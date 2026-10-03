@@ -51,11 +51,14 @@ function isState(value: unknown): value is ReviewState {
  */
 export class LocalReviewStore implements ReviewStore {
   private readonly memory = new MemoryReviewStore();
+  /** Set while the last write failed: the memory copy is newer than what storage holds. */
+  private memoryIsNewer = false;
   constructor(
     private readonly storage: Pick<Storage, 'getItem' | 'setItem'> = localStorage
   ) {}
 
   load(): ReviewState {
+    if (this.memoryIsNewer) return this.memory.load();
     try {
       const raw = this.storage.getItem(STORAGE_KEY);
       if (!raw) return empty();
@@ -76,10 +79,12 @@ export class LocalReviewStore implements ReviewStore {
   save(state: ReviewState): void {
     try {
       this.storage.setItem(STORAGE_KEY, JSON.stringify(state));
+      this.memoryIsNewer = false;
     } catch (error) {
       // Quota or blocked storage: keep practising, the deck lives for this session.
       log.debug('review storage unavailable', { name: (error as Error).name });
       this.memory.save(state);
+      this.memoryIsNewer = true;
     }
   }
 }

@@ -82,6 +82,18 @@ describe('review stores', () => {
     expect(() => full.save(state)).not.toThrow();
   });
 
+  it('never hand back an older stored deck after a write failed', () => {
+    const storage = fakeStorage();
+    const store = new LocalReviewStore(storage);
+    store.save({ cards: {}, bestTimes: { 'sort-28': 50_000 } });
+    // The quota runs out: the newer deck lives in memory, the old one is still in storage.
+    storage.setItem = () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+    store.save(state);
+    expect(store.load()).toEqual(state);
+  });
+
   it('hand out copies, so a caller cannot change the stored deck', () => {
     const memory = new MemoryReviewStore(state);
     const loaded = memory.load();
