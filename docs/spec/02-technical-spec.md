@@ -84,17 +84,24 @@ Built (migration `0002_languages_and_translations`, ADR-0020):
 | `users.language` | `de`, `en`, `fr`, `ar` or null: interface, sign-in mail, translation target                                            |
 | `translations`   | cached machine translations of written remarks per text and target language; author for the daily limit and the export |
 
+Built (migration `0003_halaqat`, spec T1, ADR-0005):
+
+| Table            | Purpose                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------ |
+| `halaqat`        | name, one-to-one flag, the teacher who opened it (cascades with the teacher's account)                 |
+| `halaqa_members` | ḥalaqa role (`teacher`, `student`) and status (`pending` until the teacher approves, `active`)         |
+| `halaqa_invites` | SHA-256 of a 192-bit token, 14 days, revoked when a new link is made; the token itself is never stored |
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
-| Table                                         | Story    | Key fields                                                                                  |
-| --------------------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `halaqat`, `halaqa_members`, `halaqa_invites` | T1       | teacher, name, one-to-one flag; member role and status; hashed invite token                 |
-| `assignments`                                 | T2       | halaqa, student (or all), type, `range` of word keys, focus rule, due, done_at              |
-| `recitations`                                 | F7       | student, halaqa, range, object key, duration, status, consent                               |
-| `recitation_marks`                            | T3       | recitation, word key, second, rule, remark, voice note key, by teacher                      |
-| `arḍ_log` (`arda_log`)                        | T4       | student, sūra/range, date, verdict, note                                                    |
-| `check_results`                               | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
-| `flags`                                       | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
+| Table                  | Story    | Key fields                                                                                  |
+| ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `assignments`          | T2       | halaqa, student (or all), type, `range` of word keys, focus rule, due, done_at              |
+| `recitations`          | F7       | student, halaqa, range, object key, duration, status, consent                               |
+| `recitation_marks`     | T3       | recitation, word key, second, rule, remark, voice note key, by teacher                      |
+| `arḍ_log` (`arda_log`) | T4       | student, sūra/range, date, verdict, note                                                    |
+| `check_results`        | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
+| `flags`                | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
 
 Content (Qurʾān text layers, rule spans, timings) lives in **content packs**, not in Postgres
 (ADR-0010); Postgres stores only word keys that point into them.
@@ -121,7 +128,19 @@ Built:
 | `GET /api/v1/admin/users`, `PATCH …/:id`, `GET /api/v1/admin/audit`    | `admin:*` + 2FA                                     | admin area                                                                                     |
 | `POST /api/v1/translations` `{ text, from?, to }`                      | `feedback:translate` (teacher, admin)               | a written remark in a student's language: `original`, `translated` or `unavailable` (ADR-0020) |
 
-Next: `/api/v1/halaqat/*` (T1), `/api/v1/assignments/*` (T2), `/api/v1/recitations/*`
+Built for T1 (`/api/v1/halaqat`, every route checked against every kind of caller in
+`halaqat.routes.test.ts`):
+
+| Method and path                                                    | Action                    | Purpose                                                    |
+| ------------------------------------------------------------------ | ------------------------- | ---------------------------------------------------------- |
+| `GET /`, `POST /` `{ name, oneToOne }`                             | `halaqa:join`, `:create`  | my ḥalaqāt (pending ones included); open one               |
+| `POST /invites/preview`, `POST /join` `{ token }`                  | `halaqa:join`             | where a link leads; join as pending (token only in bodies) |
+| `GET /:id`                                                         | `halaqa:read` (active)    | the ḥalaqa; its teacher also sees members and the link     |
+| `POST /:id/invites`, `DELETE /:id/invites`                         | `halaqa:manage` (teacher) | a new link (shown once), or revoke it                      |
+| `POST /:id/members/:userId/approve`, `DELETE /:id/members/:userId` | `halaqa:manage`           | approve or remove a student (audit-logged)                 |
+| `DELETE /:id/membership`                                           | `halaqa:join`             | a student leaves                                           |
+
+Next: `/api/v1/assignments/*` (T2), `/api/v1/recitations/*`
 (F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.
 

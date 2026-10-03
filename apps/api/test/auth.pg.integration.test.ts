@@ -22,6 +22,8 @@ import { base32Decode, stepAt, totpAt } from '../src/security/totp.js';
 import { SoftAuthenticator } from './softAuthenticator.js';
 import type { Language } from '../src/i18n/languages.js';
 import { PgTranslationRepository, sourceHash } from '../src/translation/repository.js';
+import { PgHalaqaRepository } from '../src/halaqat/repository.js';
+import { hashInviteToken, newInviteToken } from '../src/halaqat/invites.js';
 import { TranslationService } from '../src/translation/service.js';
 
 const url = process.env.ARDA_TEST_DATABASE_URL;
@@ -889,6 +891,196 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await pool.query("delete from users where email = 'kaskade@example.org'");
       const { rows } = await pool.query('select 1 from passkeys');
       expect(rows).toHaveLength(0);
+    });
+  });
+
+  describe('ḥalaqāt (T1, ADR-0005)', () => {
+    const TEACHER = '30000000-0000-4000-8000-000000000001';
+    const AMINA = '30000000-0000-4000-8000-000000000002';
+    const YUSUF = '30000000-0000-4000-8000-000000000003';
+    const NOW = new Date('2026-10-03T12:00:00Z');
+    let repo: PgHalaqaRepository;
+    /** A working invite to `halaqaId`; returns the hash a join is made with. */
+    const invite = async (halaqaId: string, actorId = TEACHER) => {
+      const tokenHash = hashInviteToken(newInviteToken());
+      await repo.createInvite({
+        halaqaId,
+        tokenHash,
+        actorId,
+        expiresAt: new Date(NOW.getTime() + 60_000),
+      });
+      return tokenHash;
+    };
+
+    beforeEach(async () => {
+      repo = new PgHalaqaRepository(pool);
+      await pool.query(
+        `insert into users (id, email, name, role) values
+           ($1, 'sheikh@example.org', 'Sheikh Ahmad', 'teacher'),
+           ($2, 'amina@example.org', 'Amina', 'student'),
+           ($3, 'yusuf@example.org', '', 'student')`,
+        [TEACHER, AMINA, YUSUF]
+      );
+    });
+
+    it('opens a ḥalaqa with its teacher as the first active member', async () => {
+      const id = await repo.create({
+        name: 'Juzʾ ʿAmma',
+        oneToOne: false,
+        teacherId: TEACHER,
+      });
+      expect(await repo.membership(id, TEACHER)).toEqual({
+        role: 'teacher',
+        status: 'active',
+      });
+      expect(await repo.countCreatedBy(TEACHER)).toBe(1);
+      expect(await repo.find(id)).toMatchObject({
+        name: 'Juzʾ ʿAmma',
+        teacherName: 'Sheikh Ahmad',
+      });
+      expect(await repo.listFor(TEACHER)).toEqual([
+        expect.objectContaining({ id, role: 'teacher', students: 0, pending: 0 }),
+      ]);
+    });
+
+    it('keeps one working invite, found by its hash until it expires', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
+      const first = newInviteToken();
+      const second = newInviteToken();
+      const expiresAt = new Date(NOW.getTime() + 60_000);
+      await repo.createInvite({
+        halaqaId: id,
+        tokenHash: hashInviteToken(first),
+        actorId: TEACHER,
+        expiresAt,
+      });
+      await repo.createInvite({
+        halaqaId: id,
+        tokenHash: hashInviteToken(second),
+        actorId: TEACHER,
+        expiresAt,
+      });
+      expect(await repo.findInvite(hashInviteToken(first), NOW)).toBeNull();
+      expect(await repo.findInvite(hashInviteToken(second), NOW)).toEqual({
+        halaqaId: id,
+        name: 'H',
+        oneToOne: false,
+        teacherName: 'Sheikh Ahmad',
+      });
+      expect(
+        await repo.findInvite(hashInviteToken(second), new Date(expiresAt.getTime() + 1))
+      ).toBeNull();
+      expect(await repo.activeInvite(id, NOW)).toMatchObject({
+        expiresAt: expiresAt.toISOString(),
+      });
+      const { rows } = await pool.query('select token_hash from halaqa_invites');
+      expect(JSON.stringify(rows)).not.toContain(second);
+      expect(await repo.revokeInvites(id, TEACHER)).toBe(1);
+      expect(await repo.activeInvite(id, NOW)).toBeNull();
+    });
+
+    it('lets students join pending; the teacher approves and removes, audited', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
+      const link = await invite(id);
+      const halaqa = { id, name: 'H' };
+      expect(await repo.join(link, AMINA, NOW)).toEqual({
+        kind: 'joined',
+        halaqa,
+        status: 'pending',
+      });
+      expect(await repo.join(link, AMINA, NOW)).toEqual({
+        kind: 'member',
+        halaqa,
+        status: 'pending',
+      });
+      expect(await repo.listFor(AMINA)).toEqual([
+        expect.objectContaining({
+          id,
+          status: 'pending',
+          pending: null,
+          teacherName: 'Sheikh Ahmad',
+        }),
+      ]);
+      expect(await repo.approve(id, AMINA, TEACHER)).toBe(true);
+      expect(await repo.approve(id, AMINA, TEACHER)).toBe(false);
+      expect(await repo.membership(id, AMINA)).toEqual({
+        role: 'student',
+        status: 'active',
+      });
+      expect((await repo.members(id)).map((m) => [m.email, m.role, m.status])).toEqual([
+        ['sheikh@example.org', 'teacher', 'active'],
+        ['amina@example.org', 'student', 'active'],
+      ]);
+      expect(await repo.remove(id, TEACHER, TEACHER)).toBe(false);
+      expect(await repo.remove(id, AMINA, TEACHER)).toBe(true);
+      const { rows } = await pool.query(
+        `select action from audit_log where target_type = 'halaqa' order by id`
+      );
+      expect(rows.map((r) => r.action)).toEqual([
+        'halaqa.invite_created',
+        'halaqa.member_approved',
+        'halaqa.member_removed',
+      ]);
+    });
+
+    it('lets only one of two students take a one-to-one place, even at the same time', async () => {
+      const id = await repo.create({ name: 'Amina', oneToOne: true, teacherId: TEACHER });
+      const link = await invite(id);
+      const outcomes = await Promise.all([
+        repo.join(link, AMINA, NOW),
+        repo.join(link, YUSUF, NOW),
+      ]);
+      expect(outcomes.map((o) => o.kind).sort()).toEqual(['full', 'joined']);
+    });
+
+    it('admits nobody with a link that was withdrawn, replaced or has expired', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
+      const old = await invite(id);
+      const current = await invite(id);
+      expect(await repo.join(old, AMINA, NOW)).toEqual({ kind: 'invalid' });
+      expect(await repo.join(current, AMINA, new Date(NOW.getTime() + 60_001))).toEqual({
+        kind: 'invalid',
+      });
+      await repo.revokeInvites(id, TEACHER);
+      expect(await repo.join(current, AMINA, NOW)).toEqual({ kind: 'invalid' });
+      expect(await repo.membership(id, AMINA)).toBeNull();
+    });
+
+    it('treats the empty name sign-in leaves as no name, so the email shows instead', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: YUSUF });
+      await repo.join(await invite(id, YUSUF), AMINA, NOW);
+      const members = await repo.members(id);
+      expect(members.find((m) => m.userId === YUSUF)).toMatchObject({
+        name: null,
+        email: 'yusuf@example.org',
+      });
+      expect(await repo.find(id)).toMatchObject({ teacherName: null });
+    });
+
+    it('lets a student leave, puts memberships in the export and cascades with the teacher', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
+      const link = await invite(id);
+      await repo.join(link, AMINA, NOW);
+      await repo.approve(id, AMINA, TEACHER);
+      const exported = await new PgPrivacyRepository(pool).export(AMINA);
+      // Who approved her is part of her export, without being her own action.
+      expect(exported.auditLog).toEqual([
+        expect.objectContaining({ action: 'halaqa.member_approved', actor_id: TEACHER }),
+      ]);
+      expect(exported.halaqat).toEqual([
+        expect.objectContaining({
+          name: 'H',
+          halaqa_role: 'student',
+          status: 'active',
+          opened_by_you: false,
+        }),
+      ]);
+      expect(await repo.leave(id, TEACHER)).toBe(false);
+      expect(await repo.leave(id, AMINA)).toBe(true);
+      await repo.join(link, AMINA, NOW);
+      await pool.query('delete from users where id = $1', [TEACHER]);
+      expect(await repo.find(id)).toBeNull();
+      expect(await repo.listFor(AMINA)).toEqual([]);
     });
   });
 });

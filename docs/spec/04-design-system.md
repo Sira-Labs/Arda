@@ -97,7 +97,7 @@ Rules for using it:
 | 4   | Games            | `/pfad/:unit/spiel/:game` | Which rule? · Sort the 28 · Hold the ghunna; XP, quests, streak shields; review at `/pfad/wiederholen`                                        | built: Which rule?, Sort the 28, review |
 | 5   | Recite           | `/rezitieren/:range`      | text with `gut` / `prüfen` per word (label next to colour), finding card, Yours ↔ Reciter, **Send to my sheikh** (primary)                    | week 4                                  |
 | 6   | Sheikh (student) | `/sheikh`                 | "Von meinem Sheikh" list: type chip, range, focus, due date; voice notes                                                                      | week 1                                  |
-| 7   | Ḥalaqa (teacher) | `/halaqa/:id`             | listening queue with pre-check, the ʿarḍ log, rule by rule                                                                                    | week 1–4                                |
+| 7   | Ḥalaqa (teacher) | `/halaqa/:id`             | invite link and QR code, students waiting and approved; then the listening queue, the ʿarḍ log, rule by rule                                  | built: invites and members (T1)         |
 | 8   | Live lesson      | `/live/:id`               | shared page, his pointer, recording cut by āya                                                                                                | later                                   |
 | 9   | AI flags         | inside 7                  | filled mark (his) vs ring (AI), one tap yes/no                                                                                                | later                                   |
 

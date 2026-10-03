@@ -14,6 +14,13 @@ function cards(count: number): string {
   return count <= 10 ? `${num(count)} بطاقات` : `${num(count)} بطاقة`;
 }
 
+/** "n students" with the Arabic number agreement. */
+function studentCount(count: number): string {
+  if (count === 1) return 'طالب واحد';
+  if (count === 2) return 'طالبان';
+  return count <= 10 ? `${num(count)} طلاب` : `${num(count)} طالبًا`;
+}
+
 export const ar: Messages = {
   nav: {
     brand: 'العَرْضة',
@@ -176,6 +183,56 @@ export const ar: Messages = {
     again: 'مرة أخرى',
     back: 'إلى الوحدة',
   },
+  halaqa: {
+    mine: 'حلقاتي',
+    none: 'لست في أي حلقة بعد. اطلب رابط الدعوة من شيخك، أو أره هذه الصفحة.',
+    noneTeacher: 'لم تفتح أي حلقة بعد.',
+    teacherOf: (name) => (name ? `مع ${name}` : 'مع شيخك'),
+    waiting: 'بانتظار الموافقة',
+    oneToOne: 'درس فردي',
+    students: (count) => studentCount(count),
+    pending: (count) => `${num(count)} بالانتظار`,
+    create: {
+      title: 'حلقة جديدة',
+      name: 'الاسم',
+      placeholder: 'مثلًا: جزء عمّ، يوم الثلاثاء',
+      oneToOne: 'درس فردي (طالب واحد فقط)',
+      submit: 'افتح الحلقة',
+    },
+    invite: {
+      title: 'دعوة',
+      hint: 'شارك الرابط أو اعرض رمز QR. من ينضم ينتظر حتى توافق.',
+      create: 'أنشئ رابط دعوة',
+      renew: 'أنشئ رابطًا جديدًا',
+      validUntil: (date) => `صالح حتى ${date}. الرابط الجديد يحل محل هذا.`,
+      hidden: (date) =>
+        `يوجد رابط فعّال حتى ${date}. يظهر عند إنشائه فقط؛ والرابط الجديد يحل محله.`,
+      copy: 'انسخ الرابط',
+      copied: 'نُسخ الرابط.',
+      share: 'مشاركة',
+      revoke: 'اسحب الرابط',
+      revoked: 'لم يعد الرابط يعمل.',
+      qr: 'رمز QR للانضمام',
+    },
+    waitingTitle: 'بانتظار الموافقة',
+    approve: 'اقبل',
+    reject: 'ارفض',
+    membersTitle: 'الطلاب',
+    remove: 'أزل',
+    noMembers: 'لا أحد بعد. شارك رابط الدعوة.',
+    leave: 'غادر الحلقة',
+    retry: 'حاول مرة أخرى',
+    back: 'إلى حلقاتي',
+    join: {
+      eyebrow: 'دعوة',
+      title: (name) => `حلقة «${name}»`,
+      signIn: 'سجّل الدخول للانضمام، ثم تعود إلى هنا.',
+      confirm: 'انضم',
+      pending: 'أُرسل الطلب. حين يوافق شيخك ترى الحلقة وواجباته.',
+      active: 'أنت في هذه الحلقة بالفعل.',
+      missing: 'افتح رابط الدعوة من شيخك أو امسح رمز QR الخاص به.',
+    },
+  },
   signIn: {
     eyebrow: 'الدخول',
     title: 'مرحبًا بك في العَرْضة',
@@ -231,6 +288,10 @@ export const ar: Messages = {
     INVALID_OTP: 'الرمز غير صحيح.',
     OTP_EXPIRED: 'انتهت صلاحية الرمز – اطلب رابطًا جديدًا.',
     TOO_MANY_ATTEMPTS: 'محاولات خاطئة كثيرة – اطلب رابطًا جديدًا.',
+    invite_invalid:
+      'انتهت صلاحية هذا الرابط أو أنه غير صالح. اطلب رابطًا جديدًا من شيخك.',
+    halaqa_full: 'هذا الدرس الفردي له طالب بالفعل.',
+    too_many_halaqat: 'بلغت الحد الأقصى لعدد الحلقات.',
     generic: (status) => `خطأ في الخادم (${status}).`,
   },
   remarks: {

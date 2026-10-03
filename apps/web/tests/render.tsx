@@ -10,9 +10,9 @@ export interface Call {
   body: unknown;
 }
 
-/** An AuthClient over a fake fetch: answers by path, records every call. */
+/** An AuthClient over a fake fetch: answers by "METHOD path" or path, records every call. */
 export function fakeApi(
-  answers: Record<string, Response | (() => Response)>,
+  answers: Record<string, Response | (() => Response | Promise<Response>)>,
   me: Me | null = null
 ) {
   const calls: Call[] = [];
@@ -28,7 +28,7 @@ export function fakeApi(
         ? Response.json(me)
         : Response.json({ error: 'unauthorized' }, { status: 401 });
     }
-    const answer = answers[path];
+    const answer = answers[`${init?.method ?? 'GET'} ${path}`] ?? answers[path];
     if (typeof answer === 'function') return answer();
     return answer?.clone() ?? Response.json({ error: 'not_found' }, { status: 404 });
   }) as unknown as typeof fetch;

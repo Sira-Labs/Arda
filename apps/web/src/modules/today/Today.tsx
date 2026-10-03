@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon';
 import { TajweedText } from '@/components/TajweedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { cardName } from '@/content/unit2';
+import { useHalaqat } from '@/modules/halaqa/useHalaqat';
 import { RULE_FAMILIES } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
@@ -20,6 +21,17 @@ const IQLAB = segmentsOf('مِنۢ بَعْدِ', new Set(['iqlab']));
 export function Today() {
   const { me, offline } = useSession();
   const { m, language } = useI18n();
+  const { halaqat } = useHalaqat();
+  // What "from my sheikh" says: sign in, join, wait for approval, or (soon) the assignments.
+  const sheikh = !me
+    ? { title: m.today.connect, hint: m.today.connectHint, link: null }
+    : halaqat?.length === 0
+      ? me.role === 'student'
+        ? { title: m.today.connect, hint: m.halaqa.none, link: '/sheikh' }
+        : { title: m.halaqa.create.title, hint: m.halaqa.noneTeacher, link: '/sheikh' }
+      : halaqat && halaqat.every((h) => h.status === 'pending')
+        ? { title: m.today.noTasks, hint: m.halaqa.join.pending, link: null }
+        : { title: m.today.noTasks, hint: m.today.noTasksHint, link: null };
 
   return (
     <div className="stack" style={{ gap: 24 }}>
@@ -43,8 +55,17 @@ export function Today() {
         <p className="eyebrow" style={{ color: 'var(--accent-fill)' }}>
           {m.today.fromSheikh}
         </p>
-        <h2 id="from-sheikh">{me ? m.today.noTasks : m.today.connect}</h2>
-        <p className="muted">{me ? m.today.noTasksHint : m.today.connectHint}</p>
+        <h2 id="from-sheikh">{sheikh.title}</h2>
+        <p className="muted">{sheikh.hint}</p>
+        {sheikh.link && (
+          <Link
+            className="btn btn-primary"
+            to={sheikh.link}
+            style={{ alignSelf: 'flex-start' }}
+          >
+            {m.halaqa.mine}
+          </Link>
+        )}
       </section>
 
       <section className="card stack" aria-labelledby="next-unit">

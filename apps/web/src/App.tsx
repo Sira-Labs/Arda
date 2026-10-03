@@ -6,6 +6,8 @@ import { SignIn } from '@/modules/account/SignIn';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
+import { Halaqa } from '@/modules/halaqa/Halaqa';
+import { Join } from '@/modules/halaqa/Join';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
@@ -30,6 +32,8 @@ const router = createBrowserRouter([
       { path: '/mushaf', element: <Soon page="mushaf" /> },
       { path: '/labor', element: <Soon page="lab" /> },
       { path: '/sheikh', element: <Sheikh /> },
+      { path: '/halaqa/:id', element: <Halaqa /> },
+      { path: '/beitreten', element: <Join /> },
       { path: '*', element: <Soon page="notFound" /> },
     ],
   },

@@ -27,6 +27,7 @@ import { PgPrivacyRepository } from './privacy/repository.js';
 import { SecretBox } from './security/secretBox.js';
 import { ClaudeTranslator } from './translation/claudeTranslator.js';
 import { PgTranslationRepository } from './translation/repository.js';
+import { PgHalaqaRepository } from './halaqat/repository.js';
 import { TranslationService } from './translation/service.js';
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
@@ -151,6 +152,7 @@ async function main(): Promise<void> {
     account: accountRoutes,
     admin,
     translations: { service: translations, auth, log },
+    halaqat: { repo: new PgHalaqaRepository(pool), auth, log },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,
     authzLog: log,
