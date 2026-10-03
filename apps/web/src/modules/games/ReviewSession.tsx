@@ -11,16 +11,24 @@ import { RuleQuiz } from './RuleQuiz';
 export function ReviewSession() {
   const { m } = useI18n();
   const review = useReview();
-  const [questions] = useState<Question[]>(() =>
+  const build = () =>
     review.due
       .map(questionOf)
-      .filter((question): question is Question => question !== undefined)
-  );
+      .filter((question): question is Question => question !== undefined);
+  const [round, setRound] = useState(0);
+  const [questions, setQuestions] = useState<Question[]>(build);
   return (
     <RuleQuiz
+      key={round}
       questions={questions}
       eyebrow={m.games.eyebrow}
       title={m.games.review.title}
+      offerReview={false}
+      // "Again" asks what is due now: the cards just missed, not the ones just learnt.
+      again={() => {
+        setQuestions(build());
+        setRound(round + 1);
+      }}
     />
   );
 }

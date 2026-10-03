@@ -31,6 +31,7 @@ export function RuleQuiz({
   clock = Date.now,
   onDone,
   again,
+  offerReview = true,
 }: {
   questions: readonly Question[];
   eyebrow: string;
@@ -40,6 +41,8 @@ export function RuleQuiz({
   onDone?: (result: QuizResult) => void;
   /** Starts a new round; the results screen offers it. */
   again?: () => void;
+  /** Whether the results link to the review session (not from inside it). */
+  offerReview?: boolean;
 }) {
   const { m } = useI18n();
   const review = useReview();
@@ -93,7 +96,7 @@ export function RuleQuiz({
         <h1 className="rule-title">{title}</h1>
 
         {result ? (
-          <Results result={result} again={again} />
+          <Results result={result} again={again} offerReview={offerReview} />
         ) : question ? (
           <QuestionView
             key={question.id}
@@ -238,7 +241,15 @@ function optionClass(
 }
 
 /** The end of a round: score, new review cards, and where to go next. */
-function Results({ result, again }: { result: QuizResult; again?: () => void }) {
+function Results({
+  result,
+  again,
+  offerReview,
+}: {
+  result: QuizResult;
+  again?: () => void;
+  offerReview: boolean;
+}) {
   const { m } = useI18n();
   const review = useReview();
   return (
@@ -246,7 +257,7 @@ function Results({ result, again }: { result: QuizResult; again?: () => void }) 
       <h2>{m.games.score(result.right, result.total)}</h2>
       {result.ms !== undefined && <TimeLine ms={result.ms} />}
       <p>{m.games.newCards(result.missed)}</p>
-      {review.due.length > 0 && (
+      {offerReview && review.due.length > 0 && (
         <Link className="btn" to="/pfad/wiederholen">
           {m.games.review.open(review.due.length)}
         </Link>

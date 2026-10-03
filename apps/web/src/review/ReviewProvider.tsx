@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -21,6 +22,9 @@ export interface Review {
 
 const ReviewContext = createContext<Review | null>(null);
 
+/** How often the due list is recomputed while nothing else changes. */
+export const DUE_REFRESH_MS = 60_000;
+
 /** The review deck for the app (ADR-0021); store and clock are injected in tests. */
 export function ReviewProvider({
   children,
@@ -33,6 +37,12 @@ export function ReviewProvider({
 }) {
   const [store] = useState<ReviewStore>(() => injected ?? new LocalReviewStore());
   const [state, setState] = useState<ReviewState>(() => store.load());
+  // Cards fall due while the app stays open: the clock is read again once a minute.
+  const [clockAt, setClockAt] = useState(now);
+  useEffect(() => {
+    const timer = setInterval(() => setClockAt(now()), DUE_REFRESH_MS);
+    return () => clearInterval(timer);
+  }, [now]);
 
   const update = useCallback(
     (change: (state: ReviewState) => ReviewState) => {
@@ -74,7 +84,7 @@ export function ReviewProvider({
 
   const value = useMemo<Review>(() => {
     const cards = Object.values(state.cards);
-    const at = now();
+    const at = Math.max(clockAt, now());
     return {
       cards,
       due: cards.filter((card) => isDue(card, at)).sort((a, b) => a.due - b.due),
@@ -82,7 +92,7 @@ export function ReviewProvider({
       bestTime: (game) => state.bestTimes[game],
       offerTime,
     };
-  }, [state, record, offerTime, now]);
+  }, [state, record, offerTime, now, clockAt]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

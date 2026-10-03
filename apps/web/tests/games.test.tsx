@@ -1,9 +1,9 @@
 import { IZHAR_EXCEPTIONS, SHEET_EXAMPLES } from '@arda/tajweed';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UNIT2_CARDS, cardName } from '@/content/unit2';
 import {
   WORD_POOL,
@@ -17,7 +17,7 @@ import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
 import { Path } from '@/modules/path/Path';
-import { ReviewProvider } from '@/review/ReviewProvider';
+import { DUE_REFRESH_MS, ReviewProvider } from '@/review/ReviewProvider';
 import { MemoryReviewStore } from '@/review/store';
 import type { Letter } from '@arda/tajweed';
 import { fakeApi, Providers } from './render';
@@ -163,5 +163,58 @@ describe('Sort the 28', () => {
     expect(screen.getByText(/Neue Bestzeit!/)).toBeInTheDocument();
     expect(store.load().bestTimes['sort-28']).toBe(42_000);
     expect(store.load().cards).toEqual({});
+  });
+});
+
+describe('the review session', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('starts again with what is still due, from its own results', async () => {
+    const store = new MemoryReviewStore();
+    const card = letterQuestion('ب');
+    store.save({
+      cards: { [card.id]: { ...card, box: 1, due: 0, lapses: 1, updatedAt: 0 } },
+      bestTimes: {},
+    });
+    renderGame('/pfad/wiederholen', store, <ReviewSession />);
+    await userEvent.click(screen.getByRole('button', { name: 'Ikhfāʾ' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Auswerten' }));
+    expect(screen.getByRole('heading', { name: '0 von 1 richtig' })).toBeInTheDocument();
+    // Inside the review the results offer "again", not a link to the page itself.
+    expect(screen.queryByRole('link', { name: /wiederholen/ })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
+    expect(screen.getByText('ب')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Iqlāb' }));
+    expect(store.load().cards[card.id]).toMatchObject({ box: 2 });
+  });
+});
+
+describe('the due list', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('follows the clock while the app stays open', () => {
+    vi.useFakeTimers();
+    localStorage.setItem('arda.language', 'de');
+    let now = 0;
+    const store = new MemoryReviewStore();
+    const card = letterQuestion('ب');
+    store.save({
+      cards: { [card.id]: { ...card, box: 2, due: 1000, lapses: 1, updatedAt: 0 } },
+      bestTimes: {},
+    });
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store} now={() => now}>
+          <MemoryRouter initialEntries={['/pfad']}>
+            <Path />
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    expect(screen.getByText('Gerade ist nichts fällig. Gut so!')).toBeInTheDocument();
+    now = 2000;
+    act(() => vi.advanceTimersByTime(DUE_REFRESH_MS));
+    expect(screen.getByRole('link', { name: '1 Karte wiederholen' })).toBeInTheDocument();
   });
 });
