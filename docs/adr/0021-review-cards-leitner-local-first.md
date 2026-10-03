@@ -28,6 +28,10 @@ something he can read at a glance.
   versioned JSON document, `arda.review.v1`) and an in-memory one for tests and blocked
   storage. The React provider takes the store by injection. When L3 lands, an IndexedDB store
   with Suffa's outbox replaces it without touching the games.
+- **Several tabs, one deck.** Each save merges with the stored deck instead of replacing it:
+  per card the more recently answered version, per game the better time. Open tabs pick up
+  each other's saves through the browser's `storage` event. Damaged or impossible entries
+  (a box outside 1–5, a negative time) are dropped one by one when the deck is read.
 - **Per device until then.** Cards stay on the device across sign-in and sign-out; they hold
   no personal data beyond what was practised. With L3 they move to the account and into the
   GDPR export.

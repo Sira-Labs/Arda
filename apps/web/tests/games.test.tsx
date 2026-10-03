@@ -18,7 +18,7 @@ import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
 import { Path } from '@/modules/path/Path';
 import { DUE_REFRESH_MS, ReviewProvider } from '@/review/ReviewProvider';
-import { MemoryReviewStore } from '@/review/store';
+import { LocalReviewStore, MemoryReviewStore, STORAGE_KEY } from '@/review/store';
 import type { Letter } from '@arda/tajweed';
 import { fakeApi, Providers } from './render';
 
@@ -247,5 +247,40 @@ describe('an empty review session', () => {
     act(() => vi.advanceTimersByTime(DUE_REFRESH_MS));
     expect(screen.getByText('ب')).toBeInTheDocument();
     expect(screen.getByText('1 / 1')).toBeInTheDocument();
+  });
+});
+
+describe('two tabs', () => {
+  it('show what the other tab practised', () => {
+    localStorage.setItem('arda.language', 'de');
+    const data = new Map<string, string>();
+    const storage = {
+      getItem: (key: string) => data.get(key) ?? null,
+      setItem: (key: string, value: string) => void data.set(key, value),
+    };
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={new LocalReviewStore(storage)}>
+          <MemoryRouter initialEntries={['/pfad']}>
+            <Path />
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    expect(screen.getByText('Gerade ist nichts fällig. Gut so!')).toBeInTheDocument();
+    // The other tab saves a mistake; this tab hears of it through the storage event.
+    const card = letterQuestion('ب');
+    data.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        cards: { [card.id]: { ...card, box: 1, due: 0, lapses: 1, updatedAt: 1 } },
+        bestTimes: {},
+      })
+    );
+    act(() => {
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+    });
+    expect(screen.getByRole('link', { name: '1 Karte wiederholen' })).toBeInTheDocument();
   });
 });

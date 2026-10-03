@@ -8,7 +8,12 @@ import {
   type ReactNode,
 } from 'react';
 import { answer, fromMistake, isDue, type NewCard, type ReviewCard } from './leitner';
-import { LocalReviewStore, type ReviewState, type ReviewStore } from './store';
+import {
+  LocalReviewStore,
+  mergeStates,
+  type ReviewState,
+  type ReviewStore,
+} from './store';
 
 export interface Review {
   cards: readonly ReviewCard[];
@@ -48,10 +53,19 @@ export function ReviewProvider({
     (change: (state: ReviewState) => ReviewState) => {
       setState((current) => {
         const next = change(current);
-        store.save(next);
-        return next;
+        // What the store holds now, including what another tab saved meanwhile.
+        return next === current ? current : store.save(next);
       });
     },
+    [store]
+  );
+
+  // Another tab practised: take its cards and times into this one.
+  useEffect(
+    () =>
+      store.subscribe?.((incoming) =>
+        setState((current) => mergeStates(current, incoming))
+      ),
     [store]
   );
 

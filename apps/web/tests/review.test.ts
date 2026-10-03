@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { answer, fromMistake, isDue, type ReviewCard } from '@/review/leitner';
-import { LocalReviewStore, MemoryReviewStore, STORAGE_KEY } from '@/review/store';
+import {
+  LocalReviewStore,
+  MemoryReviewStore,
+  STORAGE_KEY,
+  mergeStates,
+} from '@/review/store';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 9, 3, 12);
@@ -127,6 +132,57 @@ describe('review stores', () => {
       })
     );
     expect(new LocalReviewStore(storage).load()).toEqual(state);
+  });
+
+  it('drop numbers that break the scheduling', () => {
+    const storage = fakeStorage();
+    const good = state.cards[CARD.id]!;
+    storage.data.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        cards: {
+          [CARD.id]: good,
+          half: { ...good, id: 'half', box: 1.5 },
+          six: { ...good, id: 'six', box: 6 },
+          minus: { ...good, id: 'minus', lapses: -1 },
+        },
+        bestTimes: { 'sort-28': 41_000, negative: -5, zero: 0 },
+      })
+    );
+    expect(new LocalReviewStore(storage).load()).toEqual(state);
+  });
+
+  it('merge with what another tab saved instead of overwriting it', () => {
+    const storage = fakeStorage();
+    const first = new LocalReviewStore(storage);
+    const second = new LocalReviewStore(storage);
+    // Both tabs start from the same, empty deck.
+    first.load();
+    second.load();
+    const other = fromMistake(
+      { ...CARD, id: 'sort:ت', prompt: 'ت', answer: 'ikhfa' },
+      NOW
+    );
+    first.save({
+      cards: { [CARD.id]: fromMistake(CARD, NOW) },
+      bestTimes: { 'sort-28': 40_000 },
+    });
+    const merged = second.save({
+      cards: { [other.id]: other },
+      bestTimes: { 'sort-28': 45_000 },
+    });
+    expect(Object.keys(merged.cards).sort()).toEqual([CARD.id, other.id].sort());
+    expect(merged.bestTimes['sort-28']).toBe(40_000);
+    expect(new LocalReviewStore(storage).load()).toEqual(merged);
+  });
+
+  it('keep the more recently answered version of a card', () => {
+    const older = fromMistake(CARD, NOW);
+    const newer = answer(older, true, NOW + DAY);
+    const a = { cards: { [CARD.id]: newer }, bestTimes: {} };
+    const b = { cards: { [CARD.id]: older }, bestTimes: {} };
+    expect(mergeStates(a, b).cards[CARD.id]).toEqual(newer);
+    expect(mergeStates(b, a).cards[CARD.id]).toEqual(newer);
   });
 
   it('hand out copies, so a caller cannot change the stored deck', () => {
