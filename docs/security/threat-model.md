@@ -33,7 +33,7 @@
 | T11 | Disclosure: recordings used for training                       | separate revocable opt-in; no third-party speech APIs                                                                         | planned (ADR-0013)          |
 | T12 | **Denial of service**: mail flooding a victim                  | 5 sign-in mails / 10 min per client; SMTP timeouts so a blocked port fails fast                                               | built                       |
 | T13 | DoS: large uploads                                             | size and duration limits per recording; uploads only for signed-in members of a ḥalaqa                                        | planned                     |
-| T14 | **Elevation**: student acts as teacher                         | platform role checked before ḥalaqa scope; scoped actions without scope denied; route × role matrix test                      | built (policies)            |
+| T14 | **Elevation**: student acts as teacher                         | platform role checked before ḥalaqa scope; scoped actions without scope denied; route × role matrix test                      | built, tested (T1 routes)   |
 | T15 | Elevation: stolen admin session                                | TOTP required per session (12 h), sealed secret, replay refused, lock after 5 wrong codes                                     | built, tested               |
 | T16 | Supply chain: vulnerable image                                 | Trivy scan blocks critical fixable CVEs; no test tooling in the runtime image; pinned auth packages                           | built                       |
 | T17 | XSS via content or user text                                   | React escaping; strict CSP (`script-src 'self'`, no inline scripts, fonts and media from self)                                | built                       |
@@ -41,6 +41,8 @@
 | T18 | Disclosure: a teacher's remark sent to a translation provider | only the remark text (no names, ids or audio); off without a key; stated on the privacy page (ADR-0020) | built |
 | T19 | Tampering: a remark tries to instruct the translation model ("ignore the rules…") | fixed instructions; the remark is wrapped as data; output shown as plain text (React escaping), never executed; the original is always shown alongside | built, tested |
 | T20 | DoS / cost: translation abuse | teachers and admins only; 1000 characters; daily limit per teacher in the DB; cache | built, tested |
+| T21 | Spoofing: a guessed or leaked invite link puts a stranger in a ḥalaqa | 192-bit token, only its SHA-256 stored; in the URL fragment (never in logs); 14 days; a new link revokes the old; joiners stay `pending` until the teacher approves | built, tested |
+| T22 | Disclosure: a student sees who else is in the ḥalaqa | members and the link only for its teacher and admins; students see the ḥalaqa's name and teacher | built, tested |
 
 ## Accepted risks
 

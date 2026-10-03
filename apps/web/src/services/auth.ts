@@ -40,6 +40,55 @@ export type TranslateOutcome =
   | { status: 'translated'; text: string; model: string; cached: boolean }
   | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' };
 
+/** A ḥalaqa in "my ḥalaqāt" (apps/api/src/halaqat/repository.ts). */
+export interface HalaqaSummary {
+  id: string;
+  name: string;
+  oneToOne: boolean;
+  role: 'teacher' | 'student';
+  status: 'pending' | 'active';
+  teacherName: string | null;
+  students: number;
+  /** Only the teacher sees how many wait for approval. */
+  pending: number | null;
+}
+
+export interface HalaqaMember {
+  userId: string;
+  name: string | null;
+  email: string | null;
+  role: 'teacher' | 'student';
+  status: 'pending' | 'active';
+  joinedAt: string;
+}
+
+export interface HalaqaDetail {
+  id: string;
+  name: string;
+  oneToOne: boolean;
+  teacherName: string | null;
+  createdAt: string;
+}
+
+/** GET /halaqat/:id: students see the ḥalaqa; its teacher also the members and the link. */
+export type HalaqaView =
+  | { role: 'student'; halaqa: HalaqaDetail }
+  | {
+      role: 'teacher';
+      halaqa: HalaqaDetail;
+      members: HalaqaMember[];
+      invite: { createdAt: string; expiresAt: string } | null;
+    };
+
+export interface InvitePreview {
+  halaqaId: string;
+  name: string;
+  oneToOne: boolean;
+  teacherName: string | null;
+}
+
+const HALAQAT = '/api/v1/halaqat';
+
 export class AuthClient {
   constructor(private readonly fetchImpl: Fetch = (...args) => fetch(...args)) {}
 
@@ -104,6 +153,77 @@ export class AuthClient {
     return apiRequest(this.fetchImpl, '/api/v1/auth/sign-out', {
       method: 'POST',
       body: '{}',
+    });
+  }
+
+  /** The ḥalaqāt the signed-in person belongs to, pending ones included (spec T1). */
+  halaqat(): Promise<ApiResult<{ halaqat: HalaqaSummary[] }>> {
+    return apiRequest(this.fetchImpl, HALAQAT);
+  }
+
+  createHalaqa(name: string, oneToOne: boolean): Promise<ApiResult<{ id: string }>> {
+    return apiRequest(this.fetchImpl, HALAQAT, {
+      method: 'POST',
+      body: JSON.stringify({ name, oneToOne }),
+    });
+  }
+
+  halaqa(id: string): Promise<ApiResult<HalaqaView>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(id)}`);
+  }
+
+  /** A new invite link's token (shown once); the previous link stops working. */
+  newInvite(id: string): Promise<ApiResult<{ token: string; expiresAt: string }>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(id)}/invites`, {
+      method: 'POST',
+      body: '{}',
+    });
+  }
+
+  revokeInvites(id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(id)}/invites`, {
+      method: 'DELETE',
+    });
+  }
+
+  approveMember(id: string, userId: string): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}/approve`,
+      { method: 'POST', body: '{}' }
+    );
+  }
+
+  removeMember(id: string, userId: string): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(id)}/members/${encodeURIComponent(userId)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  leaveHalaqa(id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(id)}/membership`, {
+      method: 'DELETE',
+    });
+  }
+
+  /** Where an invite link leads; the token travels in the body, never in a URL. */
+  previewInvite(token: string): Promise<ApiResult<{ halaqa: InvitePreview }>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/invites/preview`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  joinHalaqa(
+    token: string
+  ): Promise<
+    ApiResult<{ halaqa: { id: string; name: string }; status: 'pending' | 'active' }>
+  > {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/join`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
     });
   }
 
