@@ -1,7 +1,8 @@
 # Sprint plan
 
-- Status: v1 · 2026-10-03 · One-week sprints; every story has acceptance criteria and ends on
-  staging. Stories reference spec 01.
+- Status: v2 · 2026-10-03 · One-week sprints starting Mondays; every story has acceptance
+  criteria and ends on staging. Stories reference spec 01. Phases, dates, gates and what the
+  plan waits on: [`roadmap.md`](roadmap.md).
 
 ## S0 · Foundation (done 2026-10-03)
 
@@ -14,7 +15,7 @@
 | S0.5 Design system and shell                      | tokens, fonts, navigation; sign-in end to end in a browser                                                                                                                                | done                                              |
 | S0.6 Languages and teacher translation (ADR-0020) | de, en, fr, ar (RTL); mail in the chosen language; quick remarks in every catalog; written remarks translated with terms kept, cached, limited; checked in a browser in French and Arabic | done (translation needs `ARDA_ANTHROPIC_API_KEY`) |
 
-## S1 · Sheet and inbox
+## S1 · Sheet and inbox (Sep 28 – Oct 4)
 
 | Story                                                 | Acceptance                                                                                        | Status                                                                                     |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
@@ -25,7 +26,7 @@
 | S1.5 T1 Ḥalaqāt and invites                           | link and QR; teacher approves; route × role matrix extended                                       | done: ḥalaqāt, invite link and QR, approval; routes × roles tested; checked in a browser   |
 | S1.6 T2 Assignments (range by sūra/āya at first)      | due date; first on Today; done returns to the teacher                                             | done: give by sūra/āya or rule, due day, first on Today, who is done; checked in a browser |
 
-## S2–S3 · IndoPak muṣḥaf
+## S2–S3 · IndoPak muṣḥaf (Oct 5 – Oct 18)
 
 | Story                                                            | Acceptance                                             |
 | ---------------------------------------------------------------- | ------------------------------------------------------ |
@@ -36,15 +37,24 @@
 | S3.1 Reciter player with word timings                            | highlight within 100 ms; 0.5×–1×; loop                 |
 | S3.2 Assign on the page (word selection)                         | assignments point at word keys                         |
 
-## S4 · Recite to him
+## S4–S5 · Recite to him (Oct 19 – Nov 1)
 
 | Story                                         | Acceptance                                                         |
 | --------------------------------------------- | ------------------------------------------------------------------ |
 | S4.1 Recording and offline upload (F7)        | consent asked once; upload resumes after offline                   |
 | S4.2 Listening queue, marks, voice notes (T3) | only the ḥalaqa's teachers can play a recording (integration test) |
 | S4.3 ʿArḍ log (T4)                            | per student and sūra; included in the export                       |
-| S4.4 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |
-| S4.5 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      |
+| S5.1 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |
+| S5.2 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      |
+| S5.3 Production server and pilot readiness    | own server, approval step; restore drill passed; gate G3 met       |
+
+## S6–S9 · Pilot ḥalaqa (Nov 2 – Nov 29)
+
+| Story                                                 | Acceptance                                                             |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| S6.1 Speech service `arda-speech` (ADR-0013)          | runs on its own host; hints reach only the sheikh's queue              |
+| S6.2 Agreement report per rule                        | the sheikh's verdicts vs the check, per rule, from opted-in recordings |
+| S6–S9 Weekly pilot, feedback triaged into the backlog | one ḥalaqa every week; issues triaged each Monday                      |
 
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 

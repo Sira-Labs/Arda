@@ -208,14 +208,15 @@ As described in their ADRs; only confirmed flags reach the student.
 
 ## 7. Plan (summary; details in `docs/plan/`)
 
-| When         | Milestone                                                                      |
-| ------------ | ------------------------------------------------------------------------------ |
-| Day 1 (done) | Repository from Suffa's skeleton; specs and ADRs; auth; CapRover files; design |
-| Week 1       | Unit 2 from the sheet with its games; the sheikh can assign; staging online    |
-| Weeks 2–3    | IndoPak muṣḥaf: coloured pages, tap for the rule, reciter word by word         |
-| Week 4       | Recording, his listening queue and voice notes; letter lab; units 1, 3, 4      |
-| Then         | Live lessons, AI flags he confirms, madd to waqf, Madīna muṣḥaf, Warsh         |
+| When                  | Milestone                                                                     |
+| --------------------- | ----------------------------------------------------------------------------- |
+| Sep 28 – Oct 4 (done) | Foundation; unit 2 from the sheet with its games; ḥalaqāt; the sheikh assigns |
+| Oct 5 – Oct 18        | IndoPak muṣḥaf: coloured pages, tap for the rule, reciter word by word        |
+| Oct 19 – Nov 1        | Recording, his listening queue and voice notes; letter lab; units 1, 3, 4     |
+| Nov 2 – Nov 29        | Pilot ḥalaqa; the speech check measured against the sheikh                    |
+| Then                  | Live lessons, AI flags he confirms, madd to waqf, Madīna muṣḥaf, Warsh        |
 
+Dates depend on the portfolio capacity decision in the roadmap.
 Each step ships to staging and is usable on its own.
 
 ## 8. Questions for the sheikh (they decide the first content pack)
