@@ -25,6 +25,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck -w @arda/tajweed
       - run: npm test -w @arda/tajweed
+      - run: npm run typecheck -w @arda/quran
+      - run: npm test -w @arda/quran
       - run: npm run typecheck -w @arda/web
       - run: npm test -w @arda/web
       - run: npm run build -w @arda/web
