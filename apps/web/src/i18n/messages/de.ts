@@ -3,6 +3,7 @@
  * this one, so a missing message fails the typecheck. Learners are addressed with "du".
  */
 import type { PasskeyFailure } from '@/services/passkeys';
+import type { RuleCase, Unit2Card } from '@/content/unit2';
 import type { RuleFamily } from '@/tajweed/rules';
 
 export type RemarkId =
@@ -35,13 +36,7 @@ export const de = {
     connect: 'Verbinde dich mit deinem Sheikh',
     connectHint: 'Melde dich an und tritt seiner Ḥalaqa per Link oder QR-Code bei.',
     nextUnit: 'Weiter auf dem Pfad · Einheit 2',
-    iqlabTitle: 'Iqlāb – Nūn wird zu Mīm vor Bāʾ',
-    iqlabSteps: [
-      'Erkenne Nūn sākina oder Tanwīn vor ب',
-      'Wandle das „n“ in ein „m“ um',
-      'Lippen schließen, Ghunna 2 Zählzeiten halten',
-      'Lippen öffnen und das Bāʾ sprechen',
-    ],
+    openCard: 'Zur Regelkarte',
     legend: 'Farben im Muṣḥaf',
   },
   rules: {
@@ -52,6 +47,95 @@ export const de = {
     'madd-4': { name: 'Madd 4–5', hint: 'verbundene oder getrennte Dehnung' },
     'madd-6': { name: 'Madd 6', hint: 'notwendige Dehnung, 6 Zählzeiten' },
   } as Record<RuleFamily, { name: string; hint: string }>,
+  path: {
+    eyebrow: 'Pfad',
+    unitTitle: 'Einheit 2 · Nūn sākina und Tanwīn',
+    intro:
+      'Der Buchstabe nach Nūn sākina oder Tanwīn entscheidet, wie du es sprichst: 28 Buchstaben, vier Regeln – 6 + 6 + 1 + 15.',
+    letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
+    next: 'Einheit 3 (Ghunna und Mīm sākina) und Einheit 4 (Qalqala) folgen, ebenfalls aus dem Blatt deines Sheikhs.',
+  },
+  ruleCard: {
+    eyebrow: 'Einheit 2 · Verstehen',
+    close: 'Schließen',
+    progress: (index: number, total: number) => `Karte ${index} von ${total}`,
+    draft: 'Entwurf',
+    draftHint: 'Noch nicht von deinem Sheikh geprüft.',
+    letters: 'Wenn einer dieser Buchstaben folgt',
+    examples: 'Beispiele aus deinem Blatt',
+    decides: 'entscheidet die Regel',
+    followerKey: 'unterstrichen = der Buchstabe, der entscheidet',
+    clear: 'ohne Farbe = klar gesprochen',
+    colourKey: (colour: string, name: string, hint: string) =>
+      `${colour} = ${name}, ${hint}`,
+    colours: {
+      ghunna: 'grün',
+      qalqala: 'blau',
+      silent: 'grau',
+      'madd-2': 'hellrot',
+      'madd-4': 'rot',
+      'madd-6': 'dunkelrot',
+    } as Record<RuleFamily, string>,
+    cases: {
+      inside: 'in einem Wort',
+      across: 'über zwei Wörter',
+      tanwin: 'nach Tanwīn',
+    } as Record<RuleCase, string>,
+    withGhunna: 'mit Ghunna',
+    withoutGhunna: 'ohne Ghunna',
+    exceptions: 'Ausnahme: in einem Wort bleibt es klar (Iẓhār)',
+    sourcesDiffer: 'Quellen unterscheiden sich',
+    sources: {
+      iqlabGhunna:
+        'Eine Quelle lehrt Iqlāb ohne Ghunna. Wir lehren es mit Ghunna, wie dein Blatt.',
+    },
+    teacherNote: 'Notiz deines Sheikhs: noch keine.',
+    previous: 'Zurück',
+    next: 'Weiter',
+    done: 'Zur Einheit',
+  },
+  cards: {
+    izhar: {
+      title: 'Klar sprechen vor den sechs Kehlbuchstaben',
+      steps: [
+        'Erkenne Nūn sākina oder Tanwīn.',
+        'Folgt einer der sechs Kehlbuchstaben? Dann ist es Iẓhār.',
+        'Sprich das Nūn klar: ohne Ghunna, ohne Verschmelzen.',
+        'Geh ohne Pause zum Kehlbuchstaben über.',
+      ],
+      tip: 'Iẓhār ḥalqī heißt es, weil alle sechs Buchstaben aus der Kehle (ḥalq) kommen.',
+    },
+    idgham: {
+      title: 'Nūn verschmilzt mit dem nächsten Wort',
+      steps: [
+        'Erkenne Nūn sākina oder Tanwīn am Ende eines Wortes.',
+        'Beginnt das nächste Wort mit einem der sechs Buchstaben, verschmilzt das Nūn mit ihm.',
+        'Bei Yanmū bleibt eine Ghunna von 2 Zählzeiten, bei Lām und Rāʾ fällt sie weg.',
+        'Nur über zwei Wörter: in einem Wort bleibt es klar (siehe Ausnahme).',
+      ],
+      tip: 'Merkwort: yarmalūn – seine Buchstaben sind die sechs.',
+    },
+    iqlab: {
+      title: 'Nūn wird zu Mīm vor Bāʾ',
+      steps: [
+        'Erkenne Nūn sākina oder Tanwīn vor Bāʾ',
+        'Wandle das „n“ in ein „m“ um',
+        'Lippen schließen, Ghunna 2 Zählzeiten halten',
+        'Lippen öffnen und das Bāʾ sprechen',
+      ],
+      tip: 'Im Muṣḥaf steht oft ein kleines Mīm über dem Nūn oder Tanwīn.',
+    },
+    ikhfa: {
+      title: 'Nūn wird verborgen, mit Ghunna',
+      steps: [
+        'Erkenne Nūn sākina oder Tanwīn vor einem der 15 Buchstaben.',
+        'Die Zunge stößt nicht an: das Nūn wird verborgen, nicht gesprochen.',
+        'Halte die Ghunna 2 Zählzeiten, den Mund schon bereit für den nächsten Buchstaben.',
+        'Dann sprich den Buchstaben.',
+      ],
+      tip: 'Merkhilfe: die Anfangsbuchstaben von „ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā“.',
+    },
+  } as Record<Unit2Card, { title: string; steps: string[]; tip: string }>,
   signIn: {
     eyebrow: 'Anmelden',
     title: 'Willkommen bei ʿArḍa',
@@ -148,10 +232,6 @@ export const de = {
   soon: {
     eyebrow: 'In Arbeit',
     notFound: { title: 'Nicht gefunden', text: 'Diese Seite gibt es nicht.' },
-    path: {
-      title: 'Der Pfad',
-      text: 'Acht Einheiten vom Buchstaben bis zur Riwāya. Einheit 2 (Nūn sākina und Tanwīn) entsteht zuerst, aus dem Blatt deines Sheikhs.',
-    },
     mushaf: {
       title: 'Der Muṣḥaf',
       text: 'Der IndoPak-Muṣḥaf mit Tajwīd-Farben: tippe auf einen Buchstaben, hör den Rezitator Wort für Wort, langsam und in Schleife.',

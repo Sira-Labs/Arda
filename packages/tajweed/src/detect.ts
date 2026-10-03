@@ -18,10 +18,16 @@ export interface Occurrence {
   rule: RuleId;
   /** Offset of the letter that carries the rule (the nūn, the tanwīn, the mīm, …). */
   start: number;
-  /** Offset after the letter that decides the rule, or after the carrier when none does. */
+  /** Offset after the carrier and its marks: the part a display colours. */
+  carrierEnd: number;
+  /** Offset after the letter that decides the rule, or `carrierEnd` when none does. */
   end: number;
   /** The letter after the nūn or mīm that decided the rule. */
   follower?: Letter;
+  /** Whether that letter starts the next word. */
+  acrossWords?: boolean;
+  /** Whether the carrier is a tanwīn rather than a nūn or mīm. */
+  tanwin?: boolean;
 }
 
 interface Follower {
@@ -74,6 +80,7 @@ function followerOf(
   return undefined;
 }
 
+/** Whether the rule merges the nūn or mīm into the next letter. */
 const isIdgham = (rule: RuleId): boolean =>
   rule === 'idgham-ghunna' || rule === 'idgham-no-ghunna' || rule === 'idgham-shafawi';
 
@@ -97,7 +104,12 @@ export function detect(text: string): Occurrence[] {
     if (!letter) continue;
 
     if ((letter === 'ن' || letter === 'م') && hasShadda(g) && i !== mergedInto) {
-      found.push({ rule: 'ghunna-mushaddad', start: g.start, end: g.end });
+      found.push({
+        rule: 'ghunna-mushaddad',
+        start: g.start,
+        carrierEnd: g.end,
+        end: g.end,
+      });
     }
 
     const tanwin = carriesTanwin(g, letter);
@@ -108,7 +120,7 @@ export function detect(text: string): Occurrence[] {
       // Inside one word the idghām letters keep iẓhār: صِنْوَانٌ, قِنْوَانٌ, الدُّنْيَا, بُنْيَانٌ.
       if (isIdgham(rule) && !next.acrossWords) rule = 'izhar';
       if (isIdgham(rule)) mergedInto = next.index;
-      found.push(occurrence(rule, g, gs[next.index] as Grapheme, next.letter));
+      found.push({ ...occurrence(rule, g, gs[next.index] as Grapheme, next), tanwin });
       continue;
     }
 
@@ -117,25 +129,28 @@ export function detect(text: string): Occurrence[] {
       if (!next) continue;
       const rule = mimSakinaRule(next.letter);
       if (isIdgham(rule)) mergedInto = next.index;
-      found.push(occurrence(rule, g, gs[next.index] as Grapheme, next.letter));
+      found.push(occurrence(rule, g, gs[next.index] as Grapheme, next));
       continue;
     }
 
     if (isQalqalaLetter(letter) && hasSukun(g)) {
-      found.push({ rule: 'qalqala', start: g.start, end: g.end });
+      found.push({ rule: 'qalqala', start: g.start, carrierEnd: g.end, end: g.end });
     }
   }
   return found;
 }
 
+/** An occurrence from its carrier and the letter that decided it. */
 const occurrence = (
   rule: RuleId,
   carrier: Grapheme,
   decider: Grapheme,
-  follower: Letter
+  next: Follower
 ): Occurrence => ({
   rule,
   start: carrier.start,
+  carrierEnd: carrier.end,
   end: decider.end,
-  follower,
+  follower: next.letter,
+  acrossWords: next.acrossWords,
 });
