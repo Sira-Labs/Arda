@@ -122,6 +122,21 @@ app itself never draws a frame.
   (Ghunna, Iqlāb, Muṣḥaf), Arabic script where the letter itself matters.
 - **Greeting:** "Assalāmu ʿalaikum".
 
+### Languages and direction (ADR-0020)
+
+- Four interface languages: German (source), English, French, Arabic. Catalogs in
+  `apps/web/src/i18n/messages/`; every string in all four.
+- **Arabic** turns the document `dir="rtl"`: the shell, cards and lists mirror (logical CSS
+  properties only), lists use Arabic-Indic numbering, the brand reads العَرْضة, the UI font is
+  IBM Plex Sans Arabic. Numbers with signs ("+20 XP"), e-mail addresses and codes stay
+  left to right.
+- **Terms stay terms:** Ghunna, Ikhfāʾ, … in German, English and French; غنة، إخفاء، … in
+  Arabic. Glosses are translated.
+- French uses a narrow no-break space before `? : ; !` and inside « ».
+- **The teacher's words:** a machine translation always carries "maschinell übersetzt" (in
+  the reader's language) and keeps the original one tap away; the teacher sees the preview
+  before sending.
+
 ## 9. Accessibility
 
 WCAG 2.2 AA: text ≥ 4.5:1, large text and Qurʾān glyphs ≥ 3:1; touch targets ≥ 44 px; visible

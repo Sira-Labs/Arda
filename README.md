@@ -59,6 +59,12 @@ One-click templates in `infra/caprover/one-click/` (`arda.yml`, `arda-backup.yml
 to `main` is tested, scanned, published to GHCR and deployed to staging
 (`arda-stg.siralabs.org`). Runbook: [docs/ops/caprover-deployment.md](docs/ops/caprover-deployment.md).
 
+## Languages
+
+German, English, French and Arabic (right to left). A sheikh writes in his language; each
+student reads in theirs: quick remarks are translated exactly, written remarks by Claude with
+tajwīd terms and āyāt kept as they are ([ADR-0020](docs/adr/0020-languages-and-teacher-translation.md)).
+
 ## Sign-in
 
 The same as Suffa ([ADR-0004](docs/adr/0004-authentication-same-as-suffa.md)): no passwords; a

@@ -47,15 +47,17 @@ organization start **private**: after the first release, open each package → P
 
 ## 2. `arda-api`
 
-| Variable                                             | Value                                                         |
-| ---------------------------------------------------- | ------------------------------------------------------------- |
-| `ARDA_ENV`                                           | `prod`                                                        |
-| `ARDA_PUBLIC_URL`                                    | `https://arda-stg.siralabs.org` (staging)                     |
-| `ARDA_DATABASE_URL`                                  | `postgres://arda:<pw>@srv-captain--arda-db:5432/arda`         |
-| `ARDA_AUTH_SECRET`                                   | `openssl rand -hex 48`; also in the owner's password manager  |
-| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_MAIL_FROM` | `smtp-relay.gmail.com`, `587`, `ʿArḍa <noreply@siralabs.org>` |
-| `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`               | only with "Require SMTP Authentication"                       |
-| `ARDA_TRUSTED_ORIGINS`                               | optional: the old domain while moving                         |
+| Variable                                             | Value                                                                                                                |
+| ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `ARDA_ENV`                                           | `prod`                                                                                                               |
+| `ARDA_PUBLIC_URL`                                    | `https://arda-stg.siralabs.org` (staging)                                                                            |
+| `ARDA_DATABASE_URL`                                  | `postgres://arda:<pw>@srv-captain--arda-db:5432/arda`                                                                |
+| `ARDA_AUTH_SECRET`                                   | `openssl rand -hex 48`; also in the owner's password manager                                                         |
+| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_MAIL_FROM` | `smtp-relay.gmail.com`, `587`, `ʿArḍa <noreply@siralabs.org>`                                                        |
+| `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`               | only with "Require SMTP Authentication"                                                                              |
+| `ARDA_TRUSTED_ORIGINS`                               | optional: the old domain while moving                                                                                |
+| `ARDA_ANTHROPIC_API_KEY`                             | optional: translates teachers' written remarks (ADR-0020); the log shows `translate.enabled` or `translate.disabled` |
+| `ARDA_TRANSLATE_DAILY_LIMIT`                         | optional, default 200 per teacher and day                                                                            |
 
 - Container HTTP port **8000**, not exposed as a web app.
 - Starts by migrating the database (advisory lock), then logs `auth.enabled` with `mail: smtp`.

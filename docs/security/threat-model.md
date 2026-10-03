@@ -38,6 +38,10 @@
 | T16 | Supply chain: vulnerable image                                 | Trivy scan blocks critical fixable CVEs; no test tooling in the runtime image; pinned auth packages                           | built                       |
 | T17 | XSS via content or user text                                   | React escaping; strict CSP (`script-src 'self'`, no inline scripts, fonts and media from self)                                | built                       |
 
+| T18 | Disclosure: a teacher's remark sent to a translation provider | only the remark text (no names, ids or audio); off without a key; stated on the privacy page (ADR-0020) | built |
+| T19 | Tampering: a remark tries to instruct the translation model ("ignore the rules…") | fixed instructions; the remark is wrapped as data; output shown as plain text (React escaping), never executed; the original is always shown alongside | built, tested |
+| T20 | DoS / cost: translation abuse | teachers and admins only; 1000 characters; daily limit per teacher in the DB; cache | built, tested |
+
 ## Accepted risks
 
 - A user with access to the student's unlocked phone can act as the student (as in any app).

@@ -167,8 +167,23 @@ upload work offline-first; only teachers of the ḥalaqa can play it.
 - **T4 The ʿarḍ log.** Which sūras each student recited, when, and his verdict: the notebook of
   the chain, kept for him.
 - **T5 Rule by rule.** Who still struggles with which rule.
+- **T6 In the student's language** (ADR-0020). The sheikh writes or speaks in his language;
+  each student reads in theirs. Quick remarks are exact translations from the catalogs;
+  written remarks are machine-translated with tajwīd terms and āyāt unchanged, labelled
+  "maschinell übersetzt", the original one tap away; voice notes stay his voice, with a
+  transcript and its translation underneath. _(Built: quick remarks, the preview of written
+  remarks for teachers, the translation service. Next: delivery with T3.)_
   **Acceptance:** the sheikh can assign and review entirely on a phone; a student never sees
-  another student's recordings.
+  another student's recordings; a student reading German, French or Arabic understands a
+  remark written in English, and can always see the original.
+
+### L — Languages _(Must, built, ADR-0020)_
+
+German (default), English, French and Arabic for the interface and the sign-in mail; Arabic
+runs right to left. The language is chosen on the sign-in page or the account page and stored
+on the account. **Acceptance:** every message exists in all four catalogs (typecheck and
+test); switching to Arabic mirrors the layout; the first mail arrives in the language chosen on
+the sign-in page.
 
 ### F8 — Live lessons _(Could, ADR-0015)_ and F9 — teacher-confirmed AI flags _(Should, ADR-0016)_
 
@@ -179,8 +194,9 @@ As described in their ADRs; only confirmed flags reach the student.
 ## 6. Non-functional requirements
 
 - **Offline-first:** units, muṣḥaf pages of downloaded packs, games and recording work offline.
-- **Languages:** learner-facing UI in German first (the sheet is German), English second;
-  Arabic always right to left with full tashkīl; repository content in English.
+- **Languages:** interface in German (default and source text, the sheet is German),
+  English, French and Arabic (RTL) (ADR-0020); Qurʾān text always right to left with full
+  tashkīl; repository content in English.
 - **Accessibility:** WCAG 2.2 AA; touch targets ≥ 44 px; colour never the only signal; reduced
   motion respected; adjustable Qurʾān text size.
 - **Privacy:** recordings never leave our servers; no tracking; GDPR export and deletion.

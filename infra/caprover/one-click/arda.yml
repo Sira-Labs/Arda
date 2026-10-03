@@ -38,6 +38,8 @@ services:
       ARDA_SMTP_USER: $$cap_smtp_user
       ARDA_SMTP_PASSWORD: $$cap_smtp_password
       ARDA_MAIL_FROM: $$cap_mail_from
+      # Optional: translates teachers' written remarks into each student's language (ADR-0020).
+      ARDA_ANTHROPIC_API_KEY: $$cap_anthropic_key
     caproverExtra:
       containerHttpPort: '8000'
       notExposeAsWebApp: 'true'
@@ -96,6 +98,10 @@ caproverOneClickApp:
       label: Sender
       defaultValue: ''
       description: 'e.g. ʿArḍa <noreply@siralabs.org>. Empty = the api runs, but sign-in stays off.'
+    - id: $$cap_anthropic_key
+      label: Anthropic API key (optional)
+      defaultValue: ''
+      description: Translates teachers' written remarks into each student's language. Empty = quick remarks only.
     - id: $$cap_rustfs_app
       label: Existing RustFS app name
       defaultValue: rustfs

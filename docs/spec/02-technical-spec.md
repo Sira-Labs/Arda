@@ -77,6 +77,13 @@ Built (migration `0001_users_and_auth`):
 | `user_totp`     | sealed TOTP secret, last step, failures, lock                                  |
 | `audit_log`     | append-only record of privileged changes                                       |
 
+Built (migration `0002_languages_and_translations`, ADR-0020):
+
+| Table / column   | Purpose                                                                                                                |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `users.language` | `de`, `en`, `fr`, `ar` or null: interface, sign-in mail, translation target                                            |
+| `translations`   | cached machine translations of written remarks per text and target language; author for the daily limit and the export |
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table                                         | Story    | Key fields                                                                                  |
@@ -96,22 +103,23 @@ Content (Qurʾān text layers, rule spans, timings) lives in **content packs**, 
 
 Built:
 
-| Method and path                                                        | Auth                                                | Purpose                                                           |
-| ---------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
-| `GET /healthz`, `GET /api/healthz`                                     | —                                                   | status, version, schema revision, auth on/off (503 when degraded) |
-| `GET /api/version`                                                     | —                                                   | name, version, schema revision                                    |
-| `POST /api/v1/auth/sign-in/magic-link`                                 | —                                                   | send link and code (rate-limited)                                 |
-| `GET /api/v1/auth/magic-link/verify`                                   | —                                                   | open the link                                                     |
-| `POST /api/v1/auth/sign-in/email-otp`                                  | —                                                   | sign in with the code                                             |
-| `GET                                                                   | POST /api/v1/auth/passkey/*` (4 ceremony endpoints) | — / session                                                       | passkey sign-in and registration |
-| `POST /api/v1/auth/sign-out`                                           | session                                             | sign out                                                          |
-| `GET /api/v1/me`                                                       | `profile:read`                                      | id, email, name, role, time zone                                  |
-| `GET /api/v1/account/sessions`, `DELETE …/:id`, `POST …/revoke-others` | `profile:*`                                         | devices                                                           |
-| `PATCH /api/v1/account/settings`                                       | `profile:write`                                     | time zone                                                         |
-| `GET /api/v1/account/passkeys`, `DELETE …/:id`                         | `profile:*`                                         | passkeys, no key material                                         |
-| `GET /api/v1/account/2fa`, `POST …/setup`, `POST …/confirm`            | `profile:*`                                         | TOTP                                                              |
-| `GET /api/v1/account/export`, `DELETE /api/v1/account`                 | `profile:*`                                         | GDPR                                                              |
-| `GET /api/v1/admin/users`, `PATCH …/:id`, `GET /api/v1/admin/audit`    | `admin:*` + 2FA                                     | admin area                                                        |
+| Method and path                                                        | Auth                                                | Purpose                                                                                        |
+| ---------------------------------------------------------------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `GET /healthz`, `GET /api/healthz`                                     | —                                                   | status, version, schema revision, auth on/off (503 when degraded)                              |
+| `GET /api/version`                                                     | —                                                   | name, version, schema revision                                                                 |
+| `POST /api/v1/auth/sign-in/magic-link`                                 | —                                                   | send link and code (rate-limited)                                                              |
+| `GET /api/v1/auth/magic-link/verify`                                   | —                                                   | open the link                                                                                  |
+| `POST /api/v1/auth/sign-in/email-otp`                                  | —                                                   | sign in with the code                                                                          |
+| `GET                                                                   | POST /api/v1/auth/passkey/*` (4 ceremony endpoints) | — / session                                                                                    | passkey sign-in and registration |
+| `POST /api/v1/auth/sign-out`                                           | session                                             | sign out                                                                                       |
+| `GET /api/v1/me`                                                       | `profile:read`                                      | id, email, name, role, time zone                                                               |
+| `GET /api/v1/account/sessions`, `DELETE …/:id`, `POST …/revoke-others` | `profile:*`                                         | devices                                                                                        |
+| `PATCH /api/v1/account/settings`                                       | `profile:write`                                     | time zone                                                                                      |
+| `GET /api/v1/account/passkeys`, `DELETE …/:id`                         | `profile:*`                                         | passkeys, no key material                                                                      |
+| `GET /api/v1/account/2fa`, `POST …/setup`, `POST …/confirm`            | `profile:*`                                         | TOTP                                                                                           |
+| `GET /api/v1/account/export`, `DELETE /api/v1/account`                 | `profile:*`                                         | GDPR                                                                                           |
+| `GET /api/v1/admin/users`, `PATCH …/:id`, `GET /api/v1/admin/audit`    | `admin:*` + 2FA                                     | admin area                                                                                     |
+| `POST /api/v1/translations` `{ text, from?, to }`                      | `feedback:translate` (teacher, admin)               | a written remark in a student's language: `original`, `translated` or `unavailable` (ADR-0020) |
 
 Next: `/api/v1/halaqat/*` (T1), `/api/v1/assignments/*` (T2), `/api/v1/recitations/*`
 (F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
@@ -119,19 +127,22 @@ added to the route-by-role matrix test.
 
 ## 6. Configuration (`ARDA_*`)
 
-| Variable                                                                                     | Required    | Meaning                                                                     |
-| -------------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
-| `ARDA_ENV`                                                                                   | — (`dev`)   | `dev`, `test` or `prod`; prod enforces secrets                              |
-| `ARDA_PORT`                                                                                  | — (8000)    | HTTP port                                                                   |
-| `ARDA_DATABASE_URL`                                                                          | yes         | `postgres://…`; in prod with a generated password ≥ 16 chars                |
-| `ARDA_DB_POOL_MAX`                                                                           | — (10)      | connection pool size                                                        |
-| `ARDA_AUTH_SECRET`                                                                           | prod        | ≥ 32 random chars; signs sessions, seals TOTP secrets                       |
-| `ARDA_PUBLIC_URL`                                                                            | prod        | e.g. `https://arda-stg.siralabs.org`; links in mails, passkey relying party |
-| `ARDA_TRUSTED_ORIGINS`                                                                       | —           | more web origins (while moving domains)                                     |
-| `ARDA_APP_ORIGINS`                                                                           | —           | native app origins (bearer tokens, CORS without credentials)                |
-| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`, `ARDA_MAIL_FROM` | for sign-in | Google Workspace SMTP relay                                                 |
-| `ARDA_MAIL_DIR`                                                                              | —           | browser tests: links to files (never in prod)                               |
-| `ARDA_LOG_LEVEL`, `ARDA_VERSION`                                                             | —           | logging; release tag reported by health                                     |
+| Variable                                                                                     | Required              | Meaning                                                                              |
+| -------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------ |
+| `ARDA_ENV`                                                                                   | — (`dev`)             | `dev`, `test` or `prod`; prod enforces secrets                                       |
+| `ARDA_PORT`                                                                                  | — (8000)              | HTTP port                                                                            |
+| `ARDA_DATABASE_URL`                                                                          | yes                   | `postgres://…`; in prod with a generated password ≥ 16 chars                         |
+| `ARDA_DB_POOL_MAX`                                                                           | — (10)                | connection pool size                                                                 |
+| `ARDA_AUTH_SECRET`                                                                           | prod                  | ≥ 32 random chars; signs sessions, seals TOTP secrets                                |
+| `ARDA_PUBLIC_URL`                                                                            | prod                  | e.g. `https://arda-stg.siralabs.org`; links in mails, passkey relying party          |
+| `ARDA_TRUSTED_ORIGINS`                                                                       | —                     | more web origins (while moving domains)                                              |
+| `ARDA_APP_ORIGINS`                                                                           | —                     | native app origins (bearer tokens, CORS without credentials)                         |
+| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`, `ARDA_MAIL_FROM` | for sign-in           | Google Workspace SMTP relay                                                          |
+| `ARDA_MAIL_DIR`                                                                              | —                     | browser tests: links to files (never in prod)                                        |
+| `ARDA_ANTHROPIC_API_KEY`                                                                     | —                     | Claude key for translating written remarks; translation is off without it (ADR-0020) |
+| `ARDA_TRANSLATE_MODEL`                                                                       | — (`claude-opus-5-5`) | model for translations                                                               |
+| `ARDA_TRANSLATE_DAILY_LIMIT`                                                                 | — (200)               | new translations per teacher and day; cache hits do not count                        |
+| `ARDA_LOG_LEVEL`, `ARDA_VERSION`                                                             | —                     | logging; release tag reported by health                                              |
 
 Web (`arda-web` container): `ARDA_API_UPSTREAM`, `ARDA_MEDIA_UPSTREAM`, `ARDA_VERSION`.
 Backup: `ARDA_BACKUP_*` (runbook).

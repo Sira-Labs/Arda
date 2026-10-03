@@ -5,13 +5,14 @@
 
 ## S0 · Foundation (done 2026-10-03)
 
-| Story                                | Acceptance                                                            | Status                         |
-| ------------------------------------ | --------------------------------------------------------------------- | ------------------------------ |
-| S0.1 Monorepo from Suffa's skeleton  | `npm ci`, lint, format, typecheck, tests green                        | done                           |
-| S0.2 Specs, ADRs, threat model, plan | docs index lists all; ADR per hard-to-reverse decision                | done                           |
-| S0.3 Auth ported (A1–A5)             | 115 api tests incl. Suffa's Postgres suite green                      | done                           |
-| S0.4 CapRover deployment and CI      | images build and pass smoke tests; release deploys digests to staging | done (staging secrets pending) |
-| S0.5 Design system and shell         | tokens, fonts, navigation; sign-in end to end in a browser            | done                           |
+| Story                                             | Acceptance                                                                                                                                                                                | Status                                            |
+| ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| S0.1 Monorepo from Suffa's skeleton               | `npm ci`, lint, format, typecheck, tests green                                                                                                                                            | done                                              |
+| S0.2 Specs, ADRs, threat model, plan              | docs index lists all; ADR per hard-to-reverse decision                                                                                                                                    | done                                              |
+| S0.3 Auth ported (A1–A5)                          | 115 api tests incl. Suffa's Postgres suite green                                                                                                                                          | done                                              |
+| S0.4 CapRover deployment and CI                   | images build and pass smoke tests; release deploys digests to staging                                                                                                                     | done (staging secrets pending)                    |
+| S0.5 Design system and shell                      | tokens, fonts, navigation; sign-in end to end in a browser                                                                                                                                | done                                              |
+| S0.6 Languages and teacher translation (ADR-0020) | de, en, fr, ar (RTL); mail in the chosen language; quick remarks in every catalog; written remarks translated with terms kept, cached, limited; checked in a browser in French and Arabic | done (translation needs `ARDA_ANTHROPIC_API_KEY`) |
 
 ## S1 · Sheet and inbox
 
@@ -47,7 +48,8 @@
 
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 
-| Date       | Change                                                                                 | From            | To                                                |
-| ---------- | -------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------- |
-| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                   | Suffa `3540971` | ʿArḍa S0.3                                        |
-| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors) | ʿArḍa           | Suffa (to check: its lockfile has one copy today) |
+| Date       | Change                                                                                        | From            | To                                                |
+| ---------- | --------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------- |
+| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                          | Suffa `3540971` | ʿArḍa S0.3                                        |
+| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)        | ʿArḍa           | Suffa (to check: its lockfile has one copy today) |
+| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language) | ʿArḍa           | Suffa (its ADR-0021 plans languages)              |
