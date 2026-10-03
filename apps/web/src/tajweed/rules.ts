@@ -1,19 +1,10 @@
-/**
- * The colour families of the tajwīd layer (docs/spec/04-design-system.md, ADR-0008) and the
- * label each one carries. The engine (packages/tajweed, next) assigns finer rules; the
- * display groups them into these families, following the common tajwīd-muṣḥaf convention.
- */
-export const RULE_FAMILIES = [
-  'ghunna',
-  'qalqala',
-  'silent',
-  'madd-2',
-  'madd-4',
-  'madd-6',
-] as const;
-export type RuleFamily = (typeof RULE_FAMILIES)[number];
+import type { RuleFamily } from '@arda/tajweed';
 
-/** Their labels (always shown with the colour) live in the i18n catalogs, `rules`. */
+/**
+ * The colour families and the rule taxonomy live in `@arda/tajweed` (ADR-0008); their labels,
+ * always shown with the colour, live in the i18n catalogs (`rules`).
+ */
+export { RULE_FAMILIES, type RuleFamily } from '@arda/tajweed';
 
 /** A piece of Qurʾān text, optionally marked with the family of the rule it shows. */
 export interface Segment {

@@ -104,6 +104,15 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8001/api/v1/me)" = 401 \
             || { docker logs api-auth; exit 1; }
           docker logs api-auth 2>&1 | grep -q 'auth.enabled' || { docker logs api-auth; exit 1; }
+          # The one-click template's defaults (relay host, no sender yet; CapRover keeps empty
+          # variables) must start the api with sign-in off, never crash-loop it.
+          run -d --name api-template -e ARDA_PORT=8002 -e ARDA_SMTP_HOST=smtp-relay.gmail.com \
+            -e ARDA_SMTP_PORT=587 -e ARDA_SMTP_USER= -e ARDA_SMTP_PASSWORD= -e ARDA_MAIL_FROM= \
+            -e ARDA_ANTHROPIC_API_KEY= smoke/arda-api:test
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8002/healthz >/dev/null && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8002/healthz | grep -q '"auth":"disabled"' \
+            || { docker logs api-template; exit 1; }
+          docker logs api-template 2>&1 | grep -q 'config.feature_off' || { docker logs api-template; exit 1; }
           # Test tooling must not be in the image.
           docker run --rm --entrypoint sh smoke/arda-api:test -c \
             'for m in vitest vite esbuild rollup; do test ! -e /app/node_modules/$m || { echo "$m in image"; exit 1; }; done'

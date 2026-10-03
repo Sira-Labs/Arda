@@ -1,0 +1,20 @@
+{
+  "name": "@arda/tajweed",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ʿArḍa tajwīd engine: rule taxonomy, letter classes and rule detection (pure TypeScript, no I/O).",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

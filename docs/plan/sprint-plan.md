@@ -16,14 +16,14 @@
 
 ## S1 · Sheet and inbox
 
-| Story                                                 | Acceptance                                                                                        |
-| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| S1.1 Staging live                                     | `arda-stg.siralabs.org/healthz` reports the deployed tag and `auth: enabled`; the sheikh signs in |
-| S1.2 `packages/tajweed`: taxonomy and letter classes  | 6 + 6 + 1 + 15 = 28 test; the four iẓhār exceptions; all sheet fixtures (spec 03 §4)              |
-| S1.3 Unit 2 rule cards (iẓhār, idghām, iqlāb, ikhfāʾ) | texts from the sheet, marked draft; examples render in IndoPak with labels                        |
-| S1.4 Games: Which rule?, Sort the 28                  | mistakes become review cards; works offline                                                       |
-| S1.5 T1 Ḥalaqāt and invites                           | link and QR; teacher approves; route × role matrix extended                                       |
-| S1.6 T2 Assignments (range by sūra/āya at first)      | due date; first on Today; done returns to the teacher                                             |
+| Story                                                 | Acceptance                                                                                        | Status                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| S1.1 Staging live                                     | `arda-stg.siralabs.org/healthz` reports the deployed tag and `auth: enabled`; the sheikh signs in | web live; api fix in review (one-click defaults crash-looped) |
+| S1.2 `packages/tajweed`: taxonomy and letter classes  | 6 + 6 + 1 + 15 = 28 test; the four iẓhār exceptions; all sheet fixtures (spec 03 §4)              | done (also reads ʿUthmānī spelling; qalqala, mushaddad)       |
+| S1.3 Unit 2 rule cards (iẓhār, idghām, iqlāb, ikhfāʾ) | texts from the sheet, marked draft; examples render in IndoPak with labels                        |                                                               |
+| S1.4 Games: Which rule?, Sort the 28                  | mistakes become review cards; works offline                                                       |                                                               |
+| S1.5 T1 Ḥalaqāt and invites                           | link and QR; teacher approves; route × role matrix extended                                       |                                                               |
+| S1.6 T2 Assignments (range by sūra/āya at first)      | due date; first on Today; done returns to the teacher                                             |                                                               |
 
 ## S2–S3 · IndoPak muṣḥaf
 

@@ -95,6 +95,11 @@ export interface Config {
   mailDir: string | undefined;
   /** Translation of written remarks; undefined turns it off (ADR-0020). */
   translation: { apiKey: string; model: string; dailyLimit: number } | undefined;
+  /**
+   * Optional features switched off because their settings are incomplete; logged at start
+   * (`config.feature_off`). Only unsafe settings stop the service.
+   */
+  warnings: string[];
 }
 
 function isPlaceholder(value: string): boolean {
@@ -122,6 +127,9 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
   }
   const raw = parsed.data;
   const issues: string[] = [];
+  // A half-configured optional feature stays off instead of stopping the service: the
+  // one-click template fills in the relay host and leaves the sender for later.
+  const warnings: string[] = [];
 
   if (raw.ARDA_ENV === 'prod') {
     const secret = raw.ARDA_AUTH_SECRET;
@@ -141,12 +149,16 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     // Missing SMTP does not stop the service; sign-in stays off and the api logs it loudly.
   }
   // Host and sender go together; user and password are optional (the Workspace relay can
-  // allow the server by IP) but also only together.
+  // allow the server by IP) but also only together. Incomplete mail settings switch sign-in
+  // off (logged loudly); they never stop the service.
   if (Boolean(raw.ARDA_SMTP_HOST) !== Boolean(raw.ARDA_MAIL_FROM)) {
-    issues.push('ARDA_SMTP_HOST and ARDA_MAIL_FROM go together');
+    warnings.push('ARDA_SMTP_HOST and ARDA_MAIL_FROM go together; sign-in mails are off');
   }
-  if (Boolean(raw.ARDA_SMTP_USER) !== Boolean(raw.ARDA_SMTP_PASSWORD)) {
-    issues.push('ARDA_SMTP_USER and ARDA_SMTP_PASSWORD go together');
+  const smtpAuthHalf = Boolean(raw.ARDA_SMTP_USER) !== Boolean(raw.ARDA_SMTP_PASSWORD);
+  if (smtpAuthHalf) {
+    warnings.push(
+      'ARDA_SMTP_USER and ARDA_SMTP_PASSWORD go together; sign-in mails are off'
+    );
   }
   if (raw.ARDA_MAIL_DIR && raw.ARDA_ENV === 'prod') {
     issues.push('ARDA_MAIL_DIR must not be set in prod');
@@ -171,7 +183,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
       ...extraOrigins.origins,
     ]),
   ];
-  const smtpComplete = Boolean(raw.ARDA_SMTP_HOST && raw.ARDA_MAIL_FROM);
+  const smtpComplete = Boolean(raw.ARDA_SMTP_HOST && raw.ARDA_MAIL_FROM) && !smtpAuthHalf;
 
   return {
     env: raw.ARDA_ENV,
@@ -185,6 +197,7 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     trustedOrigins,
     appOrigins,
     mailDir: raw.ARDA_MAIL_DIR || undefined,
+    warnings,
     translation: raw.ARDA_ANTHROPIC_API_KEY
       ? {
           apiKey: raw.ARDA_ANTHROPIC_API_KEY,

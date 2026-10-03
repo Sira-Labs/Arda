@@ -77,13 +77,43 @@ describe('loadConfig', () => {
     });
   });
 
-  it('wants SMTP host and sender, user and password together', () => {
-    expect(
-      issues({ ARDA_DATABASE_URL: DB, ARDA_SMTP_HOST: 'smtp.example.org' })
-    ).toContain('ARDA_SMTP_HOST and ARDA_MAIL_FROM go together');
-    expect(issues({ ARDA_DATABASE_URL: DB, ARDA_SMTP_USER: 'u' })).toContain(
-      'ARDA_SMTP_USER and ARDA_SMTP_PASSWORD go together'
-    );
+  it('switches sign-in mails off, but starts, when SMTP is only half set', () => {
+    const hostOnly = loadConfig({
+      ARDA_DATABASE_URL: DB,
+      ARDA_SMTP_HOST: 'smtp.example.org',
+    });
+    expect(hostOnly.smtp).toBeUndefined();
+    expect(hostOnly.warnings).toEqual([
+      'ARDA_SMTP_HOST and ARDA_MAIL_FROM go together; sign-in mails are off',
+    ]);
+    const userOnly = loadConfig({
+      ARDA_DATABASE_URL: DB,
+      ARDA_SMTP_HOST: 'smtp.example.org',
+      ARDA_MAIL_FROM: 'a@example.org',
+      ARDA_SMTP_USER: 'u',
+    });
+    expect(userOnly.smtp).toBeUndefined();
+    expect(userOnly.warnings).toHaveLength(1);
+  });
+
+  it('starts in prod with the one-click template defaults (relay host, no sender yet)', () => {
+    // CapRover keeps empty variables: this is exactly what arda.yml produces before the
+    // sender is filled in. The api must run (health, migrations) with sign-in off.
+    const config = loadConfig({
+      ARDA_ENV: 'prod',
+      ARDA_DATABASE_URL: DB,
+      ARDA_AUTH_SECRET: SECRET,
+      ARDA_PUBLIC_URL: 'https://arda-stg.siralabs.org',
+      ARDA_SMTP_HOST: 'smtp-relay.gmail.com',
+      ARDA_SMTP_PORT: '587',
+      ARDA_SMTP_USER: '',
+      ARDA_SMTP_PASSWORD: '',
+      ARDA_MAIL_FROM: '',
+      ARDA_ANTHROPIC_API_KEY: '',
+    });
+    expect(config.smtp).toBeUndefined();
+    expect(config.translation).toBeUndefined();
+    expect(config.warnings).toHaveLength(1);
   });
 
   it('never writes sign-in links to files in prod', () => {

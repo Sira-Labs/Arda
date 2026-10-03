@@ -41,7 +41,7 @@ flowchart LR
 ```
 apps/api        Hono API: auth, account, admin, health, migrations (TypeScript, raw pg)
 apps/web        React + Vite PWA: shell, sign-in, design tokens, (next) units, muṣḥaf
-packages/       (next) tajweed: rule taxonomy, letter classes, mapping, lookup (pure TS)
+packages/       tajweed: rule taxonomy, letter classes, detection; (next) mapping, lookup (pure TS)
 infra/          Dockerfiles, Caddyfile, CapRover captain-definitions and one-click templates,
                 backup scripts
 docs/           specs, ADRs, plan, ops, security
