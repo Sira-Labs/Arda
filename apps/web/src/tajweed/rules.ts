@@ -15,7 +15,8 @@ export interface Segment {
   text: string;
   rule?: RuleFamily;
   ruleId?: RuleId;
-  role?: 'carrier' | 'follower';
+  /** `focus` marks the letter a question asks about, without giving its rule away. */
+  role?: 'carrier' | 'follower' | 'focus';
 }
 
 /** A rule's name: the Arabic one in the Arabic interface, else the transliterated term. */

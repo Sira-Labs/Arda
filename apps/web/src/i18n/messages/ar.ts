@@ -4,6 +4,16 @@
  */
 import type { Messages } from './de';
 
+/** Arabic-Indic digits. */
+const num = (n: number): string => n.toLocaleString('ar-EG');
+
+/** "n cards" with the Arabic number agreement (one, two, three to ten, eleven and more). */
+function cards(count: number): string {
+  if (count === 1) return 'بطاقة واحدة';
+  if (count === 2) return 'بطاقتان';
+  return count <= 10 ? `${num(count)} بطاقات` : `${num(count)} بطاقة`;
+}
+
 export const ar: Messages = {
   nav: {
     brand: 'العَرْضة',
@@ -126,6 +136,45 @@ export const ar: Messages = {
       ],
       tip: 'حروفه أوائل كلمات البيت: صِفْ ذا ثَنا كَمْ جادَ شَخْصٌ قَدْ سَما / دُمْ طَيِّبًا زِدْ في تُقًى ضَعْ ظالِما.',
     },
+  },
+  games: {
+    eyebrow: 'الوحدة ٢ · التدريب',
+    practise: 'التدريب',
+    progress: (index, total) => `${num(index)} / ${num(total)}`,
+    seconds: (seconds) => `${num(seconds)} ث`,
+    options: 'الأحكام',
+    whichRule: {
+      title: 'ما الحكم؟',
+      intro:
+        'عشر كلمات حقيقية من ورقتك: انظر إلى الحرف الذي يلي النون الساكنة أو التنوين.',
+      question: 'ما حكم النون أو التنوين المحدد؟',
+    },
+    sort: {
+      title: 'رتّب الحروف الثمانية والعشرين',
+      intro: 'لكل حرف حكم واحد فقط. ما أسرع وقت ترتّب فيه الحروف كلها؟',
+      question: 'النون الساكنة قبل هذا الحرف – ما الحكم؟',
+      best: (seconds) => `أفضل وقت: ${num(seconds)} ث`,
+      newBest: 'وقت قياسي جديد!',
+    },
+    review: {
+      title: 'المراجعة',
+      intro: 'ما أخطأت فيه يعود إليك حتى تتقنه.',
+      none: 'لا شيء للمراجعة الآن. أحسنت!',
+      open: (count) => `راجع ${cards(count)}`,
+    },
+    good: 'جيد',
+    check: 'راجِع',
+    rightAnswer: 'الصواب',
+    follows: 'يليه',
+    insideWord: 'في كلمة واحدة، وهو الاستثناء',
+    toReview: 'سيُضاف إلى مراجعتك.',
+    next: 'التالي',
+    finish: 'النتيجة',
+    score: (right, total) => `${num(right)} من ${num(total)} صحيحة`,
+    newCards: (count) =>
+      count === 0 ? 'لا بطاقات مراجعة جديدة.' : `تُضاف ${cards(count)} إلى مراجعتك.`,
+    again: 'مرة أخرى',
+    back: 'إلى الوحدة',
   },
   signIn: {
     eyebrow: 'الدخول',

@@ -125,6 +125,51 @@ export const fr: Messages = {
       tip: 'Moyen mnémotechnique : les initiales de « ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā ».',
     },
   },
+  games: {
+    eyebrow: 'Unité 2 · S’entraîner',
+    practise: 'S’entraîner',
+    progress: (index, total) => `${index} / ${total}`,
+    seconds: (seconds) => `${seconds.toLocaleString('fr-FR')}\u202fs`,
+    options: 'Règles',
+    whichRule: {
+      title: 'Quelle règle ?',
+      intro:
+        'Dix vrais mots de ta feuille : regarde la lettre après le nūn sākina ou le tanwīn.',
+      question: 'Quelle règle pour le nūn ou le tanwīn marqué ?',
+    },
+    sort: {
+      title: 'Trie les 28',
+      intro:
+        'Chaque lettre appartient à une seule règle. En combien de temps tries-tu les 28 ?',
+      question: 'Nūn sākina devant cette lettre – quelle règle ?',
+      best: (seconds) =>
+        `Meilleur temps\u202f: ${seconds.toLocaleString('fr-FR')}\u202fs`,
+      newBest: 'Nouveau record !',
+    },
+    review: {
+      title: 'Révision',
+      intro: 'Ce que tu as confondu revient – jusqu’à ce que ce soit acquis.',
+      none: 'Rien à réviser pour l’instant. Bravo !',
+      open: (count) => (count === 1 ? 'Réviser 1 carte' : `Réviser ${count} cartes`),
+    },
+    good: 'bien',
+    check: 'à revoir',
+    rightAnswer: 'La bonne réponse',
+    follows: 'suivi de',
+    insideWord: 'dans un seul mot, l’exception',
+    toReview: 'Cela va dans ta révision.',
+    next: 'Suite',
+    finish: 'Voir le résultat',
+    score: (right, total) => `${right} sur ${total} justes`,
+    newCards: (count) =>
+      count === 0
+        ? 'Aucune nouvelle carte de révision.'
+        : count === 1
+          ? '1 carte va dans ta révision.'
+          : `${count} cartes vont dans ta révision.`,
+    again: 'Encore',
+    back: 'Vers l’unité',
+  },
   signIn: {
     eyebrow: 'Connexion',
     title: 'Bienvenue sur ʿArḍa',

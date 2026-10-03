@@ -35,6 +35,7 @@
 | [0018](adr/0018-design-system.md)                     | Design system                                            | accepted                 |
 | [0019](adr/0019-mobile-apps.md)                       | iOS and Android with Capacitor                           | proposed                 |
 | [0020](adr/0020-languages-and-teacher-translation.md) | Languages; the teacher's words in the student's language | accepted                 |
+| [0021](adr/0021-review-cards-leitner-local-first.md)  | Review cards: Leitner boxes, kept on the device first    | accepted                 |
 
 New ADRs use the template of ADR-0002: title, status, date, Context, Decision, Alternatives,
 Consequences; later changes are added as dated "Update" sections.

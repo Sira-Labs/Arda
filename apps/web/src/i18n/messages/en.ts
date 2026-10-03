@@ -124,6 +124,49 @@ export const en: Messages = {
       tip: 'Memory aid: the first letters of “ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā”.',
     },
   },
+  games: {
+    eyebrow: 'Unit 2 · Practise',
+    practise: 'Practise',
+    progress: (index, total) => `${index} / ${total}`,
+    seconds: (seconds) => `${seconds.toLocaleString('en')} s`,
+    options: 'Rules',
+    whichRule: {
+      title: 'Which rule?',
+      intro:
+        'Ten real words from your sheet: look at the letter after nūn sākina or tanwīn.',
+      question: 'Which rule applies to the marked nūn or tanwīn?',
+    },
+    sort: {
+      title: 'Sort the 28',
+      intro: 'Every letter belongs to exactly one rule. How fast can you sort all 28?',
+      question: 'Nūn sākina before this letter – which rule?',
+      best: (seconds) => `Best time: ${seconds.toLocaleString('en')} s`,
+      newBest: 'New best time!',
+    },
+    review: {
+      title: 'Review',
+      intro: 'What you mixed up comes back – until it holds.',
+      none: 'Nothing is due right now. Well done!',
+      open: (count) => (count === 1 ? 'Review 1 card' : `Review ${count} cards`),
+    },
+    good: 'good',
+    check: 'check',
+    rightAnswer: 'Right is',
+    follows: 'followed by',
+    insideWord: 'inside one word, the exception',
+    toReview: 'This goes into your review.',
+    next: 'Next',
+    finish: 'See results',
+    score: (right, total) => `${right} of ${total} right`,
+    newCards: (count) =>
+      count === 0
+        ? 'No new review cards.'
+        : count === 1
+          ? '1 card goes into your review.'
+          : `${count} cards go into your review.`,
+    again: 'Again',
+    back: 'To the unit',
+  },
   signIn: {
     eyebrow: 'Sign in',
     title: 'Welcome to ʿArḍa',

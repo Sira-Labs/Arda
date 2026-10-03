@@ -19,6 +19,7 @@ export function TajweedText({
 
   const title = (segment: Segment): string | undefined => {
     if (segment.role === 'follower') return m.ruleCard.decides;
+    if (segment.role === 'focus') return undefined;
     const name = segment.ruleId ? ruleName(segment.ruleId, language) : undefined;
     const family = segment.rule ? m.rules[segment.rule].name : undefined;
     return name && family && name !== family ? `${name} · ${family}` : (name ?? family);
@@ -35,7 +36,13 @@ export function TajweedText({
         segment.rule || segment.role ? (
           <span
             key={index}
-            className={segment.role === 'follower' ? 'tj-follower' : 'tj'}
+            className={
+              segment.role === 'follower'
+                ? 'tj-follower'
+                : segment.role === 'focus'
+                  ? 'tj-focus'
+                  : 'tj'
+            }
             data-rule={segment.rule}
             title={title(segment)}
           >
