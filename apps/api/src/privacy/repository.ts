@@ -20,6 +20,8 @@ export interface AccountExport {
   passkeys: Record<string, unknown>[];
   /** Remarks this person had translated (ADR-0020), with their translations. */
   translations: Record<string, unknown>[];
+  /** Ḥalaqāt this person belongs to, with their role and status (spec T1). */
+  halaqat: Record<string, unknown>[];
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -34,37 +36,45 @@ export class PgPrivacyRepository implements PrivacyRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   async export(userId: string): Promise<AccountExport> {
-    const [profile, totp, sessions, passkeys, translations, audit] = await Promise.all([
-      this.pool.query(
-        `select id, email, email_verified, name, role, language, time_zone, disabled_at,
+    const [profile, totp, sessions, passkeys, translations, halaqat, audit] =
+      await Promise.all([
+        this.pool.query(
+          `select id, email, email_verified, name, role, language, time_zone, disabled_at,
                 created_at, updated_at
            from users where id = $1`,
-        [userId]
-      ),
-      this.pool.query('select enabled_at from user_totp where user_id = $1', [userId]),
-      this.pool.query(
-        `select id, created_at, updated_at, expires_at, ip_address, user_agent
+          [userId]
+        ),
+        this.pool.query('select enabled_at from user_totp where user_id = $1', [userId]),
+        this.pool.query(
+          `select id, created_at, updated_at, expires_at, ip_address, user_agent
            from sessions where user_id = $1 order by created_at`,
-        [userId]
-      ),
-      this.pool.query(
-        `select id, name, device_type, backed_up, aaguid, created_at
+          [userId]
+        ),
+        this.pool.query(
+          `select id, name, device_type, backed_up, aaguid, created_at
            from passkeys where user_id = $1 order by created_at`,
-        [userId]
-      ),
-      this.pool.query(
-        `select source_language, target_language, source_text, text, model, created_at
+          [userId]
+        ),
+        this.pool.query(
+          `select source_language, target_language, source_text, text, model, created_at
            from translations where created_by = $1 order by id`,
-        [userId]
-      ),
-      this.pool.query(
-        `select id, actor_id, action, target_type, target_id, details, created_at
+          [userId]
+        ),
+        this.pool.query(
+          `select h.id, h.name, h.one_to_one, h.created_by = $1 as opened_by_you,
+                m.halaqa_role, m.status, m.joined_at, m.approved_at
+           from halaqa_members m join halaqat h on h.id = m.halaqa_id
+          where m.user_id = $1 order by m.joined_at`,
+          [userId]
+        ),
+        this.pool.query(
+          `select id, actor_id, action, target_type, target_id, details, created_at
            from audit_log
           where actor_id = $1 or (target_type = 'user' and target_id = $1::text)
           order by id`,
-        [userId]
-      ),
-    ]);
+          [userId]
+        ),
+      ]);
     return {
       exportedAt: new Date().toISOString(),
       profile: profile.rows[0] ?? {},
@@ -72,6 +82,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       sessions: sessions.rows,
       passkeys: passkeys.rows,
       translations: translations.rows,
+      halaqat: halaqat.rows,
       auditLog: audit.rows,
     };
   }

@@ -15,6 +15,7 @@ import {
 import { AUTHENTICATE_OPTIONS, requireVerificationInOptions } from './auth/passkeys.js';
 import { createAccountRoutes, type AccountRouteDeps } from './account/routes.js';
 import { createAdminRoutes, type AdminRouteDeps } from './admin/routes.js';
+import { createHalaqaRoutes, type HalaqaRouteDeps } from './halaqat/routes.js';
 import { authorize, type AuthorizeLog } from './authz/middleware.js';
 import { appCors } from './http/appCors.js';
 import { sameOriginOnly } from './http/sameOrigin.js';
@@ -55,6 +56,8 @@ export interface AppDeps {
   admin?: AdminRouteDeps;
   /** Translation of teachers' written remarks (ADR-0020). */
   translations?: TranslationRouteDeps;
+  /** Ḥalaqāt, members and invites (spec T1, ADR-0005). */
+  halaqat?: HalaqaRouteDeps;
   /**
    * Origins of the web app (ARDA_PUBLIC_URL, ARDA_TRUSTED_ORIGINS). When set, state-changing
    * API requests that a browser marks as coming from another site are refused (403).
@@ -147,6 +150,7 @@ export function createApp(deps: AppDeps): Hono {
   if (deps.account) app.route('/api/v1/account', createAccountRoutes(deps.account));
   if (deps.admin) app.route('/api/v1/admin', createAdminRoutes(deps.admin));
   if (deps.translations) app.route('/api/v1', createTranslationRoutes(deps.translations));
+  if (deps.halaqat) app.route('/api/v1/halaqat', createHalaqaRoutes(deps.halaqat));
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((error, c) => {
