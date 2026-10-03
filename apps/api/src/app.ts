@@ -15,6 +15,10 @@ import {
 import { AUTHENTICATE_OPTIONS, requireVerificationInOptions } from './auth/passkeys.js';
 import { createAccountRoutes, type AccountRouteDeps } from './account/routes.js';
 import { createAdminRoutes, type AdminRouteDeps } from './admin/routes.js';
+import {
+  createAssignmentRoutes,
+  type AssignmentRouteDeps,
+} from './assignments/routes.js';
 import { createHalaqaRoutes, type HalaqaRouteDeps } from './halaqat/routes.js';
 import { authorize, type AuthorizeLog } from './authz/middleware.js';
 import { appCors } from './http/appCors.js';
@@ -58,6 +62,8 @@ export interface AppDeps {
   translations?: TranslationRouteDeps;
   /** Ḥalaqāt, members and invites (spec T1, ADR-0005). */
   halaqat?: HalaqaRouteDeps;
+  /** Assignments in a ḥalaqa and what a student still has to do (spec T2, ADR-0014). */
+  assignments?: AssignmentRouteDeps;
   /**
    * Origins of the web app (ARDA_PUBLIC_URL, ARDA_TRUSTED_ORIGINS). When set, state-changing
    * API requests that a browser marks as coming from another site are refused (403).
@@ -151,6 +157,7 @@ export function createApp(deps: AppDeps): Hono {
   if (deps.admin) app.route('/api/v1/admin', createAdminRoutes(deps.admin));
   if (deps.translations) app.route('/api/v1', createTranslationRoutes(deps.translations));
   if (deps.halaqat) app.route('/api/v1/halaqat', createHalaqaRoutes(deps.halaqat));
+  if (deps.assignments) app.route('/api/v1', createAssignmentRoutes(deps.assignments));
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((error, c) => {
