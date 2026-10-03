@@ -1,4 +1,4 @@
-import { RULES, detect, graphemes, type RuleId } from '@arda/tajweed';
+import { RULES, detect, graphemes, type Occurrence, type RuleId } from '@arda/tajweed';
 import type { Segment } from './rules';
 
 interface Mark {
@@ -41,4 +41,16 @@ export function segmentsOf(text: string, only?: ReadonlySet<RuleId>): Segment[] 
   }
   if (at < text.length) segments.push({ text: text.slice(at) });
   return segments;
+}
+
+/** The text with one occurrence's carrier in focus and nothing else marked: for questions. */
+export function focusSegments(
+  text: string,
+  focus: Pick<Occurrence, 'start' | 'carrierEnd'>
+): Segment[] {
+  return [
+    { text: text.slice(0, focus.start) },
+    { text: text.slice(focus.start, focus.carrierEnd), role: 'focus' as const },
+    { text: text.slice(focus.carrierEnd) },
+  ].filter((segment) => segment.text !== '');
 }

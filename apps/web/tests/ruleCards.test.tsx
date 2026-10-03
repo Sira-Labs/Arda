@@ -5,6 +5,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { UNIT2, UNIT2_CARDS } from '@/content/unit2';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
+import { ReviewProvider } from '@/review/ReviewProvider';
+import { MemoryReviewStore } from '@/review/store';
 import { segmentsOf } from '@/tajweed/segments';
 import { fakeApi, Providers } from './render';
 
@@ -20,12 +22,14 @@ function renderAt(path: string) {
   const { client } = fakeApi({});
   return render(
     <Providers client={client}>
-      <MemoryRouter initialEntries={[path]}>
-        <Routes>
-          <Route path="/pfad" element={<Path />} />
-          <Route path="/pfad/2/:rule" element={<RuleCardPage />} />
-        </Routes>
-      </MemoryRouter>
+      <ReviewProvider store={new MemoryReviewStore()}>
+        <MemoryRouter initialEntries={[path]}>
+          <Routes>
+            <Route path="/pfad" element={<Path />} />
+            <Route path="/pfad/2/:rule" element={<RuleCardPage />} />
+          </Routes>
+        </MemoryRouter>
+      </ReviewProvider>
     </Providers>
   );
 }
@@ -157,8 +161,11 @@ describe('the path', () => {
       '/pfad/2/idgham',
       '/pfad/2/iqlab',
       '/pfad/2/ikhfa',
+      '/pfad/2/spiel/welche-regel',
+      '/pfad/2/spiel/sortieren',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();
+    expect(screen.getByText('Nothing is due right now. Well done!')).toBeInTheDocument();
   });
 });
 

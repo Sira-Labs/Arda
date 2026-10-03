@@ -136,6 +136,51 @@ export const de = {
       tip: 'Merkhilfe: die Anfangsbuchstaben von „ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā“.',
     },
   } as Record<Unit2Card, { title: string; steps: string[]; tip: string }>,
+  games: {
+    eyebrow: 'Einheit 2 · Üben',
+    practise: 'Üben',
+    progress: (index: number, total: number) => `${index} / ${total}`,
+    seconds: (seconds: number) => `${seconds.toLocaleString('de-DE')} s`,
+    options: 'Regeln',
+    whichRule: {
+      title: 'Welche Regel?',
+      intro:
+        'Zehn echte Wörter aus deinem Blatt: Schau auf den Buchstaben nach Nūn sākina oder Tanwīn.',
+      question: 'Welche Regel gilt für das markierte Nūn oder Tanwīn?',
+    },
+    sort: {
+      title: 'Sortiere die 28',
+      intro:
+        'Jeder Buchstabe gehört zu genau einer Regel. Wie schnell schaffst du alle 28?',
+      question: 'Nūn sākina vor diesem Buchstaben – welche Regel?',
+      best: (seconds: number) => `Bestzeit: ${seconds.toLocaleString('de-DE')} s`,
+      newBest: 'Neue Bestzeit!',
+    },
+    review: {
+      title: 'Wiederholen',
+      intro: 'Was du verwechselt hast, kommt wieder – bis es sitzt.',
+      none: 'Gerade ist nichts fällig. Gut so!',
+      open: (count: number) =>
+        count === 1 ? '1 Karte wiederholen' : `${count} Karten wiederholen`,
+    },
+    good: 'gut',
+    check: 'prüfen',
+    rightAnswer: 'Richtig ist',
+    follows: 'es folgt',
+    insideWord: 'in einem Wort, die Ausnahme',
+    toReview: 'Kommt in deine Wiederholung.',
+    next: 'Weiter',
+    finish: 'Auswerten',
+    score: (right: number, total: number) => `${right} von ${total} richtig`,
+    newCards: (count: number) =>
+      count === 0
+        ? 'Keine neuen Karten zum Wiederholen.'
+        : count === 1
+          ? '1 Karte kommt in deine Wiederholung.'
+          : `${count} Karten kommen in deine Wiederholung.`,
+    again: 'Nochmal',
+    back: 'Zur Einheit',
+  },
   signIn: {
     eyebrow: 'Anmelden',
     title: 'Willkommen bei ʿArḍa',

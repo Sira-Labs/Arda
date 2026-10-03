@@ -437,3 +437,42 @@ a {
 .path-card:hover {
   border-color: var(--accent-2);
 }
+
+/* Games: the letter in question, the four rule options, the answer */
+.tj-focus {
+  background: color-mix(in srgb, var(--accent-fill) 35%, transparent);
+  border-radius: 6px;
+}
+.options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+.option {
+  min-height: 56px;
+  font-size: 1.05rem;
+}
+.option:disabled {
+  opacity: 1;
+}
+.option-right {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--on-accent-2);
+}
+.option-chosen {
+  border-color: var(--check);
+  color: var(--check);
+  border-style: dashed;
+}
+.answer {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.answer-good strong {
+  color: var(--good);
+}
+.answer-check strong {
+  color: var(--check);
+}
