@@ -2,7 +2,8 @@
 
 - Status: v1 · 2026-10-03 · Decision: ADR-0018
 - Code: `apps/web/src/styles/tokens.css`, `global.css`, `fonts.css`, `components/`
-- Visual reference: the deck "ʿArḍa — Tajweed" (21 slides) and the published design overview
+- Visual reference: the deck "ʿArḍa — Tajweed" (21 slides) and the design canvas
+  "ʿArḍa — Design" (https://claude.ai/artifact/P3MUKSdc66uBzVdDZhediX, private until shared)
 
 ʿArḍa is Suffa's sister: the same palette, type and calm, read **on paper**, because the
 muṣḥaf page is the centre of the app.
