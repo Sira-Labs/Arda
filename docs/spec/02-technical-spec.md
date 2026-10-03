@@ -1,0 +1,145 @@
+# 02 — Technical Specification
+
+- Status: draft v1 · 2026-10-03
+- Related: [01 product](01-product-spec.md), ADR-0002 to ADR-0019
+
+## 1. Architecture
+
+```mermaid
+flowchart LR
+  subgraph Device
+    PWA["arda-web PWA<br/>React, offline-first<br/>IndexedDB: packs, outbox"]
+    App["iOS / Android<br/>(Capacitor, later)"]
+  end
+  subgraph CapRover
+    Web["arda-web<br/>Caddy: PWA, /api, /media"]
+    API["arda-api<br/>Hono, Better Auth"]
+    Worker["arda-worker<br/>(later: alignment, checks)"]
+    Speech["arda-speech<br/>Quran Muʿallim (later)"]
+    DB[("arda-db<br/>Postgres 17")]
+    S3[("rustfs (shared)<br/>arda-recordings, arda-content")]
+    Backup["arda-backup<br/>nightly pg_dump"]
+    LK["LiveKit (later)"]
+  end
+  Reciters["Reciter audio<br/>(streamed with credit)"]
+  PWA -- same origin --> Web
+  App -- bearer token --> Web
+  Web --> API
+  Web -- /media presigned --> S3
+  API --> DB
+  Worker --> DB
+  Worker --> Speech
+  Worker --> S3
+  Backup --> DB
+  Backup --> S3
+  PWA -. streams .-> Reciters
+  PWA -. live .-> LK
+```
+
+## 2. Repository layout
+
+```
+apps/api        Hono API: auth, account, admin, health, migrations (TypeScript, raw pg)
+apps/web        React + Vite PWA: shell, sign-in, design tokens, (next) units, muṣḥaf
+packages/       (next) tajweed: rule taxonomy, letter classes, mapping, lookup (pure TS)
+infra/          Dockerfiles, Caddyfile, CapRover captain-definitions and one-click templates,
+                backup scripts
+docs/           specs, ADRs, plan, ops, security
+tools/          (next) content import: Tanzil text, cpfair rules, IndoPak alignment, packs
+```
+
+## 3. Stack
+
+| Concern    | Choice                                            | Notes                                                   |
+| ---------- | ------------------------------------------------- | ------------------------------------------------------- |
+| Runtime    | Node 22, TypeScript 5, ESM                        | npm workspaces, one lockfile                            |
+| API        | Hono 4 on `@hono/node-server`                     | dependency-injected routes, testable without a DB       |
+| Auth       | Better Auth 1.7.6 + `@better-auth/passkey`        | ADR-0004; `@better-auth/core` pinned                    |
+| DB         | Postgres 17, raw `pg`, plain SQL migrations       | advisory-locked runner, `schema_migrations`             |
+| Validation | zod 3                                             | env config and request bodies                           |
+| Logging    | pino (api), small structured logger (web)         | JSON lines; never links, codes or addresses on failures |
+| Web        | React 18, react-router 7, Vite 5, vite-plugin-pwa | offline shell; IndexedDB for packs (next)               |
+| Tests      | Vitest (unit, jsdom), Postgres integration suites | `ARDA_TEST_DATABASE_URL`                                |
+| Edge       | Caddy 2 behind CapRover's nginx                   | same-origin proxy, CSP, HSTS, X-Real-IP                 |
+
+## 4. Data model
+
+Built (migration `0001_users_and_auth`):
+
+| Table           | Purpose                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| `users`         | id (uuid), email, role (`student`, `teacher`, `admin`), time zone, disabled_at |
+| `sessions`      | Better Auth sessions; `second_factor_at` for admins                            |
+| `accounts`      | kept for later sign-in methods (OIDC); no passwords                            |
+| `verifications` | magic links and codes, hashed                                                  |
+| `rate_limits`   | Better Auth rate-limit counters                                                |
+| `passkeys`      | WebAuthn credentials                                                           |
+| `user_totp`     | sealed TOTP secret, last step, failures, lock                                  |
+| `audit_log`     | append-only record of privileged changes                                       |
+
+Next (one migration per story, each cascading on user deletion and added to the export):
+
+| Table                                         | Story    | Key fields                                                                                  |
+| --------------------------------------------- | -------- | ------------------------------------------------------------------------------------------- |
+| `halaqat`, `halaqa_members`, `halaqa_invites` | T1       | teacher, name, one-to-one flag; member role and status; hashed invite token                 |
+| `assignments`                                 | T2       | halaqa, student (or all), type, `range` of word keys, focus rule, due, done_at              |
+| `recitations`                                 | F7       | student, halaqa, range, object key, duration, status, consent                               |
+| `recitation_marks`                            | T3       | recitation, word key, second, rule, remark, voice note key, by teacher                      |
+| `arḍ_log` (`arda_log`)                        | T4       | student, sūra/range, date, verdict, note                                                    |
+| `check_results`                               | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
+| `flags`                                       | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
+
+Content (Qurʾān text layers, rule spans, timings) lives in **content packs**, not in Postgres
+(ADR-0010); Postgres stores only word keys that point into them.
+
+## 5. API surface
+
+Built:
+
+| Method and path                                                        | Auth                                                | Purpose                                                           |
+| ---------------------------------------------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- |
+| `GET /healthz`, `GET /api/healthz`                                     | —                                                   | status, version, schema revision, auth on/off (503 when degraded) |
+| `GET /api/version`                                                     | —                                                   | name, version, schema revision                                    |
+| `POST /api/v1/auth/sign-in/magic-link`                                 | —                                                   | send link and code (rate-limited)                                 |
+| `GET /api/v1/auth/magic-link/verify`                                   | —                                                   | open the link                                                     |
+| `POST /api/v1/auth/sign-in/email-otp`                                  | —                                                   | sign in with the code                                             |
+| `GET                                                                   | POST /api/v1/auth/passkey/*` (4 ceremony endpoints) | — / session                                                       | passkey sign-in and registration |
+| `POST /api/v1/auth/sign-out`                                           | session                                             | sign out                                                          |
+| `GET /api/v1/me`                                                       | `profile:read`                                      | id, email, name, role, time zone                                  |
+| `GET /api/v1/account/sessions`, `DELETE …/:id`, `POST …/revoke-others` | `profile:*`                                         | devices                                                           |
+| `PATCH /api/v1/account/settings`                                       | `profile:write`                                     | time zone                                                         |
+| `GET /api/v1/account/passkeys`, `DELETE …/:id`                         | `profile:*`                                         | passkeys, no key material                                         |
+| `GET /api/v1/account/2fa`, `POST …/setup`, `POST …/confirm`            | `profile:*`                                         | TOTP                                                              |
+| `GET /api/v1/account/export`, `DELETE /api/v1/account`                 | `profile:*`                                         | GDPR                                                              |
+| `GET /api/v1/admin/users`, `PATCH …/:id`, `GET /api/v1/admin/audit`    | `admin:*` + 2FA                                     | admin area                                                        |
+
+Next: `/api/v1/halaqat/*` (T1), `/api/v1/assignments/*` (T2), `/api/v1/recitations/*`
+(F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
+added to the route-by-role matrix test.
+
+## 6. Configuration (`ARDA_*`)
+
+| Variable                                                                                     | Required    | Meaning                                                                     |
+| -------------------------------------------------------------------------------------------- | ----------- | --------------------------------------------------------------------------- |
+| `ARDA_ENV`                                                                                   | — (`dev`)   | `dev`, `test` or `prod`; prod enforces secrets                              |
+| `ARDA_PORT`                                                                                  | — (8000)    | HTTP port                                                                   |
+| `ARDA_DATABASE_URL`                                                                          | yes         | `postgres://…`; in prod with a generated password ≥ 16 chars                |
+| `ARDA_DB_POOL_MAX`                                                                           | — (10)      | connection pool size                                                        |
+| `ARDA_AUTH_SECRET`                                                                           | prod        | ≥ 32 random chars; signs sessions, seals TOTP secrets                       |
+| `ARDA_PUBLIC_URL`                                                                            | prod        | e.g. `https://arda-stg.siralabs.org`; links in mails, passkey relying party |
+| `ARDA_TRUSTED_ORIGINS`                                                                       | —           | more web origins (while moving domains)                                     |
+| `ARDA_APP_ORIGINS`                                                                           | —           | native app origins (bearer tokens, CORS without credentials)                |
+| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`, `ARDA_MAIL_FROM` | for sign-in | Google Workspace SMTP relay                                                 |
+| `ARDA_MAIL_DIR`                                                                              | —           | browser tests: links to files (never in prod)                               |
+| `ARDA_LOG_LEVEL`, `ARDA_VERSION`                                                             | —           | logging; release tag reported by health                                     |
+
+Web (`arda-web` container): `ARDA_API_UPSTREAM`, `ARDA_MEDIA_UPSTREAM`, `ARDA_VERSION`.
+Backup: `ARDA_BACKUP_*` (runbook).
+
+## 7. Open technical items
+
+1. Speech service sizing: GPU host or CPU budget for Quran Muʿallim (ADR-0013).
+2. IndoPak text source with a clear licence (ADR-0009 question 1).
+3. Port Suffa's sync (outbox, last write wins) for progress (story L3) and its engagement
+   package; decide when both move to shared packages (ADR-0002).
+4. LiveKit on CapRover: TURN and UDP ports (ADR-0015).
