@@ -1,0 +1,84 @@
+/*
+ * Design tokens of ʿArḍa (docs/spec/04-design-system.md). Suffa's palette, read on paper:
+ * the default theme is "paper" because the muṣḥaf page is the centre of the app; "night" is
+ * the dark theme for evening recitation. Every colour that carries meaning (tajwīd rules,
+ * feedback) always comes with a written label too.
+ */
+:root {
+  color-scheme: light;
+
+  /* Surfaces and text */
+  --bg: #f6f1e7;
+  --bg-elev: #fffdf8;
+  --bg-elev-2: #ede5d5;
+  --ink: #10201b; /* statement surfaces, the cover, the teacher's voice */
+  --on-ink: #f4eee2;
+  --text: #1b2420;
+  --text-muted: #56615b;
+  --border: #dcd2bf;
+
+  /* Accents: saffron for the one primary action, teal for progress and the teacher */
+  --accent: #8a5a12; /* text-safe saffron on paper */
+  --accent-fill: #e8a93b;
+  --on-accent: #1a1206;
+  --accent-2: #1f7a6d;
+  --on-accent-2: #f4eee2;
+  --focus: #8a5a12;
+
+  /* Feedback */
+  --good: #1f7a6d;
+  --check: #8a5a12; /* "check this word": never red, it is not a failure */
+  --bad: #b4432b;
+  --info: #25609b;
+
+  /* Tajwīd colours (common tajwīd-muṣḥaf convention), tuned for paper */
+  --tj-ghunna: #2e8b3e; /* ghunna: ikhfāʾ, idghām with ghunna, iqlāb, shafawī rules */
+  --tj-qalqala: #2464b0;
+  --tj-silent: #8c8c86; /* written, not pronounced; idghām without ghunna */
+  --tj-madd-2: #c8574b;
+  --tj-madd-4: #b8322a;
+  --tj-madd-6: #8a1f1a; /* darker = longer */
+
+  /* Type */
+  --font-ui: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', 'Fraunces', Georgia, serif;
+  --font-arabic: 'Amiri', 'Times New Roman', serif;
+  --font-quran-indopak: 'DigitalKhatt IndoPak', 'Amiri Quran', serif;
+  --font-quran-madina: 'Amiri Quran', 'Amiri', serif;
+  --quran-scale: 1; /* user setting */
+
+  /* Shape and rhythm */
+  --radius-sm: 12px;
+  --radius: 16px;
+  --radius-lg: 24px;
+  --tap: 44px;
+  --space: 16px;
+  --nav-height: 72px;
+  --shadow: 0 12px 32px rgba(27, 36, 32, 0.12);
+}
+
+:root[data-theme='night'] {
+  color-scheme: dark;
+  --bg: #0f1714;
+  --bg-elev: #17221e;
+  --bg-elev-2: #22302b;
+  --ink: #0b1310;
+  --text: #f4eee2;
+  --text-muted: #a9b5ae;
+  --border: #2e3d37;
+  --accent: #e8a93b;
+  --accent-2: #3fb5a3;
+  --on-accent-2: #06201c;
+  --focus: #f3c274;
+  --good: #4cc3a5;
+  --check: #f3c274;
+  --bad: #f08a73;
+  --info: #8cc4f2;
+  --tj-ghunna: #7fd08a;
+  --tj-qalqala: #8cc4f2;
+  --tj-silent: #9aa39e;
+  --tj-madd-2: #f4a090;
+  --tj-madd-4: #f08a73;
+  --tj-madd-6: #e2604f;
+  --shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+}

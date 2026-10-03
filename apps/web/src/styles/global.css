@@ -1,0 +1,305 @@
+/* Base styles and the small set of components (docs/spec/04-design-system.md). */
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  line-height: 1.15;
+  margin: 0;
+}
+/* Fraunces only for the page title and the brand, as in Suffa: its smaller optical sizes
+   misplace the macrons of transliteration (ā, ī, ū). */
+h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+}
+h1 {
+  font-size: 2.1rem;
+}
+h2 {
+  font-size: 1.5rem;
+}
+h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+p {
+  margin: 0;
+}
+a {
+  color: var(--accent);
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Layout helpers */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space);
+}
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.muted {
+  color: var(--text-muted);
+}
+.eyebrow {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* App shell: bottom bar on phones, sidebar from 960 px */
+.app {
+  min-height: 100dvh;
+}
+.app-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px 16px calc(var(--nav-height) + 32px);
+}
+.app-nav {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  height: var(--nav-height);
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background: var(--ink);
+  color: var(--on-ink);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  z-index: 10;
+}
+.app-nav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-height: var(--tap);
+  color: #b9c7bf;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.app-nav a[aria-current='page'] {
+  color: var(--accent-fill);
+}
+.app-brand {
+  display: none;
+}
+@media (min-width: 960px) {
+  .app {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+  }
+  .app-nav {
+    position: sticky;
+    top: 0;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    height: 100dvh;
+    border-radius: 0;
+    grid-template-columns: 1fr;
+    grid-auto-rows: min-content;
+    align-content: start;
+    gap: 4px;
+    padding: 24px 12px;
+  }
+  .app-nav a {
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 0 12px;
+    font-size: 0.95rem;
+    border-radius: var(--radius-sm);
+  }
+  .app-nav a[aria-current='page'] {
+    background: rgba(232, 169, 59, 0.12);
+  }
+  .app-brand {
+    display: block;
+    padding: 0 12px 20px;
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    color: var(--on-ink);
+  }
+  .app-main {
+    padding: 40px 32px;
+  }
+}
+
+/* Surfaces */
+.card {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.card-ink {
+  background: var(--ink);
+  color: var(--on-ink);
+  border: none;
+}
+.card-ink .muted {
+  color: #b9c7bf;
+}
+.card-teal {
+  background: var(--accent-2);
+  color: var(--on-accent-2);
+  border: none;
+}
+.paper {
+  background: var(--bg-elev);
+  border: 2px solid #c9b98f;
+  border-radius: var(--radius-lg);
+  padding: 20px 28px;
+}
+
+/* Controls */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--accent-2);
+  background: transparent;
+  color: var(--accent-2);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.btn-primary {
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
+  color: var(--on-accent);
+}
+.btn-teal {
+  background: var(--accent-2);
+  color: var(--on-accent-2);
+}
+.input {
+  min-height: var(--tap);
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  font: inherit;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+.feedback-good {
+  color: var(--good);
+  font-weight: 600;
+}
+.feedback-bad {
+  color: var(--bad);
+  font-weight: 600;
+}
+
+/* Arabic and Qurʾān text: always right to left, isolated inside Latin text */
+.arabic {
+  font-family: var(--font-arabic);
+  direction: rtl;
+  unicode-bidi: isolate;
+}
+.quran {
+  font-family: var(--font-quran-indopak);
+  font-size: calc(2.4rem * var(--quran-scale));
+  line-height: 1.9;
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+}
+.quran[data-script='madina'] {
+  font-family: var(--font-quran-madina);
+}
+.quran-lg {
+  font-size: calc(3.2rem * var(--quran-scale));
+  text-align: center;
+}
+
+/* Tajwīd marks: colour plus a label in the legend or tooltip, never colour alone */
+.tj[data-rule='ghunna'] {
+  color: var(--tj-ghunna);
+}
+.tj[data-rule='qalqala'] {
+  color: var(--tj-qalqala);
+}
+.tj[data-rule='silent'] {
+  color: var(--tj-silent);
+}
+.tj[data-rule='madd-2'] {
+  color: var(--tj-madd-2);
+}
+.tj[data-rule='madd-4'] {
+  color: var(--tj-madd-4);
+}
+.tj[data-rule='madd-6'] {
+  color: var(--tj-madd-6);
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 0.9rem;
+}
+.legend b {
+  font-weight: 800;
+}
