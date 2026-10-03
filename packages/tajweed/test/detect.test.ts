@@ -43,7 +43,14 @@ describe('detect', () => {
   it('stops at an āya sign and where a vowel is carried over alif waṣla', () => {
     expect(rules('مِنْ ۝ بَعْدِ')).toEqual([]);
     expect(rules('خَيْرًا ٱلْوَصِيَّةُ')).toEqual([]);
+    // IndoPak writes alif waṣla as a bare alif.
+    expect(rules('خَيْرًا الْوَصِيَّةُ')).toEqual([]);
+    expect(rules('عَلِيمٌ الَّذِي')).toEqual([]);
     expect(rules('مِنَ ٱللَّهِ')).toEqual([]);
+  });
+
+  it('reads a bare alif with a vowel as hamza (IndoPak spelling)', () => {
+    expect(rules('عَذَابٌ اَلِيْمٌ')).toEqual(['izhar']);
   });
 
   it('finds the ghunna of a mushaddad nūn or mīm', () => {

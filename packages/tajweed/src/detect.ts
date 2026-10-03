@@ -65,7 +65,9 @@ function followerOf(
     ) {
       continue;
     }
-    // A bare alif can only start a word here, so it carries a hamza.
+    // A bare alif can only start a word here. With a vowel it carries a hamza; without one it
+    // is alif waṣla in IndoPak spelling, so a vowel is carried over and no rule applies.
+    if (g.char === 'ا' && !hasVowel(g)) return undefined;
     const letter = g.char === 'ا' ? 'ء' : letterOf(g.char);
     return letter ? { index: j, letter, acrossWords } : undefined;
   }
