@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { answer, fromMistake, isDue, type ReviewCard } from '@/review/leitner';
 import { LocalReviewStore, MemoryReviewStore, STORAGE_KEY } from '@/review/store';
 
@@ -94,10 +94,60 @@ describe('review stores', () => {
     expect(store.load()).toEqual(state);
   });
 
+  it('keep the memory copy current, so a later outage still has the latest deck', () => {
+    const storage = fakeStorage();
+    const store = new LocalReviewStore(storage);
+    const realSet = storage.setItem;
+    storage.setItem = () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+    store.save({ cards: {}, bestTimes: { 'sort-28': 60_000 } });
+    storage.setItem = realSet;
+    store.save(state);
+    // Storage becomes unreadable: the deck comes from memory, and it is the latest one.
+    storage.getItem = () => {
+      throw new DOMException('blocked', 'SecurityError');
+    };
+    expect(store.load()).toEqual(state);
+  });
+
+  it('drop damaged entries one by one instead of breaking the app', () => {
+    const storage = fakeStorage();
+    const good = state.cards[CARD.id]!;
+    storage.data.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        cards: {
+          [CARD.id]: good,
+          gone: null,
+          half: { id: 'half', kind: 'sort-letter', prompt: 'ت' },
+          wrongId: { ...good, id: 'other' },
+        },
+        bestTimes: { 'sort-28': 41_000, broken: 'fast' },
+      })
+    );
+    expect(new LocalReviewStore(storage).load()).toEqual(state);
+  });
+
   it('hand out copies, so a caller cannot change the stored deck', () => {
     const memory = new MemoryReviewStore(state);
     const loaded = memory.load();
     loaded.bestTimes['sort-28'] = 1;
     expect(memory.load().bestTimes['sort-28']).toBe(41_000);
+  });
+});
+
+describe('the browser default', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('survives a browser that blocks storage altogether', () => {
+    vi.spyOn(window, 'localStorage', 'get').mockImplementation(() => {
+      throw new DOMException('denied', 'SecurityError');
+    });
+    const store = new LocalReviewStore();
+    expect(store.load()).toEqual({ cards: {}, bestTimes: {} });
+    const state = { cards: {}, bestTimes: { 'sort-28': 30_000 } };
+    expect(() => store.save(state)).not.toThrow();
+    expect(store.load()).toEqual(state);
   });
 });
