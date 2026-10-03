@@ -12,7 +12,7 @@
  * only those for them or for the whole ḥalaqa. The list across ḥalaqāt keeps to the caller's
  * active memberships in its query, like the list of ḥalaqāt itself.
  */
-import type { Context } from 'hono';
+import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { isAyaRange } from '@arda/quran';
@@ -125,10 +125,14 @@ export function createAssignmentRoutes(deps: AssignmentRouteDeps): Hono<ActorEnv
       : null;
   };
 
-  app.use('*', async (c, next) => {
+  // Mounted at /api/v1 next to other routers: the header is set on these paths only.
+  const noStore: MiddlewareHandler = async (c, next) => {
     await next();
     c.header('Cache-Control', 'no-store');
-  });
+  };
+  app.use('/assignments', noStore);
+  app.use('/halaqat/:id/assignments', noStore);
+  app.use('/halaqat/:id/assignments/*', noStore);
 
   app.get('/assignments', mine, async (c) =>
     c.json({ assignments: await deps.repo.open(c.get('actor').id, OPEN_LIMIT) })

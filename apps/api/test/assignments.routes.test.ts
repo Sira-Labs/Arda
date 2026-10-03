@@ -484,9 +484,40 @@ describe('giving and doing assignments (T2)', () => {
     expect(await json(response)).toEqual({ error: 'too_many_assignments' });
   });
 
-  it('is never cached', async () => {
-    const { halaqaId, call } = await setup();
-    const response = await call('member', 'GET', `/halaqat/${halaqaId}/assignments`);
-    expect(response.headers.get('cache-control')).toBe('no-store');
+  it('is never cached, and leaves the headers of other routes alone', async () => {
+    const { halaqaId, assignmentId, call } = await setup();
+    for (const [method, path] of [
+      ['GET', '/assignments'],
+      ['GET', `/halaqat/${halaqaId}/assignments`],
+      ['PUT', `/halaqat/${halaqaId}/assignments/${assignmentId}/done`],
+    ] as const) {
+      const response = await call('member', method, path);
+      expect(response.headers.get('cache-control'), path).toBe('no-store');
+    }
+    const elsewhere = await call('member', 'GET', '/somewhere-else');
+    expect(elsewhere.status).toBe(404);
+    expect(elsewhere.headers.get('cache-control')).toBeNull();
+  });
+
+  it('lives next to the ḥalaqa routes without either shadowing the other', async () => {
+    const { halaqat, repo, halaqaId } = await setup();
+    const auth = {
+      actor: async (h: Headers) => ACTORS[h.get('x-test-actor') ?? ''] ?? null,
+    };
+    const app = createApp({
+      version: 't',
+      expectedRevision: null,
+      health: { schemaRevision: async () => null },
+      halaqat: { repo: halaqat, auth, log: quiet },
+      assignments: { repo, halaqat, auth, log: quiet },
+    });
+    const get = (path: string) =>
+      app.request(`/api/v1${path}`, { headers: { 'x-test-actor': 'member' } });
+    expect((await get(`/halaqat/${halaqaId}`)).status).toBe(200);
+    const list = await get(`/halaqat/${halaqaId}/assignments`);
+    expect(list.status).toBe(200);
+    expect((await json(list)).role).toBe('student');
+    expect((await get('/halaqat')).status).toBe(200);
+    expect((await get('/assignments')).status).toBe(200);
   });
 });
