@@ -310,3 +310,130 @@ a {
 .legend b {
   font-weight: 800;
 }
+
+/* The letter after a nūn or mīm that decides its rule: underlined, never coloured. */
+.tj-follower {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-fill);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 0.45em;
+}
+
+/* Learning screens: close button and progress instead of the navigation bar. */
+.learning {
+  min-height: 100dvh;
+}
+.learning-bar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 16px;
+  background: var(--bg);
+}
+.learning-main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 16px 48px;
+}
+.btn-round {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  inline-size: var(--tap);
+  block-size: var(--tap);
+  border-radius: 50%;
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+.progress {
+  flex: 1;
+  block-size: 8px;
+  border-radius: 4px;
+  background: var(--bg-elev-2);
+  overflow: hidden;
+}
+.progress > div {
+  block-size: 100%;
+  border-radius: 4px;
+  background: var(--accent-2);
+}
+
+/* Rule cards and the path */
+.chip-quiet {
+  background: var(--bg-elev-2);
+  color: var(--text-muted);
+}
+.h-small {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.rule-name {
+  font-size: calc(3rem * var(--quran-scale));
+  text-align: center;
+  line-height: 1.6;
+}
+.rule-title {
+  font-family: var(--font-ui);
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.letters {
+  font-size: 1.9rem;
+  letter-spacing: 0.3em;
+  line-height: 1.6;
+}
+.examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 4px 20px;
+}
+.example {
+  margin: 0;
+  text-align: center;
+}
+.example .quran {
+  text-align: center;
+  font-size: calc(2.1rem * var(--quran-scale));
+}
+.example figcaption {
+  font-size: 0.8rem;
+}
+.steps {
+  margin: 0;
+  padding-inline-start: 22px;
+  display: grid;
+  gap: 6px;
+}
+.note {
+  background: var(--bg-elev-2);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+}
+.note strong {
+  color: var(--accent);
+}
+.card-nav {
+  justify-content: space-between;
+}
+.path-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.path-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.path-card:hover {
+  border-color: var(--accent-2);
+}

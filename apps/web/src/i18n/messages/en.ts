@@ -25,13 +25,7 @@ export const en: Messages = {
     connect: 'Connect with your sheikh',
     connectHint: 'Sign in and join his ḥalaqa by link or QR code.',
     nextUnit: 'Next on the path · Unit 2',
-    iqlabTitle: 'Iqlāb – nūn becomes mīm before bāʾ',
-    iqlabSteps: [
-      'Spot nūn sākina or tanwīn before ب',
-      'Turn the “n” into an “m”',
-      'Close the lips and hold the ghunna for 2 counts',
-      'Open the lips into the bāʾ',
-    ],
+    openCard: 'Open the rule card',
     legend: 'Colours in the muṣḥaf',
   },
   rules: {
@@ -41,6 +35,94 @@ export const en: Messages = {
     'madd-2': { name: 'Madd 2', hint: 'natural lengthening, 2 counts' },
     'madd-4': { name: 'Madd 4–5', hint: 'joined or separated lengthening' },
     'madd-6': { name: 'Madd 6', hint: 'necessary lengthening, 6 counts' },
+  },
+  path: {
+    eyebrow: 'Path',
+    unitTitle: 'Unit 2 · Nūn sākina and tanwīn',
+    intro:
+      'The letter after nūn sākina or tanwīn decides how you say it: 28 letters, four rules – 6 + 6 + 1 + 15.',
+    letters: (count) => (count === 1 ? '1 letter' : `${count} letters`),
+    next: 'Unit 3 (Ghunna and mīm sākina) and unit 4 (Qalqala) follow, also from your sheikh’s sheet.',
+  },
+  ruleCard: {
+    eyebrow: 'Unit 2 · Understand',
+    close: 'Close',
+    progress: (index, total) => `Card ${index} of ${total}`,
+    draft: 'Draft',
+    draftHint: 'Not yet reviewed by your sheikh.',
+    letters: 'When one of these letters follows',
+    examples: 'Examples from your sheet',
+    decides: 'decides the rule',
+    followerKey: 'underlined = the letter that decides',
+    clear: 'no colour = said clearly',
+    colourKey: (colour, name, hint) => `${colour} = ${name}, ${hint}`,
+    colours: {
+      ghunna: 'green',
+      qalqala: 'blue',
+      silent: 'grey',
+      'madd-2': 'light red',
+      'madd-4': 'red',
+      'madd-6': 'dark red',
+    },
+    cases: {
+      inside: 'inside a word',
+      across: 'across two words',
+      tanwin: 'after tanwīn',
+    },
+    withGhunna: 'with ghunna',
+    withoutGhunna: 'without ghunna',
+    exceptions: 'Exception: inside one word it stays clear (Iẓhār)',
+    sourcesDiffer: 'Sources differ',
+    sources: {
+      iqlabGhunna:
+        'One source teaches iqlāb without ghunna. We teach it with ghunna, like your sheet.',
+    },
+    teacherNote: 'Your sheikh’s note: none yet.',
+    previous: 'Back',
+    next: 'Next',
+    done: 'To the unit',
+  },
+  cards: {
+    izhar: {
+      title: 'Say it clearly before the six throat letters',
+      steps: [
+        'Spot nūn sākina or tanwīn.',
+        'Is the next letter one of the six throat letters? Then it is iẓhār.',
+        'Say the nūn clearly: no ghunna, no merging.',
+        'Move straight on to the throat letter, without a pause.',
+      ],
+      tip: 'It is called iẓhār ḥalqī because all six letters come from the throat (ḥalq).',
+    },
+    idgham: {
+      title: 'Nūn merges into the next word',
+      steps: [
+        'Spot nūn sākina or tanwīn at the end of a word.',
+        'If the next word starts with one of the six letters, the nūn merges into it.',
+        'With yanmū a ghunna of 2 counts remains; with lām and rāʾ it falls away.',
+        'Only across two words: inside one word it stays clear (see the exception).',
+      ],
+      tip: 'Memory word: yarmalūn – its letters are the six.',
+    },
+    iqlab: {
+      title: 'Nūn becomes mīm before bāʾ',
+      steps: [
+        'Spot nūn sākina or tanwīn before bāʾ',
+        'Turn the “n” into an “m”',
+        'Close the lips and hold the ghunna for 2 counts',
+        'Open the lips into the bāʾ',
+      ],
+      tip: 'The muṣḥaf often writes a small mīm over the nūn or tanwīn.',
+    },
+    ikhfa: {
+      title: 'Nūn is hidden, with ghunna',
+      steps: [
+        'Spot nūn sākina or tanwīn before one of the 15 letters.',
+        'The tongue does not press: the nūn is hidden, not said.',
+        'Hold the ghunna for 2 counts, the mouth already set for the next letter.',
+        'Then say the letter.',
+      ],
+      tip: 'Memory aid: the first letters of “ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā”.',
+    },
   },
   signIn: {
     eyebrow: 'Sign in',
@@ -136,10 +218,6 @@ export const en: Messages = {
   soon: {
     eyebrow: 'In progress',
     notFound: { title: 'Not found', text: 'This page does not exist.' },
-    path: {
-      title: 'The path',
-      text: 'Eight units from the letter to the riwāya. Unit 2 (nūn sākina and tanwīn) comes first, from your sheikh’s sheet.',
-    },
     mushaf: {
       title: 'The muṣḥaf',
       text: 'The IndoPak muṣḥaf with tajwīd colours: tap a letter, hear the reciter word by word, slowly and on a loop.',

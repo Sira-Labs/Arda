@@ -2,20 +2,16 @@ import { Link } from 'react-router-dom';
 import { Icon } from '@/components/Icon';
 import { TajweedText } from '@/components/TajweedText';
 import { useI18n } from '@/i18n/I18nProvider';
-import { RULE_FAMILIES, type Segment } from '@/tajweed/rules';
+import { cardName } from '@/content/unit2';
+import { RULE_FAMILIES } from '@/tajweed/rules';
+import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
 
 /**
- * Iqlāb from the rule card (spec F2): nūn before bāʾ becomes mīm, with ghunna. IndoPak and
- * Madīna spelling write the nūn without sukūn and with a small high mīm (U+06E2).
+ * Iqlāb from its rule card (spec F2): nūn before bāʾ becomes mīm, with ghunna. IndoPak and
+ * Madīna spelling write the small high mīm (U+06E2) on the nūn; the engine colours it.
  */
-const IQLAB: readonly Segment[] = [
-  { text: 'مِ' },
-  { text: 'نۢ', rule: 'ghunna' },
-  { text: ' ' },
-  { text: 'بَ', rule: 'qalqala' },
-  { text: 'عْدِ' },
-];
+const IQLAB = segmentsOf('مِنۢ بَعْدِ', new Set(['iqlab']));
 
 /**
  * Today: what your sheikh asked for comes first, then the next step on the path. The data is
@@ -23,7 +19,7 @@ const IQLAB: readonly Segment[] = [
  */
 export function Today() {
   const { me, offline } = useSession();
-  const { m } = useI18n();
+  const { m, language } = useI18n();
 
   return (
     <div className="stack" style={{ gap: 24 }}>
@@ -59,13 +55,22 @@ export function Today() {
             +20 XP
           </span>
         </div>
-        <h2 id="next-unit">{m.today.iqlabTitle}</h2>
+        <h2 id="next-unit">
+          {cardName('iqlab', language)} – {m.cards.iqlab.title}
+        </h2>
         <TajweedText segments={IQLAB} large />
         <ol className="muted" style={{ margin: 0, paddingInlineStart: 22 }}>
-          {m.today.iqlabSteps.map((step) => (
+          {m.cards.iqlab.steps.map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ol>
+        <Link
+          className="btn btn-primary"
+          to="/pfad/2/iqlab"
+          style={{ alignSelf: 'flex-start' }}
+        >
+          {m.today.openCard}
+        </Link>
       </section>
 
       <section className="stack" aria-label={m.today.legend}>

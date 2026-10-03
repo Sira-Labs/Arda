@@ -26,13 +26,7 @@ export const fr: Messages = {
     connect: 'Rejoins ton cheikh',
     connectHint: 'Connecte-toi et rejoins sa ḥalaqa par lien ou par code QR.',
     nextUnit: 'Suite du parcours · Unité 2',
-    iqlabTitle: 'Iqlāb – le nūn devient mīm devant le bāʾ',
-    iqlabSteps: [
-      'Repère le nūn sākina ou le tanwīn devant ب',
-      'Transforme le « n » en « m »',
-      'Ferme les lèvres et tiens la ghunna 2 temps',
-      'Ouvre les lèvres sur le bāʾ',
-    ],
+    openCard: 'Ouvrir la fiche',
     legend: 'Couleurs du muṣḥaf',
   },
   rules: {
@@ -42,6 +36,94 @@ export const fr: Messages = {
     'madd-2': { name: 'Madd 2', hint: 'allongement naturel, 2 temps' },
     'madd-4': { name: 'Madd 4–5', hint: 'allongement joint ou séparé' },
     'madd-6': { name: 'Madd 6', hint: 'allongement obligatoire, 6 temps' },
+  },
+  path: {
+    eyebrow: 'Parcours',
+    unitTitle: 'Unité 2 · Nūn sākina et tanwīn',
+    intro:
+      'La lettre qui suit le nūn sākina ou le tanwīn décide de la prononciation : 28 lettres, quatre règles – 6 + 6 + 1 + 15.',
+    letters: (count) => (count === 1 ? '1 lettre' : `${count} lettres`),
+    next: 'Les unités 3 (ghunna et mīm sākina) et 4 (qalqala) suivent, elles aussi tirées de la feuille de ton cheikh.',
+  },
+  ruleCard: {
+    eyebrow: 'Unité 2 · Comprendre',
+    close: 'Fermer',
+    progress: (index, total) => `Carte ${index} sur ${total}`,
+    draft: 'Brouillon',
+    draftHint: 'Pas encore relu par ton cheikh.',
+    letters: 'Si l’une de ces lettres suit',
+    examples: 'Exemples de ta feuille',
+    decides: 'décide de la règle',
+    followerKey: 'souligné = la lettre qui décide',
+    clear: 'sans couleur = prononcé clairement',
+    colourKey: (colour, name, hint) => `${colour} = ${name}, ${hint}`,
+    colours: {
+      ghunna: 'vert',
+      qalqala: 'bleu',
+      silent: 'gris',
+      'madd-2': 'rouge clair',
+      'madd-4': 'rouge',
+      'madd-6': 'rouge foncé',
+    },
+    cases: {
+      inside: 'dans un mot',
+      across: 'entre deux mots',
+      tanwin: 'après un tanwīn',
+    },
+    withGhunna: 'avec ghunna',
+    withoutGhunna: 'sans ghunna',
+    exceptions: 'Exception : dans un seul mot, il reste clair (iẓhār)',
+    sourcesDiffer: 'Les sources divergent',
+    sources: {
+      iqlabGhunna:
+        'Une source enseigne l’iqlāb sans ghunna. Nous l’enseignons avec ghunna, comme ta feuille.',
+    },
+    teacherNote: 'Note de ton cheikh : aucune pour l’instant.',
+    previous: 'Retour',
+    next: 'Suite',
+    done: 'Vers l’unité',
+  },
+  cards: {
+    izhar: {
+      title: 'Prononcer clairement devant les six lettres de la gorge',
+      steps: [
+        'Repère le nūn sākina ou le tanwīn.',
+        'La lettre suivante est-elle l’une des six lettres de la gorge ? Alors c’est l’iẓhār.',
+        'Prononce le nūn clairement : sans ghunna, sans fusion.',
+        'Passe directement à la lettre de la gorge, sans pause.',
+      ],
+      tip: 'On l’appelle iẓhār ḥalqī parce que les six lettres viennent de la gorge (ḥalq).',
+    },
+    idgham: {
+      title: 'Le nūn fusionne avec le mot suivant',
+      steps: [
+        'Repère le nūn sākina ou le tanwīn à la fin d’un mot.',
+        'Si le mot suivant commence par l’une des six lettres, le nūn fusionne avec elle.',
+        'Avec yanmū, une ghunna de 2 temps reste ; avec lām et rāʾ, elle disparaît.',
+        'Seulement entre deux mots : dans un seul mot, il reste clair (voir l’exception).',
+      ],
+      tip: 'Ses lettres forment le mot yarmalūn.',
+    },
+    iqlab: {
+      title: 'Le nūn devient mīm devant le bāʾ',
+      steps: [
+        'Repère le nūn sākina ou le tanwīn devant le bāʾ',
+        'Transforme le « n » en « m »',
+        'Ferme les lèvres et tiens la ghunna 2 temps',
+        'Ouvre les lèvres sur le bāʾ',
+      ],
+      tip: 'Le muṣḥaf écrit souvent un petit mīm sur le nūn ou le tanwīn.',
+    },
+    ikhfa: {
+      title: 'Le nūn est caché, avec ghunna',
+      steps: [
+        'Repère le nūn sākina ou le tanwīn devant l’une des 15 lettres.',
+        'La langue ne se pose pas : le nūn est caché, pas prononcé.',
+        'Tiens la ghunna 2 temps, la bouche déjà prête pour la lettre suivante.',
+        'Puis prononce la lettre.',
+      ],
+      tip: 'Moyen mnémotechnique : les initiales de « ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā ».',
+    },
   },
   signIn: {
     eyebrow: 'Connexion',
@@ -141,10 +223,6 @@ export const fr: Messages = {
   soon: {
     eyebrow: 'En préparation',
     notFound: { title: 'Introuvable', text: 'Cette page n’existe pas.' },
-    path: {
-      title: 'Le parcours',
-      text: 'Huit unités, de la lettre à la riwāya. L’unité 2 (nūn sākina et tanwīn) vient en premier, à partir de la fiche de ton cheikh.',
-    },
     mushaf: {
       title: 'Le muṣḥaf',
       text: 'Le muṣḥaf IndoPak avec les couleurs du tajwīd : touche une lettre, écoute le récitateur mot à mot, lentement et en boucle.',

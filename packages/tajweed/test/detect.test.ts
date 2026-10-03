@@ -72,3 +72,15 @@ describe('detect', () => {
     expect(rules('قُلْ هُوَ اللَّهُ أَحَدٌ')).toEqual([]);
   });
 });
+
+describe('occurrences', () => {
+  it('tell the carrier, the case and the deciding letter apart', () => {
+    const text = 'سَمِيعٌ بَصِيرٌ';
+    const [iqlab] = detect(text);
+    expect(text.slice(iqlab!.start, iqlab!.carrierEnd)).toBe('عٌ');
+    expect(iqlab).toMatchObject({ tanwin: true, acrossWords: true, follower: 'ب' });
+
+    const [inside] = detect('أَنْعَمْتَ');
+    expect(inside).toMatchObject({ rule: 'izhar', tanwin: false, acrossWords: false });
+  });
+});

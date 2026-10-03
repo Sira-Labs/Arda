@@ -1,9 +1,10 @@
 import { useI18n } from '@/i18n/I18nProvider';
-import type { Segment } from '@/tajweed/rules';
+import { ruleName, type Segment } from '@/tajweed/rules';
 
 /**
  * Qurʾān text with tajwīd colours. Each marked letter keeps its joining (the spans sit inside
  * one word) and carries its rule as a title, so the meaning never depends on colour alone.
+ * The letter that decides a rule is underlined and titled as such.
  */
 export function TajweedText({
   segments,
@@ -14,7 +15,15 @@ export function TajweedText({
   script?: 'indopak' | 'madina';
   large?: boolean;
 }) {
-  const { m } = useI18n();
+  const { m, language } = useI18n();
+
+  const title = (segment: Segment): string | undefined => {
+    if (segment.role === 'follower') return m.ruleCard.decides;
+    const name = segment.ruleId ? ruleName(segment.ruleId, language) : undefined;
+    const family = segment.rule ? m.rules[segment.rule].name : undefined;
+    return name && family && name !== family ? `${name} · ${family}` : (name ?? family);
+  };
+
   return (
     <p
       className={large ? 'quran quran-lg' : 'quran'}
@@ -23,12 +32,12 @@ export function TajweedText({
       dir="rtl"
     >
       {segments.map((segment, index) =>
-        segment.rule ? (
+        segment.rule || segment.role ? (
           <span
             key={index}
-            className="tj"
+            className={segment.role === 'follower' ? 'tj-follower' : 'tj'}
             data-rule={segment.rule}
-            title={m.rules[segment.rule].name}
+            title={title(segment)}
           >
             {segment.text}
           </span>
