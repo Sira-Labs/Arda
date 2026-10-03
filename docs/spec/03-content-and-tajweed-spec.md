@@ -70,8 +70,9 @@ sheikh).
 
 ## 4. Acceptance fixtures from the sheet
 
-Every example of the sheet is a fixture `{ text, wordKey?, expectedRule }` in
-`packages/tajweed/test/sheet.fixtures.ts`, e.g.:
+Every example of the sheet is a fixture `{ text, wordKey?, expectedRule, all? }` in
+`packages/tajweed/test/sheet.fixtures.ts`; `detect(text)` must return exactly `all` (every
+rule in the example, in reading order) or, when it is absent, only `expectedRule`. E.g.:
 
 | Example                                                                                | Rule                            |
 | -------------------------------------------------------------------------------------- | ------------------------------- |

@@ -6,6 +6,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
+COPY packages/tajweed/package.json packages/tajweed/
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 COPY apps/api apps/api
 RUN npm run build -w @arda/api
@@ -16,6 +17,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
+COPY packages/tajweed/package.json packages/tajweed/
 # npm nests packages it cannot hoist (e.g. better-auth) under the workspace; keep that
 # directory even when it is empty so the runtime stage can always copy it.
 # --omit=optional keeps test tooling out of the image: better-auth names vitest as an optional
