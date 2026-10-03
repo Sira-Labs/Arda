@@ -1,0 +1,56 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  # Called by release.yml so nothing is built or deployed unless these checks pass.
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    name: web (format, lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run lint
+      - run: npm run typecheck -w @arda/web
+      - run: npm test -w @arda/web
+      - run: npm run build -w @arda/web
+
+  api:
+    name: api (typecheck, unit + Postgres integration tests, build)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: arda
+          POSTGRES_PASSWORD: ci0123456789abcdef
+          POSTGRES_DB: arda_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U arda -d arda_test" --health-interval 2s
+          --health-timeout 5s --health-retries 20
+    env:
+      # Throwaway database: the integration tests wipe it.
+      ARDA_TEST_DATABASE_URL: postgres://arda:ci0123456789abcdef@127.0.0.1:5432/arda_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck -w @arda/api
+      - run: npm test -w @arda/api
+      - run: npm run build -w @arda/api

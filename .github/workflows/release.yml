@@ -1,0 +1,263 @@
+name: release
+
+# Runs the CI checks, builds the arda-web, arda-api and arda-backup images, smoke-tests each
+# image in a real container, scans it for critical vulnerabilities (Trivy) and publishes exactly
+# that image to GHCR. Every push to main then deploys those image digests to staging
+# (arda-stg.siralabs.org) and waits until staging reports the new version (ADR-0006).
+# Production gets its own server and an approval step when the pilot starts (same pattern as
+# Suffa's deploy-production.yml).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: ci checks
+    uses: ./.github/workflows/ci.yml
+
+  images:
+    name: build, smoke-test and publish ${{ matrix.name }}
+    needs: checks
+    # Only main is published and deployed, also when started by hand.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    strategy:
+      matrix:
+        include:
+          - name: web
+            dockerfile: infra/docker/web.Dockerfile
+          - name: api
+            dockerfile: infra/docker/api.Dockerfile
+          - name: backup
+            dockerfile: infra/docker/backup.Dockerfile
+    # Real database for the api and backup smoke tests (unused by the web job).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: arda
+          POSTGRES_PASSWORD: smoke0123456789abcdef
+          POSTGRES_DB: arda
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U arda" --health-interval 2s --health-timeout 5s
+          --health-retries 20
+    steps:
+      # Image names must be lowercase; the owner (e.g. "Sira-Labs") may not be.
+      - name: image prefix
+        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/arda" >> "$GITHUB_ENV"
+      - uses: actions/checkout@v4
+      - id: tag
+        run: echo "tag=sha-$(git rev-parse --short=7 HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - name: build image (local, for the smoke test)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          load: true
+          tags: smoke/arda-${{ matrix.name }}:test
+          build-args: |
+            ARDA_VERSION=${{ steps.tag.outputs.tag }}
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+      - name: smoke test web
+        if: matrix.name == 'web'
+        run: |
+          docker run -d --name web -p 8080:80 smoke/arda-web:test
+          for i in $(seq 1 20); do curl -fsS http://127.0.0.1:8080/healthz-web && break; sleep 1; done
+          # The health endpoint must answer itself (not the SPA fallback) and name the image.
+          curl -fsS http://127.0.0.1:8080/healthz-web | grep -q '"role":"web","version":"${{ steps.tag.outputs.tag }}"'
+          curl -fsS http://127.0.0.1:8080/ | grep -q '<title>ʿArḍa'
+          curl -fsS -o /dev/null http://127.0.0.1:8080/fonts/DigitalKhattIndoPak.woff2
+          curl -fsS http://127.0.0.1:8080/some/deep/link | grep -q '<div id="root">'
+          curl -fsSI http://127.0.0.1:8080/ | grep -qi "content-security-policy: default-src 'self'"
+      - name: smoke test api
+        if: matrix.name == 'api'
+        env:
+          DB: postgres://arda:smoke0123456789abcdef@127.0.0.1:5432/arda
+        run: |
+          SECRET=$(openssl rand -hex 32)
+          run() { docker run --network host -e ARDA_ENV=prod -e ARDA_DATABASE_URL="$DB" -e ARDA_AUTH_SECRET="$SECRET" -e ARDA_PUBLIC_URL=http://127.0.0.1:8080 "$@"; }
+          # A short secret must stop the service before it serves anything.
+          set +e; run --rm -e ARDA_AUTH_SECRET=short smoke/arda-api:test; code=$?; set -e
+          test "$code" = 1 || { echo "expected exit 1 for a short secret, got $code"; exit 1; }
+          run -d --name api smoke/arda-api:test
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8000/healthz && break; sleep 1; done
+          curl -fsS http://127.0.0.1:8000/healthz | grep -q '"status":"ok"'
+          # Without SMTP the api runs, but sign-in stays off (ADR-0004) and says so in the log.
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8000/api/v1/me)" = 404
+          docker logs api 2>&1 | grep -q 'auth.disabled' || { docker logs api; exit 1; }
+          # With SMTP set, sign-in loads from the slim install: no session is 401, not 404.
+          run -d --name api-auth -e ARDA_PORT=8001 -e ARDA_SMTP_HOST=127.0.0.1 \
+            -e ARDA_MAIL_FROM=smoke@example.org smoke/arda-api:test
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8001/healthz >/dev/null && break; sleep 1; done
+          test "$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8001/api/v1/me)" = 401 \
+            || { docker logs api-auth; exit 1; }
+          docker logs api-auth 2>&1 | grep -q 'auth.enabled' || { docker logs api-auth; exit 1; }
+          # Test tooling must not be in the image.
+          docker run --rm --entrypoint sh smoke/arda-api:test -c \
+            'for m in vitest vite esbuild rollup; do test ! -e /app/node_modules/$m || { echo "$m in image"; exit 1; }; done'
+      - name: smoke test backup (dump, verify, restore)
+        if: matrix.name == 'backup'
+        env:
+          DB: postgres://arda:smoke0123456789abcdef@127.0.0.1:5432/arda
+        run: |
+          mkdir -p /tmp/backups && chmod 777 /tmp/backups
+          psql "$DB" -qc "create table smoke (id int primary key, word text); insert into smoke values (1, 'عَرْضة')"
+          psql "$DB" -qc "create database restore_smoke"
+          run() { docker run --rm --network host -v /tmp/backups:/backups -e ARDA_BACKUP_LOCAL_DIR=/backups "$@"; }
+          run -e ARDA_BACKUP_MODE=once -e ARDA_BACKUP_DATABASE_URL="$DB" smoke/arda-backup:test
+          find /tmp/backups -name 'arda-*.dump' | grep -q dump
+          # Restoring into the production URL must be refused (exit 2).
+          set +e; run --entrypoint /opt/arda-backup/restore.sh -e ARDA_BACKUP_DATABASE_URL="$DB" \
+            -e ARDA_RESTORE_DATABASE_URL="$DB" smoke/arda-backup:test latest; code=$?; set -e
+          test "$code" = 2
+          run --entrypoint /opt/arda-backup/restore.sh -e ARDA_BACKUP_DATABASE_URL="$DB" \
+            -e ARDA_RESTORE_DATABASE_URL="${DB%/arda}/restore_smoke" smoke/arda-backup:test latest
+          test "$(psql "${DB%/arda}/restore_smoke" -tAc 'select word from smoke where id = 1')" = 'عَرْضة'
+      # Known critical vulnerabilities with a fix available stop the release before anything
+      # is published; accepted exceptions (with their reason) live in .trivyignore.
+      - name: scan image (Trivy, critical and fixable)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: smoke/arda-${{ matrix.name }}:test
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+          trivyignores: .trivyignore
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      # The image that passed the smoke tests and the scan is the one published: tagged and
+      # pushed, not rebuilt.
+      - name: publish image
+        env:
+          IMAGE: ${{ env.IMAGE_PREFIX }}-${{ matrix.name }}
+          TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          docker tag "smoke/arda-${{ matrix.name }}:test" "$IMAGE:$TAG"
+          docker tag "smoke/arda-${{ matrix.name }}:test" "$IMAGE:latest"
+          docker push "$IMAGE:$TAG"
+          docker push "$IMAGE:latest"
+
+  # Staging (ADR-0006): deploys by digest, so a later production job can promote exactly
+  # these images.
+  deploy-staging:
+    name: deploy to staging
+    needs: images
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    # The GitHub environment `staging`: its variables and secrets (CAPROVER_SERVER,
+    # CAPROVER_APP_TOKEN_*) win over the repository's, and deploys show under Environments.
+    environment:
+      name: staging
+      url: ${{ vars.ARDA_STAGING_URL || 'https://arda-stg.siralabs.org' }}
+    permissions:
+      contents: read
+      packages: read
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
+    outputs:
+      deployed: ${{ steps.gate.outputs.deployed }}
+      url: ${{ vars.ARDA_STAGING_URL || 'https://arda-stg.siralabs.org' }}
+    env:
+      # Step conditions cannot read secrets; the backup app is optional until it exists.
+      HAS_BACKUP: ${{ secrets.CAPROVER_APP_TOKEN_BACKUP != '' }}
+    steps:
+      - name: image prefix
+        run: echo "IMAGE_PREFIX=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/arda" >> "$GITHUB_ENV"
+      # New packages in an organization start private: read them with the workflow's token.
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: image digests
+        id: digests
+        env:
+          TAG: ${{ needs.images.outputs.tag }}
+        run: |
+          for name in api web backup; do
+            digest=$(docker buildx imagetools inspect "$IMAGE_PREFIX-$name:$TAG" --format '{{.Manifest.Digest}}')
+            case "$digest" in sha256:*) ;; *) echo "::error::no digest for $name:$TAG"; exit 1 ;; esac
+            echo "$name=$IMAGE_PREFIX-$name@$digest" >> "$GITHUB_OUTPUT"
+          done
+      # api and web together or not at all; backup once its app exists.
+      - name: staging is set up
+        id: gate
+        env:
+          SERVER: ${{ vars.CAPROVER_SERVER }}
+          API: ${{ secrets.CAPROVER_APP_TOKEN_API }}
+          WEB: ${{ secrets.CAPROVER_APP_TOKEN_WEB }}
+        run: |
+          if [ -z "$SERVER" ] || { [ -z "$API" ] && [ -z "$WEB" ]; }; then
+            echo "deployed=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Staging is not set up (CAPROVER_SERVER or the app tokens missing); skipping the deploy"
+          elif [ -n "$API" ] && [ -n "$WEB" ]; then
+            echo "deployed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::error::Staging is partly configured: set both CAPROVER_APP_TOKEN_API and _WEB, or neither"
+            exit 1
+          fi
+      # Order matters: the api migrates the schema before the web app expects it.
+      - name: deploy api
+        if: steps.gate.outputs.deployed == 'true'
+        uses: caprover/deploy-from-github@v2
+        with:
+          server: ${{ vars.CAPROVER_SERVER }}
+          app: ${{ vars.CAPROVER_APP_API || 'arda-api' }}
+          token: ${{ secrets.CAPROVER_APP_TOKEN_API }}
+          image: ${{ steps.digests.outputs.api }}
+      - name: deploy backup
+        if: steps.gate.outputs.deployed == 'true' && env.HAS_BACKUP == 'true'
+        uses: caprover/deploy-from-github@v2
+        with:
+          server: ${{ vars.CAPROVER_SERVER }}
+          app: ${{ vars.CAPROVER_APP_BACKUP || 'arda-backup' }}
+          token: ${{ secrets.CAPROVER_APP_TOKEN_BACKUP }}
+          image: ${{ steps.digests.outputs.backup }}
+      - name: deploy web
+        if: steps.gate.outputs.deployed == 'true'
+        uses: caprover/deploy-from-github@v2
+        with:
+          server: ${{ vars.CAPROVER_SERVER }}
+          app: ${{ vars.CAPROVER_APP_WEB || 'arda-web' }}
+          token: ${{ secrets.CAPROVER_APP_TOKEN_WEB }}
+          image: ${{ steps.digests.outputs.web }}
+
+  verify-staging:
+    name: verify staging
+    needs: [images, deploy-staging]
+    runs-on: ubuntu-latest
+    if: needs.deploy-staging.outputs.deployed == 'true'
+    timeout-minutes: 12
+    steps:
+      - name: staging reports the new version
+        env:
+          URL: ${{ needs.deploy-staging.outputs.url }}
+          TAG: ${{ needs.images.outputs.tag }}
+        run: |
+          for i in $(seq 1 60); do
+            api=$(curl -fsS "$URL/healthz" || true)
+            web=$(curl -fsS "$URL/healthz-web" || true)
+            if echo "$api" | grep -q "\"version\":\"$TAG\"" && echo "$api" | grep -q '"status":"ok"' \
+              && echo "$web" | grep -q "\"version\":\"$TAG\""; then
+              echo "staging runs $TAG"; exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::staging did not report $TAG within 10 minutes"; echo "$api"; echo "$web"; exit 1

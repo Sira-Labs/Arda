@@ -1,0 +1,378 @@
+/**
+ * Sign-in with Better Auth (ADR-0004), by email only: the learner enters an email address and
+ * gets a link, and the click signs them in with an httpOnly session cookie. The same mail
+ * carries a six-digit code for the same sign-in in another browser: a mail app that opens
+ * links in its own built-in browser (Yahoo, Gmail) keeps the session there. Web and API share
+ * one origin (Caddy proxies /api), so there are no tokens in the browser's storage.
+ *
+ * Better Auth's field names are mapped onto our snake_case tables (migration 0003); user ids
+ * are UUIDs, so records keep working with the sync tables.
+ */
+import { randomUUID } from 'node:crypto';
+import { betterAuth } from 'better-auth';
+import { bearer, emailOTP, magicLink } from 'better-auth/plugins';
+import { passkeyPlugin } from './passkeys.js';
+import type pg from 'pg';
+import { isRole, type Actor, type Role } from '../authz/policies.js';
+import {
+  DEFAULT_LANGUAGE,
+  fromAcceptLanguage,
+  isLanguage,
+  type Language,
+} from '../i18n/languages.js';
+import type { AuthResolver } from './resolver.js';
+import type { Mailer } from './mailer.js';
+
+/** Where the auth routes live; Caddy forwards /api to this service. */
+export const AUTH_BASE_PATH = '/api/v1/auth';
+/** A magic link (and its code) is valid this long (seconds). */
+export const MAGIC_LINK_TTL_SEC = 15 * 60;
+/** Wrong guesses allowed per code; then a new link (and code) is needed. */
+export const SIGN_IN_CODE_ATTEMPTS = 5;
+/** Better Auth's key for the sign-in code of an address (see its email-otp plugin). */
+const signInCodeKey = (email: string) => `sign-in-otp-${email.toLowerCase()}`;
+/** Sessions last 30 days and are extended once a day while used. */
+const SESSION_TTL_SEC = 30 * 24 * 60 * 60;
+const SESSION_REFRESH_SEC = 24 * 60 * 60;
+
+export interface AuthOptions {
+  pool: pg.Pool;
+  /** ARDA_AUTH_SECRET: signs cookies and tokens. */
+  secret: string;
+  /** Public URL of the app, e.g. https://arda.example.org (links in mails point here). */
+  publicUrl: string;
+  /** Every origin the app is served from (the public URL's included). */
+  trustedOrigins?: readonly string[];
+  mailer: Mailer;
+  /** Secure cookies and rate limits on (prod); tests may switch rate limits on explicitly. */
+  production: boolean;
+  rateLimit?: boolean;
+}
+
+const timestamps = { createdAt: 'created_at', updatedAt: 'updated_at' } as const;
+
+export function createAuth(options: AuthOptions) {
+  const auth = betterAuth({
+    appName: 'ʿArḍa',
+    secret: options.secret,
+    baseURL: options.publicUrl,
+    basePath: AUTH_BASE_PATH,
+    trustedOrigins: [options.publicUrl, ...(options.trustedOrigins ?? [])],
+    database: options.pool,
+    // Magic link is the only way in (no passwords to forget or leak).
+    emailAndPassword: { enabled: false },
+    user: {
+      modelName: 'users',
+      fields: { emailVerified: 'email_verified', ...timestamps },
+      additionalFields: {
+        // Platform role (ADR-0005); only admins change it, never the sign-up request.
+        role: { type: 'string', required: false, defaultValue: 'student', input: false },
+        // de, en, fr or ar (ADR-0020); set through PATCH /api/v1/account/settings, never here.
+        language: { type: 'string', required: false, input: false },
+        // IANA time zone (e.g. Europe/Zurich); set through PATCH /api/v1/me, never here.
+        timeZone: {
+          type: 'string',
+          required: false,
+          input: false,
+          fieldName: 'time_zone',
+        },
+        // Set by an admin (story A4); a disabled user has no working session.
+        disabledAt: {
+          type: 'date',
+          required: false,
+          input: false,
+          fieldName: 'disabled_at',
+        },
+      },
+    },
+    session: {
+      modelName: 'sessions',
+      fields: {
+        userId: 'user_id',
+        expiresAt: 'expires_at',
+        ipAddress: 'ip_address',
+        userAgent: 'user_agent',
+        ...timestamps,
+      },
+      expiresIn: SESSION_TTL_SEC,
+      updateAge: SESSION_REFRESH_SEC,
+      additionalFields: {
+        // When this session last confirmed the second factor (admins, story A4).
+        secondFactorAt: {
+          type: 'date',
+          required: false,
+          input: false,
+          fieldName: 'second_factor_at',
+        },
+      },
+    },
+    account: {
+      modelName: 'accounts',
+      fields: {
+        userId: 'user_id',
+        accountId: 'account_id',
+        providerId: 'provider_id',
+        accessToken: 'access_token',
+        refreshToken: 'refresh_token',
+        idToken: 'id_token',
+        accessTokenExpiresAt: 'access_token_expires_at',
+        refreshTokenExpiresAt: 'refresh_token_expires_at',
+        ...timestamps,
+      },
+    },
+    verification: {
+      modelName: 'verifications',
+      fields: { expiresAt: 'expires_at', ...timestamps },
+    },
+    rateLimit: {
+      enabled: options.rateLimit ?? options.production,
+      storage: 'database',
+      modelName: 'rate_limits',
+      fields: { lastRequest: 'last_request' },
+      window: 60,
+      max: 60,
+      customRules: {
+        // Mails cost trust: at most 5 sign-in links per 10 minutes and client.
+        '/sign-in/magic-link': { window: 600, max: 5 },
+        '/magic-link/verify': { window: 60, max: 10 },
+        // With 5 guesses per code and at most 5 codes per 10 minutes, guessing stays hopeless.
+        '/sign-in/email-otp': { window: 600, max: 10 },
+        '/passkey/generate-authenticate-options': { window: 60, max: 20 },
+        '/passkey/verify-authentication': { window: 60, max: 10 },
+        '/passkey/generate-register-options': { window: 600, max: 5 },
+        '/passkey/verify-registration': { window: 600, max: 5 },
+      },
+    },
+    advanced: {
+      cookiePrefix: 'arda',
+      useSecureCookies: options.production,
+      database: { generateId: () => randomUUID() },
+      // Caddy (arda-web) sets X-Real-IP to the client address it resolved from nginx's
+      // X-Forwarded-For and overwrites any value the client sent. The first hop of
+      // X-Forwarded-For is client-controlled and must never be used for rate limits.
+      ipAddress: { ipAddressHeaders: ['x-real-ip'] },
+    },
+    plugins: [
+      // The native app keeps its session as a bearer token (ADR-0019); only tokens signed
+      // with the auth secret are accepted. The web keeps the httpOnly cookie.
+      bearer({ requireSignature: true }),
+      magicLink({
+        expiresIn: MAGIC_LINK_TTL_SEC,
+        storeToken: 'hashed',
+        sendMagicLink: async ({ email, url, metadata }, ctx) => {
+          // One valid code per address: a new mail replaces the code of the last one.
+          await options.pool.query('delete from verifications where identifier = $1', [
+            signInCodeKey(email),
+          ]);
+          const code = await auth.api.createVerificationOTP({
+            body: { email, type: 'sign-in' },
+          });
+          const language = await mailLanguage(
+            options.pool,
+            email,
+            metadata?.language,
+            ctx?.request?.headers.get('accept-language')
+          );
+          await options.mailer.sendMagicLink(email, url, code, language);
+        },
+      }),
+      // Passkeys (update 2026-09-26): optional, added in the settings after signing in.
+      passkeyPlugin(options.publicUrl),
+      // Codes are only created with a magic link (above); the plugin's own mail routes stay
+      // closed (PUBLIC_AUTH_ENDPOINTS), so this sender is never used.
+      emailOTP({
+        expiresIn: MAGIC_LINK_TTL_SEC,
+        storeOTP: 'hashed',
+        allowedAttempts: SIGN_IN_CODE_ATTEMPTS,
+        sendVerificationOTP: async () => {
+          throw new Error('sign-in codes are only sent with a magic link');
+        },
+      }),
+    ],
+  });
+  return auth;
+}
+
+export type ArdaAuth = ReturnType<typeof createAuth>;
+
+/**
+ * The language of the sign-in mail (ADR-0020): the choice on the sign-in page (sent as
+ * `metadata.language`), else the language stored for this address, else the browser's
+ * Accept-Language, else German.
+ */
+export async function mailLanguage(
+  pool: Pick<pg.Pool, 'query'>,
+  email: string,
+  chosen: unknown,
+  acceptLanguage: string | null | undefined
+): Promise<Language> {
+  if (isLanguage(chosen)) return chosen;
+  const { rows } = await pool.query<{ language: string | null }>(
+    // Better Auth stores addresses in lower case; this keeps the unique index usable.
+    'select language from users where email = lower($1)',
+    [email]
+  );
+  const stored = rows[0]?.language;
+  if (isLanguage(stored)) return stored;
+  return fromAcceptLanguage(acceptLanguage) ?? DEFAULT_LANGUAGE;
+}
+
+/**
+ * The only Better Auth endpoints reachable from outside (relative to AUTH_BASE_PATH). Better
+ * Auth ships many more (password reset, email change, account deletion, session listing with
+ * raw tokens); none of them is needed for sign-in by link or code, and each is attack surface.
+ * Sessions are managed through /api/v1/account instead, which never returns a token.
+ */
+export const PUBLIC_AUTH_ENDPOINTS: readonly string[] = [
+  'POST /sign-in/magic-link',
+  'GET /magic-link/verify',
+  'POST /sign-in/email-otp',
+  // Passkeys: sign in, and add one to the signed-in account. The plugin's list, update and
+  // delete stay closed; /api/v1/account/passkeys lists and removes them without key material.
+  'GET /passkey/generate-authenticate-options',
+  'POST /passkey/verify-authentication',
+  'GET /passkey/generate-register-options',
+  'POST /passkey/verify-registration',
+  'POST /sign-out',
+];
+
+/** Is this request one of the PUBLIC_AUTH_ENDPOINTS? */
+export function isPublicAuthEndpoint(method: string, pathname: string): boolean {
+  if (!pathname.startsWith(`${AUTH_BASE_PATH}/`)) return false;
+  const endpoint = `${method.toUpperCase()} ${pathname.slice(AUTH_BASE_PATH.length)}`;
+  return PUBLIC_AUTH_ENDPOINTS.includes(endpoint);
+}
+
+/** Query and body fields that name where to go after signing in. */
+const REDIRECT_FIELDS = [
+  'callbackURL',
+  'errorCallbackURL',
+  'newUserCallbackURL',
+] as const;
+
+/** Only paths inside the app are allowed as redirect targets ("/settings", not "//evil"). */
+export function isSafeRedirect(value: unknown): boolean {
+  return typeof value === 'string' && /^\/(?![/\\])/.test(value);
+}
+
+/**
+ * Defence in depth against open redirects: every redirect target must be a path inside the
+ * app, whether it arrives in the sign-in request or in the link. Returns a 400 response for
+ * an unsafe request, or null to let Better Auth handle it.
+ */
+export async function rejectUnsafeRedirect(request: Request): Promise<Response | null> {
+  const url = new URL(request.url);
+  const values: unknown[] = REDIRECT_FIELDS.map((field) => url.searchParams.get(field));
+  if (
+    request.method === 'POST' &&
+    request.headers.get('content-type')?.includes('json')
+  ) {
+    let body: unknown;
+    try {
+      body = await request.clone().json();
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      return null; // Malformed JSON: Better Auth answers it itself.
+    }
+    if (body && typeof body === 'object') {
+      for (const field of REDIRECT_FIELDS)
+        values.push((body as Record<string, unknown>)[field]);
+    }
+  }
+  const unsafe = values.some((v) => v !== null && v !== undefined && !isSafeRedirect(v));
+  return unsafe ? Response.json({ error: 'invalid_redirect' }, { status: 400 }) : null;
+}
+
+/** The signed-in user, as the app sees it. */
+export interface Me {
+  id: string;
+  email: string;
+  name: string | null;
+  role: Role;
+  timeZone: string | null;
+  /** Null until chosen; the app then uses the browser's language (ADR-0020). */
+  language: Language | null;
+}
+
+/** The signed-in user plus the session of this request (to mark "this device"). */
+export interface SessionActor extends Actor {
+  sessionId: string;
+  email: string;
+}
+
+/** A confirmed second factor counts this long for admin actions. */
+export const SECOND_FACTOR_TTL_MS = 12 * 60 * 60 * 1000;
+
+/** Session lookup for other routes (sync, /me): the session cookie identifies the user. */
+export class SessionResolver implements AuthResolver {
+  constructor(private readonly auth: ArdaAuth) {}
+
+  async me(headers: Headers): Promise<Me | null> {
+    return (await this.current(headers))?.me ?? null;
+  }
+
+  /** The actor with the id of the session the request came with. */
+  async sessionActor(headers: Headers): Promise<SessionActor | null> {
+    const current = await this.current(headers);
+    return current
+      ? {
+          id: current.me.id,
+          role: current.me.role,
+          sessionId: current.sessionId,
+          email: current.me.email,
+          secondFactor: current.secondFactor,
+        }
+      : null;
+  }
+
+  private async current(
+    headers: Headers
+  ): Promise<{ me: Me; sessionId: string; secondFactor: boolean } | null> {
+    const session = await this.auth.api.getSession({ headers });
+    if (!session) return null;
+    const user = session.user as typeof session.user & {
+      role?: string;
+      timeZone?: string;
+      language?: string | null;
+      disabledAt?: Date | string | null;
+    };
+    // A disabled user is signed out everywhere, even with a session that is still valid.
+    if (user.disabledAt) return null;
+    const confirmed = (session.session as { secondFactorAt?: Date | string | null })
+      .secondFactorAt;
+    const secondFactor =
+      confirmed != null &&
+      Date.now() - new Date(confirmed).getTime() < SECOND_FACTOR_TTL_MS;
+    // An unknown value in the database never grants more than a student has.
+    const role = isRole(user.role) ? user.role : 'student';
+    return {
+      sessionId: session.session.id,
+      secondFactor,
+      me: {
+        id: user.id,
+        email: user.email,
+        name: user.name || null,
+        role,
+        timeZone: user.timeZone || null,
+        language: isLanguage(user.language) ? user.language : null,
+      },
+    };
+  }
+
+  async actor(headers: Headers): Promise<Actor | null> {
+    return this.sessionActor(headers);
+  }
+}
+
+/** Tries each resolver in turn; the first that knows the request wins. */
+export class ChainResolver implements AuthResolver {
+  constructor(private readonly resolvers: readonly AuthResolver[]) {}
+
+  async actor(headers: Headers): Promise<Actor | null> {
+    for (const resolver of this.resolvers) {
+      const actor = await resolver.actor(headers);
+      if (actor) return actor;
+    }
+    return null;
+  }
+}

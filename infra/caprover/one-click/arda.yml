@@ -1,0 +1,124 @@
+# ʿArḍa — CapRover one-click template: database, api and web (ADR-0003, ADR-0006).
+#
+# Use: CapRover → Apps → One-Click Apps/Databases → ">> TEMPLATE <<" → paste this file →
+#      app name "arda" → Deploy.
+# Creates: arda-db (Postgres 17, internal), arda-api (sign-in, accounts; internal) and
+#          arda-web (Caddy serving the offline PWA and proxying /api; public domain).
+# Images are built by .github/workflows/release.yml and published on GHCR.
+# Backups: arda-backup.yml. Runbook: docs/ops/caprover-deployment.md
+captainVersion: 4
+services:
+  $$cap_appname-db:
+    image: postgres:$$cap_pg_tag
+    restart: always
+    volumes:
+      - $$cap_appname-pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: arda
+      POSTGRES_DB: arda
+      POSTGRES_PASSWORD: $$cap_db_password
+    caproverExtra:
+      notExposeAsWebApp: 'true'
+
+  # Runs DB migrations on start, then serves /healthz and /api/* on port 8000.
+  $$cap_appname-api:
+    image: ghcr.io/sira-labs/arda-api:$$cap_tag
+    restart: always
+    depends_on:
+      - $$cap_appname-db
+    environment:
+      ARDA_ENV: prod
+      ARDA_PUBLIC_URL: https://$$cap_domain
+      ARDA_DATABASE_URL: postgres://arda:$$cap_db_password@srv-captain--$$cap_appname-db:5432/arda
+      ARDA_AUTH_SECRET: $$cap_auth_secret
+      # Sign-in mails (link and code) through the Google Workspace SMTP relay, as for Suffa.
+      # User/password only if the relay requires SMTP authentication. Empty sender = no sign-in.
+      ARDA_SMTP_HOST: $$cap_smtp_host
+      ARDA_SMTP_PORT: '587'
+      ARDA_SMTP_USER: $$cap_smtp_user
+      ARDA_SMTP_PASSWORD: $$cap_smtp_password
+      ARDA_MAIL_FROM: $$cap_mail_from
+      # Optional: translates teachers' written remarks into each student's language (ADR-0020).
+      ARDA_ANTHROPIC_API_KEY: $$cap_anthropic_key
+    caproverExtra:
+      containerHttpPort: '8000'
+      notExposeAsWebApp: 'true'
+
+  $$cap_appname-web:
+    image: ghcr.io/sira-labs/arda-web:$$cap_tag
+    restart: always
+    depends_on:
+      - $$cap_appname-api
+    environment:
+      ARDA_API_UPSTREAM: srv-captain--$$cap_appname-api:8000
+      ARDA_MEDIA_UPSTREAM: srv-captain--$$cap_rustfs_app:9000
+    caproverExtra:
+      containerHttpPort: '80'
+
+caproverOneClickApp:
+  variables:
+    - id: $$cap_domain
+      label: Public domain
+      defaultValue: arda-stg.siralabs.org
+      description: The domain you will connect to arda-web (links in sign-in mails point here; passkeys are bound to it).
+      validRegex: /^[a-z0-9.-]+$/
+    - id: $$cap_tag
+      label: Image tag
+      defaultValue: latest
+      description: latest follows main. For production use an immutable sha-<short> tag; CI redeploys with digests.
+      validRegex: /^[A-Za-z0-9._-]+$/
+    - id: $$cap_pg_tag
+      label: Postgres image tag
+      defaultValue: '17'
+      description: Postgres 17. Pin a minor version for production and upgrade deliberately after a pg_dump.
+      validRegex: /^[A-Za-z0-9._-]+$/
+    - id: $$cap_db_password
+      label: Database password
+      defaultValue: $$cap_gen_random_hex(24)
+      description: Generated. Hex is safe inside a database URL.
+      validRegex: /^[A-Za-z0-9]{16,}$/
+    - id: $$cap_auth_secret
+      label: Auth secret
+      defaultValue: $$cap_gen_random_hex(48)
+      description: Generated. Signs sessions and seals admin 2FA secrets; the api refuses to start in prod with a short or placeholder secret.
+      validRegex: /^[A-Za-z0-9]{32,}$/
+    - id: $$cap_smtp_host
+      label: SMTP host (sign-in mails)
+      defaultValue: smtp-relay.gmail.com
+      description: Google Workspace SMTP relay (Admin console → Apps → Google Workspace → Gmail → Routing → SMTP relay service).
+    - id: $$cap_smtp_user
+      label: SMTP user (optional)
+      defaultValue: ''
+      description: Only if the relay requires SMTP authentication; then a Workspace user of your domain.
+    - id: $$cap_smtp_password
+      label: SMTP password (optional)
+      defaultValue: ''
+      description: App password of that user, never the account password.
+    - id: $$cap_mail_from
+      label: Sender
+      defaultValue: ''
+      description: 'e.g. ʿArḍa <noreply@siralabs.org>. Empty = the api runs, but sign-in stays off.'
+    - id: $$cap_anthropic_key
+      label: Anthropic API key (optional)
+      defaultValue: ''
+      description: Translates teachers' written remarks into each student's language. Empty = quick remarks only.
+    - id: $$cap_rustfs_app
+      label: Existing RustFS app name
+      defaultValue: rustfs
+      description: The shared RustFS app (Suffa, Tabayyun). Used for /media once recordings ship (ADR-0012).
+      validRegex: /^[a-z0-9-]+$/
+  instructions:
+    start: >-
+      Deploys ʿArḍa (Tajwīd learning with your teacher) in the same layout as Suffa: Postgres 17,
+      the api and the web app (Caddy + PWA). Use the app name "arda" so the apps are called
+      arda-db, arda-api and arda-web.
+    end: >-
+      Done. Next: (1) $$cap_appname-web → HTTP Settings → connect $$cap_domain, Enable HTTPS,
+      Force HTTPS. (2) Check https://$$cap_domain/healthz → "status":"ok" and "auth":"enabled".
+      (3) For automatic deploys enable App Tokens on api and web, store them as GitHub secrets
+      CAPROVER_APP_TOKEN_API / _WEB in the environment "staging" and set its variable
+      CAPROVER_SERVER=https://captain.<root-domain>. (4) Add backups with arda-backup.yml.
+  displayName: ʿArḍa (db + api + web)
+  isOfficial: false
+  description: Tajwīd learning with your teacher (العَرْضة) — database, api and web app.
+  documentation: https://github.com/Sira-Labs/arda/blob/main/docs/ops/caprover-deployment.md

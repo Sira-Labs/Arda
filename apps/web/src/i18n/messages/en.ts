@@ -1,0 +1,156 @@
+/** English (ADR-0020); typed against the German source catalog. */
+import type { Messages } from './de';
+
+export const en: Messages = {
+  nav: {
+    brand: 'ʿArḍa',
+    label: 'Main navigation',
+    today: 'Today',
+    path: 'Path',
+    mushaf: 'Muṣḥaf',
+    lab: 'Lab',
+    sheikh: 'Sheikh',
+  },
+  language: { label: 'Language' },
+  today: {
+    eyebrow: 'Today',
+    greeting: (name) => (name ? `Assalāmu ʿalaikum, ${name}` : 'Assalāmu ʿalaikum'),
+    account: 'Account',
+    signIn: 'Sign in',
+    offline: 'Offline – keep learning; your sheikh sees it the next time you connect.',
+    fromSheikh: 'From my sheikh',
+    noTasks: 'No assignments yet',
+    noTasksHint:
+      'As soon as he marks a passage in the muṣḥaf for you, it appears here at the top, with a due date.',
+    connect: 'Connect with your sheikh',
+    connectHint: 'Sign in and join his ḥalaqa by link or QR code.',
+    nextUnit: 'Next on the path · Unit 2',
+    iqlabTitle: 'Iqlāb – nūn becomes mīm before bāʾ',
+    iqlabSteps: [
+      'Spot nūn sākina or tanwīn before ب',
+      'Turn the “n” into an “m”',
+      'Close the lips and hold the ghunna for 2 counts',
+      'Open the lips into the bāʾ',
+    ],
+    legend: 'Colours in the muṣḥaf',
+  },
+  rules: {
+    ghunna: { name: 'Ghunna', hint: 'nasal sound, 2 counts (ikhfāʾ, idghām, iqlāb)' },
+    qalqala: { name: 'Qalqala', hint: 'echo of ق ط ب ج د with sukūn' },
+    silent: { name: 'Silent', hint: 'written, not pronounced' },
+    'madd-2': { name: 'Madd 2', hint: 'natural lengthening, 2 counts' },
+    'madd-4': { name: 'Madd 4–5', hint: 'joined or separated lengthening' },
+    'madd-6': { name: 'Madd 6', hint: 'necessary lengthening, 6 counts' },
+  },
+  signIn: {
+    eyebrow: 'Sign in',
+    title: 'Welcome to ʿArḍa',
+    intro:
+      'Sign in so your sheikh can hear your recitations and give you assignments. No password: we send you a link and a code.',
+    linkFailed: 'The link has expired or was already used. Just ask for a new one.',
+    email: 'Email address',
+    emailPlaceholder: 'you@example.com',
+    sendLink: 'Send link',
+    sentTo: (email) => `✓ Link sent to ${email}`,
+    sentHint:
+      'Open the email on this device and tap “Sign in to ʿArḍa”. The link and the code are valid for 15 minutes. Nothing arrived? Check your spam folder too.',
+    codeLabel:
+      'Does your mail app open the link in its own browser? Then enter the 6-digit code from the email here:',
+    code: 'Sign-in code',
+    confirm: 'Sign in',
+    resend: 'Send again',
+    otherEmail: 'Use another email address',
+    sendFailed: 'The sign-in link could not be sent.',
+    signInFailed: 'Signing in did not work.',
+    passkey: 'Sign in with a passkey',
+  },
+  account: {
+    eyebrow: 'Account',
+    roles: { student: 'Student', teacher: 'Sheikh / teacher', admin: 'Admin' },
+    devices: 'Signed-in devices',
+    unknownDevice: 'Unknown device',
+    thisDevice: 'this device',
+    endOthers: 'Sign out other devices',
+    endedOthers: (count) =>
+      count === 1 ? '1 other device signed out.' : `${count} other devices signed out.`,
+    addPasskey: 'Add a passkey',
+    passkeyAdded: 'Passkey added.',
+    signOut: 'Sign out',
+    languageHint:
+      'You see the app, receive emails and read your sheikh’s feedback in this language.',
+  },
+  passkey: {
+    'already-added': 'This device already has a passkey for ʿArḍa.',
+    'stale-session':
+      'For your safety: sign in again (link or code), then you can add a passkey.',
+    'unknown-passkey':
+      'ʿArḍa does not know this passkey (any more). Sign in with a link or code.',
+    'not-verified': 'Please confirm with your face, fingerprint or your device PIN.',
+    'rate-limited': 'Too many attempts – please try again in a few minutes.',
+    offline: 'No connection – try again in a moment.',
+    failed: 'That did not work. Try again, or use a link or code.',
+  },
+  errors: {
+    offline: 'No connection.',
+    unauthorized: 'Please sign in.',
+    forbidden: 'You are not allowed to do this.',
+    not_found: 'Not found.',
+    invalid_body: 'The input is not valid.',
+    invalid_redirect: 'Invalid return address.',
+    cross_origin: 'This request came from another site.',
+    INVALID_OTP: 'The code is not correct.',
+    OTP_EXPIRED: 'The code has expired – ask for a new link.',
+    TOO_MANY_ATTEMPTS: 'Too many wrong attempts – ask for a new link.',
+    generic: (status) => `Server error (${status}).`,
+  },
+  remarks: {
+    ghunnaShort: 'Ghunna too short – hold it for 2 counts.',
+    ghunnaLong: 'Ghunna too long – only 2 counts.',
+    nunTooClear: 'Nūn too clear – it is hidden here (ikhfāʾ).',
+    qalqalaMissing: 'Qalqala missing – let the sound bounce back briefly.',
+    maddShort: 'Madd too short – lengthen it more.',
+    good: 'Good, keep it like this.',
+  },
+  feedback: {
+    eyebrow: 'For the sheikh',
+    title: 'Feedback in your students’ language',
+    intro:
+      'Write in your language. Each student reads quick remarks in their own language; ʿArḍa translates free text, and tajwīd terms and āyāt stay unchanged.',
+    quick: 'Quick remarks',
+    write: 'Your own feedback',
+    from: 'I write in',
+    to: 'Student reads in',
+    placeholder: 'e.g. Your ghunna on “min sharri” was too short.',
+    preview: 'What your student reads',
+    translate: 'Show translation',
+    machine: 'machine-translated',
+    original: 'Original',
+    sameLanguage: 'Same language – no translation needed.',
+    unavailable: {
+      not_configured: 'Translation is not set up on this server.',
+      limit: 'Daily translation limit reached – it continues tomorrow.',
+      refused: 'Translation not available. Your student gets the original.',
+      failed: 'Translation not possible right now. Your student gets the original.',
+    },
+  },
+  soon: {
+    eyebrow: 'In progress',
+    notFound: { title: 'Not found', text: 'This page does not exist.' },
+    path: {
+      title: 'The path',
+      text: 'Eight units from the letter to the riwāya. Unit 2 (nūn sākina and tanwīn) comes first, from your sheikh’s sheet.',
+    },
+    mushaf: {
+      title: 'The muṣḥaf',
+      text: 'The IndoPak muṣḥaf with tajwīd colours: tap a letter, hear the reciter word by word, slowly and on a loop.',
+    },
+    lab: {
+      title: 'The letter lab',
+      text: 'Where the sound comes from: the makhārij, drawn and animated, checked by your sheikh.',
+    },
+    sheikh: {
+      title: 'My sheikh',
+      text: 'Your ḥalaqa, his assignments on the page, your recitations in his listening queue and the ʿarḍ log.',
+    },
+  },
+};

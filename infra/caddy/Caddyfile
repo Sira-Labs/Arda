@@ -1,0 +1,80 @@
+# arda-web edge. CapRover's nginx terminates TLS; Caddy serves the PWA on plain HTTP :80.
+# Upstreams are CapRover service names on the captain overlay network, e.g.
+#   ARDA_API_UPSTREAM=srv-captain--arda-api:8000
+#   ARDA_MEDIA_UPSTREAM=srv-captain--rustfs:9000
+# Without arda-api, /api answers 502; the offline app is unaffected.
+{
+	admin off
+	# CapRover's nginx (on the private overlay network) is the only hop in front of Caddy.
+	# Trusting private ranges lets Caddy read the client address nginx appends to
+	# X-Forwarded-For; "strict" takes the right-most untrusted entry, so a client cannot
+	# choose its own address by sending X-Forwarded-For itself.
+	servers {
+		trusted_proxies static private_ranges
+		trusted_proxies_strict
+	}
+}
+
+:80 {
+	encode zstd gzip
+
+	header {
+		# style-src needs 'unsafe-inline' for React style attributes. Fonts are bundled ('self').
+		# Reciter audio is streamed from its publishers with credit (ADR-0011); each host is added
+		# to media-src when its source is switched on, never a wildcard.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+		# The app is HTTPS-only (CapRover forces HTTPS); browsers must never try plain HTTP.
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# The microphone is how a student recites (ADR-0012); the camera stays off until live
+		# lessons ship (ADR-0015).
+		Permissions-Policy "camera=(), microphone=(self), geolocation=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+	}
+
+	# Liveness and deployed version of the web image, independent of the API. It needs its
+	# own `handle`: a bare `respond` sorts after `handle` blocks, so the SPA fallback below
+	# used to answer it with index.html (still 200, but it proved nothing).
+	handle /healthz-web {
+		header Content-Type application/json
+		header Cache-Control no-store
+		respond `{"status":"ok","role":"web","version":"{$ARDA_VERSION:dev}"}` 200
+	}
+
+	@api path /api/* /healthz
+	handle @api {
+		reverse_proxy {$ARDA_API_UPSTREAM:srv-captain--arda-api:8000} {
+			# The one client address the API trusts (sign-in rate limits, sessions). Always
+			# overwritten here, so a value sent by the client never reaches the API.
+			header_up X-Real-IP {client_ip}
+		}
+	}
+
+	# Presigned S3 URLs signed by the API for the internal RustFS host: recordings (ADR-0012).
+	@media {
+		path /media/*
+		method GET HEAD PUT
+	}
+	handle @media {
+		uri strip_prefix /media
+		reverse_proxy {$ARDA_MEDIA_UPSTREAM:srv-captain--rustfs:9000} {
+			header_up Host {$ARDA_MEDIA_UPSTREAM:srv-captain--rustfs:9000}
+		}
+	}
+
+	handle {
+		root * /srv
+
+		# Service worker, manifest and shell must revalidate so updates roll out immediately.
+		@revalidate path / /index.html /sw.js /registerSW.js /manifest.webmanifest /workbox-*.js
+		header @revalidate Cache-Control "no-cache"
+		# Vite emits content-hashed assets.
+		@hashed path /assets/*
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+
+		try_files {path} /index.html
+		file_server
+	}
+}

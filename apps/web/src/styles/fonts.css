@@ -1,0 +1,21 @@
+/*
+ * Typefaces (docs/spec/04-design-system.md), all SIL OFL and bundled for offline use:
+ * Manrope (UI), Fraunces (headings), IBM Plex Sans Arabic (the Arabic interface, ADR-0020),
+ * Amiri (Arabic words in Latin text), Amiri Quran (Madīna script) via
+ * @fontsource; DigitalKhatt IndoPak (the IndoPak muṣḥaf, © Amine Anane and Tarteel Inc.)
+ * from public/fonts, converted to WOFF2 unchanged (licence next to it).
+ */
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/fraunces';
+@import '@fontsource/amiri/400.css';
+@import '@fontsource/amiri/700.css';
+@import '@fontsource/amiri-quran';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-700.css';
+
+@font-face {
+  font-family: 'DigitalKhatt IndoPak';
+  src: url('/fonts/DigitalKhattIndoPak.woff2') format('woff2');
+  font-display: swap;
+}
