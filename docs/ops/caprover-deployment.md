@@ -149,9 +149,10 @@ and/or SMTP authentication, TLS required. ʿArḍa greets the relay with the hos
 
 ## 9. Troubleshooting
 
-| Symptom                                              | Cause                                                        | Fix                                                            |
-| ---------------------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------- |
-| api log `config.invalid`                             | placeholder or short secret, weak DB password, no public URL | generate secrets as above, **Save & Update**                   |
-| `/healthz` 503 `degraded`                            | schema behind the image (migration failed)                   | api log `migrate.*`; never run two api versions against one DB |
-| web log `lookup srv-captain--arda-api: no such host` | upstream name mismatch                                       | `ARDA_API_UPSTREAM=srv-captain--<api app>:8000`                |
-| image pull `unauthorized`                            | GHCR package private                                         | make the package public (§ quick start)                        |
+| Symptom                                                  | Cause                                                                                                               | Fix                                                                                                                    |
+| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| api log `config.invalid`                                 | placeholder or short secret, weak DB password, no public URL                                                        | generate secrets as above, **Save & Update**                                                                           |
+| `/healthz` and `/api` answer 502, `/healthz-web` is fine | arda-api is not running (crash loop); before this fix, the one-click defaults (relay host, empty sender) stopped it | check arda-api → App Logs; `config.feature_off` names an incomplete optional setting (the api still runs, sign-in off) |
+| `/healthz` 503 `degraded`                                | schema behind the image (migration failed)                                                                          | api log `migrate.*`; never run two api versions against one DB                                                         |
+| web log `lookup srv-captain--arda-api: no such host`     | upstream name mismatch                                                                                              | `ARDA_API_UPSTREAM=srv-captain--<api app>:8000`                                                                        |
+| image pull `unauthorized`                                | GHCR package private                                                                                                | make the package public (§ quick start)                                                                                |

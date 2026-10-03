@@ -47,6 +47,8 @@ async function main(): Promise<void> {
   }
 
   const log = pino({ level: config.logLevel, base: { service: 'arda', role: 'api' } });
+  // Incomplete optional features are off; say so loudly so the setting gets fixed.
+  for (const warning of config.warnings) log.error({ warning }, 'config.feature_off');
   const pool = new pg.Pool({
     connectionString: config.databaseUrl,
     max: config.dbPoolMax,
