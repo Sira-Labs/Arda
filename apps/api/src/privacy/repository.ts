@@ -70,7 +70,10 @@ export class PgPrivacyRepository implements PrivacyRepository {
         this.pool.query(
           `select id, actor_id, action, target_type, target_id, details, created_at
            from audit_log
-          where actor_id = $1 or (target_type = 'user' and target_id = $1::text)
+          where actor_id = $1
+             or (target_type = 'user' and target_id = $1::text)
+             -- A teacher approving or removing this person in a ḥalaqa.
+             or (target_type = 'halaqa' and details->>'userId' = $1::text)
           order by id`,
           [userId]
         ),

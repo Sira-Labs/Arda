@@ -55,12 +55,18 @@ export interface ActiveInvite {
   expiresAt: string;
 }
 
+/** The ḥalaqa a join led to. */
+export interface JoinedHalaqa {
+  id: string;
+  name: string;
+}
+
 export type JoinOutcome =
-  | { kind: 'joined'; status: MemberStatus }
-  | { kind: 'member'; status: MemberStatus }
+  | { kind: 'joined'; halaqa: JoinedHalaqa; status: MemberStatus }
+  | { kind: 'member'; halaqa: JoinedHalaqa; status: MemberStatus }
   | { kind: 'full' }
-  /** The ḥalaqa was deleted after the invite was read. */
-  | { kind: 'gone' };
+  /** No valid invite with this hash: unknown, expired, revoked or replaced. */
+  | { kind: 'invalid' };
 
 export interface HalaqaRepository {
   membership(halaqaId: string, userId: string): Promise<Membership | null>;
@@ -81,8 +87,12 @@ export interface HalaqaRepository {
   revokeInvites(halaqaId: string, actorId: string): Promise<number>;
   /** The ḥalaqa a valid (unexpired, unrevoked) invite leads to. */
   findInvite(tokenHash: string, now: Date): Promise<InvitePreview | null>;
-  /** Joins as a pending student; one-to-one ḥalaqāt take a single student. */
-  join(halaqaId: string, userId: string): Promise<JoinOutcome>;
+  /**
+   * Joins the ḥalaqa a valid invite leads to, as a pending student. The invite is checked in
+   * the same transaction as the insert, so a link withdrawn or expiring meanwhile admits
+   * nobody; one-to-one ḥalaqāt take a single student.
+   */
+  join(tokenHash: string, userId: string, now: Date): Promise<JoinOutcome>;
   approve(halaqaId: string, userId: string, actorId: string): Promise<boolean>;
   /** Removes a student (pending or active); the teacher's own row cannot be removed. */
   remove(halaqaId: string, userId: string, actorId: string): Promise<boolean>;
@@ -302,32 +312,42 @@ export class PgHalaqaRepository implements HalaqaRepository {
       : null;
   }
 
-  async join(halaqaId: string, userId: string): Promise<JoinOutcome> {
+  async join(tokenHash: string, userId: string, now: Date): Promise<JoinOutcome> {
     const client = await this.pool.connect();
     try {
       await client.query('begin');
-      // Serialise joins per ḥalaqa, so two students cannot both take a one-to-one place.
-      const { rows: halaqa } = await client.query<{ one_to_one: boolean }>(
-        'select one_to_one from halaqat where id = $1 for update',
-        [halaqaId]
+      // Locks the invite (a revocation waits for this join, or this join sees it) and the
+      // ḥalaqa (joins queue up, so two students cannot both take a one-to-one place).
+      const { rows: found } = await client.query<{
+        id: string;
+        name: string;
+        one_to_one: boolean;
+      }>(
+        `select h.id, h.name, h.one_to_one
+           from halaqa_invites i join halaqat h on h.id = i.halaqa_id
+          where i.token_hash = $1 and i.revoked_at is null and i.expires_at > $2
+          for update of i, h`,
+        [tokenHash, now]
       );
-      if (!halaqa[0]) {
+      const halaqa = found[0];
+      if (!halaqa) {
         await client.query('commit');
-        return { kind: 'gone' };
+        return { kind: 'invalid' };
       }
+      const joined = { id: halaqa.id, name: halaqa.name };
       const { rows: existing } = await client.query<{ status: MemberStatus }>(
         'select status from halaqa_members where halaqa_id = $1 and user_id = $2',
-        [halaqaId, userId]
+        [halaqa.id, userId]
       );
       if (existing[0]) {
         await client.query('commit');
-        return { kind: 'member', status: existing[0].status };
+        return { kind: 'member', halaqa: joined, status: existing[0].status };
       }
-      if (halaqa[0].one_to_one) {
+      if (halaqa.one_to_one) {
         const { rows } = await client.query<{ count: string }>(
           `select count(*) from halaqa_members
             where halaqa_id = $1 and halaqa_role = 'student'`,
-          [halaqaId]
+          [halaqa.id]
         );
         if (Number(rows[0]?.count ?? 0) > 0) {
           await client.query('commit');
@@ -337,10 +357,10 @@ export class PgHalaqaRepository implements HalaqaRepository {
       await client.query(
         `insert into halaqa_members (halaqa_id, user_id, halaqa_role, status)
          values ($1, $2, 'student', 'pending')`,
-        [halaqaId, userId]
+        [halaqa.id, userId]
       );
       await client.query('commit');
-      return { kind: 'joined', status: 'pending' };
+      return { kind: 'joined', halaqa: joined, status: 'pending' };
     } catch (error) {
       await client.query('rollback');
       throw error;

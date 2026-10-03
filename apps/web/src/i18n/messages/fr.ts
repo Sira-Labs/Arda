@@ -209,6 +209,7 @@ export const fr: Messages = {
     remove: 'Retirer',
     noMembers: 'Personne pour l’instant. Partage le lien d’invitation.',
     leave: 'Quitter la ḥalaqa',
+    retry: 'Réessayer',
     back: 'Vers mes ḥalaqāt',
     join: {
       eyebrow: 'Invitation',

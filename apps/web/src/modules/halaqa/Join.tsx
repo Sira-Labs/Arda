@@ -77,7 +77,8 @@ export function Join() {
     void client.previewInvite(token).then((result) => {
       if (result.ok) setPhase({ kind: 'preview', halaqa: result.value.halaqa });
       else {
-        forget();
+        // Offline or a server error: keep the link for another try.
+        if (result.status === 404) forget();
         setPhase({ kind: 'failed', message: errorMessage(m, result) });
       }
     });

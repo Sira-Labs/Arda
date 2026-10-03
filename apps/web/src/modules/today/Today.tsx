@@ -26,7 +26,9 @@ export function Today() {
   const sheikh = !me
     ? { title: m.today.connect, hint: m.today.connectHint, link: null }
     : halaqat?.length === 0
-      ? { title: m.today.connect, hint: m.halaqa.none, link: '/sheikh' }
+      ? me.role === 'student'
+        ? { title: m.today.connect, hint: m.halaqa.none, link: '/sheikh' }
+        : { title: m.halaqa.create.title, hint: m.halaqa.noneTeacher, link: '/sheikh' }
       : halaqat && halaqat.every((h) => h.status === 'pending')
         ? { title: m.today.noTasks, hint: m.halaqa.join.pending, link: null }
         : { title: m.today.noTasks, hint: m.today.noTasksHint, link: null };

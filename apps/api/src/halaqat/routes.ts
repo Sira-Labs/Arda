@@ -112,19 +112,19 @@ export function createHalaqaRoutes(deps: HalaqaRouteDeps): Hono<ActorEnv> {
   app.post('/join', join, async (c) => {
     const body = TokenBody.safeParse(await readJson(c));
     if (!body.success) return c.json({ error: 'invite_invalid' }, 404);
-    const invite = await deps.repo.findInvite(hashInviteToken(body.data.token), now());
-    if (!invite) return c.json({ error: 'invite_invalid' }, 404);
     const actor = c.get('actor');
-    const outcome = await deps.repo.join(invite.halaqaId, actor.id);
-    if (outcome.kind === 'gone') return c.json({ error: 'invite_invalid' }, 404);
+    // The invite is checked inside the join's transaction, not before it.
+    const outcome = await deps.repo.join(
+      hashInviteToken(body.data.token),
+      actor.id,
+      now()
+    );
+    if (outcome.kind === 'invalid') return c.json({ error: 'invite_invalid' }, 404);
     if (outcome.kind === 'full') return c.json({ error: 'halaqa_full' }, 409);
     if (outcome.kind === 'joined') {
-      deps.log.info({ userId: actor.id, halaqaId: invite.halaqaId }, 'halaqa.joined');
+      deps.log.info({ userId: actor.id, halaqaId: outcome.halaqa.id }, 'halaqa.joined');
     }
-    return c.json({
-      halaqa: { id: invite.halaqaId, name: invite.name },
-      status: outcome.status,
-    });
+    return c.json({ halaqa: outcome.halaqa, status: outcome.status });
   });
 
   app.get('/:id', read, async (c) => {

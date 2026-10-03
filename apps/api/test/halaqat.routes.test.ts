@@ -322,6 +322,17 @@ describe('invites and joining (T1)', () => {
     expect(await json(second)).toEqual({ error: 'halaqa_full' });
   });
 
+  it('check the link again when joining: withdrawn after the preview, nobody is admitted', async () => {
+    const { call, halaqaId, repo } = await setup();
+    const { token } = await json(await call('owner', 'POST', `/${halaqaId}/invites`));
+    expect((await call('outsider', 'POST', '/invites/preview', { token })).status).toBe(
+      200
+    );
+    await call('owner', 'DELETE', `/${halaqaId}/invites`);
+    expect((await call('outsider', 'POST', '/join', { token })).status).toBe(404);
+    expect(await repo.membership(halaqaId, ID.outsider)).toBeNull();
+  });
+
   it('let joining twice answer the current status instead of failing', async () => {
     const { call, halaqaId } = await setup();
     const { token } = await json(await call('owner', 'POST', `/${halaqaId}/invites`));

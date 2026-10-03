@@ -12,7 +12,7 @@ export interface Call {
 
 /** An AuthClient over a fake fetch: answers by "METHOD path" or path, records every call. */
 export function fakeApi(
-  answers: Record<string, Response | (() => Response)>,
+  answers: Record<string, Response | (() => Response | Promise<Response>)>,
   me: Me | null = null
 ) {
   const calls: Call[] = [];

@@ -221,6 +221,7 @@ export const ar: Messages = {
     remove: 'أزل',
     noMembers: 'لا أحد بعد. شارك رابط الدعوة.',
     leave: 'غادر الحلقة',
+    retry: 'حاول مرة أخرى',
     back: 'إلى حلقاتي',
     join: {
       eyebrow: 'دعوة',

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
+import type { ApiResult } from '@/services/api/request';
 import type { HalaqaMember, HalaqaView } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { InviteBox } from './InviteBox';
@@ -16,14 +17,25 @@ export function Halaqa() {
   const navigate = useNavigate();
   const [view, setView] = useState<HalaqaView | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  // Only the latest load may set the page: an older answer (another id) is dropped.
+  const latest = useRef(0);
 
   const load = useCallback(async () => {
+    const version = ++latest.current;
     const result = await client.halaqa(id);
-    if (result.ok) setView(result.value);
-    else
+    if (version !== latest.current) return;
+    if (result.ok) {
+      setView(result.value);
+      setError(null);
+    } else {
+      // Not a member and not there look the same, so nobody learns which ḥalaqāt exist.
+      setView(null);
       setError(
         errorMessage(m, result.status === 403 ? { ...result, code: 'not_found' } : result)
       );
+    }
   }, [client, id, m]);
 
   useEffect(() => {
@@ -41,9 +53,20 @@ export function Halaqa() {
   }
   if (!view) return null;
 
-  const act = async (change: Promise<{ ok: boolean }>) => {
-    const result = await change;
-    if (result.ok) await load();
+  /** One action at a time; a failure is shown, success reloads (or `then` runs). */
+  const act = async (
+    change: () => Promise<ApiResult<unknown>>,
+    then: () => unknown = load
+  ) => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      const result = await change();
+      if (result.ok) await then();
+      else setActionError(errorMessage(m, result));
+    } finally {
+      setBusy(false);
+    }
   };
 
   const { halaqa } = view;
@@ -57,6 +80,7 @@ export function Halaqa() {
           <p className="muted">{m.halaqa.teacherOf(halaqa.teacherName)}</p>
         )}
       </header>
+      {actionError && <p role="alert">{actionError}</p>}
 
       {view.role === 'teacher' ? (
         <>
@@ -75,14 +99,20 @@ export function Halaqa() {
                 <button
                   className="btn btn-teal"
                   type="button"
-                  onClick={() => void act(client.approveMember(halaqa.id, member.userId))}
+                  disabled={busy}
+                  onClick={() =>
+                    void act(() => client.approveMember(halaqa.id, member.userId))
+                  }
                 >
                   {m.halaqa.approve}
                 </button>
                 <button
                   className="btn"
                   type="button"
-                  onClick={() => void act(client.removeMember(halaqa.id, member.userId))}
+                  disabled={busy}
+                  onClick={() =>
+                    void act(() => client.removeMember(halaqa.id, member.userId))
+                  }
                 >
                   {m.halaqa.reject}
                 </button>
@@ -99,7 +129,10 @@ export function Halaqa() {
               <button
                 className="btn"
                 type="button"
-                onClick={() => void act(client.removeMember(halaqa.id, member.userId))}
+                disabled={busy}
+                onClick={() =>
+                  void act(() => client.removeMember(halaqa.id, member.userId))
+                }
               >
                 {m.halaqa.remove}
               </button>
@@ -111,10 +144,12 @@ export function Halaqa() {
           className="btn"
           type="button"
           style={{ alignSelf: 'flex-start' }}
+          disabled={busy}
           onClick={() =>
-            void client.leaveHalaqa(halaqa.id).then((result) => {
-              if (result.ok) navigate('/sheikh');
-            })
+            void act(
+              () => client.leaveHalaqa(halaqa.id),
+              () => navigate('/sheikh')
+            )
           }
         >
           {m.halaqa.leave}
@@ -133,7 +168,7 @@ function Members({
 }: {
   title: string;
   members: HalaqaMember[];
-  actions: (member: HalaqaMember) => React.ReactNode;
+  actions: (member: HalaqaMember) => ReactNode;
   empty?: string;
 }) {
   if (members.length === 0 && !empty) return null;

@@ -182,12 +182,14 @@ export class MemoryHalaqaRepository implements HalaqaRepository {
       : null;
   }
 
-  async join(halaqaId: string, userId: string): Promise<JoinOutcome> {
-    const h = this.halaqat.get(halaqaId);
-    if (!h) return { kind: 'gone' };
-    const rows = this.rowsOf(halaqaId);
+  async join(tokenHash: string, userId: string, now: Date): Promise<JoinOutcome> {
+    const invite = await this.findInvite(tokenHash, now);
+    const h = invite && this.halaqat.get(invite.halaqaId);
+    if (!h) return { kind: 'invalid' };
+    const halaqa = { id: h.id, name: h.name };
+    const rows = this.rowsOf(h.id);
     const existing = rows.get(userId);
-    if (existing) return { kind: 'member', status: existing.status };
+    if (existing) return { kind: 'member', halaqa, status: existing.status };
     if (h.oneToOne && [...rows.values()].some((m) => m.role === 'student'))
       return { kind: 'full' };
     rows.set(userId, {
@@ -195,7 +197,7 @@ export class MemoryHalaqaRepository implements HalaqaRepository {
       status: 'pending',
       joinedAt: new Date().toISOString(),
     });
-    return { kind: 'joined', status: 'pending' };
+    return { kind: 'joined', halaqa, status: 'pending' };
   }
 
   async approve(halaqaId: string, userId: string, actorId: string): Promise<boolean> {

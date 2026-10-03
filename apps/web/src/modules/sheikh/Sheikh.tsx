@@ -1,5 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { useI18n } from '@/i18n/I18nProvider';
+import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { CreateHalaqa } from '@/modules/halaqa/CreateHalaqa';
 import { HalaqaList } from '@/modules/halaqa/HalaqaList';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
@@ -15,7 +15,7 @@ export function Sheikh() {
   const { me } = useSession();
   const { m } = useI18n();
   const navigate = useNavigate();
-  const { halaqat } = useHalaqat();
+  const { halaqat, failure, reload } = useHalaqat();
   const teaches = me?.role === 'teacher' || me?.role === 'admin';
 
   if (!me) {
@@ -39,6 +39,14 @@ export function Sheikh() {
         <p className="eyebrow">{m.nav.sheikh}</p>
         <h1>{m.halaqa.mine}</h1>
       </header>
+      {failure && (
+        <div className="row" role="alert">
+          <span>{errorMessage(m, failure)}</span>
+          <button className="btn" type="button" onClick={reload}>
+            {m.halaqa.retry}
+          </button>
+        </div>
+      )}
       {halaqat && <HalaqaList halaqat={halaqat} teaches={teaches} />}
       {teaches && <CreateHalaqa onCreated={(id) => navigate(`/halaqa/${id}`)} />}
       {teaches && <FeedbackComposer />}

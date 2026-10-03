@@ -900,6 +900,17 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
     const YUSUF = '30000000-0000-4000-8000-000000000003';
     const NOW = new Date('2026-10-03T12:00:00Z');
     let repo: PgHalaqaRepository;
+    /** A working invite to `halaqaId`; returns the hash a join is made with. */
+    const invite = async (halaqaId: string, actorId = TEACHER) => {
+      const tokenHash = hashInviteToken(newInviteToken());
+      await repo.createInvite({
+        halaqaId,
+        tokenHash,
+        actorId,
+        expiresAt: new Date(NOW.getTime() + 60_000),
+      });
+      return tokenHash;
+    };
 
     beforeEach(async () => {
       repo = new PgHalaqaRepository(pool);
@@ -970,8 +981,18 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
     it('lets students join pending; the teacher approves and removes, audited', async () => {
       const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
-      expect(await repo.join(id, AMINA)).toEqual({ kind: 'joined', status: 'pending' });
-      expect(await repo.join(id, AMINA)).toEqual({ kind: 'member', status: 'pending' });
+      const link = await invite(id);
+      const halaqa = { id, name: 'H' };
+      expect(await repo.join(link, AMINA, NOW)).toEqual({
+        kind: 'joined',
+        halaqa,
+        status: 'pending',
+      });
+      expect(await repo.join(link, AMINA, NOW)).toEqual({
+        kind: 'member',
+        halaqa,
+        status: 'pending',
+      });
       expect(await repo.listFor(AMINA)).toEqual([
         expect.objectContaining({
           id,
@@ -996,6 +1017,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         `select action from audit_log where target_type = 'halaqa' order by id`
       );
       expect(rows.map((r) => r.action)).toEqual([
+        'halaqa.invite_created',
         'halaqa.member_approved',
         'halaqa.member_removed',
       ]);
@@ -1003,13 +1025,30 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
     it('lets only one of two students take a one-to-one place, even at the same time', async () => {
       const id = await repo.create({ name: 'Amina', oneToOne: true, teacherId: TEACHER });
-      const outcomes = await Promise.all([repo.join(id, AMINA), repo.join(id, YUSUF)]);
+      const link = await invite(id);
+      const outcomes = await Promise.all([
+        repo.join(link, AMINA, NOW),
+        repo.join(link, YUSUF, NOW),
+      ]);
       expect(outcomes.map((o) => o.kind).sort()).toEqual(['full', 'joined']);
+    });
+
+    it('admits nobody with a link that was withdrawn, replaced or has expired', async () => {
+      const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
+      const old = await invite(id);
+      const current = await invite(id);
+      expect(await repo.join(old, AMINA, NOW)).toEqual({ kind: 'invalid' });
+      expect(await repo.join(current, AMINA, new Date(NOW.getTime() + 60_001))).toEqual({
+        kind: 'invalid',
+      });
+      await repo.revokeInvites(id, TEACHER);
+      expect(await repo.join(current, AMINA, NOW)).toEqual({ kind: 'invalid' });
+      expect(await repo.membership(id, AMINA)).toBeNull();
     });
 
     it('treats the empty name sign-in leaves as no name, so the email shows instead', async () => {
       const id = await repo.create({ name: 'H', oneToOne: false, teacherId: YUSUF });
-      await repo.join(id, AMINA);
+      await repo.join(await invite(id, YUSUF), AMINA, NOW);
       const members = await repo.members(id);
       expect(members.find((m) => m.userId === YUSUF)).toMatchObject({
         name: null,
@@ -1020,19 +1059,25 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
     it('lets a student leave, puts memberships in the export and cascades with the teacher', async () => {
       const id = await repo.create({ name: 'H', oneToOne: false, teacherId: TEACHER });
-      await repo.join(id, AMINA);
+      const link = await invite(id);
+      await repo.join(link, AMINA, NOW);
+      await repo.approve(id, AMINA, TEACHER);
       const exported = await new PgPrivacyRepository(pool).export(AMINA);
+      // Who approved her is part of her export, without being her own action.
+      expect(exported.auditLog).toEqual([
+        expect.objectContaining({ action: 'halaqa.member_approved', actor_id: TEACHER }),
+      ]);
       expect(exported.halaqat).toEqual([
         expect.objectContaining({
           name: 'H',
           halaqa_role: 'student',
-          status: 'pending',
+          status: 'active',
           opened_by_you: false,
         }),
       ]);
       expect(await repo.leave(id, TEACHER)).toBe(false);
       expect(await repo.leave(id, AMINA)).toBe(true);
-      await repo.join(id, AMINA);
+      await repo.join(link, AMINA, NOW);
       await pool.query('delete from users where id = $1', [TEACHER]);
       expect(await repo.find(id)).toBeNull();
       expect(await repo.listFor(AMINA)).toEqual([]);

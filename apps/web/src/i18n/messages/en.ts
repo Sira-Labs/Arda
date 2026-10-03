@@ -205,6 +205,7 @@ export const en: Messages = {
     remove: 'Remove',
     noMembers: 'Nobody yet. Share the invite link.',
     leave: 'Leave ḥalaqa',
+    retry: 'Try again',
     back: 'To my ḥalaqāt',
     join: {
       eyebrow: 'Invitation',

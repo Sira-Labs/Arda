@@ -220,6 +220,7 @@ export const de = {
     remove: 'Entfernen',
     noMembers: 'Noch niemand dabei. Teile den Einladungslink.',
     leave: 'Ḥalaqa verlassen',
+    retry: 'Nochmal versuchen',
     back: 'Zu meinen Ḥalaqāt',
     join: {
       eyebrow: 'Einladung',
