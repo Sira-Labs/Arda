@@ -62,6 +62,13 @@ const RawEnvSchema = z.object({
   ARDA_MAIL_FROM: z.string().trim().optional(),
   /** Browser tests: sign-in links are written to files in this directory (never in prod). */
   ARDA_MAIL_DIR: z.string().trim().optional(),
+  /**
+   * Translation of teachers' written remarks with Claude (ADR-0020); off without a key.
+   * The key is passed to the SDK explicitly, so ANTHROPIC_* variables are never read.
+   */
+  ARDA_ANTHROPIC_API_KEY: z.string().trim().optional(),
+  ARDA_TRANSLATE_MODEL: z.string().trim().default('claude-opus-5-5'),
+  ARDA_TRANSLATE_DAILY_LIMIT: z.coerce.number().int().min(0).max(10_000).default(200),
   ARDA_LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
     .default('info'),
@@ -86,6 +93,8 @@ export interface Config {
   smtp: SmtpSettings | undefined;
   /** Browser tests: where sign-in links are written instead of mailed (never in prod). */
   mailDir: string | undefined;
+  /** Translation of written remarks; undefined turns it off (ADR-0020). */
+  translation: { apiKey: string; model: string; dailyLimit: number } | undefined;
 }
 
 function isPlaceholder(value: string): boolean {
@@ -176,6 +185,13 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     trustedOrigins,
     appOrigins,
     mailDir: raw.ARDA_MAIL_DIR || undefined,
+    translation: raw.ARDA_ANTHROPIC_API_KEY
+      ? {
+          apiKey: raw.ARDA_ANTHROPIC_API_KEY,
+          model: raw.ARDA_TRANSLATE_MODEL,
+          dailyLimit: raw.ARDA_TRANSLATE_DAILY_LIMIT,
+        }
+      : undefined,
     smtp: smtpComplete
       ? {
           host: raw.ARDA_SMTP_HOST!,

@@ -47,6 +47,8 @@ export const RBAC_MATRIX = {
   'halaqa:read': ['student', 'teacher', 'admin'],
   /** Hear students' recitations and mark them; scoped: teacher of that ḥalaqa. */
   'halaqa:review': ['teacher', 'admin'],
+  /** Translate a written remark into a student's language (ADR-0020; costs money). */
+  'feedback:translate': ['teacher', 'admin'],
   /** List and search users in the admin area. */
   'admin:users:read': ['admin'],
   /** Change a user's role (e.g. make a sheikh a teacher) or disable them (audit-logged). */

@@ -26,6 +26,9 @@ function setup() {
     setTimeZone: async (userId, tz) => {
       calls.push(`tz ${userId} ${tz}`);
     },
+    setLanguage: async (userId, language) => {
+      calls.push(`lang ${userId} ${language}`);
+    },
     listPasskeys: async () => [
       {
         id: 'pk-phone',
@@ -138,6 +141,29 @@ describe('account routes', () => {
     expect((await patch({ timeZone: "UTC'; drop table users;--" })).status).toBe(400);
     expect((await patch({ role: 'admin' })).status).toBe(400);
     expect(calls).toEqual([`tz ${USER} Europe/Zurich`, `tz ${USER} null`]);
+  });
+});
+
+describe('language setting (ADR-0020)', () => {
+  it('stores one of the four languages and refuses others', async () => {
+    const { app, calls } = setup();
+    const patch = (body: unknown) =>
+      app.request('/settings', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+    expect((await patch({ language: 'fr' })).status).toBe(204);
+    expect((await patch({ language: 'ar', timeZone: 'Asia/Riyadh' })).status).toBe(204);
+    expect((await patch({ language: null })).status).toBe(204);
+    expect((await patch({ language: 'tr' })).status).toBe(400);
+    expect((await patch({ language: 'FR' })).status).toBe(400);
+    expect(calls).toEqual([
+      `lang ${USER} fr`,
+      `tz ${USER} Asia/Riyadh`,
+      `lang ${USER} ar`,
+      `lang ${USER} null`,
+    ]);
   });
 });
 

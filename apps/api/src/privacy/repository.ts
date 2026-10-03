@@ -18,6 +18,8 @@ export interface AccountExport {
   sessions: Record<string, unknown>[];
   /** Passkeys without their public keys and credential ids. */
   passkeys: Record<string, unknown>[];
+  /** Remarks this person had translated (ADR-0020), with their translations. */
+  translations: Record<string, unknown>[];
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -32,10 +34,10 @@ export class PgPrivacyRepository implements PrivacyRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   async export(userId: string): Promise<AccountExport> {
-    const [profile, totp, sessions, passkeys, audit] = await Promise.all([
+    const [profile, totp, sessions, passkeys, translations, audit] = await Promise.all([
       this.pool.query(
-        `select id, email, email_verified, name, role, time_zone, disabled_at, created_at,
-                updated_at
+        `select id, email, email_verified, name, role, language, time_zone, disabled_at,
+                created_at, updated_at
            from users where id = $1`,
         [userId]
       ),
@@ -48,6 +50,11 @@ export class PgPrivacyRepository implements PrivacyRepository {
       this.pool.query(
         `select id, name, device_type, backed_up, aaguid, created_at
            from passkeys where user_id = $1 order by created_at`,
+        [userId]
+      ),
+      this.pool.query(
+        `select source_language, target_language, source_text, text, model, created_at
+           from translations where created_by = $1 order by id`,
         [userId]
       ),
       this.pool.query(
@@ -64,6 +71,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       secondFactorEnabled: Boolean(totp.rows[0]?.enabled_at),
       sessions: sessions.rows,
       passkeys: passkeys.rows,
+      translations: translations.rows,
       auditLog: audit.rows,
     };
   }

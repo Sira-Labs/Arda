@@ -8,6 +8,7 @@
  */
 import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
+import Anthropic from '@anthropic-ai/sdk';
 import pg from 'pg';
 import { pino } from 'pino';
 import { createApp, type AuthRouteDeps } from './app.js';
@@ -24,6 +25,9 @@ import { ConfigError, loadConfig, redactDatabaseUrl } from './config.js';
 import { currentRevision, expectedRevision, loadMigrations, migrate } from './migrate.js';
 import { PgPrivacyRepository } from './privacy/repository.js';
 import { SecretBox } from './security/secretBox.js';
+import { ClaudeTranslator } from './translation/claudeTranslator.js';
+import { PgTranslationRepository } from './translation/repository.js';
+import { TranslationService } from './translation/service.js';
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
 
@@ -116,6 +120,25 @@ async function main(): Promise<void> {
   const auth: AuthResolver =
     resolvers.length > 0 ? new ChainResolver(resolvers) : new DenyAllResolver();
   const admin: AdminRouteDeps = { repo: new PgAdminRepository(pool), auth, log };
+  // Translation of teachers' written remarks (ADR-0020): off without an API key.
+  const translation = config.translation;
+  const translations = new TranslationService({
+    translator: translation
+      ? new ClaudeTranslator(
+          new Anthropic({ apiKey: translation.apiKey }),
+          translation.model,
+          log
+        )
+      : null,
+    repo: new PgTranslationRepository(pool),
+    dailyLimit: translation?.dailyLimit ?? 0,
+  });
+  log.info(
+    translation
+      ? { model: translation.model, dailyLimit: translation.dailyLimit }
+      : { reason: 'ARDA_ANTHROPIC_API_KEY is not set' },
+    translation ? 'translate.enabled' : 'translate.disabled'
+  );
 
   const app = createApp({
     version: config.version,
@@ -125,6 +148,7 @@ async function main(): Promise<void> {
     auth: authRoutes,
     account: accountRoutes,
     admin,
+    translations: { service: translations, auth, log },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,
     authzLog: log,

@@ -4,6 +4,7 @@
  * can never see or end another user's session.
  */
 import type pg from 'pg';
+import type { Language } from '../i18n/languages.js';
 
 /** A session as the account page shows it; the session token never leaves the database. */
 export interface DeviceSession {
@@ -21,6 +22,8 @@ export interface AccountRepository {
   /** Ends every session of this user except `keepSessionId`; returns how many ended. */
   revokeOtherSessions(userId: string, keepSessionId: string): Promise<number>;
   setTimeZone(userId: string, timeZone: string | null): Promise<void>;
+  /** The person's language (ADR-0020); null returns to the browser's choice. */
+  setLanguage(userId: string, language: Language | null): Promise<void>;
   /** This user's passkeys, newest first; never the public key. */
   listPasskeys(userId: string): Promise<StoredPasskey[]>;
   /** Removes one passkey of this user; false when there is no such passkey. */
@@ -90,6 +93,13 @@ export class PgAccountRepository implements AccountRepository {
     await this.pool.query(
       'update users set time_zone = $2, updated_at = now() where id = $1',
       [userId, timeZone]
+    );
+  }
+
+  async setLanguage(userId: string, language: Language | null): Promise<void> {
+    await this.pool.query(
+      'update users set language = $2, updated_at = now() where id = $1',
+      [userId, language]
     );
   }
 

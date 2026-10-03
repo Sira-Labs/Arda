@@ -20,6 +20,9 @@ import { writeAudit } from '../src/audit/log.js';
 import { SecretBox } from '../src/security/secretBox.js';
 import { base32Decode, stepAt, totpAt } from '../src/security/totp.js';
 import { SoftAuthenticator } from './softAuthenticator.js';
+import type { Language } from '../src/i18n/languages.js';
+import { PgTranslationRepository, sourceHash } from '../src/translation/repository.js';
+import { TranslationService } from '../src/translation/service.js';
 
 const url = process.env.ARDA_TEST_DATABASE_URL;
 const PUBLIC_URL = 'http://localhost:5173';
@@ -27,9 +30,14 @@ const OLD_URL = 'https://old.example.org';
 const quiet = { info: () => undefined, warn: () => undefined, error: () => undefined };
 
 class CapturingMailer implements Mailer {
-  links: { email: string; url: string; code: string }[] = [];
-  async sendMagicLink(email: string, url: string, code: string): Promise<void> {
-    this.links.push({ email, url, code });
+  links: { email: string; url: string; code: string; language?: Language }[] = [];
+  async sendMagicLink(
+    email: string,
+    url: string,
+    code: string,
+    language?: Language
+  ): Promise<void> {
+    this.links.push({ email, url, code, language });
   }
 }
 
@@ -49,7 +57,9 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
   });
 
   beforeEach(async () => {
-    await pool.query('truncate users, rate_limits, verifications, audit_log cascade');
+    await pool.query(
+      'truncate users, rate_limits, verifications, audit_log, translations cascade'
+    );
     mailer = new CapturingMailer();
     const auth = createAuth({
       pool,
@@ -616,6 +626,96 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       "select 1 from users where email = 'weg@example.org'"
     );
     expect(rows).toHaveLength(0);
+  });
+
+  describe('languages and translations (ADR-0020)', () => {
+    const linkWith = (
+      email: string,
+      body: object,
+      headers: Record<string, string> = {}
+    ) =>
+      app.request('/api/v1/auth/sign-in/magic-link', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          origin: PUBLIC_URL,
+          'x-real-ip': '203.0.113.120',
+          ...headers,
+        },
+        body: JSON.stringify({ email, callbackURL: '/', ...body }),
+      });
+
+    it('mails in the chosen, then the stored, then the browser language', async () => {
+      expect(
+        (await linkWith('sprache@example.org', { metadata: { language: 'fr' } })).status
+      ).toBe(200);
+      expect(mailer.links.at(-1)?.language).toBe('fr');
+      // A new address without a choice: the browser's Accept-Language.
+      await linkWith('neu@example.org', {}, { 'accept-language': 'ar-SA,ar;q=0.9' });
+      expect(mailer.links.at(-1)?.language).toBe('ar');
+      await linkWith('ohne@example.org', {}, { 'accept-language': 'tr' });
+      expect(mailer.links.at(-1)?.language).toBe('de');
+
+      // Signed in, the person chooses English; later mails follow it without a choice.
+      const cookie = (await openLink(mailer.links[0]!.url)).cookie;
+      const saved = await app.request('/api/v1/account/settings', {
+        method: 'PATCH',
+        headers: { cookie, origin: PUBLIC_URL, 'content-type': 'application/json' },
+        body: JSON.stringify({ language: 'en' }),
+      });
+      expect(saved.status).toBe(204);
+      const me = await app.request('/api/v1/me', { headers: { cookie } });
+      expect(await me.json()).toMatchObject({
+        email: 'sprache@example.org',
+        language: 'en',
+      });
+      await linkWith('sprache@example.org', {}, { 'accept-language': 'fr' });
+      expect(mailer.links.at(-1)?.language).toBe('en');
+    });
+
+    it('caches translations per teacher, counts them and exports them', async () => {
+      const cookie = await signInDevice('lehrer@example.org', '203.0.113.121');
+      const { rows } = await pool.query<{ id: string }>(
+        "select id from users where email = 'lehrer@example.org'"
+      );
+      const teacherId = rows[0]!.id;
+      let calls = 0;
+      const service = new TranslationService({
+        translator: {
+          model: 'fake',
+          translate: async () => {
+            calls += 1;
+            return { ok: true, text: 'Deine Ghunna war zu kurz.' };
+          },
+        },
+        repo: new PgTranslationRepository(pool),
+        dailyLimit: 2,
+      });
+      const ask = (text: string) =>
+        service.translate({ userId: teacherId, text, from: 'en', to: 'de' });
+      expect(await ask('Your ghunna was too short.')).toMatchObject({ cached: false });
+      expect(await ask('Your ghunna was too short.')).toMatchObject({ cached: true });
+      expect(await ask('Second remark')).toMatchObject({ status: 'translated' });
+      expect(await ask('Third remark')).toEqual({
+        status: 'unavailable',
+        reason: 'limit',
+      });
+      expect(calls).toBe(2);
+      const stored = await pool.query(
+        'select target_language, source_hash from translations where created_by = $1 order by id',
+        [teacherId]
+      );
+      expect(stored.rows[0]).toEqual({
+        target_language: 'de',
+        source_hash: sourceHash('Your ghunna was too short.'),
+      });
+
+      const exported = await app.request('/api/v1/account/export', {
+        headers: { cookie },
+      });
+      const data = (await exported.json()) as { translations: { text: string }[] };
+      expect(data.translations.map((t) => t.text)).toContain('Deine Ghunna war zu kurz.');
+    });
   });
 
   describe('passkeys (ADR-0004)', () => {

@@ -4,7 +4,7 @@
  *   GET    /sessions                → { sessions: [{ id, …, current }] }
  *   DELETE /sessions/:id            → 204 (404 when it is not one of yours)
  *   POST   /sessions/revoke-others  → { revoked }
- *   PATCH  /settings   { timeZone } → 204
+ *   PATCH  /settings   { timeZone?, language? } → 204
  *   GET    /passkeys                → { passkeys: [{ id, name, provider, synced, createdAt }] }
  *   DELETE /passkeys/:id            → 204 (404 when it is not one of yours)
  *   GET    /2fa                     → { enabled, confirmed }
@@ -29,6 +29,7 @@ import { providerName } from '../auth/passkeys.js';
 import type { AccountRepository } from './repository.js';
 import type { SecondFactorService } from './secondFactor.js';
 import type { PrivacyRepository } from '../privacy/repository.js';
+import { LANGUAGES } from '../i18n/languages.js';
 
 export interface AccountRouteDeps {
   repo: AccountRepository;
@@ -67,6 +68,8 @@ const Settings = z
       .refine(isTimeZone, 'unknown time zone')
       .nullable()
       .optional(),
+    /** Interface, mails and translations (ADR-0020); null returns to the browser's choice. */
+    language: z.enum(LANGUAGES).nullable().optional(),
   })
   .strict();
 
@@ -125,6 +128,9 @@ export function createAccountRoutes(
     }
     if (settings.data.timeZone !== undefined) {
       await deps.repo.setTimeZone(c.get('actor').id, settings.data.timeZone);
+    }
+    if (settings.data.language !== undefined) {
+      await deps.repo.setLanguage(c.get('actor').id, settings.data.language);
     }
     return c.body(null, 204);
   });

@@ -14,6 +14,12 @@ import { bearer, emailOTP, magicLink } from 'better-auth/plugins';
 import { passkeyPlugin } from './passkeys.js';
 import type pg from 'pg';
 import { isRole, type Actor, type Role } from '../authz/policies.js';
+import {
+  DEFAULT_LANGUAGE,
+  fromAcceptLanguage,
+  isLanguage,
+  type Language,
+} from '../i18n/languages.js';
 import type { AuthResolver } from './resolver.js';
 import type { Mailer } from './mailer.js';
 
@@ -61,6 +67,8 @@ export function createAuth(options: AuthOptions) {
       additionalFields: {
         // Platform role (ADR-0005); only admins change it, never the sign-up request.
         role: { type: 'string', required: false, defaultValue: 'student', input: false },
+        // de, en, fr or ar (ADR-0020); set through PATCH /api/v1/account/settings, never here.
+        language: { type: 'string', required: false, input: false },
         // IANA time zone (e.g. Europe/Zurich); set through PATCH /api/v1/me, never here.
         timeZone: {
           type: 'string',
@@ -151,7 +159,7 @@ export function createAuth(options: AuthOptions) {
       magicLink({
         expiresIn: MAGIC_LINK_TTL_SEC,
         storeToken: 'hashed',
-        sendMagicLink: async ({ email, url }) => {
+        sendMagicLink: async ({ email, url, metadata }, ctx) => {
           // One valid code per address: a new mail replaces the code of the last one.
           await options.pool.query('delete from verifications where identifier = $1', [
             signInCodeKey(email),
@@ -159,7 +167,13 @@ export function createAuth(options: AuthOptions) {
           const code = await auth.api.createVerificationOTP({
             body: { email, type: 'sign-in' },
           });
-          await options.mailer.sendMagicLink(email, url, code);
+          const language = await mailLanguage(
+            options.pool,
+            email,
+            metadata?.language,
+            ctx?.request?.headers.get('accept-language')
+          );
+          await options.mailer.sendMagicLink(email, url, code, language);
         },
       }),
       // Passkeys (update 2026-09-26): optional, added in the settings after signing in.
@@ -180,6 +194,28 @@ export function createAuth(options: AuthOptions) {
 }
 
 export type ArdaAuth = ReturnType<typeof createAuth>;
+
+/**
+ * The language of the sign-in mail (ADR-0020): the choice on the sign-in page (sent as
+ * `metadata.language`), else the language stored for this address, else the browser's
+ * Accept-Language, else German.
+ */
+export async function mailLanguage(
+  pool: Pick<pg.Pool, 'query'>,
+  email: string,
+  chosen: unknown,
+  acceptLanguage: string | null | undefined
+): Promise<Language> {
+  if (isLanguage(chosen)) return chosen;
+  const { rows } = await pool.query<{ language: string | null }>(
+    // Better Auth stores addresses in lower case; this keeps the unique index usable.
+    'select language from users where email = lower($1)',
+    [email]
+  );
+  const stored = rows[0]?.language;
+  if (isLanguage(stored)) return stored;
+  return fromAcceptLanguage(acceptLanguage) ?? DEFAULT_LANGUAGE;
+}
 
 /**
  * The only Better Auth endpoints reachable from outside (relative to AUTH_BASE_PATH). Better
@@ -254,6 +290,8 @@ export interface Me {
   name: string | null;
   role: Role;
   timeZone: string | null;
+  /** Null until chosen; the app then uses the browser's language (ADR-0020). */
+  language: Language | null;
 }
 
 /** The signed-in user plus the session of this request (to mark "this device"). */
@@ -295,6 +333,7 @@ export class SessionResolver implements AuthResolver {
     const user = session.user as typeof session.user & {
       role?: string;
       timeZone?: string;
+      language?: string | null;
       disabledAt?: Date | string | null;
     };
     // A disabled user is signed out everywhere, even with a session that is still valid.
@@ -315,6 +354,7 @@ export class SessionResolver implements AuthResolver {
         name: user.name || null,
         role,
         timeZone: user.timeZone || null,
+        language: isLanguage(user.language) ? user.language : null,
       },
     };
   }

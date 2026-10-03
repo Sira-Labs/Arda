@@ -19,6 +19,10 @@ import { authorize, type AuthorizeLog } from './authz/middleware.js';
 import { appCors } from './http/appCors.js';
 import { sameOriginOnly } from './http/sameOrigin.js';
 import { withoutSessionToken } from './http/withoutSessionToken.js';
+import {
+  createTranslationRoutes,
+  type TranslationRouteDeps,
+} from './translation/routes.js';
 
 /** Sign-in answers that carry a session token the browser must not see. */
 const SIGN_IN_ANSWERS = new Set([
@@ -49,6 +53,8 @@ export interface AppDeps {
   account?: AccountRouteDeps;
   /** Admin area (users, roles, audit); every route needs an admin with 2FA. */
   admin?: AdminRouteDeps;
+  /** Translation of teachers' written remarks (ADR-0020). */
+  translations?: TranslationRouteDeps;
   /**
    * Origins of the web app (ARDA_PUBLIC_URL, ARDA_TRUSTED_ORIGINS). When set, state-changing
    * API requests that a browser marks as coming from another site are refused (403).
@@ -77,6 +83,7 @@ export function createApp(deps: AppDeps): Hono {
           schemaRevision: revision,
           expectedRevision: deps.expectedRevision,
           auth: deps.auth ? 'enabled' : 'disabled',
+          translation: deps.translations?.service.enabled ? 'enabled' : 'disabled',
         },
         { status: ok ? 200 : 503 }
       );
@@ -139,6 +146,7 @@ export function createApp(deps: AppDeps): Hono {
   }
   if (deps.account) app.route('/api/v1/account', createAccountRoutes(deps.account));
   if (deps.admin) app.route('/api/v1/admin', createAdminRoutes(deps.admin));
+  if (deps.translations) app.route('/api/v1', createTranslationRoutes(deps.translations));
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((error, c) => {

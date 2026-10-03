@@ -20,6 +20,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'halaqa:join': ['student', 'teacher', 'admin'],
   'halaqa:read': ['admin'], // without a ḥalaqa scope only admins
   'halaqa:review': ['admin'], // without a ḥalaqa scope only admins
+  'feedback:translate': ['teacher', 'admin'],
   'admin:users:read': ['admin'],
   'admin:users:write': ['admin'],
   'admin:audit:read': ['admin'],
