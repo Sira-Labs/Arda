@@ -1,5 +1,5 @@
 /**
- * Passkeys (ADR-0004): an optional way in next to the emailed link and
+ * Passkeys (ADR-0004); messages for each failure live in the i18n catalogs (ADR-0020): an optional way in next to the emailed link and
  * code. A signed-in learner adds one in the settings; later one tap with Face ID, Touch ID or
  * the device PIN signs them in. The server keeps the session in its httpOnly cookie, as with
  * the link; nothing is stored in the browser.
@@ -42,21 +42,6 @@ export type PasskeyFailure =
 export type PasskeyResult =
   { ok: true } | { ok: false; reason: PasskeyFailure; message?: string };
 
-/** What the learner reads for each failure; `cancelled` stays silent. */
-export const PASSKEY_MESSAGES: Record<PasskeyFailure, string | undefined> = {
-  cancelled: undefined,
-  'already-added': 'Auf diesem Gerät ist schon ein Passkey für ʿArḍa eingerichtet.',
-  'stale-session':
-    'Zur Sicherheit: Melde dich kurz neu an (Link oder Code), dann kannst du einen Passkey hinzufügen.',
-  'unknown-passkey':
-    'Dieser Passkey ist bei ʿArḍa nicht (mehr) hinterlegt. Melde dich mit Link oder Code an.',
-  'not-verified':
-    'Bitte bestätige mit Gesicht, Fingerabdruck oder der PIN deines Geräts.',
-  'rate-limited': 'Zu viele Versuche – bitte in ein paar Minuten noch einmal.',
-  offline: 'Keine Verbindung – versuch es gleich noch einmal.',
-  failed: 'Das hat nicht geklappt. Versuch es noch einmal oder nimm Link oder Code.',
-};
-
 export interface WebAuthnCeremonies {
   startRegistration(options: {
     optionsJSON: PublicKeyCredentialCreationOptionsJSON;
@@ -96,11 +81,7 @@ export async function serverFailure(response: Response): Promise<PasskeyFailure>
   return 'failed';
 }
 
-const failure = (reason: PasskeyFailure): PasskeyResult => ({
-  ok: false,
-  reason,
-  message: PASSKEY_MESSAGES[reason],
-});
+const failure = (reason: PasskeyFailure): PasskeyResult => ({ ok: false, reason });
 
 type Fetch = typeof fetch;
 

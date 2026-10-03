@@ -65,11 +65,7 @@ describe('passkeys', () => {
       { [SIGN_IN_OPTIONS]: json({ challenge: 'c' }) },
       { startAuthentication: async () => Promise.reject(domError('NotAllowedError')) }
     );
-    expect(await client.signIn()).toEqual({
-      ok: false,
-      reason: 'cancelled',
-      message: undefined,
-    });
+    expect(await client.signIn()).toEqual({ ok: false, reason: 'cancelled' });
     expect(calls).toHaveLength(1);
   });
 
@@ -78,8 +74,7 @@ describe('passkeys', () => {
       [REGISTER_OPTIONS]: json({ code: 'SESSION_NOT_FRESH' }, 403),
     });
     const result = await client.add();
-    expect(result).toMatchObject({ ok: false, reason: 'stale-session' });
-    expect(!result.ok && result.message).toMatch(/neu an/);
+    expect(result).toEqual({ ok: false, reason: 'stale-session' });
   });
 
   it('explains an unknown or unverified passkey and rate limits', async () => {

@@ -1,22 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
+import { useI18n } from '@/i18n/I18nProvider';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 import type { Device } from '@/services/auth';
 import { PasskeyClient, passkeysSupported } from '@/services/passkeys';
 import { useSession } from '@/state/session';
 
-const ROLE_LABELS = {
-  student: 'Schüler·in',
-  teacher: 'Sheikh / Lehrer·in',
-  admin: 'Admin',
-};
-
-/** The account page: who you are, your devices, a passkey, signing out. */
+/** The account page: who you are, your language, your devices, a passkey, signing out. */
 export function Account({
   passkeys = new PasskeyClient(),
 }: {
   passkeys?: PasskeyClient;
 }) {
   const { me, loading, client, signOut } = useSession();
+  const { m } = useI18n();
   const [devices, setDevices] = useState<Device[]>([]);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -32,37 +29,42 @@ export function Account({
 
   const addPasskey = async () => {
     const result = await passkeys.add();
-    setMessage(result.ok ? 'Passkey hinzugefügt.' : (result.message ?? null));
+    if (result.ok) setMessage(m.account.passkeyAdded);
+    else if (result.reason !== 'cancelled') setMessage(m.passkey[result.reason]);
   };
 
   const endOthers = async () => {
     const result = await client.endOtherDevices();
     if (result.ok) {
       setDevices((list) => list.filter((d) => d.current));
-      setMessage(`${result.value.revoked} andere Geräte abgemeldet.`);
+      setMessage(m.account.endedOthers(result.value.revoked));
     }
   };
 
   return (
     <div className="stack">
-      <p className="eyebrow">Konto</p>
+      <p className="eyebrow">{m.account.eyebrow}</p>
       <h1>{me.name ?? me.email}</h1>
       <p className="muted">
-        {me.email} · {ROLE_LABELS[me.role]}
+        <span dir="ltr">{me.email}</span> · {m.account.roles[me.role]}
       </p>
+      <section className="card stack">
+        <LanguagePicker />
+        <p className="muted">{m.account.languageHint}</p>
+      </section>
       <section className="card stack" aria-labelledby="devices">
-        <h3 id="devices">Angemeldete Geräte</h3>
-        <ul className="stack" style={{ margin: 0, paddingLeft: 20 }}>
+        <h3 id="devices">{m.account.devices}</h3>
+        <ul className="stack" style={{ margin: 0, paddingInlineStart: 20 }}>
           {devices.map((device) => (
             <li key={device.id}>
-              {device.userAgent ?? 'Unbekanntes Gerät'}
-              {device.current && <b> · dieses Gerät</b>}
+              {device.userAgent ?? m.account.unknownDevice}
+              {device.current && <b> · {m.account.thisDevice}</b>}
             </li>
           ))}
         </ul>
         <div className="row">
           <button className="btn" type="button" onClick={() => void endOthers()}>
-            Andere Geräte abmelden
+            {m.account.endOthers}
           </button>
           {passkeysSupported() && (
             <button
@@ -70,14 +72,14 @@ export function Account({
               type="button"
               onClick={() => void addPasskey()}
             >
-              Passkey hinzufügen
+              {m.account.addPasskey}
             </button>
           )}
         </div>
         {message && <p role="status">{message}</p>}
       </section>
       <button className="btn" type="button" onClick={() => void signOut()}>
-        Abmelden
+        {m.account.signOut}
       </button>
     </div>
   );

@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import { useI18n } from '@/i18n/I18nProvider';
 import { PasskeyClient, passkeysSupported } from '@/services/passkeys';
 import { useSession } from '@/state/session';
 
 /**
- * "Mit Passkey anmelden": one tap with Face ID, Touch ID or the device PIN, for learners who
+ * "Sign in with a passkey": one tap with Face ID, Touch ID or the device PIN, for learners who
  * added a passkey on the account page. Hidden in browsers without WebAuthn.
  */
 export function PasskeySignIn({
@@ -14,6 +15,7 @@ export function PasskeySignIn({
   passkeys?: PasskeyClient;
 }) {
   const { refresh } = useSession();
+  const { m } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +29,13 @@ export function PasskeySignIn({
     if (result.ok) {
       await refresh();
       onSignedIn?.();
-    } else setError(result.message ?? null);
+    } else if (result.reason !== 'cancelled') setError(m.passkey[result.reason]);
   };
 
   return (
     <div className="stack" style={{ gap: 6 }}>
       <button className="btn" type="button" disabled={busy} onClick={() => void signIn()}>
-        Mit Passkey anmelden
+        {m.signIn.passkey}
       </button>
       {error && <span className="feedback-bad">{error}</span>}
     </div>

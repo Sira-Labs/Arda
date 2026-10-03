@@ -1,28 +1,33 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useI18n } from '@/i18n/I18nProvider';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { safeReturnPath } from '@/services/auth';
 import { PasskeySignIn } from './PasskeySignIn';
 import { SignInForm } from './SignInForm';
 
-/** The sign-in page: link and code by mail, or a passkey. No passwords (ADR-0004). */
+/**
+ * The sign-in page: link and code by mail, or a passkey. No passwords (ADR-0004). The
+ * language chosen here is the language of the mail (ADR-0020).
+ */
 export function SignIn() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { m } = useI18n();
   const returnTo = safeReturnPath(params.get('zurueck'));
   const linkFailed = params.get('fehler') === 'link';
   const done = () => navigate(returnTo, { replace: true });
 
   return (
     <div className="stack" style={{ maxWidth: 560 }}>
-      <p className="eyebrow">Anmelden</p>
-      <h1>Willkommen bei ʿArḍa</h1>
-      <p className="muted">
-        Melde dich an, damit dein Sheikh deine Rezitationen hört und dir Aufgaben gibt.
-        Ohne Passwort: wir schicken dir einen Link und einen Code.
-      </p>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <p className="eyebrow">{m.signIn.eyebrow}</p>
+        <LanguagePicker />
+      </div>
+      <h1>{m.signIn.title}</h1>
+      <p className="muted">{m.signIn.intro}</p>
       {linkFailed && (
         <p className="feedback-bad" role="alert">
-          Der Link ist abgelaufen oder wurde schon benutzt. Fordere einfach einen neuen
-          an.
+          {m.signIn.linkFailed}
         </p>
       )}
       <div className="card stack">

@@ -1,4 +1,5 @@
-import { RULE_LABELS, type Segment } from '@/tajweed/rules';
+import { useI18n } from '@/i18n/I18nProvider';
+import type { Segment } from '@/tajweed/rules';
 
 /**
  * Qurʾān text with tajwīd colours. Each marked letter keeps its joining (the spans sit inside
@@ -13,6 +14,7 @@ export function TajweedText({
   script?: 'indopak' | 'madina';
   large?: boolean;
 }) {
+  const { m } = useI18n();
   return (
     <p
       className={large ? 'quran quran-lg' : 'quran'}
@@ -26,7 +28,7 @@ export function TajweedText({
             key={index}
             className="tj"
             data-rule={segment.rule}
-            title={RULE_LABELS[segment.rule].name}
+            title={m.rules[segment.rule].name}
           >
             {segment.text}
           </span>

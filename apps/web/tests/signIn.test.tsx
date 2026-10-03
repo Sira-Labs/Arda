@@ -1,42 +1,34 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SignInForm } from '@/modules/account/SignInForm';
-import { AuthClient } from '@/services/auth';
-import { SessionProvider } from '@/state/session';
+import { fakeApi, Providers } from './render';
 
-function setup(answers: Record<string, Response>) {
-  const calls: { path: string; body: unknown }[] = [];
-  const fetchImpl = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const path = String(input);
-    calls.push({ path, body: init?.body ? JSON.parse(String(init.body)) : undefined });
-    return (
-      answers[path]?.clone() ?? Response.json({ error: 'unauthorized' }, { status: 401 })
-    );
-  }) as unknown as typeof fetch;
-  const client = new AuthClient(fetchImpl);
-  return { client, calls };
-}
+beforeEach(() => {
+  localStorage.setItem('arda.language', 'de');
+});
 
 describe('SignInForm', () => {
-  it('sends a link that returns into the app, then signs in with the code', async () => {
-    const { client, calls } = setup({
+  it('sends a link that returns into the app in the chosen language, then signs in with the code', async () => {
+    const { client, calls } = fakeApi({
       '/api/v1/auth/sign-in/magic-link': Response.json({ status: true }),
       '/api/v1/auth/sign-in/email-otp': Response.json({ ok: true }),
     });
     const signedIn = vi.fn();
     render(
-      <SessionProvider client={client}>
+      <Providers client={client}>
         <SignInForm returnTo="//evil.example" onSignedIn={signedIn} />
-      </SessionProvider>
+      </Providers>
     );
     await userEvent.type(screen.getByLabelText('E-Mail-Adresse'), 'amina@example.org');
     await userEvent.click(screen.getByRole('button', { name: 'Link senden' }));
     expect(await screen.findByRole('status')).toHaveTextContent('amina@example.org');
-    // A foreign return address is never sent; the server would refuse it anyway.
-    expect(calls.find((c) => c.path.endsWith('magic-link'))?.body).toMatchObject({
+    // A foreign return address is never sent; the mail follows the page's language.
+    expect(calls.find((c) => c.path.endsWith('magic-link'))?.body).toEqual({
       email: 'amina@example.org',
       callbackURL: '/',
+      errorCallbackURL: '/anmelden?fehler=link',
+      metadata: { language: 'de' },
     });
 
     await userEvent.type(screen.getByLabelText('Anmeldecode'), '123 456');
@@ -48,8 +40,9 @@ describe('SignInForm', () => {
     expect(signedIn).toHaveBeenCalledOnce();
   });
 
-  it('shows the reason when the code is wrong', async () => {
-    const { client } = setup({
+  it('shows the reason in the reader’s language when the code is wrong', async () => {
+    localStorage.setItem('arda.language', 'fr');
+    const { client } = fakeApi({
       '/api/v1/auth/sign-in/magic-link': Response.json({ status: true }),
       '/api/v1/auth/sign-in/email-otp': Response.json(
         { code: 'INVALID_OTP' },
@@ -57,14 +50,14 @@ describe('SignInForm', () => {
       ),
     });
     render(
-      <SessionProvider client={client}>
+      <Providers client={client}>
         <SignInForm />
-      </SessionProvider>
+      </Providers>
     );
-    await userEvent.type(screen.getByLabelText('E-Mail-Adresse'), 'a@example.org');
-    await userEvent.click(screen.getByRole('button', { name: 'Link senden' }));
-    await userEvent.type(await screen.findByLabelText('Anmeldecode'), '000000');
-    await userEvent.click(screen.getByRole('button', { name: 'Anmelden' }));
-    expect(await screen.findByText('Der Code stimmt nicht.')).toBeInTheDocument();
+    await userEvent.type(screen.getByLabelText('Adresse e-mail'), 'a@example.org');
+    await userEvent.click(screen.getByRole('button', { name: 'Envoyer le lien' }));
+    await userEvent.type(await screen.findByLabelText('Code de connexion'), '000000');
+    await userEvent.click(screen.getByRole('button', { name: 'Se connecter' }));
+    expect(await screen.findByText('Le code n’est pas correct.')).toBeInTheDocument();
   });
 });

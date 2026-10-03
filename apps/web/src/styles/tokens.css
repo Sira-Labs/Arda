@@ -59,6 +59,12 @@
   --shadow: 0 12px 32px rgba(27, 36, 32, 0.12);
 }
 
+/* The Arabic interface (ADR-0020): an Arabic sans for UI and titles; the document is RTL. */
+:root[lang='ar'] {
+  --font-ui: 'IBM Plex Sans Arabic', 'Manrope Variable', system-ui, sans-serif;
+  --font-display: 'IBM Plex Sans Arabic', 'Fraunces Variable', serif;
+}
+
 :root[data-theme='night'] {
   color-scheme: dark;
   --bg: #0f1714;

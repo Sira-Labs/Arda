@@ -1,27 +1,35 @@
 import { NavLink, Outlet } from 'react-router-dom';
+import { useI18n } from '@/i18n/I18nProvider';
+import type { Messages } from '@/i18n/messages';
 import { Icon, type IconName } from './Icon';
 
 /**
  * One navigation for both layouts (docs/spec/04-design-system.md): a floating bottom bar on
- * phones, a sidebar from 960 px. Five destinations, the same order as the learning loop.
+ * phones, a sidebar from 960 px. Five destinations, the same order as the learning loop. In
+ * Arabic the whole shell mirrors (dir="rtl").
  */
-export const NAVIGATION: readonly { to: string; label: string; icon: IconName }[] = [
-  { to: '/', label: 'Heute', icon: 'today' },
-  { to: '/pfad', label: 'Pfad', icon: 'path' },
-  { to: '/mushaf', label: 'Muṣḥaf', icon: 'mushaf' },
-  { to: '/labor', label: 'Labor', icon: 'lab' },
-  { to: '/sheikh', label: 'Sheikh', icon: 'sheikh' },
+export const NAVIGATION: readonly {
+  to: string;
+  label: keyof Omit<Messages['nav'], 'label' | 'brand'>;
+  icon: IconName;
+}[] = [
+  { to: '/', label: 'today', icon: 'today' },
+  { to: '/pfad', label: 'path', icon: 'path' },
+  { to: '/mushaf', label: 'mushaf', icon: 'mushaf' },
+  { to: '/labor', label: 'lab', icon: 'lab' },
+  { to: '/sheikh', label: 'sheikh', icon: 'sheikh' },
 ];
 
 export function AppShell() {
+  const { m } = useI18n();
   return (
     <div className="app">
-      <nav className="app-nav" aria-label="Hauptnavigation">
-        <span className="app-brand">ʿArḍa</span>
+      <nav className="app-nav" aria-label={m.nav.label}>
+        <span className="app-brand">{m.nav.brand}</span>
         {NAVIGATION.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === '/'}>
             <Icon name={item.icon} />
-            <span>{item.label}</span>
+            <span>{m.nav[item.label]}</span>
           </NavLink>
         ))}
       </nav>

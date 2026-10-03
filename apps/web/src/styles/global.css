@@ -76,6 +76,13 @@ a {
 .muted {
   color: var(--text-muted);
 }
+:root[lang='ar'] .eyebrow {
+  letter-spacing: 0;
+}
+/* Arabic numbering for ordered lists in the Arabic interface. */
+:root[lang='ar'] ol {
+  list-style-type: arabic-indic;
+}
 .eyebrow {
   font-size: 0.78rem;
   font-weight: 700;

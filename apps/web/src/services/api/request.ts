@@ -1,25 +1,17 @@
 /**
- * Same-origin JSON requests to ʿArḍa's API (ported from Suffa) with the session cookie. Error codes from the API
- * become German messages the pages show as they are.
+ * Same-origin JSON requests to ʿArḍa's API with the session cookie (ported from Suffa). A
+ * failure carries the API's error code; the page shows it in the learner's language from the
+ * i18n catalogs (`errors`, ADR-0020).
  */
 export type ApiResult<T> =
-  { ok: true; value: T } | { ok: false; status: number; code: string; message: string };
+  { ok: true; value: T } | { ok: false; status: number; code: string };
 
 export type Fetch = typeof fetch;
-
-/** Error codes shared by all areas. */
-const COMMON: Record<string, string> = {
-  forbidden: 'Dafür fehlt die Berechtigung.',
-  unauthorized: 'Bitte melde dich an.',
-  not_found: 'Nicht gefunden.',
-  invalid_body: 'Die Eingabe ist ungültig.',
-};
 
 export async function apiRequest<T>(
   fetchImpl: Fetch,
   path: string,
-  init: RequestInit = {},
-  messages: Record<string, string> = {}
+  init: RequestInit = {}
 ): Promise<ApiResult<T>> {
   let response: Response;
   try {
@@ -29,7 +21,7 @@ export async function apiRequest<T>(
       headers: init.body ? { 'content-type': 'application/json' } : undefined,
     });
   } catch {
-    return { ok: false, status: 0, code: 'offline', message: 'Keine Verbindung.' };
+    return { ok: false, status: 0, code: 'offline' };
   }
   if (response.status === 204) return { ok: true, value: undefined as T };
   const body = (await response.json().catch(() => null)) as {
@@ -38,13 +30,7 @@ export async function apiRequest<T>(
   } | null;
   if (!response.ok) {
     // Our routes answer { error }, Better Auth's { code }.
-    const code = body?.error ?? body?.code ?? '';
-    return {
-      ok: false,
-      status: response.status,
-      code,
-      message: messages[code] ?? COMMON[code] ?? `Serverfehler (${response.status}).`,
-    };
+    return { ok: false, status: response.status, code: body?.error ?? body?.code ?? '' };
   }
   return { ok: true, value: body as T };
 }
