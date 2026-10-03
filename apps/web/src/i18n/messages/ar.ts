@@ -21,6 +21,20 @@ function studentCount(count: number): string {
   return count <= 10 ? `${num(count)} طلاب` : `${num(count)} طالبًا`;
 }
 
+/** "n times" with the Arabic number agreement. */
+function times(count: number): string {
+  if (count === 1) return 'مرة واحدة';
+  if (count === 2) return 'مرتان';
+  return count <= 10 ? `${num(count)} مرات` : `${num(count)} مرة`;
+}
+
+/** "n more tasks" with the Arabic number agreement. */
+function moreTasks(count: number): string {
+  if (count === 1) return 'مهمة أخرى';
+  if (count === 2) return 'مهمتان أخريان';
+  return count <= 10 ? `${num(count)} مهام أخرى` : `${num(count)} مهمة أخرى`;
+}
+
 export const ar: Messages = {
   nav: {
     brand: 'العَرْضة',
@@ -233,6 +247,57 @@ export const ar: Messages = {
       missing: 'افتح رابط الدعوة من شيخك أو امسح رمز QR الخاص به.',
     },
   },
+  assignments: {
+    title: 'المهام',
+    kinds: {
+      learn: 'تعلُّم',
+      read: 'قراءة',
+      recite: 'إعادة التلاوة',
+      practise: 'تدريب',
+    },
+    range: (sura, from, to) =>
+      from === to
+        ? `سورة ${num(sura)}، الآية ${num(from)}`
+        : `سورة ${num(sura)}، الآيات ${num(from)}–${num(to)}`,
+    times: (count) => times(count),
+    focus: 'انتبه إلى',
+    // The Arabic names already tell the two idghām rules apart.
+    variant: () => null,
+    due: (date) => `حتى ${date}`,
+    dueToday: 'مستحقة اليوم',
+    overdue: (date) => `متأخرة منذ ${date}`,
+    from: (name, halaqa) => (name ? `من ${name} · ${halaqa}` : halaqa),
+    markDone: 'أنجزتُها',
+    done: 'أُنجزت – يراها شيخك.',
+    doneOn: (date) => `أُنجزت في ${date}`,
+    undo: 'لم أُنجزها بعد',
+    openCard: 'إلى بطاقة الحكم',
+    play: 'إلى اللعبة',
+    more: (count) => moreTasks(count),
+    none: 'لا مهام في هذه الحلقة بعد.',
+    older: 'عرض الأقدم',
+    forAll: 'للجميع',
+    forStudent: (name) => `لـ${name}`,
+    doneCount: (done, of) => `أنجزها ${num(done)} من ${num(of)}`,
+    doneBy: 'أنجزها',
+    remove: 'سحب',
+    form: {
+      title: 'إعطاء مهمة',
+      who: 'لمن',
+      everyone: 'جميع الطلاب',
+      kind: 'النوع',
+      sura: 'السورة',
+      from: 'من الآية',
+      to: 'إلى الآية',
+      rule: 'الحكم',
+      noRule: 'بلا',
+      repetitions: 'كم مرة',
+      due: 'تاريخ الاستحقاق',
+      note: 'ملاحظة (اختيارية)',
+      submit: 'إعطاء المهمة',
+      given: 'أُعطيت المهمة.',
+    },
+  },
   signIn: {
     eyebrow: 'الدخول',
     title: 'مرحبًا بك في العَرْضة',
@@ -292,6 +357,7 @@ export const ar: Messages = {
       'انتهت صلاحية هذا الرابط أو أنه غير صالح. اطلب رابطًا جديدًا من شيخك.',
     halaqa_full: 'هذا الدرس الفردي له طالب بالفعل.',
     too_many_halaqat: 'بلغت الحد الأقصى لعدد الحلقات.',
+    too_many_assignments: 'بلغت هذه الحلقة الحد الأقصى لعدد المهام.',
     generic: (status) => `خطأ في الخادم (${status}).`,
   },
   remarks: {

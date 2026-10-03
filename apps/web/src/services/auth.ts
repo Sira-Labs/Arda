@@ -3,6 +3,7 @@
  * six-digit code from the same mail, or a passkey (services/passkeys.ts). The session is an
  * httpOnly cookie on the same origin; nothing about it is stored by scripts.
  */
+import type { RuleId } from '@arda/tajweed';
 import type { Language } from '@/i18n/languages';
 import { apiRequest, type ApiResult, type Fetch } from './api/request';
 
@@ -85,6 +86,59 @@ export interface InvitePreview {
   name: string;
   oneToOne: boolean;
   teacherName: string | null;
+}
+
+export type AssignmentKind = 'learn' | 'read' | 'recite' | 'practise';
+
+/** Consecutive āyāt of one sūra (`AyaRange` in @arda/quran). */
+export interface AssignmentRange {
+  sura: number;
+  from: number;
+  to: number;
+}
+
+/** What every view of an assignment shows (spec T2, ADR-0014). */
+export interface AssignmentBase {
+  id: string;
+  kind: AssignmentKind;
+  /** The one student it is for, or `null` for the whole ḥalaqa. */
+  studentId: string | null;
+  range: AssignmentRange | null;
+  focusRule: RuleId | null;
+  repetitions: number | null;
+  note: string | null;
+  /** `YYYY-MM-DD`. */
+  dueOn: string;
+  createdAt: string;
+}
+
+/** An assignment as the student it is for sees it. */
+export interface StudentAssignment extends AssignmentBase {
+  halaqaId: string;
+  halaqaName: string;
+  fromName: string | null;
+  doneAt: string | null;
+}
+
+/** An assignment as its teacher sees it: for whom, and who is done. */
+export interface TeacherAssignment extends AssignmentBase {
+  studentName: string | null;
+  targets: number;
+  done: { userId: string; name: string | null; email: string | null; doneAt: string }[];
+}
+
+export type AssignmentPage =
+  | { role: 'teacher'; assignments: TeacherAssignment[]; more: boolean }
+  | { role: 'student'; assignments: StudentAssignment[]; more: boolean };
+
+export interface NewAssignment {
+  kind: AssignmentKind;
+  studentId: string | null;
+  range: AssignmentRange | null;
+  focusRule: RuleId | null;
+  repetitions: number | null;
+  note: string | null;
+  dueOn: string;
 }
 
 const HALAQAT = '/api/v1/halaqat';
@@ -225,6 +279,55 @@ export class AuthClient {
       method: 'POST',
       body: JSON.stringify({ token }),
     });
+  }
+
+  /** What the signed-in student still has to do, across their ḥalaqāt, soonest due first. */
+  openAssignments(): Promise<ApiResult<{ assignments: StudentAssignment[] }>> {
+    return apiRequest(this.fetchImpl, '/api/v1/assignments');
+  }
+
+  /** A page of the ḥalaqa's assignments; pass the last id shown to get older ones. */
+  assignments(halaqaId: string, before?: string): Promise<ApiResult<AssignmentPage>> {
+    const query = before ? `?before=${encodeURIComponent(before)}` : '';
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/assignments${query}`
+    );
+  }
+
+  giveAssignment(
+    halaqaId: string,
+    assignment: NewAssignment
+  ): Promise<ApiResult<{ id: string }>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/assignments`,
+      {
+        method: 'POST',
+        body: JSON.stringify(assignment),
+      }
+    );
+  }
+
+  removeAssignment(halaqaId: string, id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/assignments/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  /** Marks the student's assignment done (`true`), or takes the mark back. */
+  markAssignment(
+    halaqaId: string,
+    id: string,
+    done: boolean
+  ): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/assignments/${encodeURIComponent(id)}/done`,
+      done ? { method: 'PUT', body: '{}' } : { method: 'DELETE' }
+    );
   }
 
   devices(): Promise<ApiResult<{ sessions: Device[] }>> {

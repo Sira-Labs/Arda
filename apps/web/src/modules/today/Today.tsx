@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '@/components/Icon';
 import { TajweedText } from '@/components/TajweedText';
-import { useI18n } from '@/i18n/I18nProvider';
+import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { cardName } from '@/content/unit2';
+import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
+import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
 import { RULE_FAMILIES } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
@@ -14,14 +16,19 @@ import { useSession } from '@/state/session';
  */
 const IQLAB = segmentsOf('مِنۢ بَعْدِ', new Set(['iqlab']));
 
+/** How many open assignments Today lists before pointing to the rest. */
+const SHOWN = 3;
+
 /**
- * Today: what your sheikh asked for comes first, then the next step on the path. The data is
- * a placeholder until assignments (spec T2) and the path (spec F1) exist.
+ * Today: what your sheikh asked for comes first (spec T2, ADR-0014), soonest due on top, then
+ * the next step on the path (a placeholder until the path, spec F1, exists).
  */
 export function Today() {
   const { me, offline } = useSession();
   const { m, language } = useI18n();
   const { halaqat } = useHalaqat();
+  const open = useOpenAssignments();
+  const tasks = open.assignments ?? [];
   // What "from my sheikh" says: sign in, join, wait for approval, or (soon) the assignments.
   const sheikh = !me
     ? { title: m.today.connect, hint: m.today.connectHint, link: null }
@@ -55,17 +62,48 @@ export function Today() {
         <p className="eyebrow" style={{ color: 'var(--accent-fill)' }}>
           {m.today.fromSheikh}
         </p>
-        <h2 id="from-sheikh">{sheikh.title}</h2>
-        <p className="muted">{sheikh.hint}</p>
-        {sheikh.link && (
-          <Link
-            className="btn btn-primary"
-            to={sheikh.link}
-            style={{ alignSelf: 'flex-start' }}
-          >
-            {m.halaqa.mine}
-          </Link>
+        {/* A failed load says so instead of claiming there is nothing to do. */}
+        {tasks.length > 0 || open.failure ? (
+          <>
+            <h2 id="from-sheikh">{m.assignments.title}</h2>
+            <ul className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+              {tasks.slice(0, SHOWN).map((assignment) => (
+                <StudentAssignmentItem
+                  key={assignment.id}
+                  assignment={assignment}
+                  showFrom
+                  busy={open.busy}
+                  onMark={(done) => void open.mark(assignment, done)}
+                />
+              ))}
+            </ul>
+            {tasks.some((a) => a.doneAt) && (
+              <p className="muted" role="status">
+                {m.assignments.done}
+              </p>
+            )}
+            {tasks.length > SHOWN && (
+              <Link to="/sheikh" style={{ color: 'inherit' }}>
+                {m.assignments.more(tasks.length - SHOWN)}
+              </Link>
+            )}
+          </>
+        ) : (
+          <>
+            <h2 id="from-sheikh">{sheikh.title}</h2>
+            <p className="muted">{sheikh.hint}</p>
+            {sheikh.link && (
+              <Link
+                className="btn btn-primary"
+                to={sheikh.link}
+                style={{ alignSelf: 'flex-start' }}
+              >
+                {m.halaqa.mine}
+              </Link>
+            )}
+          </>
         )}
+        {open.failure && <p role="alert">{errorMessage(m, open.failure)}</p>}
       </section>
 
       <section className="card stack" aria-labelledby="next-unit">

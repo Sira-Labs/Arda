@@ -4,6 +4,7 @@ import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import type { ApiResult } from '@/services/api/request';
 import type { HalaqaMember, HalaqaView } from '@/services/auth';
 import { useSession } from '@/state/session';
+import { HalaqaAssignments } from '@/modules/assignments/HalaqaAssignments';
 import { InviteBox } from './InviteBox';
 
 /**
@@ -84,6 +85,12 @@ export function Halaqa() {
 
       {view.role === 'teacher' ? (
         <>
+          <HalaqaAssignments
+            halaqaId={halaqa.id}
+            students={view.members.filter(
+              (x) => x.role === 'student' && x.status === 'active'
+            )}
+          />
           <InviteBox
             halaqaId={halaqa.id}
             active={view.invite}
@@ -140,20 +147,23 @@ export function Halaqa() {
           />
         </>
       ) : (
-        <button
-          className="btn"
-          type="button"
-          style={{ alignSelf: 'flex-start' }}
-          disabled={busy}
-          onClick={() =>
-            void act(
-              () => client.leaveHalaqa(halaqa.id),
-              () => navigate('/sheikh')
-            )
-          }
-        >
-          {m.halaqa.leave}
-        </button>
+        <>
+          <HalaqaAssignments halaqaId={halaqa.id} />
+          <button
+            className="btn"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            disabled={busy}
+            onClick={() =>
+              void act(
+                () => client.leaveHalaqa(halaqa.id),
+                () => navigate('/sheikh')
+              )
+            }
+          >
+            {m.halaqa.leave}
+          </button>
+        </>
       )}
     </div>
   );
