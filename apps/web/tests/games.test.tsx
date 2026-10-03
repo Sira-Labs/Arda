@@ -218,3 +218,34 @@ describe('the due list', () => {
     expect(screen.getByRole('link', { name: '1 Karte wiederholen' })).toBeInTheDocument();
   });
 });
+
+describe('an empty review session', () => {
+  afterEach(() => vi.useRealTimers());
+
+  it('starts once a card falls due, without leaving the page', () => {
+    vi.useFakeTimers();
+    localStorage.setItem('arda.language', 'de');
+    let now = 0;
+    const store = new MemoryReviewStore();
+    const card = letterQuestion('ب');
+    store.save({
+      cards: { [card.id]: { ...card, box: 2, due: 1000, lapses: 1, updatedAt: 0 } },
+      bestTimes: {},
+    });
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store} now={() => now}>
+          <MemoryRouter initialEntries={['/pfad/wiederholen']}>
+            <ReviewSession />
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    expect(screen.getByText('Gerade ist nichts fällig. Gut so!')).toBeInTheDocument();
+    now = 2000;
+    act(() => vi.advanceTimersByTime(DUE_REFRESH_MS));
+    expect(screen.getByText('ب')).toBeInTheDocument();
+    expect(screen.getByText('1 / 1')).toBeInTheDocument();
+  });
+});
