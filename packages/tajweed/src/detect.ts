@@ -80,6 +80,7 @@ function followerOf(
   return undefined;
 }
 
+/** Whether the rule merges the nūn or mīm into the next letter. */
 const isIdgham = (rule: RuleId): boolean =>
   rule === 'idgham-ghunna' || rule === 'idgham-no-ghunna' || rule === 'idgham-shafawi';
 
@@ -139,6 +140,7 @@ export function detect(text: string): Occurrence[] {
   return found;
 }
 
+/** An occurrence from its carrier and the letter that decided it. */
 const occurrence = (
   rule: RuleId,
   carrier: Grapheme,

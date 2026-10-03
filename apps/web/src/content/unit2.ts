@@ -72,6 +72,7 @@ export function caseOf(text: string, rule: RuleId): RuleCase {
   return occurrence.acrossWords ? 'across' : 'inside';
 }
 
+/** Builds a card from the sheet: one example group per rule, each example with its case. */
 function card(id: Unit2Card): RuleCardContent {
   return {
     id,
@@ -94,6 +95,7 @@ export const UNIT2: Readonly<Record<Unit2Card, RuleCardContent>> = {
   ikhfa: card('ikhfa'),
 };
 
+/** Whether a route parameter names a card of unit 2. */
 export function isUnit2Card(value: string | undefined): value is Unit2Card {
   return (UNIT2_CARDS as readonly string[]).includes(value ?? '');
 }

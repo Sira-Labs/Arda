@@ -147,6 +147,7 @@ export function RuleCard({ id }: { id: Unit2Card }) {
   );
 }
 
+/** The card's name in the reader's interface language. */
 function CardName({ id }: { id: Unit2Card }) {
   const { language } = useI18n();
   return <>{cardName(id, language)}</>;
@@ -157,13 +158,16 @@ function Group({ group, titled }: { group: ExampleGroup; titled: boolean }) {
   const { m, language } = useI18n();
   const rule = RULES[group.rule];
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
+  const ghunna = rule.ghunna ? m.ruleCard.withGhunna : m.ruleCard.withoutGhunna;
   return (
-    <section className="stack" aria-label={ruleName(group.rule, language)}>
+    // Both idghām groups share the term, so the label names the ghunna too.
+    <section
+      className="stack"
+      aria-label={`${ruleName(group.rule, language)} · ${ghunna}`}
+    >
       <div className="row" style={{ gap: 8 }}>
         {titled && <h2 className="h-small">{ruleName(group.rule, language)}</h2>}
-        <span className="chip chip-quiet">
-          {rule.ghunna ? m.ruleCard.withGhunna : m.ruleCard.withoutGhunna}
-        </span>
+        <span className="chip chip-quiet">{ghunna}</span>
       </div>
       <div className="stack" style={{ gap: 6 }}>
         <p className="muted">{m.ruleCard.letters}</p>

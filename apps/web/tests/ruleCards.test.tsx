@@ -161,3 +161,16 @@ describe('the path', () => {
     expect(screen.getByText('15 letters')).toBeInTheDocument();
   });
 });
+
+describe('accessible names', () => {
+  it('tell the two idghām groups apart', () => {
+    localStorage.setItem('arda.language', 'de');
+    renderAt('/pfad/2/idgham');
+    expect(
+      screen.getByRole('region', { name: 'Idghām · mit Ghunna' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('region', { name: 'Idghām · ohne Ghunna' })
+    ).toBeInTheDocument();
+  });
+});
