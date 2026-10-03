@@ -32,12 +32,14 @@
   --info: #25609b;
 
   /* Tajwīd colours (common tajwīd-muṣḥaf convention), tuned for paper */
-  --tj-ghunna: #2e8b3e; /* ghunna: ikhfāʾ, idghām with ghunna, iqlāb, shafawī rules */
+  /* Each ≥ 3:1 on --bg and --bg-elev (Qurʾān text is large); green ghunna also differs in
+     lightness from the madd reds, the pair colour-blind readers confuse most. */
+  --tj-ghunna: #1f7a35; /* ghunna: ikhfāʾ, idghām with ghunna, iqlāb, shafawī rules */
   --tj-qalqala: #2464b0;
-  --tj-silent: #8c8c86; /* written, not pronounced; idghām without ghunna */
-  --tj-madd-2: #c8574b;
-  --tj-madd-4: #b8322a;
-  --tj-madd-6: #8a1f1a; /* darker = longer */
+  --tj-silent: #86867f; /* written, not pronounced; idghām without ghunna */
+  --tj-madd-2: #c85e52;
+  --tj-madd-4: #a32b22;
+  --tj-madd-6: #6e1813; /* darker = longer */
 
   /* Type */
   --font-ui: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
@@ -74,11 +76,11 @@
   --check: #f3c274;
   --bad: #f08a73;
   --info: #8cc4f2;
-  --tj-ghunna: #7fd08a;
-  --tj-qalqala: #8cc4f2;
-  --tj-silent: #9aa39e;
-  --tj-madd-2: #f4a090;
-  --tj-madd-4: #f08a73;
-  --tj-madd-6: #e2604f;
+  --tj-ghunna: #8fdc9b;
+  --tj-qalqala: #6aa6e6;
+  --tj-silent: #8e9893;
+  --tj-madd-2: #e98a7a;
+  --tj-madd-4: #e0604e;
+  --tj-madd-6: #d4513f; /* at night: longer = deeper, still ≥ 3:1 */
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
