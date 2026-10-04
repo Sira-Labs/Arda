@@ -107,6 +107,31 @@ describe('loading a pack (S2.3)', () => {
     expect(await loadPack(entry, deps)).toEqual({ ok: false, failure: 'invalid' });
   });
 
+  it('says offline when the connection drops during the download', async () => {
+    const { deps } = loader();
+    const broken = {
+      ...deps,
+      fetch: async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.error(new TypeError('network'));
+            },
+          })
+        ),
+    };
+    expect(await loadPack(juz30, broken)).toEqual({ ok: false, failure: 'offline' });
+  });
+
+  it('still shows the pack when it cannot be kept (storage full or blocked)', async () => {
+    const full = new MemoryCache();
+    full.put = async () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+    const { deps } = loader({ cache: full });
+    expect((await loadPack(juz30, deps)).ok).toBe(true);
+  });
+
   it('works without Cache Storage, online', async () => {
     const { deps } = loader({ cache: null });
     expect((await loadPack(juz30, deps)).ok).toBe(true);

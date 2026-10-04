@@ -102,7 +102,13 @@ export async function loadPack(
     if (!response.ok)
       return { ok: false, failure: response.status === 404 ? 'missing' : 'offline' };
   }
-  const bytes = await response.clone().arrayBuffer();
+  let bytes: ArrayBuffer;
+  try {
+    bytes = await response.clone().arrayBuffer();
+  } catch {
+    // The connection dropped while the body was coming.
+    return { ok: false, failure: 'offline' };
+  }
   if ((await deps.sha256(bytes)) !== entry.sha256) {
     if (fromCache) await cache?.delete(url);
     return { ok: false, failure: 'checksum' };
@@ -114,6 +120,9 @@ export async function loadPack(
     return { ok: false, failure: 'invalid' };
   }
   if (!isPack(parsed)) return { ok: false, failure: 'invalid' };
-  if (!fromCache) await cache?.put(url, response);
+  if (!fromCache) {
+    // Keeping it for offline use is best effort: full or blocked storage still shows the pack.
+    await cache?.put(url, response).catch(() => undefined);
+  }
   return { ok: true, pack: parsed, entry, fromCache };
 }

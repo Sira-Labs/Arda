@@ -25,7 +25,11 @@ export function usePack(entry: PackIndexEntry | undefined): PackResult | null {
     if (!cache) loaded.set(deps, (cache = new Map()));
     let promise = cache.get(key);
     if (!promise) {
-      promise = loadPack(entry, deps);
+      // A failure nobody foresaw still ends the loading, and the next mount tries again.
+      promise = loadPack(entry, deps).catch((): PackResult => ({
+        ok: false,
+        failure: 'offline',
+      }));
       cache.set(key, promise);
     }
     void promise.then((value) => {
