@@ -13,7 +13,14 @@ export type MushafPack = Pack<PackRuleId>;
 export type PackFailure = 'offline' | 'checksum' | 'invalid' | 'missing';
 
 export type PackResult =
-  | { ok: true; pack: MushafPack; entry: PackIndexEntry; fromCache: boolean }
+  | {
+      ok: true;
+      pack: MushafPack;
+      entry: PackIndexEntry;
+      fromCache: boolean;
+      /** Kept in Cache Storage, so it opens offline next time. */
+      stored: boolean;
+    }
   | { ok: false; failure: PackFailure };
 
 /** Where packs are kept for offline use (Cache Storage in the browser). */
@@ -123,9 +130,13 @@ export async function loadPack(
     return { ok: false, failure: 'invalid' };
   }
   if (!isPack(parsed)) return { ok: false, failure: 'invalid' };
-  if (!fromCache) {
+  let stored = fromCache;
+  if (!fromCache && cache) {
     // Keeping it for offline use is best effort: full or blocked storage still shows the pack.
-    await cache?.put(url, response).catch(() => undefined);
+    stored = await cache.put(url, response).then(
+      () => true,
+      () => false
+    );
   }
-  return { ok: true, pack: parsed, entry, fromCache };
+  return { ok: true, pack: parsed, entry, fromCache, stored };
 }

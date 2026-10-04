@@ -290,6 +290,7 @@ export const en: Messages = {
     ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
     loading: 'Loading the muṣḥaf …',
     saved: 'Saved for offline use',
+    notSaved: 'Online only: this device cannot keep it.',
     failure: {
       offline: 'Open the muṣḥaf once with a connection; after that it works offline too.',
       checksum: 'The muṣḥaf data arrived damaged. Please reload the page.',

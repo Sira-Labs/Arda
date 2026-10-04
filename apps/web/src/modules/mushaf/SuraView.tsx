@@ -219,6 +219,20 @@ export function SuraView() {
             {m.mushaf.assign}
           </button>
         )}
+        {picking && !given && (
+          // Until both words are picked there is no panel yet to cancel from.
+          <button
+            className="btn"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => {
+              setPicking(false);
+              setPicked(null);
+            }}
+          >
+            {m.mushaf.cancel}
+          </button>
+        )}
         {notice && <p role="status">{notice}</p>}
       </header>
 

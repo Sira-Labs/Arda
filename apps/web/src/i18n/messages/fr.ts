@@ -296,6 +296,7 @@ export const fr: Messages = {
     ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
     loading: 'Chargement du muṣḥaf …',
     saved: 'Enregistré hors ligne',
+    notSaved: 'En ligne seulement : cet appareil ne peut pas le garder.',
     failure: {
       offline:
         'Ouvre le muṣḥaf une fois avec une connexion\u202f; ensuite il marche aussi hors ligne.',

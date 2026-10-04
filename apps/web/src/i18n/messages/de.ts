@@ -315,6 +315,7 @@ export const de = {
     ayat: (count: number) => (count === 1 ? '1 Āya' : `${count} Āyāt`),
     loading: 'Der Muṣḥaf wird geladen …',
     saved: 'Offline gespeichert',
+    notSaved: 'Nur mit Verbindung: Dieses Gerät kann ihn nicht speichern.',
     failure: {
       offline: 'Öffne den Muṣḥaf einmal mit Verbindung; danach geht er auch offline.',
       checksum: 'Die Muṣḥaf-Daten sind beschädigt angekommen. Lade die Seite bitte neu.',

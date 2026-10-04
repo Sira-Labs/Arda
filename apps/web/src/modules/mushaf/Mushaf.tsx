@@ -44,9 +44,13 @@ function PackGroup({ entry }: { entry: PackIndexEntry }) {
           <span className="muted" role="status">
             {m.mushaf.loading}
           </span>
-        ) : result.ok ? (
+        ) : result.ok && result.stored ? (
           <span className="chip chip-quiet" role="status">
             ✓ {m.mushaf.saved}
+          </span>
+        ) : result.ok ? (
+          <span className="muted" role="status">
+            {m.mushaf.notSaved}
           </span>
         ) : (
           <span role="alert">{m.mushaf.failure[result.failure]}</span>

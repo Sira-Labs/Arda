@@ -69,6 +69,7 @@ describe('loading a pack (S2.3)', () => {
     const { deps, calls, cache } = loader();
     const first = await loadPack(juz30, deps);
     expect(first.ok && first.fromCache).toBe(false);
+    expect(first.ok && first.stored).toBe(true);
     expect(first.ok && first.pack.suras).toHaveLength(37);
     expect(cache?.entries.has(`/packs/${juz30.file}`)).toBe(true);
 
@@ -134,12 +135,16 @@ describe('loading a pack (S2.3)', () => {
       throw new DOMException('full', 'QuotaExceededError');
     };
     const { deps } = loader({ cache: full });
-    expect((await loadPack(juz30, deps)).ok).toBe(true);
+    const result = await loadPack(juz30, deps);
+    expect(result.ok).toBe(true);
+    // …and does not claim it opens offline.
+    expect(result.ok && result.stored).toBe(false);
   });
 
   it('works without Cache Storage, online', async () => {
     const { deps } = loader({ cache: null });
-    expect((await loadPack(juz30, deps)).ok).toBe(true);
+    const result = await loadPack(juz30, deps);
+    expect(result.ok && !result.stored).toBe(true);
   });
 
   it('knows which sūras the app has', () => {
@@ -212,6 +217,18 @@ beforeEach(() => {
 });
 
 describe('the muṣḥaf screen (S2.4)', () => {
+  it('does not say saved when the device cannot keep the packs', async () => {
+    const full = new MemoryCache();
+    full.put = async () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+    renderAt('/mushaf', loader({ cache: full }).deps);
+    const juz30 = await screen.findByRole('region', { name: 'Juzʾ ʿAmma' });
+    expect(await within(juz30).findByRole('status')).toHaveTextContent(
+      'Nur mit Verbindung: Dieses Gerät kann ihn nicht speichern.'
+    );
+  });
+
   it('lists the sūras of each pack and keeps the packs for offline use', async () => {
     renderAt('/mushaf', loader().deps);
     const baqara = await screen.findByRole('region', { name: 'al-Fātiḥa und al-Baqara' });
@@ -465,6 +482,24 @@ describe('assigning on the page (S3.2)', () => {
       range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
     });
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('can be left before both words are picked', async () => {
+    renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
+    await user.click(within(aya2).getAllByRole('button')[1]!);
+    await user.click(screen.getByRole('button', { name: 'Abbrechen' }));
+    expect(
+      screen.getByText('Tippe auf ein Wort, um seine Regeln zu sehen.')
+    ).toBeInTheDocument();
+    expect(document.querySelector('.picked')).toBeNull();
+    // Tapping a word shows its rules again.
+    await user.click(within(aya2).getAllByRole('button')[0]!);
+    expect(
+      screen.getByRole('dialog', { name: 'Sūra 113, Āya 2, Wort 1' })
+    ).toBeInTheDocument();
   });
 
   it('gives whole āyāt when the pick begins and ends with them', async () => {
