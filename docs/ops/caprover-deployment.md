@@ -89,16 +89,16 @@ lock). Keys:
 
 Repository → Settings → Environments → **`staging`**:
 
-| Kind     | Name                        | Value                                             |
-| -------- | --------------------------- | ------------------------------------------------- |
-| variable | `CAPROVER_SERVER`           | `https://captain.<root-domain>`                   |
-| variable | `ARDA_STAGING_URL`          | optional, default `https://arda-stg.siralabs.org` |
-| variable | `CAPROVER_APP_API`          | the api app's name when it is not `arda-api`      |
-| variable | `CAPROVER_APP_WEB`          | the web app's name when it is not `arda-web`      |
-| variable | `CAPROVER_APP_BACKUP`       | the backup app's name when not `arda-backup`      |
-| secret   | `CAPROVER_APP_TOKEN_API`    | arda-api → Deployment → Enable App Token          |
-| secret   | `CAPROVER_APP_TOKEN_WEB`    | arda-web → Deployment → Enable App Token          |
-| secret   | `CAPROVER_APP_TOKEN_BACKUP` | optional, once `arda-backup` exists               |
+| Kind     | Name                        | Value                                                                                 |
+| -------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| variable | `CAPROVER_SERVER`           | `https://captain.<root-domain>`                                                       |
+| variable | `ARDA_STAGING_URL`          | optional, default `https://arda-stg.siralabs.org`                                     |
+| variable | `CAPROVER_APP_API`          | the api app's name when it is not `arda-api`                                          |
+| variable | `CAPROVER_APP_WEB`          | the web app's name when it is not `arda-web`                                          |
+| variable | `CAPROVER_APP_BACKUP`       | the backup app's name when not `arda-backup`                                          |
+| secret   | `CAPROVER_APP_TOKEN_API`    | the app `CAPROVER_APP_API` names (default `arda-api`) → Deployment → Enable App Token |
+| secret   | `CAPROVER_APP_TOKEN_WEB`    | the app `CAPROVER_APP_WEB` names (default `arda-web`) → Deployment → Enable App Token |
+| secret   | `CAPROVER_APP_TOKEN_BACKUP` | optional: the app `CAPROVER_APP_BACKUP` names (default `arda-backup`), once it exists |
 
 Every push to `main`: checks → images (smoke tests, Trivy) → GHCR → deploy api, backup, web by
 digest → wait until staging reports the new `sha-…`. Without `CAPROVER_SERVER` and the tokens
