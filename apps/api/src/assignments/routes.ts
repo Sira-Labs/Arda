@@ -60,9 +60,24 @@ const NewAssignmentBody = z
     kind: z.enum(ASSIGNMENT_KINDS),
     studentId: Id.nullable().default(null),
     range: z
-      .object({ sura: z.number().int(), from: z.number().int(), to: z.number().int() })
+      .object({
+        sura: z.number().int(),
+        from: z.number().int(),
+        to: z.number().int(),
+        // From a word of the first āya to a word of the last (S3.2).
+        words: z
+          .object({
+            from: z.number().int().min(1).max(128),
+            to: z.number().int().min(1).max(128),
+          })
+          .strict()
+          .optional(),
+      })
       .strict()
       .refine(isAyaRange, { message: 'range' })
+      .refine((r) => !r.words || r.from < r.to || r.words.from <= r.words.to, {
+        message: 'range',
+      })
       .nullable()
       .default(null),
     focusRule: z.enum(RULE_IDS).nullable().default(null),

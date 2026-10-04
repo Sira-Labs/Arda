@@ -1225,6 +1225,38 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await repo.countIn(halaqaId)).toBe(1);
     });
 
+    it('keeps the words an assignment starts and ends at (S3.2)', async () => {
+      const id = await give({
+        range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+      });
+      const [open] = await repo.open(AMINA, 50);
+      expect(open).toMatchObject({
+        id,
+        range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+      });
+      const plain = await give({ range: { sura: 1, from: 1, to: 7 } });
+      expect((await repo.open(AMINA, 50)).find((a) => a.id === plain)?.range).toEqual({
+        sura: 1,
+        from: 1,
+        to: 7,
+      });
+      // One bound without the other, or backwards inside one āya, is refused by the database.
+      await expect(
+        pool.query(
+          `insert into assignments (halaqa_id, kind, sura, aya_from, aya_to, word_from, due_on)
+           values ($1, 'read', 113, 2, 2, 3, '2026-10-09')`,
+          [halaqaId]
+        )
+      ).rejects.toThrow();
+      await expect(
+        pool.query(
+          `insert into assignments (halaqa_id, kind, sura, aya_from, aya_to, word_from, word_to, due_on)
+           values ($1, 'read', 113, 2, 2, 3, 2, '2026-10-09')`,
+          [halaqaId]
+        )
+      ).rejects.toThrow();
+    });
+
     it('gives only to active students of that ḥalaqa', async () => {
       for (const studentId of [ZAID, TEACHER, '40000000-0000-4000-8000-000000000009']) {
         expect(

@@ -316,6 +316,31 @@ describe('giving and doing assignments (T2)', () => {
     });
   });
 
+  it('can start and end at a word (S3.2)', async () => {
+    const { halaqaId, call } = await setup();
+    const words = { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } };
+    const created = await call('owner', 'POST', `/halaqat/${halaqaId}/assignments`, {
+      ...READ_FATIHA,
+      range: words,
+    });
+    expect(created.status).toBe(201);
+    const open = await json(await call('member', 'GET', '/assignments'));
+    expect(open.assignments.find((a: Json) => a.range?.words)?.range).toEqual(words);
+    for (const range of [
+      // Backwards inside one āya, a word 0, more words than any āya has, an unknown key.
+      { sura: 113, from: 2, to: 2, words: { from: 3, to: 2 } },
+      { sura: 113, from: 2, to: 3, words: { from: 0, to: 2 } },
+      { sura: 113, from: 2, to: 3, words: { from: 1, to: 129 } },
+      { sura: 113, from: 2, to: 3, words: { from: 1, to: 2, key: 'x' } },
+    ]) {
+      const response = await call('owner', 'POST', `/halaqat/${halaqaId}/assignments`, {
+        ...READ_FATIHA,
+        range,
+      });
+      expect(response.status, JSON.stringify(range)).toBe(400);
+    }
+  });
+
   it('gives only to active students of the ḥalaqa', async () => {
     const { halaqaId, call } = await setup();
     for (const studentId of [ID.pending, ID.outsider, ID.owner]) {
