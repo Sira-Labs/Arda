@@ -39,9 +39,12 @@ flowchart LR
 ## 2. Repository layout
 
 ```
-apps/api        Hono API: auth, account, admin, health, migrations (TypeScript, raw pg)
+apps/api        Hono API: auth, account, admin, ḥalaqāt, assignments, health, migrations
+                (TypeScript, raw pg); built as one ESM bundle that inlines the packages
 apps/web        React + Vite PWA: shell, sign-in, design tokens, (next) units, muṣḥaf
-packages/       tajweed: rule taxonomy, letter classes, detection; (next) mapping, lookup (pure TS)
+packages/       tajweed: rule taxonomy, letter classes, detection; (next) mapping, lookup
+                quran: the sūras and āya ranges (Tanzil metadata); (next) word keys
+                (both pure TS, consumed as source: Vite for the web, esbuild for the api)
 infra/          Dockerfiles, Caddyfile, CapRover captain-definitions and one-click templates,
                 backup scripts
 docs/           specs, ADRs, plan, ops, security
@@ -57,6 +60,7 @@ tools/          (next) content import: Tanzil text, cpfair rules, IndoPak alignm
 | Auth       | Better Auth 1.7.6 + `@better-auth/passkey`        | ADR-0004; `@better-auth/core` pinned                    |
 | DB         | Postgres 17, raw `pg`, plain SQL migrations       | advisory-locked runner, `schema_migrations`             |
 | Validation | zod 3                                             | env config and request bodies                           |
+| Build      | tsc (types), esbuild (api), Vite (web)            | the api bundle inlines `@arda/*`; npm packages external |
 | Logging    | pino (api), small structured logger (web)         | JSON lines; never links, codes or addresses on failures |
 | Web        | React 18, react-router 7, Vite 5, vite-plugin-pwa | offline shell; IndexedDB for packs (next)               |
 | Tests      | Vitest (unit, jsdom), Postgres integration suites | `ARDA_TEST_DATABASE_URL`                                |
@@ -92,11 +96,23 @@ Built (migration `0003_halaqat`, spec T1, ADR-0005):
 | `halaqa_members` | ḥalaqa role (`teacher`, `student`) and status (`pending` until the teacher approves, `active`)         |
 | `halaqa_invites` | SHA-256 of a 192-bit token, 14 days, revoked when a new link is made; the token itself is never stored |
 
+Built (migration `0004_assignments`, spec T2, ADR-0014):
+
+| Table                    | Purpose                                                                                                                  |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `assignments`            | ḥalaqa, one student or all (`student_id` null), kind, sūra and āyāt, focus rule, repetitions, note, due day, who gave it |
+| `assignment_completions` | who marked which assignment done, and when; what returns to the teacher                                                  |
+
+Both point at the student's membership (`halaqa_id, student_id` → `halaqa_members`): when a
+student leaves, is removed or deletes the account, their own assignments and their completions
+go too. The range is checked against the muṣḥaf (`@arda/quran`) and the rule against
+`@arda/tajweed` by the API; the database keeps the shape (read and recite need āyāt, learn and
+practise a rule). Word keys replace the sūra and āya columns when the content packs arrive.
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table                  | Story    | Key fields                                                                                  |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `assignments`          | T2       | halaqa, student (or all), type, `range` of word keys, focus rule, due, done_at              |
 | `recitations`          | F7       | student, halaqa, range, object key, duration, status, consent                               |
 | `recitation_marks`     | T3       | recitation, word key, second, rule, remark, voice note key, by teacher                      |
 | `arḍ_log` (`arda_log`) | T4       | student, sūra/range, date, verdict, note                                                    |
@@ -140,7 +156,18 @@ Built for T1 (`/api/v1/halaqat`, every route checked against every kind of calle
 | `POST /:id/members/:userId/approve`, `DELETE /:id/members/:userId` | `halaqa:manage`           | approve or remove a student (audit-logged)                 |
 | `DELETE /:id/membership`                                           | `halaqa:join`             | a student leaves                                           |
 
-Next: `/api/v1/assignments/*` (T2), `/api/v1/recitations/*`
+Built for T2 (mounted at `/api/v1`, every route checked against every kind of caller in
+`assignments.routes.test.ts`):
+
+| Method and path                                    | Action                    | Purpose                                                             |
+| -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------- |
+| `GET /assignments`                                 | `halaqa:join`             | what I still have to do across my active ḥalaqāt, soonest due first |
+| `GET /halaqat/:id/assignments?before=`             | `halaqa:read` (active)    | 50 at a time, latest due first; the teacher also sees who is done   |
+| `POST /halaqat/:id/assignments`                    | `halaqa:manage` (teacher) | give one: kind, student or all, range, rule, repetitions, note, due |
+| `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                        |
+| `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                 |
+
+Next: `/api/v1/recitations/*`
 (F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.
 

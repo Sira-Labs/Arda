@@ -218,6 +218,59 @@ export const en: Messages = {
       missing: 'Open your sheikh’s invite link or scan his QR code.',
     },
   },
+  assignments: {
+    title: 'Assignments',
+    kinds: {
+      learn: 'Learn',
+      read: 'Read',
+      recite: 'Recite again',
+      practise: 'Practise',
+    },
+    range: (sura, from, to) =>
+      from === to ? `Sūra ${sura}, āya ${from}` : `Sūra ${sura}, āyāt ${from}–${to}`,
+    times: (count) => (count === 1 ? 'once' : count === 2 ? 'twice' : `${count} times`),
+    focus: 'Focus on',
+    variant: (rule) =>
+      rule === 'idgham-ghunna'
+        ? 'with ghunna'
+        : rule === 'idgham-no-ghunna'
+          ? 'without ghunna'
+          : null,
+    due: (date) => `by ${date}`,
+    dueToday: 'due today',
+    overdue: (date) => `overdue since ${date}`,
+    from: (name, halaqa) => (name ? `from ${name} · ${halaqa}` : halaqa),
+    markDone: 'Done',
+    done: 'Done – your sheikh sees it.',
+    doneOn: (date) => `done on ${date}`,
+    undo: 'Not done after all',
+    openCard: 'Open the rule card',
+    play: 'Play the game',
+    more: (count) => (count === 1 ? '1 more assignment' : `${count} more assignments`),
+    none: 'No assignments in this ḥalaqa yet.',
+    older: 'Show older',
+    forAll: 'for everyone',
+    forStudent: (name) => `for ${name}`,
+    doneCount: (done, of) => `${done} of ${of} done`,
+    doneBy: 'Done by',
+    remove: 'Withdraw',
+    form: {
+      title: 'Give an assignment',
+      who: 'For',
+      everyone: 'all students',
+      kind: 'Kind',
+      sura: 'Sūra',
+      from: 'from āya',
+      to: 'to āya',
+      rule: 'Rule',
+      noRule: 'none',
+      repetitions: 'How often',
+      due: 'Due on',
+      note: 'Note (optional)',
+      submit: 'Give assignment',
+      given: 'Assignment given.',
+    },
+  },
   signIn: {
     eyebrow: 'Sign in',
     title: 'Welcome to ʿArḍa',
@@ -281,6 +334,7 @@ export const en: Messages = {
       'This link has expired or is not valid. Ask your sheikh for a new one.',
     halaqa_full: 'This one-to-one ḥalaqa already has a student.',
     too_many_halaqat: 'You have reached the maximum number of ḥalaqāt.',
+    too_many_assignments: 'This ḥalaqa has reached the maximum number of assignments.',
     generic: (status) => `Server error (${status}).`,
   },
   remarks: {

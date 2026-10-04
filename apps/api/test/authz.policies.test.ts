@@ -19,6 +19,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'halaqa:manage': ['admin'], // without a ḥalaqa scope only admins
   'halaqa:join': ['student', 'teacher', 'admin'],
   'halaqa:read': ['admin'], // without a ḥalaqa scope only admins
+  'halaqa:study': [], // without a ḥalaqa scope nobody, admins included
   'halaqa:review': ['admin'], // without a ḥalaqa scope only admins
   'feedback:translate': ['teacher', 'admin'],
   'admin:users:read': ['admin'],
@@ -64,6 +65,15 @@ describe('authz policies', () => {
     expect(can(student, 'halaqa:read', { halaqaRole: 'teacher' })).toBe(true);
     expect(can(student, 'halaqa:read', { halaqaRole: null })).toBe(false);
     expect(can(student, 'halaqa:read')).toBe(false);
+  });
+
+  it('lets only the students of a ḥalaqa mark its assignments done', () => {
+    for (const role of ROLES) {
+      const actor = { id: 'u', role };
+      expect(can(actor, 'halaqa:study', { halaqaRole: 'student' })).toBe(true);
+      expect(can(actor, 'halaqa:study', { halaqaRole: 'teacher' })).toBe(false);
+      expect(can(actor, 'halaqa:study', { halaqaRole: null })).toBe(false);
+    }
   });
 
   it('asks admins for a confirmed second factor on every admin action', () => {

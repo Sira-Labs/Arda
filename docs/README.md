@@ -28,7 +28,7 @@
 | [0011](adr/0011-reciter-audio.md)                     | Reciter audio, streamed with credit                      | proposed                 |
 | [0012](adr/0012-recordings-and-privacy.md)            | Recordings and privacy                                   | accepted                 |
 | [0013](adr/0013-speech-check.md)                      | Speech check, gated per rule                             | proposed                 |
-| [0014](adr/0014-assignments-on-the-page.md)           | Assignments on the muṣḥaf page                           | proposed                 |
+| [0014](adr/0014-assignments-on-the-page.md)           | Assignments on the muṣḥaf page                           | accepted (first cut)     |
 | [0015](adr/0015-live-lessons.md)                      | Live lessons on LiveKit                                  | proposed                 |
 | [0016](adr/0016-teacher-confirmed-ai-flags.md)        | AI flags the teacher confirms                            | proposed                 |
 | [0017](adr/0017-mushaf-editions-and-riwayat.md)       | Muṣḥaf editions and riwāyāt                              | accepted                 |

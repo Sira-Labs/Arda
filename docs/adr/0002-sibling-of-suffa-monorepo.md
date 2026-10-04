@@ -35,3 +35,11 @@ audience (Qurʾān students and their sheikh), its content and its content right
 
 Duplicate code for a while, with a written rule for keeping it in step. Suffa's ADRs stay the
 reference for the ported parts; ʿArḍa's ADRs say only what differs.
+
+## Update 2026-10-03: the api bundles the shared packages
+
+The packages under `packages/` stay TypeScript source without a build of their own. The web
+app compiles them with Vite; the api, which first imports them for assignments (T2), is now
+built by esbuild into one ESM file that inlines `@arda/*` and leaves the npm packages external,
+after `tsc` has checked the types. The runtime image is unchanged otherwise: production
+dependencies only, no test tooling.

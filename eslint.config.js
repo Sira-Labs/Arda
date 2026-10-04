@@ -30,6 +30,13 @@ export default tseslint.config(
     },
   },
   {
+    // Build scripts run on Node.
+    files: ['**/*.{js,mjs}'],
+    languageOptions: {
+      globals: { ...globals.node },
+    },
+  },
+  {
     files: ['**/*.test.{ts,tsx}', '**/tests/**/*.{ts,tsx}', '**/vitest.setup.ts'],
     languageOptions: {
       globals: { ...globals.node },

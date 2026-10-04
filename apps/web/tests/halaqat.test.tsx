@@ -33,8 +33,15 @@ function Where() {
   return <span data-testid="where">{location.pathname + location.hash}</span>;
 }
 
+/** Assignments (T2) have their own tests; here every list of them is empty. */
+const NO_ASSIGNMENTS = {
+  'GET /api/v1/assignments': () => Response.json({ assignments: [] }),
+  [`GET /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+    Response.json({ role: 'student', assignments: [], more: false }),
+};
+
 function renderAt(path: string, answers: Parameters<typeof fakeApi>[0], me: Me | null) {
-  const api = fakeApi(answers, me);
+  const api = fakeApi({ ...NO_ASSIGNMENTS, ...answers }, me);
   render(
     <Providers client={api.client}>
       <MemoryRouter initialEntries={[path]}>

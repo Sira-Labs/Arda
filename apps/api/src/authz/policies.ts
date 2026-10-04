@@ -41,10 +41,12 @@ export const RBAC_MATRIX = {
   'halaqa:create': ['teacher', 'admin'],
   /** Invite, approve and remove members, assign work; scoped: teacher of that ḥalaqa. */
   'halaqa:manage': ['teacher', 'admin'],
-  /** See one's ḥalaqāt and join one with an invite. */
+  /** See one's ḥalaqāt and the work open in them; join one with an invite. */
   'halaqa:join': ['student', 'teacher', 'admin'],
   /** Read a ḥalaqa's assignments and feed; scoped: active member of it. */
   'halaqa:read': ['student', 'teacher', 'admin'],
+  /** Mark one's own assignments done; scoped: active student of that ḥalaqa. */
+  'halaqa:study': ['student', 'teacher', 'admin'],
   /** Hear students' recitations and mark them; scoped: teacher of that ḥalaqa. */
   'halaqa:review': ['teacher', 'admin'],
   /** Translate a written remark into a student's language (ADR-0020; costs money). */
@@ -95,6 +97,9 @@ export function can(actor: Actor | null, action: Action, scope?: HalaqaScope): b
     case 'halaqa:read':
       // Any active member (pending students wait for the teacher's approval first).
       return actor.role === 'admin' || (scope?.halaqaRole ?? null) !== null;
+    case 'halaqa:study':
+      // Only the students themselves: a teacher or admin has nothing to hand in here.
+      return scope?.halaqaRole === 'student';
     default:
       return true;
   }

@@ -222,6 +222,61 @@ export const fr: Messages = {
       missing: 'Ouvre le lien d’invitation de ton cheikh ou scanne son code QR.',
     },
   },
+  assignments: {
+    title: 'Devoirs',
+    kinds: {
+      learn: 'Apprendre',
+      read: 'Lire',
+      recite: 'Réciter à nouveau',
+      practise: 'S’entraîner',
+    },
+    range: (sura, from, to) =>
+      from === to
+        ? `Sourate ${sura}, āya ${from}`
+        : `Sourate ${sura}, āyāt ${from}–${to}`,
+    times: (count) => `${count} fois`,
+    focus: 'Attention à',
+    variant: (rule) =>
+      rule === 'idgham-ghunna'
+        ? 'avec ghunna'
+        : rule === 'idgham-no-ghunna'
+          ? 'sans ghunna'
+          : null,
+    due: (date) => `pour le ${date}`,
+    dueToday: 'pour aujourd’hui',
+    overdue: (date) => `en retard depuis le ${date}`,
+    from: (name, halaqa) => (name ? `de ${name} · ${halaqa}` : halaqa),
+    markDone: 'Fait',
+    done: 'Fait – ton cheikh le voit.',
+    doneOn: (date) => `fait le ${date}`,
+    undo: 'Pas encore fait',
+    openCard: 'Vers la carte',
+    play: 'Vers le jeu',
+    more: (count) => (count === 1 ? '1 autre devoir' : `${count} autres devoirs`),
+    none: 'Pas encore de devoirs dans cette ḥalaqa.',
+    older: 'Voir les plus anciens',
+    forAll: 'pour tous',
+    forStudent: (name) => `pour ${name}`,
+    doneCount: (done, of) => `${done} sur ${of} faits`,
+    doneBy: 'Fait par',
+    remove: 'Retirer',
+    form: {
+      title: 'Donner un devoir',
+      who: 'Pour',
+      everyone: 'tous les élèves',
+      kind: 'Type',
+      sura: 'Sourate',
+      from: 'de l’āya',
+      to: 'à l’āya',
+      rule: 'Règle',
+      noRule: 'aucune',
+      repetitions: 'Combien de fois',
+      due: 'Pour le',
+      note: 'Note (facultatif)',
+      submit: 'Donner le devoir',
+      given: 'Devoir donné.',
+    },
+  },
   signIn: {
     eyebrow: 'Connexion',
     title: 'Bienvenue sur ʿArḍa',
@@ -289,6 +344,7 @@ export const fr: Messages = {
       'Ce lien a expiré ou n’est pas valable. Demande-en un nouveau à ton cheikh.',
     halaqa_full: 'Ce cours individuel a déjà un élève.',
     too_many_halaqat: 'Tu as atteint le nombre maximal de ḥalaqāt.',
+    too_many_assignments: 'Cette ḥalaqa a atteint le nombre maximal de devoirs.',
     generic: (status) => `Erreur du serveur (${status}).`,
   },
   remarks: {

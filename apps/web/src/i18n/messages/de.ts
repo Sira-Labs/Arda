@@ -4,7 +4,8 @@
  */
 import type { PasskeyFailure } from '@/services/passkeys';
 import type { RuleCase, Unit2Card } from '@/content/unit2';
-import type { RuleFamily } from '@/tajweed/rules';
+import type { RuleFamily, RuleId } from '@/tajweed/rules';
+import type { AssignmentKind } from '@/services/auth';
 
 export type RemarkId =
   'ghunnaShort' | 'ghunnaLong' | 'nunTooClear' | 'qalqalaMissing' | 'maddShort' | 'good';
@@ -233,6 +234,62 @@ export const de = {
       missing: 'Öffne den Einladungslink deines Sheikhs oder scanne seinen QR-Code.',
     },
   },
+  assignments: {
+    title: 'Aufgaben',
+    kinds: {
+      learn: 'Lernen',
+      read: 'Lesen',
+      recite: 'Nochmal rezitieren',
+      practise: 'Üben',
+    } as Record<AssignmentKind, string>,
+    range: (sura: number, from: number, to: number) =>
+      from === to ? `Sūra ${sura}, Āya ${from}` : `Sūra ${sura}, Āyāt ${from}–${to}`,
+    times: (count: number) => (count === 1 ? 'einmal' : `${count}-mal`),
+    focus: 'Achte auf',
+    /** Tells the two idghām rules apart, whose term is the same; `null` for the others. */
+    variant: (rule: RuleId): string | null =>
+      rule === 'idgham-ghunna'
+        ? 'mit Ghunna'
+        : rule === 'idgham-no-ghunna'
+          ? 'ohne Ghunna'
+          : null,
+    due: (date: string) => `bis ${date}`,
+    dueToday: 'heute fällig',
+    overdue: (date: string) => `überfällig seit ${date}`,
+    from: (name: string | null, halaqa: string) =>
+      name ? `von ${name} · ${halaqa}` : halaqa,
+    markDone: 'Erledigt',
+    done: 'Erledigt – dein Sheikh sieht es.',
+    doneOn: (date: string) => `erledigt am ${date}`,
+    undo: 'Doch nicht erledigt',
+    openCard: 'Zur Regelkarte',
+    play: 'Zum Spiel',
+    more: (count: number) =>
+      count === 1 ? '1 weitere Aufgabe' : `${count} weitere Aufgaben`,
+    none: 'Noch keine Aufgaben in dieser Ḥalaqa.',
+    older: 'Ältere zeigen',
+    forAll: 'für alle',
+    forStudent: (name: string) => `für ${name}`,
+    doneCount: (done: number, of: number) => `${done} von ${of} erledigt`,
+    doneBy: 'Erledigt von',
+    remove: 'Zurückziehen',
+    form: {
+      title: 'Aufgabe geben',
+      who: 'Für',
+      everyone: 'alle Schüler·innen',
+      kind: 'Art',
+      sura: 'Sūra',
+      from: 'von Āya',
+      to: 'bis Āya',
+      rule: 'Regel',
+      noRule: 'keine',
+      repetitions: 'Wie oft',
+      due: 'Fällig am',
+      note: 'Notiz (optional)',
+      submit: 'Aufgabe geben',
+      given: 'Aufgabe gegeben.',
+    },
+  },
   signIn: {
     eyebrow: 'Anmelden',
     title: 'Willkommen bei ʿArḍa',
@@ -298,6 +355,7 @@ export const de = {
       'Dieser Link ist abgelaufen oder ungültig. Bitte deinen Sheikh um einen neuen.',
     halaqa_full: 'Diese Einzel-Ḥalaqa hat schon eine·n Schüler·in.',
     too_many_halaqat: 'Du hast die Höchstzahl an Ḥalaqāt erreicht.',
+    too_many_assignments: 'Diese Ḥalaqa hat die Höchstzahl an Aufgaben erreicht.',
     generic: (status: number) => `Serverfehler (${status}).`,
   },
   remarks: {

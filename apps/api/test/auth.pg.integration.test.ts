@@ -23,6 +23,10 @@ import { SoftAuthenticator } from './softAuthenticator.js';
 import type { Language } from '../src/i18n/languages.js';
 import { PgTranslationRepository, sourceHash } from '../src/translation/repository.js';
 import { PgHalaqaRepository } from '../src/halaqat/repository.js';
+import {
+  PgAssignmentRepository,
+  type NewAssignment,
+} from '../src/assignments/repository.js';
 import { hashInviteToken, newInviteToken } from '../src/halaqat/invites.js';
 import { TranslationService } from '../src/translation/service.js';
 
@@ -1081,6 +1085,263 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await pool.query('delete from users where id = $1', [TEACHER]);
       expect(await repo.find(id)).toBeNull();
       expect(await repo.listFor(AMINA)).toEqual([]);
+    });
+  });
+  describe('assignments (T2, ADR-0014)', () => {
+    const TEACHER = '40000000-0000-4000-8000-000000000001';
+    const AMINA = '40000000-0000-4000-8000-000000000002';
+    const YUSUF = '40000000-0000-4000-8000-000000000003';
+    const ZAID = '40000000-0000-4000-8000-000000000004';
+    const NOW = new Date('2026-10-03T12:00:00Z');
+    let halaqat: PgHalaqaRepository;
+    let repo: PgAssignmentRepository;
+    let halaqaId: string;
+
+    /** Brings `userId` into the ḥalaqa: active, or pending when `approve` is false. */
+    const enrol = async (userId: string, approve = true) => {
+      const tokenHash = hashInviteToken(newInviteToken());
+      await halaqat.createInvite({
+        halaqaId,
+        tokenHash,
+        actorId: TEACHER,
+        expiresAt: new Date(NOW.getTime() + 60_000),
+      });
+      await halaqat.join(tokenHash, userId, NOW);
+      if (approve) await halaqat.approve(halaqaId, userId, TEACHER);
+    };
+    const give = async (input: Partial<NewAssignment> = {}) => {
+      const id = await repo.create({
+        halaqaId,
+        studentId: null,
+        kind: 'read',
+        range: { sura: 1, from: 1, to: 7 },
+        focusRule: 'ikhfa',
+        repetitions: 3,
+        note: 'Achte auf die Ghunna.',
+        dueOn: '2026-10-09',
+        createdBy: TEACHER,
+        ...input,
+      });
+      expect(id).not.toBeNull();
+      return id as string;
+    };
+    const page = { limit: 50 };
+
+    beforeEach(async () => {
+      halaqat = new PgHalaqaRepository(pool);
+      repo = new PgAssignmentRepository(pool);
+      await pool.query(
+        `insert into users (id, email, name, role) values
+           ($1, 'sheikh@example.org', 'Sheikh Ahmad', 'teacher'),
+           ($2, 'amina@example.org', 'Amina', 'student'),
+           ($3, 'yusuf@example.org', 'Yusuf', 'student'),
+           ($4, 'zaid@example.org', 'Zaid', 'student')`,
+        [TEACHER, AMINA, YUSUF, ZAID]
+      );
+      halaqaId = await halaqat.create({
+        name: 'Juzʾ ʿAmma',
+        oneToOne: false,
+        teacherId: TEACHER,
+      });
+      await enrol(AMINA);
+      await enrol(YUSUF);
+      await enrol(ZAID, false);
+    });
+
+    it('gives work to all or one, and returns who is done to the teacher', async () => {
+      const forAll = await give();
+      const forAmina = await give({
+        studentId: AMINA,
+        kind: 'recite',
+        range: { sura: 112, from: 1, to: 4 },
+        focusRule: null,
+        repetitions: null,
+        note: null,
+        dueOn: '2026-10-05',
+      });
+
+      const open = await repo.open(AMINA, 50);
+      expect(open.map((a) => a.id)).toEqual([forAmina, forAll]);
+      expect(open[1]).toEqual({
+        id: forAll,
+        kind: 'read',
+        studentId: null,
+        range: { sura: 1, from: 1, to: 7 },
+        focusRule: 'ikhfa',
+        repetitions: 3,
+        note: 'Achte auf die Ghunna.',
+        dueOn: '2026-10-09',
+        createdAt: expect.any(String),
+        halaqaId,
+        halaqaName: 'Juzʾ ʿAmma',
+        fromName: 'Sheikh Ahmad',
+        doneAt: null,
+      });
+      expect((await repo.open(YUSUF, 50)).map((a) => a.id)).toEqual([forAll]);
+      // Pending students get nothing until the teacher approves them.
+      expect(await repo.open(ZAID, 50)).toEqual([]);
+
+      expect(await repo.complete(halaqaId, forAll, AMINA)).toBe(true);
+      expect(await repo.complete(halaqaId, forAll, AMINA)).toBe(true);
+      expect(await repo.complete(halaqaId, forAmina, YUSUF)).toBe(false);
+      expect((await repo.open(AMINA, 50)).map((a) => a.id)).toEqual([forAmina]);
+
+      const teacher = await repo.forTeacher(halaqaId, page);
+      expect(teacher.more).toBe(false);
+      expect(teacher.assignments.map((a) => a.id)).toEqual([forAll, forAmina]);
+      expect(teacher.assignments[0]).toMatchObject({
+        targets: 2,
+        studentName: null,
+        done: [
+          {
+            userId: AMINA,
+            name: 'Amina',
+            email: 'amina@example.org',
+            doneAt: expect.any(String),
+          },
+        ],
+      });
+      expect(teacher.assignments[1]).toMatchObject({
+        studentId: AMINA,
+        studentName: 'Amina',
+        targets: 1,
+        done: [],
+      });
+
+      const amina = await repo.forStudent(halaqaId, AMINA, page);
+      expect(amina.assignments.map((a) => [a.id, a.doneAt !== null])).toEqual([
+        [forAll, true],
+        [forAmina, false],
+      ]);
+      expect((await repo.forStudent(halaqaId, YUSUF, page)).assignments).toHaveLength(1);
+
+      expect(await repo.undo(halaqaId, forAll, AMINA)).toBe(true);
+      expect(await repo.undo(halaqaId, forAll, AMINA)).toBe(true);
+      expect((await repo.open(AMINA, 50)).map((a) => a.id)).toEqual([forAmina, forAll]);
+
+      expect(await repo.remove(halaqaId, forAll)).toBe(true);
+      expect(await repo.remove(halaqaId, forAll)).toBe(false);
+      expect(await repo.open(YUSUF, 50)).toEqual([]);
+      expect(await repo.countIn(halaqaId)).toBe(1);
+    });
+
+    it('gives only to active students of that ḥalaqa', async () => {
+      for (const studentId of [ZAID, TEACHER, '40000000-0000-4000-8000-000000000009']) {
+        expect(
+          await repo.create({
+            halaqaId,
+            studentId,
+            kind: 'practise',
+            range: null,
+            focusRule: 'iqlab',
+            repetitions: null,
+            note: null,
+            dueOn: '2026-10-09',
+            createdBy: TEACHER,
+          }),
+          studentId
+        ).toBeNull();
+      }
+      expect(await repo.countIn(halaqaId)).toBe(0);
+    });
+
+    it('keeps the shape of an assignment in the database too', async () => {
+      const insert = (columns: string, values: string) =>
+        pool.query(
+          `insert into assignments (halaqa_id, kind, due_on, ${columns})
+           values ($1, ${values})`,
+          [halaqaId]
+        );
+      // Reading needs āyāt; learning needs a rule; only reading counts repetitions.
+      await expect(
+        insert('focus_rule', `'read', '2026-10-09', 'ikhfa'`)
+      ).rejects.toThrow();
+      await expect(insert('sura', `'learn', '2026-10-09', 1`)).rejects.toThrow();
+      await expect(
+        insert(
+          'sura, aya_from, aya_to, repetitions',
+          `'recite', '2026-10-09', 1, 1, 7, 2`
+        )
+      ).rejects.toThrow();
+      await expect(
+        insert('sura, aya_from, aya_to', `'read', '2026-10-09', 1, 5, 4`)
+      ).rejects.toThrow();
+      await expect(
+        insert('focus_rule', `'learn', '2026-10-09', 'Ikhfa!'`)
+      ).rejects.toThrow();
+      // An assignment for one student needs that student's membership.
+      await expect(
+        pool.query(
+          `insert into assignments (halaqa_id, student_id, kind, focus_rule, due_on)
+           values ($1, $2, 'learn', 'izhar', '2026-10-09')`,
+          [halaqaId, '40000000-0000-4000-8000-000000000009']
+        )
+      ).rejects.toThrow();
+    });
+
+    it('pages through the list without losing or repeating one', async () => {
+      const ids: string[] = [];
+      for (let i = 0; i < 5; i++) ids.push(await give({ dueOn: '2026-10-09' }));
+      ids.push(await give({ dueOn: '2026-10-20' }));
+      const seen: string[] = [];
+      let before: string | undefined;
+      for (;;) {
+        const next = await repo.forTeacher(halaqaId, { before, limit: 2 });
+        seen.push(...next.assignments.map((a) => a.id));
+        if (!next.more) break;
+        before = next.assignments.at(-1)!.id;
+      }
+      expect(seen).toHaveLength(6);
+      expect(new Set(seen).size).toBe(6);
+      // The latest due day first; among one day, the newest first.
+      expect(seen[0]).toBe(ids[5]);
+      expect(seen.slice(1)).toEqual(ids.slice(0, 5).reverse());
+      const studentSeen = await repo.forStudent(halaqaId, AMINA, {
+        before: seen[2],
+        limit: 50,
+      });
+      expect(studentSeen.assignments.map((a) => a.id)).toEqual(seen.slice(3));
+    });
+
+    it("lets a student's own work go when they leave; the export and the cascade", async () => {
+      const forAll = await give();
+      const forAmina = await give({ studentId: AMINA });
+      await repo.complete(halaqaId, forAll, AMINA);
+      await repo.complete(halaqaId, forAll, YUSUF);
+
+      const aminaExport = await new PgPrivacyRepository(pool).export(AMINA);
+      expect(aminaExport.assignments).toEqual([
+        expect.objectContaining({
+          id: forAll,
+          given_by_you: false,
+          due_on: '2026-10-09',
+          done_at: expect.any(Date),
+        }),
+        expect.objectContaining({ id: forAmina, student_id: AMINA, done_at: null }),
+      ]);
+      const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
+      expect(teacherExport.assignments.map((a) => a.id)).toEqual([forAll, forAmina]);
+      expect(teacherExport.assignments.every((a) => a.given_by_you)).toBe(true);
+
+      expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
+      expect(await repo.countIn(halaqaId)).toBe(1);
+      const teacher = await repo.forTeacher(halaqaId, page);
+      expect(teacher.assignments[0]!.done.map((d) => d.userId)).toEqual([YUSUF]);
+      expect(teacher.assignments[0]!.targets).toBe(1);
+      expect(await repo.open(AMINA, 50)).toEqual([]);
+
+      await pool.query('delete from users where id = $1', [YUSUF]);
+      expect((await repo.forTeacher(halaqaId, page)).assignments[0]!.done).toEqual([]);
+
+      await pool.query('delete from users where id = $1', [TEACHER]);
+      expect(
+        Number((await pool.query('select count(*) from assignments')).rows[0].count)
+      ).toBe(0);
+      expect(
+        Number(
+          (await pool.query('select count(*) from assignment_completions')).rows[0].count
+        )
+      ).toBe(0);
     });
   });
 });

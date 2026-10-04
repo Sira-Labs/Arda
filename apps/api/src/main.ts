@@ -27,6 +27,7 @@ import { PgPrivacyRepository } from './privacy/repository.js';
 import { SecretBox } from './security/secretBox.js';
 import { ClaudeTranslator } from './translation/claudeTranslator.js';
 import { PgTranslationRepository } from './translation/repository.js';
+import { PgAssignmentRepository } from './assignments/repository.js';
 import { PgHalaqaRepository } from './halaqat/repository.js';
 import { TranslationService } from './translation/service.js';
 
@@ -143,6 +144,7 @@ async function main(): Promise<void> {
     translation ? 'translate.enabled' : 'translate.disabled'
   );
 
+  const halaqat = new PgHalaqaRepository(pool);
   const app = createApp({
     version: config.version,
     expectedRevision: expectedRevision(migrations),
@@ -152,7 +154,8 @@ async function main(): Promise<void> {
     account: accountRoutes,
     admin,
     translations: { service: translations, auth, log },
-    halaqat: { repo: new PgHalaqaRepository(pool), auth, log },
+    halaqat: { repo: halaqat, auth, log },
+    assignments: { repo: new PgAssignmentRepository(pool), halaqat, auth, log },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,
     authzLog: log,

@@ -1,6 +1,6 @@
 # ADR-0014: The sheikh assigns directly on the muṣḥaf page
 
-- Status: proposed
+- Status: accepted (first cut built 2026-10-03)
 - Date: 2026-10-03
 - Source: Suffa's class assignments (due dates), extended
 
@@ -23,3 +23,16 @@ one new idea: the sheikh points at the page, the student practises exactly there
 
 Assignments are the first feature the sheikh can use (week 1 in the plan), before recording
 and the speech check exist.
+
+## Update 2026-10-03: T2 built, first cut
+
+- Until the muṣḥaf and its word keys exist (sprint S2), an assignment points at a range of āyāt
+  in one sūra, checked against the 114 sūras of `@arda/quran` (Tanzil metadata, ADR-0009).
+- Kinds: **Lernen** and **Üben** name a rule (the student goes to its card or game), **Lesen**
+  and **Nochmal rezitieren** name āyāt; reading may say how often. The voice note waits for
+  recordings (F7) and the reminder for notifications; the sheikh's note is shown as he wrote it
+  until remarks are delivered translated (T3, ADR-0020).
+- For one student or the whole ḥalaqa; due on a calendar day, so no time zone can move it.
+- "Done" is the student's word for now: the teacher sees who is done with each assignment.
+  With F7 and T3, completing a recitation assignment will send the recording to his queue.
+- A student's own assignments and completions belong to their membership and go with it.

@@ -22,6 +22,8 @@ export interface AccountExport {
   translations: Record<string, unknown>[];
   /** Ḥalaqāt this person belongs to, with their role and status (spec T1). */
   halaqat: Record<string, unknown>[];
+  /** Assignments this person gave, or was given, and when they marked them done (T2). */
+  assignments: Record<string, unknown>[];
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -36,7 +38,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   async export(userId: string): Promise<AccountExport> {
-    const [profile, totp, sessions, passkeys, translations, halaqat, audit] =
+    const [profile, totp, sessions, passkeys, translations, halaqat, assignments, audit] =
       await Promise.all([
         this.pool.query(
           `select id, email, email_verified, name, role, language, time_zone, disabled_at,
@@ -68,6 +70,21 @@ export class PgPrivacyRepository implements PrivacyRepository {
           [userId]
         ),
         this.pool.query(
+          `select a.id, a.halaqa_id, a.kind, a.sura, a.aya_from, a.aya_to, a.focus_rule,
+                a.repetitions, a.note, to_char(a.due_on, 'YYYY-MM-DD') as due_on,
+                a.created_at, a.created_by = $1 as given_by_you, a.student_id, c.done_at
+           from assignments a
+           left join assignment_completions c
+             on c.assignment_id = a.id and c.student_id = $1
+          where a.created_by = $1 or a.student_id = $1 or c.student_id is not null
+             or (a.student_id is null and exists (
+                   select 1 from halaqa_members m
+                    where m.halaqa_id = a.halaqa_id and m.user_id = $1
+                      and m.halaqa_role = 'student' and m.status = 'active'))
+          order by a.created_at, a.id`,
+          [userId]
+        ),
+        this.pool.query(
           `select id, actor_id, action, target_type, target_id, details, created_at
            from audit_log
           where actor_id = $1
@@ -86,6 +103,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       passkeys: passkeys.rows,
       translations: translations.rows,
       halaqat: halaqat.rows,
+      assignments: assignments.rows,
       auditLog: audit.rows,
     };
   }

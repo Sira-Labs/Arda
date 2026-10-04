@@ -498,3 +498,50 @@ a {
   inline-size: 100%;
   font-size: 0.85rem;
 }
+
+/* Assignments (spec T2): one per row; overdue is said in words and set in the accent */
+.assignment-row {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+}
+.assignment-row:first-child {
+  border-top: none;
+  padding-top: 0;
+}
+.card-ink .assignment-row {
+  border-top-color: rgb(255 255 255 / 0.18);
+}
+.assignment-note {
+  white-space: pre-wrap;
+  font-style: italic;
+}
+.due-overdue,
+.due-today {
+  color: var(--accent);
+  font-weight: 700;
+}
+.card-ink .due-overdue,
+.card-ink .due-today {
+  color: var(--accent-fill);
+}
+/* Outlined buttons on the ink card: teal on ink is too faint, so they take the ink's text. */
+.card-ink .btn:not(.btn-primary) {
+  color: var(--on-ink);
+  border-color: var(--on-ink);
+}
+.assignment-form {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+}
+.assignment-form .field {
+  gap: 6px;
+}
+.assignment-form .wide {
+  grid-column: 1 / -1;
+}
+.assignment-form textarea.input {
+  padding: 10px 14px;
+}

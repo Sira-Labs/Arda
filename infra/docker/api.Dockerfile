@@ -7,7 +7,10 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/tajweed/package.json packages/tajweed/
+COPY packages/quran/package.json packages/quran/
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
+# The build bundles the workspace packages (TypeScript source) into dist/main.js.
+COPY packages packages
 COPY apps/api apps/api
 RUN npm run build -w @arda/api
 
@@ -18,6 +21,7 @@ COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/tajweed/package.json packages/tajweed/
+COPY packages/quran/package.json packages/quran/
 # npm nests packages it cannot hoist (e.g. better-auth) under the workspace; keep that
 # directory even when it is empty so the runtime stage can always copy it.
 # --omit=optional keeps test tooling out of the image: better-auth names vitest as an optional
@@ -41,4 +45,4 @@ USER node
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:8000/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
-CMD ["node", "dist/main.js"]
+CMD ["node", "--enable-source-maps", "dist/main.js"]
