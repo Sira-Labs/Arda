@@ -26,16 +26,22 @@ travels inside every pack, as its terms ask.
    marks after the word before. The basmala Tanzil writes before āya 1 is taken off and kept
    with the sūra, as written there (before at-Tīn and al-Qadr with a shadda on the bāʾ). A word
    is `hafs:sura:aya:n`, n from 1.
-2. **Re-alignment** (`align.ts`): cpfair indexed Tanzil's text of 2017, which differs from 1.1
-   by a character or two in 20 āyāt of Juzʾ ʿAmma. Each rule has a signature (the letter it
-   starts on); an āya is accepted only when every annotation fits after the smallest shift,
-   and the build fails otherwise. cpfair's classifier has no licence, so it is not run.
+2. **Re-alignment** (`align.ts`): cpfair indexed Tanzil's text of 2017. Since then Tanzil
+   writes a space before each pause sign, a hamza after a lām on a tatweel (ٱلْـَٔاخِرَةِ, was
+   ٱلْءَاخِرَةِ) and the small yāʾ as tatweel with a mark. `toTanzil2017` rebuilds the old text
+   with a map back to today's letters, which places 6215 of 6236 āyāt exactly. The rest (such
+   as ٱلْـَٰٔنَ) fall back to a checked shift: each rule has a signature (the letter it starts
+   on), an āya is accepted only when every annotation fits, and the build fails otherwise.
+   cpfair's classifier has no licence, so it is not run.
 3. **Spans** (`pack.ts`): each rule becomes spans of the word's text. For the rules decided by
    the next letter (ikhfāʾ, idghām, iqlāb), the nūn, mīm or tanwīn letter is the carrier, and
    the letter after it the follower.
-4. **Cross-check**: on Juzʾ ʿAmma, cpfair and `@arda/tajweed`'s `detect()` agree on every nūn
-   and mīm rule; they differ only on qalqala at a stop and on three mīms with shadda that begin
-   an āya (tested in `test/pack.test.ts`).
+4. **Cross-check**: in every pack, cpfair and `@arda/tajweed`'s `detect()` agree on every nūn
+   and mīm rule; they differ only on qalqala at a stop and on mīms with shadda that begin an
+   āya (three in Juzʾ ʿAmma, three in al-Baqara; tested in `test/pack.test.ts`).
+
+The packs to build are listed in `src/packs.ts` (sūra range, id, version). A pack whose bytes
+change gets a new version; the app's index names only the current one.
 
 The pack file is written deterministically (no timestamps), so the same sources give the same
 bytes and the checksum in `index.json` is reproducible.

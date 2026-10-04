@@ -9,7 +9,7 @@ import {
   type PackWord,
 } from '@arda/quran';
 import { PACK_RULES, type PackRuleId } from '@arda/tajweed';
-import { align } from './align';
+import { realign } from './align';
 import type { Annotation } from './cpfair';
 import type { TanzilText } from './tanzil';
 import { isMark, splitWords, type WordSpan } from './words';
@@ -94,7 +94,7 @@ export function buildPack(input: PackInput): {
   const placed = (key: string, text: readonly string[]) => {
     const raw = input.annotations.get(key);
     if (!raw) throw new Error(`cpfair: no annotations for ${key}`);
-    const aligned = align(text, raw);
+    const aligned = realign(text, raw);
     if (!aligned)
       throw new Error(`cpfair: ${key} cannot be aligned with the Tanzil text`);
     if (aligned.moved > 0) stats.realigned.push(key);

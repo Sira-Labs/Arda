@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { align } from '../src/align';
+import { align, realign, toTanzil2017 } from '../src/align';
 import type { Annotation } from '../src/cpfair';
 import { parseCpfair } from '../src/cpfair';
 import { parseTanzil } from '../src/tanzil';
@@ -109,5 +109,32 @@ describe('re-aligning cpfair to the current Tanzil text', () => {
 
   it('gives up rather than guess', () => {
     expect(align(text, [{ rule: 'hamzat_wasl', start: 2, end: 3 }])).toBeNull();
+  });
+});
+
+describe('the 2017 text cpfair indexed', () => {
+  it('had no pause signs, the hamza after a lām on the line, and the small yāʾ alone', () => {
+    const now = [...'لَا رَيْبَ ۛ فِيهِ وَبِٱلْـَٔاخِرَةِ إِبْرَٰهِـۧمَ'];
+    const { old, map } = toTanzil2017(now);
+    expect(old.join('')).toBe('لَا رَيْبَ فِيهِ وَبِٱلْءَاخِرَةِ إِبْرَٰهِۦمَ');
+    // Every code point of the old text maps back onto the same one, or onto what replaced it.
+    old.forEach((c, i) => {
+      if (c !== 'ء' && c !== 'ۦ') expect(now[map[i]!], `${i}`).toBe(c);
+    });
+    expect(map.at(-1)).toBe(now.length);
+  });
+
+  it('keeps a hamza on a tatweel after any other letter (bi-āyātinā)', () => {
+    const now = [...'بِـَٔايَٰتِنَا'];
+    expect(toTanzil2017(now).old).toEqual(now);
+  });
+
+  it('carries annotations over exactly, before any shift is tried', () => {
+    // The qalqala of رَيْبَ… here the bāʾ after two pause signs: offset 2 less in 2017.
+    const now = [...'هُدًى ۛ قَبْلَ'];
+    const ba = now.indexOf('ب');
+    const result = realign(now, [{ rule: 'qalqalah', start: ba - 2, end: ba - 1 }]);
+    expect(result?.annotations).toEqual([{ rule: 'qalqalah', start: ba, end: ba + 1 }]);
+    expect(result?.moved).toBe(1);
   });
 });

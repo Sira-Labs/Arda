@@ -11,8 +11,9 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parseCpfair } from './cpfair';
-import type { PackIndex, PackSource } from '@arda/quran';
+import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { buildPack, serialise } from './pack';
+import { PACKS } from './packs';
 import { parseTanzil } from './tanzil';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -80,46 +81,41 @@ async function buildPacks(): Promise<void> {
     attribution: s.attribution,
     sha256: s.sha256,
   }));
-  const { pack, stats } = buildPack({
-    id: 'uthmani-hafs-juz30',
-    version: 1,
-    title:
-      'Juzʾ ʿAmma, ʿUthmānī script (Tanzil), riwāyat Ḥafṣ, with tajwīd rules (cpfair)',
-    fromSura: 78,
-    toSura: 114,
-    tanzil,
-    annotations: parseCpfair(cpfairRaw),
-    sources: packSources,
-  });
-  const { bytes, sha256: digest } = serialise(pack);
-  const file = `${pack.id}.v${pack.version}.json`;
+  const annotations = parseCpfair(cpfairRaw);
   await mkdir(outDir, { recursive: true });
-  await writeFile(`${outDir}${file}`, bytes);
-  const index: PackIndex = {
-    format: 1,
-    packs: [
-      {
-        id: pack.id,
-        version: pack.version,
-        file,
-        sha256: digest,
-        bytes: bytes.length,
-        script: pack.script,
-        riwaya: pack.riwaya,
-        title: pack.title,
-        suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura] as [number, number],
-        sources: packSources.map(({ id, licence, attribution }) => ({
-          id,
-          licence,
-          attribution,
-        })),
-      },
-    ],
-  };
+  const entries: PackIndexEntry[] = [];
+  for (const spec of PACKS) {
+    const { pack, stats } = buildPack({
+      ...spec,
+      tanzil,
+      annotations,
+      sources: packSources,
+    });
+    const { bytes, sha256: digest } = serialise(pack);
+    const file = `${pack.id}.v${pack.version}.json`;
+    await writeFile(`${outDir}${file}`, bytes);
+    entries.push({
+      id: pack.id,
+      version: pack.version,
+      file,
+      sha256: digest,
+      bytes: bytes.length,
+      script: pack.script,
+      riwaya: pack.riwaya,
+      title: pack.title,
+      suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura],
+      sources: packSources.map(({ id, licence, attribution }) => ({
+        id,
+        licence,
+        attribution,
+      })),
+    });
+    process.stdout.write(
+      `${file}: ${bytes.length} bytes, sha256 ${digest}\n${JSON.stringify({ ...stats, realigned: stats.realigned.length })}\n`
+    );
+  }
+  const index: PackIndex = { format: 1, packs: entries };
   await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`);
-  process.stdout.write(
-    `${file}: ${bytes.length} bytes, sha256 ${digest}\n${JSON.stringify(stats)}\n`
-  );
 }
 
 const command = process.argv[2];
