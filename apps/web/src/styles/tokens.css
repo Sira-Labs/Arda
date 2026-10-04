@@ -11,6 +11,7 @@
   --bg: #f6f1e7;
   --bg-elev: #fffdf8;
   --bg-elev-2: #ede5d5;
+  --range-bg: rgb(232 169 59 / 0.22); /* an assignment's āyāt in the muṣḥaf */
   --ink: #10201b; /* statement surfaces, the cover, the teacher's voice */
   --on-ink: #f4eee2;
   --text: #1b2420;
@@ -70,6 +71,7 @@
   --bg: #0f1714;
   --bg-elev: #17221e;
   --bg-elev-2: #22302b;
+  --range-bg: rgb(232 169 59 / 0.18);
   --ink: #0b1310;
   --text: #f4eee2;
   --text-muted: #a9b5ae;

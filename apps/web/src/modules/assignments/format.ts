@@ -60,5 +60,8 @@ export function linkFor(kind: string, rule: RuleId | null): 'card' | 'game' | nu
   return kind === 'practise' ? 'game' : null;
 }
 
+/** Whether a rule card teaches the rule yet. */
+export const hasCard = (rule: RuleId): boolean => CARDS[rule] !== undefined;
+
 export const cardPath = (rule: RuleId): string => `/pfad/2/${CARDS[rule] ?? ''}`;
 export const GAME_PATH = '/pfad/2/spiel/welche-regel';

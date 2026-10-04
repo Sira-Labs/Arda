@@ -15,6 +15,20 @@ export function TajweedText({
   script?: 'indopak' | 'madina';
   large?: boolean;
 }) {
+  return (
+    <p
+      className={large ? 'quran quran-lg' : 'quran'}
+      data-script={script}
+      lang="ar"
+      dir="rtl"
+    >
+      <TajweedSpans segments={segments} />
+    </p>
+  );
+}
+
+/** The coloured pieces of a text, for use inside an element that sets script and direction. */
+export function TajweedSpans({ segments }: { segments: readonly Segment[] }) {
   const { m, language } = useI18n();
 
   const title = (segment: Segment): string | undefined => {
@@ -26,12 +40,7 @@ export function TajweedText({
   };
 
   return (
-    <p
-      className={large ? 'quran quran-lg' : 'quran'}
-      data-script={script}
-      lang="ar"
-      dir="rtl"
-    >
+    <>
       {segments.map((segment, index) =>
         segment.rule || segment.role ? (
           <span
@@ -52,6 +61,6 @@ export function TajweedText({
           <span key={index}>{segment.text}</span>
         )
       )}
-    </p>
+    </>
   );
 }

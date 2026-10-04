@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '@/components/Icon';
+import { RuleLegend } from '@/components/RuleLegend';
 import { TajweedText } from '@/components/TajweedText';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { cardName } from '@/content/unit2';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
-import { RULE_FAMILIES } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
 
@@ -132,18 +132,7 @@ export function Today() {
         </Link>
       </section>
 
-      <section className="stack" aria-label={m.today.legend}>
-        <div className="legend">
-          {RULE_FAMILIES.map((family) => (
-            <span key={family}>
-              <b className="tj" data-rule={family}>
-                ●
-              </b>{' '}
-              <b>{m.rules[family].name}</b> · {m.rules[family].hint}
-            </span>
-          ))}
-        </div>
-      </section>
+      <RuleLegend />
     </div>
   );
 }

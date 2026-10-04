@@ -8,6 +8,8 @@ import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
 import { Halaqa } from '@/modules/halaqa/Halaqa';
 import { Join } from '@/modules/halaqa/Join';
+import { Mushaf } from '@/modules/mushaf/Mushaf';
+import { SuraView } from '@/modules/mushaf/SuraView';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
@@ -29,7 +31,8 @@ const router = createBrowserRouter([
       { path: '/anmelden', element: <SignIn /> },
       { path: '/konto', element: <Account /> },
       { path: '/pfad', element: <Path /> },
-      { path: '/mushaf', element: <Soon page="mushaf" /> },
+      { path: '/mushaf', element: <Mushaf /> },
+      { path: '/mushaf/:sura', element: <SuraView /> },
       { path: '/labor', element: <Soon page="lab" /> },
       { path: '/sheikh', element: <Sheikh /> },
       { path: '/halaqa/:id', element: <Halaqa /> },
