@@ -82,6 +82,8 @@ export interface PackIndexEntry {
   title: string;
   /** First and last sūra in the pack. */
   suras: [number, number];
+  /** First and last page the pack's sūras are on, as the edition prints them. */
+  pages: [number, number];
   sources: Pick<PackSource, 'id' | 'licence' | 'attribution'>[];
 }
 

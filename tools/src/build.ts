@@ -1,4 +1,4 @@
-import type { Pack, PackSource } from '@arda/quran';
+import { madinaPage, type Pack, type PackSource } from '@arda/quran';
 import type { PackRuleId } from '@arda/tajweed';
 import type { Annotation } from './cpfair';
 import type { IndopakText } from './indopak';
@@ -53,4 +53,19 @@ export function buildSpec(
     sources: sourcesFor('indopak', inputs.sources),
     copyright: inputs.digitalkhattNotice,
   }).pack;
+}
+
+/**
+ * First and last page of a pack, as printed: Madīna pages from Tanzil's metadata; IndoPak pages
+ * from the words' places plus the edition's offset (the sheikh's numbering).
+ */
+export function pagesOf(pack: Pack<PackRuleId>): [number, number] {
+  const first = pack.suras[0]!;
+  const last = pack.suras.at(-1)!;
+  if (pack.script === 'uthmani') {
+    return [madinaPage(first.sura, 1), madinaPage(last.sura, last.ayat.length)];
+  }
+  const offset = pack.layout!.pageOffset;
+  const lastWord = last.ayat.at(-1)!.words.at(-1)!;
+  return [first.at![0] + offset, lastWord.at![0] + offset];
 }
