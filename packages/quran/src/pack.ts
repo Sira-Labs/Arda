@@ -16,8 +16,13 @@ export interface PackWord<R extends string = string> {
   t: string;
   /** Rule spans, in reading order. */
   r?: PackSpan<R>[];
-  /** Pause or sajdah signs after the word. */
+  /**
+   * Signs after the word: pause or sajdah signs (ʿUthmānī packs); in IndoPak packs, where pause
+   * signs are part of the word, the āya-end marker as printed (`۝٣٠ۙ`).
+   */
   a?: string;
+  /** Where the word stands on the printed page: page (as in the layout) and line, from 1. */
+  at?: [page: number, line: number];
 }
 
 export interface PackAya<R extends string = string> {
@@ -34,6 +39,8 @@ export interface PackSura<R extends string = string> {
    */
   basmala?: PackWord<R>[];
   ayat: PackAya<R>[];
+  /** Where the sūra heading stands on the printed page (packs with a layout). */
+  at?: [page: number, line: number];
 }
 
 export interface PackSource {
@@ -55,6 +62,11 @@ export interface Pack<R extends string = string> {
   sources: PackSource[];
   /** The text source's copyright block, which travels with every file derived from it. */
   copyright: string;
+  /**
+   * The printed layout the words' `at` follows: lines per page, and what to add to a page
+   * number to get the number printed in the edition it matches (the sheikh's copy).
+   */
+  layout?: { name: string; pages: number; lines: number; pageOffset: number };
   suras: PackSura<R>[];
 }
 

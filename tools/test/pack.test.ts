@@ -6,6 +6,8 @@ import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
 import { wordCount, type Pack, type PackIndex, type PackWord } from '@arda/quran';
 import { countsModule, wordCounts } from '../src/counts';
+import { buildSpec } from '../src/build';
+import { parseIndopak } from '../src/indopak';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
 import { parseTanzil } from '../src/tanzil';
@@ -157,13 +159,19 @@ describe('the packs in the app', () => {
       expect(createHash('sha256').update(bytes).digest('hex'), entry.id).toBe(
         entry.sha256
       );
-      expect(pack.sources.map((s) => s.licence)).toEqual([
-        'CC BY 3.0, verbatim copies only',
-        'CC BY 4.0',
-      ]);
-      expect(pack.copyright).toContain(
-        'PLEASE DO NOT REMOVE OR CHANGE THIS COPYRIGHT BLOCK'
-      );
+      // Each text travels with its own notice: Tanzil's copyright block, DigitalKhatt's MIT.
+      if (pack.script === 'uthmani') {
+        expect(pack.sources.map((s) => s.licence)).toEqual([
+          'CC BY 3.0, verbatim copies only',
+          'CC BY 4.0',
+        ]);
+        expect(pack.copyright).toContain(
+          'PLEASE DO NOT REMOVE OR CHANGE THIS COPYRIGHT BLOCK'
+        );
+      } else {
+        expect(pack.sources.map((s) => s.licence)).toEqual(['MIT', 'CC BY 4.0']);
+        expect(pack.copyright).toMatch(/^MIT License\n\nCopyright \(c\) .* DigitalKhatt/);
+      }
     }
   });
 
@@ -233,6 +241,93 @@ describe('the packs in the app', () => {
   });
 });
 
+describe('the IndoPak packs (S2.2)', () => {
+  const pairs = [
+    ['indopak-hafs-fatiha-baqara', 'uthmani-hafs-fatiha-baqara'],
+    ['indopak-hafs-juz30', 'uthmani-hafs-juz30'],
+  ] as const;
+  const wordsOf = (s: Pack['suras'][number]) => [
+    ...(s.basmala ?? []),
+    ...s.ayat.flatMap((a) => a.words),
+  ];
+  const rulesOf = (w: PackWord) =>
+    (w.r ?? []).map(([, , id, role]) => `${id}${role ?? ''}`).sort();
+
+  it('have the same āyāt and word keys as the ʿUthmānī text, and every rule', () => {
+    for (const [indopak, uthmani] of pairs) {
+      const ip = byId(indopak).pack;
+      const ut = byId(uthmani).pack;
+      expect(ip.script).toBe('indopak');
+      expect(ip.suras.map((s) => s.ayat.map((a) => a.words.length))).toEqual(
+        ut.suras.map((s) => s.ayat.map((a) => a.words.length))
+      );
+      ip.suras.forEach((s, i) => {
+        const theirs = wordsOf(ut.suras[i]!);
+        // The same rules on the same word, carried letter by letter.
+        wordsOf(s).forEach((w, k) => {
+          expect(rulesOf(w), `${s.sura}: ${w.t}`).toEqual(rulesOf(theirs[k]!));
+        });
+      });
+    }
+  });
+
+  it('place every word on a 15-line page, in reading order', () => {
+    for (const [indopak] of pairs) {
+      const { pack } = byId(indopak);
+      expect(pack.layout).toEqual({
+        name: 'IndoPak, 15 lines (DigitalKhatt)',
+        pages: 610,
+        lines: 15,
+        pageOffset: 1,
+      });
+      let last = 0;
+      for (const s of pack.suras) {
+        for (const w of wordsOf(s)) {
+          const [page, line] = w.at!;
+          expect(line).toBeGreaterThanOrEqual(1);
+          expect(line).toBeLessThanOrEqual(15);
+          expect(page * 100 + line).toBeGreaterThanOrEqual(last);
+          last = page * 100 + line;
+        }
+      }
+    }
+  });
+
+  it('break pages where the sheikh’s copy does (pages 6, 7, 597 and 598)', () => {
+    const baqara = byId('indopak-hafs-fatiha-baqara').pack;
+    const juz30 = byId('indopak-hafs-juz30').pack;
+    const printed = (pack: Pack, sura: number, aya: number, word: 'first' | 'last') => {
+      const words = pack.suras.find((s) => s.sura === sura)!.ayat[aya - 1]!.words;
+      const w = word === 'first' ? words[0]! : words.at(-1)!;
+      return w.at![0] + pack.layout!.pageOffset;
+    };
+    expect(printed(baqara, 2, 23, 'last')).toBe(5);
+    expect(printed(baqara, 2, 24, 'first')).toBe(6);
+    expect(printed(baqara, 2, 29, 'last')).toBe(6);
+    expect(printed(baqara, 2, 30, 'first')).toBe(7);
+    expect(printed(baqara, 2, 37, 'last')).toBe(7);
+    expect(printed(juz30, 85, 14, 'first')).toBe(597);
+    expect(printed(juz30, 86, 17, 'last')).toBe(597);
+    expect(printed(juz30, 87, 1, 'first')).toBe(598);
+    expect(printed(juz30, 88, 7, 'last')).toBe(598);
+    // Al-Aʿlā's heading is the first line of the sheikh's page 598.
+    expect(juz30.suras.find((s) => s.sura === 87)!.at).toEqual([597, 1]);
+  });
+
+  it('colour the same letters as the ʿUthmānī text', () => {
+    const baqara = byId('indopak-hafs-fatiha-baqara').pack.suras[1]!;
+    const spans = (aya: number, word: number) => {
+      const w = baqara.ayat[aya - 1]!.words[word - 1]!;
+      return (w.r ?? []).map(
+        ([s, , rule, role]) => `${rule}${role ? '(f)' : ''}=${w.t[s]}`
+      );
+    };
+    // Al-Baqara 2: hudan li-l-muttaqīn, the tanwīn merging into the lām without ghunna.
+    expect(spans(2, 6)).toEqual(['idghaam_no_ghunnah=د', 'idghaam_no_ghunnah(f)=ي']);
+    expect(spans(2, 7)).toEqual(['idghaam_no_ghunnah(f)=ل', 'madd_246=ي']);
+  });
+});
+
 const cache = fileURLToPath(new URL('../.cache/', import.meta.url));
 const sources = JSON.parse(
   readFileSync(fileURLToPath(new URL('../sources.json', import.meta.url)), 'utf8')
@@ -242,17 +337,20 @@ const haveSources = Object.values(sources).every((s) => existsSync(`${cache}${s.
 describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
   it('gives the packs in the app, byte for byte', () => {
     const read = (id: string) => readFileSync(`${cache}${sources[id]!.file}`, 'utf8');
-    const tanzil = parseTanzil(read('tanzil-uthmani'));
-    const annotations = parseCpfair(read('cpfair-tajweed'));
+    const credited = shipped.flatMap((s) => s.pack.sources);
+    const inputs = {
+      tanzil: parseTanzil(read('tanzil-uthmani')),
+      annotations: parseCpfair(read('cpfair-tajweed')),
+      indopak: parseIndopak(read('digitalkhatt-indopak')),
+      sources: [...new Map(credited.map((s) => [s.id, s])).values()],
+      digitalkhattNotice: readFileSync(
+        fileURLToPath(new URL('../licences/digitalkhatt-js-MIT.txt', import.meta.url)),
+        'utf8'
+      ),
+    };
     for (const spec of PACKS) {
-      const { entry, pack } = byId(spec.id);
-      const { pack: rebuilt } = buildPack({
-        ...spec,
-        tanzil,
-        annotations,
-        sources: pack.sources,
-      });
-      expect(serialise(rebuilt).sha256, spec.id).toBe(entry.sha256);
+      const { entry } = byId(spec.id);
+      expect(serialise(buildSpec(spec, inputs)).sha256, spec.id).toBe(entry.sha256);
     }
   });
 

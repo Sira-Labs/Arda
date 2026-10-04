@@ -14,5 +14,13 @@
     "title": "quran-tajweed: tajweed annotations for the Qurʾān (riwāyat Ḥafṣ)",
     "licence": "CC BY 4.0",
     "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+  },
+  "digitalkhatt-indopak": {
+    "file": "digitalkhatt-quran_text_indopak_15.ts",
+    "url": "https://raw.githubusercontent.com/DigitalKhatt/digitalkhatt-js/78372d7a1e211bbab677cc0304384f278f508657/apps/site-angular/src/app/services/quran_text_indopak_15.ts",
+    "sha256": "35310a914f08379e370592d5d28ecae6224bba570cda1e97bab093d23f4cd3df",
+    "title": "DigitalKhatt IndoPak text, 15-line layout (digitalkhatt-js)",
+    "licence": "MIT",
+    "attribution": "DigitalKhatt contributors, https://github.com/DigitalKhatt/digitalkhatt-js"
   }
 }

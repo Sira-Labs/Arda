@@ -14,7 +14,9 @@ import { fileURLToPath } from 'node:url';
 import { parseCpfair } from './cpfair';
 import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
-import { buildPack, serialise } from './pack';
+import { buildSpec } from './build';
+import { serialise } from './pack';
+import { parseIndopak } from './indopak';
 import { PACKS } from './packs';
 import { parseTanzil } from './tanzil';
 
@@ -34,7 +36,10 @@ interface SourceEntry {
   licence: string;
   attribution: string;
 }
-type Sources = Record<'tanzil-uthmani' | 'cpfair-tajweed', SourceEntry>;
+type Sources = Record<
+  'tanzil-uthmani' | 'cpfair-tajweed' | 'digitalkhatt-indopak',
+  SourceEntry
+>;
 
 const sha256 = (data: Buffer | string) => createHash('sha256').update(data).digest('hex');
 
@@ -79,6 +84,11 @@ async function readSources() {
     throw new Error('cpfair-tajweed: checksum differs from the pinned one');
   }
 
+  const indopakRaw = await read('digitalkhatt-indopak');
+  if (sha256(indopakRaw) !== sources['digitalkhatt-indopak'].sha256) {
+    throw new Error('digitalkhatt-indopak: checksum differs from the pinned one');
+  }
+
   const packSources: PackSource[] = Object.entries(sources).map(([id, s]) => ({
     id,
     title: s.title,
@@ -87,20 +97,21 @@ async function readSources() {
     attribution: s.attribution,
     sha256: s.sha256,
   }));
-  return { tanzil, annotations: parseCpfair(cpfairRaw), packSources };
+  return {
+    tanzil,
+    annotations: parseCpfair(cpfairRaw),
+    indopak: parseIndopak(indopakRaw),
+    sources: packSources,
+    digitalkhattNotice: await readFile(`${root}licences/digitalkhatt-js-MIT.txt`, 'utf8'),
+  };
 }
 
 async function buildPacks(): Promise<void> {
-  const { tanzil, annotations, packSources } = await readSources();
+  const inputs = await readSources();
   await mkdir(outDir, { recursive: true });
   const entries: PackIndexEntry[] = [];
   for (const spec of PACKS) {
-    const { pack, stats } = buildPack({
-      ...spec,
-      tanzil,
-      annotations,
-      sources: packSources,
-    });
+    const pack = buildSpec(spec, inputs);
     const { bytes, sha256: digest } = serialise(pack);
     const file = `${pack.id}.v${pack.version}.json`;
     await writeFile(`${outDir}${file}`, bytes);
@@ -114,15 +125,13 @@ async function buildPacks(): Promise<void> {
       riwaya: pack.riwaya,
       title: pack.title,
       suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura],
-      sources: packSources.map(({ id, licence, attribution }) => ({
+      sources: pack.sources.map(({ id, licence, attribution }) => ({
         id,
         licence,
         attribution,
       })),
     });
-    process.stdout.write(
-      `${file}: ${bytes.length} bytes, sha256 ${digest}\n${JSON.stringify({ ...stats, realigned: stats.realigned.length })}\n`
-    );
+    process.stdout.write(`${file}: ${bytes.length} bytes, sha256 ${digest}\n`);
   }
   const index: PackIndex = { format: 1, packs: entries };
   await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`);
