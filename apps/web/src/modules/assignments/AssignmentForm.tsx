@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { SURAS, isAyaRange, sura } from '@arda/quran';
 import { RULE_IDS, type RuleId } from '@arda/tajweed';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
-import type { AssignmentKind, HalaqaMember } from '@/services/auth';
+import type { AssignmentKind, AssignmentRange, HalaqaMember } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { ruleName } from '@/tajweed/rules';
 import { addDays, localDay } from './format';
@@ -20,11 +20,14 @@ export function AssignmentForm({
   halaqaId,
   students,
   onGiven,
+  fixedRange,
 }: {
   halaqaId: string;
   /** The ḥalaqa's active students. */
   students: HalaqaMember[];
   onGiven: () => void;
+  /** Āyāt or words chosen on the muṣḥaf page (S3.2): no sūra and āya fields then. */
+  fixedRange?: AssignmentRange;
 }) {
   const { client } = useSession();
   const { m, language } = useI18n();
@@ -42,7 +45,7 @@ export function AssignmentForm({
   const [given, setGiven] = useState(false);
 
   const ayas = sura(suraNumber)?.ayas ?? 1;
-  const range = { sura: suraNumber, from, to };
+  const range: AssignmentRange = fixedRange ?? { sura: suraNumber, from, to };
   const valid =
     (needsRange(kind) ? isAyaRange(range) : rule !== '') &&
     /^\d{4}-\d{2}-\d{2}$/.test(dueOn);
@@ -61,7 +64,8 @@ export function AssignmentForm({
     const result = await client.giveAssignment(halaqaId, {
       kind,
       studentId: studentId || null,
-      range: needsRange(kind) ? range : null,
+      // A range chosen on the page goes with every kind: learning a rule there, too.
+      range: needsRange(kind) || fixedRange ? range : null,
       focusRule: rule || null,
       repetitions: kind === 'read' ? repetitions : null,
       note: note.trim() || null,
@@ -111,7 +115,7 @@ export function AssignmentForm({
             ))}
           </select>
         </label>
-        {needsRange(kind) && (
+        {needsRange(kind) && !fixedRange && (
           <>
             <label className="stack field wide">
               <span>{f.sura}</span>

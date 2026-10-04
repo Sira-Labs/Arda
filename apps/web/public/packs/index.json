@@ -2,11 +2,37 @@
   "format": 1,
   "packs": [
     {
-      "id": "uthmani-hafs-juz30",
+      "id": "uthmani-hafs-fatiha-baqara",
       "version": 1,
-      "file": "uthmani-hafs-juz30.v1.json",
-      "sha256": "f65b378de03f102677ed96d545b34a4915b46dfb0159e1afaae14f43fb756a79",
-      "bytes": 125820,
+      "file": "uthmani-hafs-fatiha-baqara.v1.json",
+      "sha256": "02f6f6631fcae1fc9aec5d28e5f2bfdeb96923703f8999630b070fd35dcd70e4",
+      "bytes": 310529,
+      "script": "uthmani",
+      "riwaya": "hafs",
+      "title": "al-Fātiḥa and al-Baqara, ʿUthmānī script (Tanzil), riwāyat Ḥafṣ, with tajwīd rules (cpfair)",
+      "suras": [
+        1,
+        2
+      ],
+      "sources": [
+        {
+          "id": "tanzil-uthmani",
+          "licence": "CC BY 3.0, verbatim copies only",
+          "attribution": "Tanzil Project, https://tanzil.net"
+        },
+        {
+          "id": "cpfair-tajweed",
+          "licence": "CC BY 4.0",
+          "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+        }
+      ]
+    },
+    {
+      "id": "uthmani-hafs-juz30",
+      "version": 2,
+      "file": "uthmani-hafs-juz30.v2.json",
+      "sha256": "3417fa719dbe07c3b2209f90764d02c86fa09a3591f7f2ddf140fdb37bc4de1f",
+      "bytes": 125906,
       "script": "uthmani",
       "riwaya": "hafs",
       "title": "Juzʾ ʿAmma, ʿUthmānī script (Tanzil), riwāyat Ḥafṣ, with tajwīd rules (cpfair)",

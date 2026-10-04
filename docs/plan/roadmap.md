@@ -10,11 +10,12 @@
 
 ## Status now (2026-10-04)
 
-| Done                                                                                                                                                 | In review                         | Next                                                                     |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ |
-| P0; P1 (S1.1–S1.6: staging, engine, unit 2 and games, ḥalaqāt, assignments); S2.1 content import ([PR #7](https://github.com/Sira-Labs/Arda/pull/7)) | S2.3/S2.4 muṣḥaf, offline (PR #8) | S3.1 reciter player, S3.2 assign on the page; IndoPak layer when cleared |
+| Done                                                                                                                                                                                                                                | In review                                             | Next                                                                           |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| P0; P1 (S1.1–S1.6: staging, engine, unit 2 and games, ḥalaqāt, assignments); S2.1 content import ([PR #7](https://github.com/Sira-Labs/Arda/pull/7)); S2.3/S2.4 muṣḥaf, offline ([PR #8](https://github.com/Sira-Labs/Arda/pull/8)) | S3.2 assign on the page; S3.3 al-Fātiḥa and al-Baqara | S3.1 reciter player (waits for timings); units 3–4; IndoPak layer when cleared |
 
-Owner, 2026-10-04: keep going and merge PRs automatically; a status report every evening.
+Owner, 2026-10-04: keep going and merge PRs automatically; a status report every evening; al-Baqara
+next (added to S3 as S3.3).
 
 ## Why this order
 

@@ -4,8 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
-import type { Pack, PackWord } from '@arda/quran';
+import { wordCount, type Pack, type PackIndex, type PackWord } from '@arda/quran';
+import { countsModule, wordCounts } from '../src/counts';
 import { buildPack, serialise } from '../src/pack';
+import { PACKS } from '../src/packs';
 import { parseTanzil } from '../src/tanzil';
 
 const BASMALA = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
@@ -98,78 +100,136 @@ describe('building a pack', () => {
 });
 
 const packs = fileURLToPath(new URL('../../apps/web/public/packs/', import.meta.url));
-const index = JSON.parse(readFileSync(`${packs}index.json`, 'utf8')) as {
-  packs: { file: string; sha256: string; bytes: number }[];
-};
-const juz30 = index.packs[0]!;
-const bytes = readFileSync(`${packs}${juz30.file}`);
-const pack = JSON.parse(bytes.toString('utf8')) as Pack;
+const index = JSON.parse(readFileSync(`${packs}index.json`, 'utf8')) as PackIndex;
+const shipped = index.packs.map((entry) => {
+  const bytes = readFileSync(`${packs}${entry.file}`);
+  return { entry, bytes, pack: JSON.parse(bytes.toString('utf8')) as Pack };
+});
+const byId = (id: string) => shipped.find((s) => s.entry.id === id)!;
 
-describe('the Juzʾ ʿAmma pack in the app', () => {
-  it('is the file its index names, byte for byte', () => {
-    expect(bytes.length).toBe(juz30.bytes);
-    expect(createHash('sha256').update(bytes).digest('hex')).toBe(juz30.sha256);
+/**
+ * Where cpfair and `detect()` disagree on a nūn, mīm, ghunna or qalqala rule, keyed
+ * "rule side[ at the end]" with the āyāt.
+ */
+function differences(pack: Pack): Record<string, string[]> {
+  const found: Record<string, string[]> = {};
+  for (const sura of pack.suras) {
+    for (const aya of sura.ayat) {
+      const text = aya.words.map((w) => w.t).join(' ');
+      const starts: number[] = [];
+      let offset = 0;
+      for (const w of aya.words) {
+        starts.push(offset);
+        offset += w.t.length + 1;
+      }
+      const wordAt = (at: number) => starts.findLastIndex((s) => s <= at);
+      const engine = new Set(
+        detect(text)
+          .filter((o) => o.rule !== 'izhar' && o.rule !== 'izhar-shafawi')
+          .map((o) => `${wordAt(o.start)}|${o.rule}`)
+      );
+      const data = new Set<string>();
+      aya.words.forEach((w, i) => {
+        for (const [, , id, role] of w.r ?? []) {
+          const rule = PACK_RULES[id as PackRuleId].rule;
+          if (rule && !role) data.add(`${i}|${rule}`);
+        }
+      });
+      for (const key of new Set([...engine, ...data])) {
+        if (engine.has(key) && data.has(key)) continue;
+        const [word, rule] = key.split('|') as [string, string];
+        const side = engine.has(key) ? 'engine' : 'cpfair';
+        const last = Number(word) === aya.words.length - 1;
+        (found[`${rule} ${side}${last ? ' at the end' : ''}`] ??= []).push(
+          `${sura.sura}:${aya.aya}`
+        );
+      }
+    }
+  }
+  return found;
+}
+
+describe('the packs in the app', () => {
+  it('are the files their index names, byte for byte, with the sources credited', () => {
+    expect(shipped.map((s) => s.entry.id)).toEqual(PACKS.map((p) => p.id));
+    for (const { entry, bytes, pack } of shipped) {
+      expect(bytes.length, entry.id).toBe(entry.bytes);
+      expect(createHash('sha256').update(bytes).digest('hex'), entry.id).toBe(
+        entry.sha256
+      );
+      expect(pack.sources.map((s) => s.licence)).toEqual([
+        'CC BY 3.0, verbatim copies only',
+        'CC BY 4.0',
+      ]);
+      expect(pack.copyright).toContain(
+        'PLEASE DO NOT REMOVE OR CHANGE THIS COPYRIGHT BLOCK'
+      );
+    }
   });
 
-  it('has an-Nabaʾ to an-Nās, every āya, with the sources credited', () => {
-    expect(pack.suras.map((s) => s.sura)).toEqual(
+  it('hold every āya of their sūras', () => {
+    const juz30 = byId('uthmani-hafs-juz30').pack;
+    expect(juz30.suras.map((s) => s.sura)).toEqual(
       Array.from({ length: 37 }, (_, i) => 78 + i)
     );
-    expect(pack.suras.reduce((n, s) => n + s.ayat.length, 0)).toBe(564);
+    expect(juz30.suras.reduce((n, s) => n + s.ayat.length, 0)).toBe(564);
     // ʿAyn, fatḥa, mīm, shadda, fatḥa: Tanzil's order of the marks.
-    expect(pack.suras[0]!.ayat[0]!.words[0]!.t).toBe('\u0639\u064E\u0645\u0651\u064E');
-    expect(pack.sources.map((s) => s.licence)).toEqual([
-      'CC BY 3.0, verbatim copies only',
-      'CC BY 4.0',
+    expect(juz30.suras[0]!.ayat[0]!.words[0]!.t).toBe('\u0639\u064E\u0645\u0651\u064E');
+    const baqara = byId('uthmani-hafs-fatiha-baqara').pack;
+    expect(baqara.suras.map((s) => [s.sura, s.ayat.length])).toEqual([
+      [1, 7],
+      [2, 286],
     ]);
-    expect(pack.copyright).toContain(
-      'PLEASE DO NOT REMOVE OR CHANGE THIS COPYRIGHT BLOCK'
-    );
+    // al-Fātiḥa's basmala is its first āya; al-Baqara's stands before it.
+    expect(baqara.suras[0]!.basmala).toBeUndefined();
+    expect(baqara.suras[1]!.basmala).toHaveLength(4);
   });
 
-  it('agrees with the engine on every nūn and mīm rule (ADR-0008)', () => {
-    const differences: Record<string, string[]> = {};
-    for (const sura of pack.suras) {
-      for (const aya of sura.ayat) {
-        const text = aya.words.map((w) => w.t).join(' ');
-        const starts: number[] = [];
-        let offset = 0;
-        for (const w of aya.words) {
-          starts.push(offset);
-          offset += w.t.length + 1;
-        }
-        const wordAt = (at: number) => starts.findLastIndex((s) => s <= at);
-        const engine = new Set(
-          detect(text)
-            .filter((o) => o.rule !== 'izhar' && o.rule !== 'izhar-shafawi')
-            .map((o) => `${wordAt(o.start)}|${o.rule}`)
-        );
-        const data = new Set<string>();
-        aya.words.forEach((w, i) => {
-          for (const [, , id, role] of w.r ?? []) {
-            const rule = PACK_RULES[id as PackRuleId].rule;
-            if (rule && !role) data.add(`${i}|${rule}`);
-          }
-        });
-        for (const key of new Set([...engine, ...data])) {
-          if (engine.has(key) && data.has(key)) continue;
-          const [word, rule] = key.split('|') as [string, string];
-          const side = engine.has(key) ? 'engine' : 'cpfair';
-          const last = Number(word) === aya.words.length - 1;
-          (differences[`${rule} ${side}${last ? ' at the end' : ''}`] ??= []).push(
-            `${sura.sura}:${aya.aya}`
-          );
+  it('carry the rules onto the right letters, also where Tanzil changed since 2017', () => {
+    const baqara = byId('uthmani-hafs-fatiha-baqara').pack.suras[1]!;
+    const spans = (aya: number, word: number) => {
+      const w = baqara.ayat[aya - 1]!.words[word - 1]!;
+      // Rule and the letter it starts on (marks left out: their order is Tanzil's, not ours).
+      return (w.r ?? []).map(
+        ([s, , rule, role]) => `${rule}${role ? '(f)' : ''}=${w.t[s]}`
+      );
+    };
+    // al-Baqara 2, after two pause signs (since 2017 written with spaces): hudan li-l-muttaqīn.
+    expect(spans(2, 6)).toEqual(['idghaam_no_ghunnah=د', 'idghaam_no_ghunnah(f)=ى']);
+    expect(spans(2, 7)).toEqual(['idghaam_no_ghunnah(f)=ل', 'madd_246=ي']);
+    // al-Baqara 4, after wa-bi-l-ākhirati (its hamza on a tatweel since 2017): the madd of the
+    // last word still sits on its wāw.
+    expect(spans(4, 10)).toEqual(['hamzat_wasl=ٱ']);
+    expect(spans(4, 12)).toEqual(['madd_246=و']);
+    expect(spans(4, 9)).toEqual(['ikhfa(f)=ق', 'qalqalah=ب']);
+  });
+
+  it('split their āyāt into as many words as @arda/quran counts (the API checks by them)', () => {
+    for (const { pack } of shipped) {
+      for (const s of pack.suras) {
+        for (const a of s.ayat) {
+          expect(a.words.length, `${s.sura}:${a.aya}`).toBe(wordCount(s.sura, a.aya));
         }
       }
     }
+  });
+
+  it('agree with the engine on every nūn and mīm rule (ADR-0008)', () => {
     // cpfair also marks qalqala on the last letter when stopping, which the engine leaves to
     // unit 7 (waqf); and the engine sees a mīm with shadda at the start of an āya as ghunna
     // where cpfair leaves it to the idghām from the āya before. Nothing else differs.
-    expect(Object.keys(differences).sort()).toEqual([
+    const juz30 = differences(byId('uthmani-hafs-juz30').pack);
+    expect(Object.keys(juz30).sort()).toEqual([
       'ghunna-mushaddad engine',
       'qalqala cpfair at the end',
     ]);
-    expect(differences['ghunna-mushaddad engine']).toEqual(['80:14', '80:32', '81:21']);
+    expect(juz30['ghunna-mushaddad engine']).toEqual(['80:14', '80:32', '81:21']);
+    const baqara = differences(byId('uthmani-hafs-fatiha-baqara').pack);
+    expect(Object.keys(baqara).sort()).toEqual([
+      'ghunna-mushaddad engine',
+      'qalqala cpfair at the end',
+    ]);
+    expect(baqara['ghunna-mushaddad engine']).toEqual(['2:105', '2:245', '2:261']);
   });
 });
 
@@ -180,18 +240,29 @@ const sources = JSON.parse(
 const haveSources = Object.values(sources).every((s) => existsSync(`${cache}${s.file}`));
 
 describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
-  it('gives the pack in the app, byte for byte', () => {
+  it('gives the packs in the app, byte for byte', () => {
     const read = (id: string) => readFileSync(`${cache}${sources[id]!.file}`, 'utf8');
-    const { pack: rebuilt } = buildPack({
-      id: pack.id,
-      version: pack.version,
-      title: pack.title,
-      fromSura: 78,
-      toSura: 114,
-      tanzil: parseTanzil(read('tanzil-uthmani')),
-      annotations: parseCpfair(read('cpfair-tajweed')),
-      sources: pack.sources,
-    });
-    expect(serialise(rebuilt).sha256).toBe(juz30.sha256);
+    const tanzil = parseTanzil(read('tanzil-uthmani'));
+    const annotations = parseCpfair(read('cpfair-tajweed'));
+    for (const spec of PACKS) {
+      const { entry, pack } = byId(spec.id);
+      const { pack: rebuilt } = buildPack({
+        ...spec,
+        tanzil,
+        annotations,
+        sources: pack.sources,
+      });
+      expect(serialise(rebuilt).sha256, spec.id).toBe(entry.sha256);
+    }
+  });
+
+  it('gives the words per āya in @arda/quran, unchanged', () => {
+    const tanzil = parseTanzil(
+      readFileSync(`${cache}${sources['tanzil-uthmani']!.file}`, 'utf8')
+    );
+    const file = fileURLToPath(
+      new URL('../../packages/quran/src/words.ts', import.meta.url)
+    );
+    expect(countsModule(wordCounts(tanzil))).toBe(readFileSync(file, 'utf8'));
   });
 });

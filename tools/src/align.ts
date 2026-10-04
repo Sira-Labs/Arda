@@ -4,13 +4,63 @@ import type { Annotation } from './cpfair';
 /**
  * Re-aligning cpfair's annotations to the current Tanzil text.
  *
- * cpfair indexed Tanzil's text of April 2017; Tanzil 1.1 differs from it by a character or two
- * in some āyāt (in Juzʾ ʿAmma: 19 of 564), so their offsets drift there. The 2017 file is not
- * available any more, and cpfair's classifier carries no licence, so the annotations are moved
- * rather than recomputed: each rule has a signature (the letter it starts on, read off the āyāt
- * that still line up), and an āya is accepted only when every annotation, after the smallest
- * shift, matches its signature. Otherwise the import fails; nothing is guessed silently.
+ * cpfair indexed Tanzil's text of April 2017. That file is not available any more, and cpfair's
+ * classifier carries no licence, so the annotations are moved, not recomputed. Tanzil 1.1
+ * differs from the 2017 text in three ways that explain all but 21 of the 6236 āyāt:
+ *
+ * 1. pause signs are written as " ۖ" (a space and the sign); in 2017 they were not there;
+ * 2. a hamza after a lām is written on a tatweel, "ـَٔ"; in 2017 it was "ءَ" (ٱلْـَٔاخِرَة);
+ * 3. the small yāʾ on a tatweel, "ـۧ" (إِبْرَٰهِـۧم), was the small yāʾ "ۦ" alone.
+ *
+ * `toTanzil2017` rebuilds the 2017 text with a map back to the current one, and the offsets are
+ * carried over exactly. Each rule also has a signature (the letter it starts on, read off the
+ * āyāt that line up); where the mapped annotations still do not fit (ٱلْءَٰنَ and a few
+ * others), the smallest checked shift is tried. An āya that does not fit then fails the import:
+ * nothing is guessed silently.
  */
+
+const PAUSE = /[\u06D6-\u06DC]/;
+const VOWEL = /[\u064B-\u0652]/;
+
+/**
+ * The 2017 text of an āya, from the current one (see above), and for each of its code points
+ * the index of the same code point in the current text (plus the length, for spans ending at
+ * the end).
+ */
+export function toTanzil2017(text: readonly string[]): { old: string[]; map: number[] } {
+  const old: string[] = [];
+  const map: number[] = [];
+  const keep = (c: string, at: number) => {
+    old.push(c);
+    map.push(at);
+  };
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i]!;
+    if (c === ' ' && PAUSE.test(text[i + 1] ?? '')) {
+      i++;
+      continue;
+    }
+    if (c === '\u0640') {
+      let j = i + 1;
+      while (j < text.length && VOWEL.test(text[j]!)) j++;
+      if (text[j] === '\u0654' && text[i - 2] === '\u0644') {
+        // ـَٔ after a lām → ءَ: the hamza stands where the tatweel was.
+        keep('\u0621', i);
+        for (let k = i + 1; k < j; k++) keep(text[k]!, k);
+        i = j;
+        continue;
+      }
+      if (text[i + 1] === '\u06E7') {
+        keep('\u06E6', i + 1);
+        i++;
+        continue;
+      }
+    }
+    keep(c, i);
+  }
+  map.push(text.length);
+  return { old, map };
+}
 
 const NUN_OR_TANWIN = new Set(['ن', 'ً', 'ٌ', 'ٍ', 'ۢ']);
 const MADD = new Set(['ا', 'و', 'ي', 'ى', 'ٰ', 'ۥ', 'ۦ']);
@@ -43,7 +93,8 @@ export const SIGNATURES: Readonly<Record<PackRuleId, Signature>> = {
   madd_246: sig(false, (c) => MADD.has(c) || isArabicLetter(c)),
   madd_muttasil: sig(false, (c) => MADD.has(c)),
   madd_munfasil: sig(false, (c) => MADD.has(c)),
-  madd_6: sig(false, (c) => MADD.has(c)),
+  // Also on the letters of the muqaṭṭaʿāt: the lām of الٓمٓ.
+  madd_6: sig(false, (c) => MADD.has(c) || isArabicLetter(c)),
   silent: sig(false, (c) => MADD.has(c)),
   idghaam_mutajanisayn: sig(false, isArabicLetter),
   idghaam_mutaqaribayn: sig(false, isArabicLetter),
@@ -116,4 +167,28 @@ export function align(
     })),
     moved: shifts.filter((s) => s !== 0).length,
   };
+}
+
+/**
+ * cpfair's annotations of an āya carried over to the current Tanzil `text`: mapped exactly
+ * through the 2017 text, then, where that still does not fit, by the smallest checked shift.
+ * `null` when they cannot all be placed.
+ */
+export function realign(
+  text: readonly string[],
+  annotations: readonly Annotation[]
+): Alignment | null {
+  const { map } = toTanzil2017(text);
+  const mapped = annotations.map((a) =>
+    a.end <= map.length - 1
+      ? { ...a, start: map[a.start]!, end: map[a.end - 1]! + 1 }
+      : { ...a }
+  );
+  const fitted = align(text, mapped);
+  if (!fitted) return null;
+  const moved = annotations.filter(
+    (a, i) =>
+      a.start !== fitted.annotations[i]!.start || a.end !== fitted.annotations[i]!.end
+  ).length;
+  return { annotations: fitted.annotations, moved };
 }

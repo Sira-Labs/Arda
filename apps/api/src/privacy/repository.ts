@@ -70,7 +70,8 @@ export class PgPrivacyRepository implements PrivacyRepository {
           [userId]
         ),
         this.pool.query(
-          `select a.id, a.halaqa_id, a.kind, a.sura, a.aya_from, a.aya_to, a.focus_rule,
+          `select a.id, a.halaqa_id, a.kind, a.sura, a.aya_from, a.aya_to, a.word_from,
+                a.word_to, a.focus_rule,
                 a.repetitions, a.note, to_char(a.due_on, 'YYYY-MM-DD') as due_on,
                 a.created_at, a.created_by = $1 as given_by_you, a.student_id, c.done_at
            from assignments a

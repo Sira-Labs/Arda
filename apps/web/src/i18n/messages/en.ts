@@ -229,6 +229,12 @@ export const en: Messages = {
     range: (sura, from, to) =>
       from === to ? `Sūra ${sura}, āya ${from}` : `Sūra ${sura}, āyāt ${from}–${to}`,
     times: (count) => (count === 1 ? 'once' : count === 2 ? 'twice' : `${count} times`),
+    rangeWords: (sura, from, wordFrom, to, wordTo) =>
+      from !== to
+        ? `Sūra ${sura}, āya ${from} word ${wordFrom} to āya ${to} word ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sūra ${sura}, āya ${from}, word ${wordFrom}`
+          : `Sūra ${sura}, āya ${from}, words ${wordFrom}–${wordTo}`,
     focus: 'Focus on',
     variant: (rule) =>
       rule === 'idgham-ghunna'
@@ -272,7 +278,11 @@ export const en: Messages = {
     },
   },
   mushaf: {
-    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    eyebrow: 'Muṣḥaf',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa and al-Baqara',
+      'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+    },
     title: 'Muṣḥaf',
     script:
       'ʿUthmānī script (Madīna), riwāyat Ḥafṣ. The IndoPak script of your muṣḥaf follows once its source is cleared.',
@@ -280,6 +290,7 @@ export const en: Messages = {
     ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
     loading: 'Loading the muṣḥaf …',
     saved: 'Saved for offline use',
+    notSaved: 'Online only: this device cannot keep it.',
     failure: {
       offline: 'Open the muṣḥaf once with a connection; after that it works offline too.',
       checksum: 'The muṣḥaf data arrived damaged. Please reload the page.',
@@ -299,6 +310,10 @@ export const en: Messages = {
     follows: (rule) => `decides the rule before it: ${rule}`,
     close: 'Close',
     open: 'Open in the muṣḥaf',
+    assign: 'Give an assignment here',
+    pick: 'Tap the first and then the last word of the assignment.',
+    cancel: 'Cancel',
+    halaqa: 'Ḥalaqa',
     sources: 'Sources',
     text: 'Text: Tanzil Project (CC BY 3.0)',
     rules: 'Tajwīd rules: cpfair/quran-tajweed (CC BY 4.0)',

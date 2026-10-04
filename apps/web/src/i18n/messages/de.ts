@@ -245,6 +245,18 @@ export const de = {
     range: (sura: number, from: number, to: number) =>
       from === to ? `Sūra ${sura}, Āya ${from}` : `Sūra ${sura}, Āyāt ${from}–${to}`,
     times: (count: number) => (count === 1 ? 'einmal' : `${count}-mal`),
+    rangeWords: (
+      sura: number,
+      from: number,
+      wordFrom: number,
+      to: number,
+      wordTo: number
+    ) =>
+      from !== to
+        ? `Sūra ${sura}, Āya ${from} Wort ${wordFrom} bis Āya ${to} Wort ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sūra ${sura}, Āya ${from}, Wort ${wordFrom}`
+          : `Sūra ${sura}, Āya ${from}, Wörter ${wordFrom}–${wordTo}`,
     focus: 'Achte auf',
     /** Tells the two idghām rules apart, whose term is the same; `null` for the others. */
     variant: (rule: RuleId): string | null =>
@@ -291,7 +303,11 @@ export const de = {
     },
   },
   mushaf: {
-    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    eyebrow: 'Muṣḥaf',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa und al-Baqara',
+      'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+    } as Record<string, string>,
     title: 'Muṣḥaf',
     script:
       'ʿUthmānī-Schrift (Madīna), riwāyat Ḥafṣ. Die IndoPak-Schrift deines Muṣḥaf folgt, sobald ihre Quelle geklärt ist.',
@@ -299,6 +315,7 @@ export const de = {
     ayat: (count: number) => (count === 1 ? '1 Āya' : `${count} Āyāt`),
     loading: 'Der Muṣḥaf wird geladen …',
     saved: 'Offline gespeichert',
+    notSaved: 'Nur mit Verbindung: Dieses Gerät kann ihn nicht speichern.',
     failure: {
       offline: 'Öffne den Muṣḥaf einmal mit Verbindung; danach geht er auch offline.',
       checksum: 'Die Muṣḥaf-Daten sind beschädigt angekommen. Lade die Seite bitte neu.',
@@ -316,6 +333,10 @@ export const de = {
     follows: (rule: string) => `entscheidet die Regel davor: ${rule}`,
     close: 'Schließen',
     open: 'Im Muṣḥaf öffnen',
+    assign: 'Aufgabe hier geben',
+    pick: 'Tippe auf das erste und dann auf das letzte Wort der Aufgabe.',
+    cancel: 'Abbrechen',
+    halaqa: 'Ḥalaqa',
     sources: 'Quellen',
     text: 'Text: Tanzil Project (CC BY 3.0)',
     rules: 'Tajwīd-Regeln: cpfair/quran-tajweed (CC BY 4.0)',

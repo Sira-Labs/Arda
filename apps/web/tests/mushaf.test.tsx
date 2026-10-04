@@ -1,12 +1,13 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PackIndex, PackIndexEntry } from '@arda/quran';
+import type { Me } from '@/services/auth';
 import { entryFor, loadPack, type PackCache, type PackLoaderDeps } from '@/content/packs';
 import { de } from '@/i18n/messages/de';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
@@ -18,8 +19,9 @@ import { fakeApi, Providers } from './render';
 
 const PACKS = resolve(__dirname, '../public/packs');
 const index = JSON.parse(readFileSync(resolve(PACKS, 'index.json'), 'utf8')) as PackIndex;
-const juz30 = index.packs[0]!;
+const juz30 = index.packs.find((p) => p.id === 'uthmani-hafs-juz30')!;
 const bytes = readFileSync(resolve(PACKS, juz30.file));
+const fileOf = (name: string) => readFileSync(resolve(PACKS, name));
 
 const sha256 = async (data: ArrayBuffer) =>
   createHash('sha256').update(new Uint8Array(data)).digest('hex');
@@ -49,8 +51,11 @@ function loader(
     fetch: async (url) => {
       calls.push(url);
       if (options.online === false) throw new TypeError('offline');
-      return url === `/packs/${juz30.file}`
-        ? new Response(new Uint8Array(options.body ?? bytes))
+      if (url === `/packs/${juz30.file}`)
+        return new Response(new Uint8Array(options.body ?? bytes));
+      const other = index.packs.find((p) => url === `/packs/${p.file}`);
+      return other
+        ? new Response(new Uint8Array(fileOf(other.file)))
         : new Response(null, { status: 404 });
     },
     cache: async () => cache,
@@ -64,6 +69,7 @@ describe('loading a pack (S2.3)', () => {
     const { deps, calls, cache } = loader();
     const first = await loadPack(juz30, deps);
     expect(first.ok && first.fromCache).toBe(false);
+    expect(first.ok && first.stored).toBe(true);
     expect(first.ok && first.pack.suras).toHaveLength(37);
     expect(cache?.entries.has(`/packs/${juz30.file}`)).toBe(true);
 
@@ -129,17 +135,22 @@ describe('loading a pack (S2.3)', () => {
       throw new DOMException('full', 'QuotaExceededError');
     };
     const { deps } = loader({ cache: full });
-    expect((await loadPack(juz30, deps)).ok).toBe(true);
+    const result = await loadPack(juz30, deps);
+    expect(result.ok).toBe(true);
+    // …and does not claim it opens offline.
+    expect(result.ok && result.stored).toBe(false);
   });
 
   it('works without Cache Storage, online', async () => {
     const { deps } = loader({ cache: null });
-    expect((await loadPack(juz30, deps)).ok).toBe(true);
+    const result = await loadPack(juz30, deps);
+    expect(result.ok && !result.stored).toBe(true);
   });
 
   it('knows which sūras the app has', () => {
     expect(entryFor(112, index)?.id).toBe('uthmani-hafs-juz30');
-    expect(entryFor(2, index)).toBeUndefined();
+    expect(entryFor(2, index)?.id).toBe('uthmani-hafs-fatiha-baqara');
+    expect(entryFor(3, index)).toBeUndefined();
   });
 });
 
@@ -178,9 +189,13 @@ describe('a word and its rules', () => {
   });
 });
 
-function renderAt(path: string, deps: PackLoaderDeps, extra?: ReactNode) {
-  const api = fakeApi({}, null);
-  return render(
+function renderAt(
+  path: string,
+  deps: PackLoaderDeps,
+  extra?: ReactNode,
+  api: ReturnType<typeof fakeApi> = fakeApi({}, null)
+) {
+  render(
     <Providers client={api.client}>
       <PackLoaderContext.Provider value={deps}>
         <MemoryRouter initialEntries={[path]}>
@@ -193,6 +208,7 @@ function renderAt(path: string, deps: PackLoaderDeps, extra?: ReactNode) {
       </PackLoaderContext.Provider>
     </Providers>
   );
+  return api;
 }
 
 beforeEach(() => {
@@ -201,18 +217,56 @@ beforeEach(() => {
 });
 
 describe('the muṣḥaf screen (S2.4)', () => {
-  it('lists the sūras of Juzʾ ʿAmma and keeps them for offline use', async () => {
+  it('does not say saved when the device cannot keep the packs', async () => {
+    const full = new MemoryCache();
+    full.put = async () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+    renderAt('/mushaf', loader({ cache: full }).deps);
+    const juz30 = await screen.findByRole('region', { name: 'Juzʾ ʿAmma' });
+    expect(await within(juz30).findByRole('status')).toHaveTextContent(
+      'Nur mit Verbindung: Dieses Gerät kann ihn nicht speichern.'
+    );
+  });
+
+  it('lists the sūras of each pack and keeps the packs for offline use', async () => {
     renderAt('/mushaf', loader().deps);
-    expect(await screen.findByRole('status')).toHaveTextContent('Offline gespeichert');
-    const links = screen
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('href')?.match(/^\/mushaf\/\d+$/));
+    const baqara = await screen.findByRole('region', { name: 'al-Fātiḥa und al-Baqara' });
+    const juz30 = screen.getByRole('region', { name: 'Juzʾ ʿAmma' });
+    expect(await within(baqara).findByRole('status')).toHaveTextContent(
+      'Offline gespeichert'
+    );
+    expect(await within(juz30).findByRole('status')).toHaveTextContent(
+      'Offline gespeichert'
+    );
+    expect(within(baqara).getAllByRole('link')).toHaveLength(2);
+    const links = within(juz30).getAllByRole('link');
     expect(links).toHaveLength(37);
     expect(within(links[34]!).getByText('الإخلاص')).toHaveAttribute('lang', 'ar');
+    expect(within(baqara).getByText('البقرة')).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('link', { name: /Tanzil Project/ })).toHaveAttribute(
       'href',
       'https://tanzil.net'
     );
+  });
+
+  it('shows al-Baqara, all 286 āyāt, with its rules', async () => {
+    renderAt('/mushaf/2?von=2&bis=2', loader().deps);
+    expect(await screen.findByRole('heading', { name: 'البقرة' })).toBeInTheDocument();
+    // The āyāt come in batches (40 at first), so that a long sūra shows at once.
+    expect(document.querySelectorAll('.aya').length).toBeLessThan(286);
+    await waitFor(() => expect(document.querySelectorAll('.aya')).toHaveLength(286), {
+      timeout: 10_000,
+    });
+    expect(document.querySelectorAll('.basmala button')).toHaveLength(4);
+    const user = userEvent.setup();
+    // al-Baqara 2: "hudan li-l-muttaqīn", the tanwīn merging into the lām without ghunna.
+    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
+    expect(aya2).toHaveClass('in-range');
+    await user.click(within(aya2).getAllByRole('button')[5]!);
+    expect(
+      screen.getByRole('dialog', { name: 'Sūra 2, Āya 2, Wort 6' })
+    ).toHaveTextContent('Idghām ohne Ghunna · Stumm');
   });
 
   it('shows a sūra word by word with its basmala and its āyāt numbered', async () => {
@@ -300,7 +354,7 @@ describe('the muṣḥaf screen (S2.4)', () => {
   });
 
   it('says when a sūra is not in the muṣḥaf yet, or cannot be loaded', async () => {
-    renderAt('/mushaf/2', loader().deps);
+    renderAt('/mushaf/3', loader().deps);
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Diese Sūra ist noch nicht im Muṣḥaf.'
     );
@@ -344,6 +398,196 @@ describe('assignments in the muṣḥaf', () => {
     expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
       'href',
       '/mushaf/112?von=1&bis=4'
+    );
+  });
+});
+
+const HALAQA = '11111111-1111-4111-8111-111111111111';
+const TEACHER: Me = {
+  id: 't',
+  email: 'sheikh@example.org',
+  name: 'Sheikh Ahmad',
+  role: 'teacher',
+  timeZone: null,
+  language: 'de',
+};
+const teacherApi = () =>
+  fakeApi(
+    {
+      'GET /api/v1/halaqat': () =>
+        Response.json({
+          halaqat: [
+            {
+              id: HALAQA,
+              name: 'Juzʾ ʿAmma',
+              oneToOne: false,
+              role: 'teacher',
+              status: 'active',
+              teacherName: 'Sheikh Ahmad',
+              students: 1,
+              pending: 0,
+            },
+          ],
+        }),
+      [`GET /api/v1/halaqat/${HALAQA}`]: () =>
+        Response.json({
+          role: 'teacher',
+          halaqa: {
+            id: HALAQA,
+            name: 'Juzʾ ʿAmma',
+            oneToOne: false,
+            teacherName: null,
+            createdAt: '',
+          },
+          members: [
+            {
+              userId: 's',
+              name: 'Amina',
+              email: 'amina@example.org',
+              role: 'student',
+              status: 'active',
+              joinedAt: '',
+            },
+          ],
+          invite: null,
+        }),
+      [`POST /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+        Response.json({ id: 'new' }, { status: 201 }),
+    },
+    TEACHER
+  );
+
+describe('assigning on the page (S3.2)', () => {
+  it('gives the words a teacher picks, from a word to a word', async () => {
+    const api = renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    expect(
+      screen.getByText('Tippe auf das erste und dann auf das letzte Wort der Aufgabe.')
+    ).toBeInTheDocument();
+    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
+    // The last word first: picking works in either order.
+    await user.click(within(aya(3)).getAllByRole('button')[3]!);
+    await user.click(within(aya(2)).getAllByRole('button')[1]!);
+    const panel = await screen.findByRole('dialog', { name: 'Aufgabe hier geben' });
+    expect(panel).toHaveTextContent('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4');
+    expect(within(panel).queryByLabelText('Sūra')).not.toBeInTheDocument();
+    expect(
+      await within(panel).findByRole('option', { name: 'Amina' })
+    ).toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: 'Aufgabe geben' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Aufgabe gegeben.');
+    expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      kind: 'recite',
+      range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('can be left before both words are picked', async () => {
+    renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
+    await user.click(within(aya2).getAllByRole('button')[1]!);
+    await user.click(screen.getByRole('button', { name: 'Abbrechen' }));
+    expect(
+      screen.getByText('Tippe auf ein Wort, um seine Regeln zu sehen.')
+    ).toBeInTheDocument();
+    expect(document.querySelector('.picked')).toBeNull();
+    // Tapping a word shows its rules again.
+    await user.click(within(aya2).getAllByRole('button')[0]!);
+    expect(
+      screen.getByRole('dialog', { name: 'Sūra 113, Āya 2, Wort 1' })
+    ).toBeInTheDocument();
+  });
+
+  it('gives whole āyāt when the pick begins and ends with them', async () => {
+    const api = renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
+    await user.click(within(aya(1)).getAllByRole('button')[0]!);
+    await user.click(within(aya(2)).getAllByRole('button').at(-1)!);
+    const panel = await screen.findByRole('dialog');
+    expect(panel).toHaveTextContent('Sūra 113, Āyāt 1–2');
+    await user.click(within(panel).getByRole('button', { name: 'Aufgabe geben' }));
+    await screen.findByRole('status');
+    expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      range: { sura: 113, from: 1, to: 2 },
+    });
+    expect(
+      (api.calls.find((c) => c.method === 'POST')?.body as { range: object }).range
+    ).not.toHaveProperty('words');
+  });
+
+  it('is offered to teachers only', async () => {
+    renderAt('/mushaf/113', loader().deps);
+    await screen.findByRole('heading', { name: 'الفلق' });
+    expect(
+      screen.queryByRole('button', { name: 'Aufgabe hier geben' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('marks exactly the words of an assignment', async () => {
+    renderAt('/mushaf/113?von=2&bis=3&wvon=2&wbis=4', loader().deps);
+    expect(
+      await screen.findByText('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4')
+    ).toBeInTheDocument();
+    const words = (n: number) =>
+      [...document.querySelectorAll(`#aya-${n} > span`)].filter((s) =>
+        s.querySelector('button')
+      );
+    // al-Falaq 2 has four words (from the second on), 3 has five (to the fourth).
+    expect(words(2).map((w) => w.classList.contains('in-range'))).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+    expect(words(3).map((w) => w.classList.contains('in-range'))).toEqual([
+      true,
+      true,
+      true,
+      true,
+      false,
+    ]);
+    expect(document.querySelectorAll('.aya.in-range')).toHaveLength(0);
+  });
+
+  it('links from an assignment to its words', () => {
+    renderAt(
+      '/heute',
+      loader().deps,
+      <ul>
+        <StudentAssignmentItem
+          assignment={{
+            id: 'a',
+            kind: 'read',
+            studentId: null,
+            range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+            focusRule: null,
+            repetitions: 2,
+            note: null,
+            dueOn: '2026-10-09',
+            createdAt: '2026-10-01T10:00:00Z',
+            halaqaId: 'h',
+            halaqaName: 'H',
+            fromName: null,
+            doneAt: null,
+          }}
+          busy={false}
+          onMark={() => {}}
+        />
+      </ul>
+    );
+    // The Arabic name of the sūra follows in the same line.
+    expect(
+      screen.getByText(/^Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
+      'href',
+      '/mushaf/113?von=2&bis=3&wvon=2&wbis=4'
     );
   });
 });

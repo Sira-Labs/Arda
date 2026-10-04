@@ -267,6 +267,12 @@ export const ar: Messages = {
         ? `سورة ${num(sura)}، الآية ${num(from)}`
         : `سورة ${num(sura)}، الآيات ${num(from)}–${num(to)}`,
     times: (count) => times(count),
+    rangeWords: (sura, from, wordFrom, to, wordTo) =>
+      from !== to
+        ? `سورة ${num(sura)}، من الآية ${num(from)} الكلمة ${num(wordFrom)} إلى الآية ${num(to)} الكلمة ${num(wordTo)}`
+        : wordFrom === wordTo
+          ? `سورة ${num(sura)}، الآية ${num(from)}، الكلمة ${num(wordFrom)}`
+          : `سورة ${num(sura)}، الآية ${num(from)}، الكلمات ${num(wordFrom)}–${num(wordTo)}`,
     focus: 'انتبه إلى',
     // The Arabic names already tell the two idghām rules apart.
     variant: () => null,
@@ -306,7 +312,11 @@ export const ar: Messages = {
     },
   },
   mushaf: {
-    eyebrow: 'المصحف · جزء عمّ',
+    eyebrow: 'المصحف',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'الفاتحة والبقرة',
+      'uthmani-hafs-juz30': 'جزء عمّ',
+    },
     title: 'المصحف',
     script:
       'بالرسم العثماني (المدني)، رواية حفص. يأتي الرسم الهندي لمصحفك حين يتضح مصدره.',
@@ -314,6 +324,7 @@ export const ar: Messages = {
     ayat: (count) => ayatCount(count),
     loading: 'جارٍ تحميل المصحف …',
     saved: 'محفوظ للاستخدام دون اتصال',
+    notSaved: 'متاح مع الاتصال فقط: لا يستطيع هذا الجهاز حفظه.',
     failure: {
       offline: 'افتح المصحف مرة واحدة مع الاتصال، ثم يعمل دونه أيضًا.',
       checksum: 'وصلت بيانات المصحف تالفة. أعد تحميل الصفحة من فضلك.',
@@ -331,6 +342,10 @@ export const ar: Messages = {
     follows: (rule) => `يحدد الحكم الذي قبله: ${rule}`,
     close: 'إغلاق',
     open: 'افتح في المصحف',
+    assign: 'أعطِ مهمة هنا',
+    pick: 'اضغط على الكلمة الأولى ثم على الكلمة الأخيرة من المهمة.',
+    cancel: 'إلغاء',
+    halaqa: 'الحلقة',
     sources: 'المصادر',
     text: 'النص: مشروع تنزيل (CC BY 3.0)',
     rules: 'أحكام التجويد: cpfair/quran-tajweed (CC BY 4.0)',

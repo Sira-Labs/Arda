@@ -13,6 +13,11 @@ export interface AssignmentRange {
   sura: number;
   from: number;
   to: number;
+  /**
+   * When the assignment starts and ends at a word (S3.2): word `from` of āya `from` to word
+   * `to` of āya `to`, counting from 1. Absent for whole āyāt.
+   */
+  words?: { from: number; to: number };
 }
 
 export interface NewAssignment {
@@ -102,7 +107,7 @@ export interface AssignmentRepository {
 const iso = (value: Date | string): string => new Date(value).toISOString();
 
 /** Columns every list selects; `due_on` as text, so no time zone can shift the day. */
-const COLUMNS = `a.id, a.kind, a.student_id, a.sura, a.aya_from, a.aya_to, a.focus_rule,
+const COLUMNS = `a.id, a.kind, a.student_id, a.sura, a.aya_from, a.aya_to, a.word_from, a.word_to, a.focus_rule,
   a.repetitions, a.note, to_char(a.due_on, 'YYYY-MM-DD') as due_on, a.created_at`;
 
 /** Older than the cursor, in the order `due_on desc, created_at desc, id desc`. */
@@ -116,6 +121,8 @@ interface Row {
   sura: number | null;
   aya_from: number | null;
   aya_to: number | null;
+  word_from: number | null;
+  word_to: number | null;
   focus_rule: string | null;
   repetitions: number | null;
   note: string | null;
@@ -130,7 +137,14 @@ const base = (row: Row): AssignmentBase => ({
   range:
     row.sura === null || row.aya_from === null || row.aya_to === null
       ? null
-      : { sura: row.sura, from: row.aya_from, to: row.aya_to },
+      : {
+          sura: row.sura,
+          from: row.aya_from,
+          to: row.aya_to,
+          ...(row.word_from !== null && row.word_to !== null
+            ? { words: { from: row.word_from, to: row.word_to } }
+            : {}),
+        },
   focusRule: row.focus_rule,
   repetitions: row.repetitions,
   note: row.note,
@@ -189,8 +203,9 @@ export class PgAssignmentRepository implements AssignmentRepository {
   async create(input: NewAssignment): Promise<string | null> {
     const { rows } = await this.pool.query<{ id: string }>(
       `insert into assignments (halaqa_id, student_id, kind, sura, aya_from, aya_to,
-                                focus_rule, repetitions, note, due_on, created_by)
-       select $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
+                                word_from, word_to, focus_rule, repetitions, note, due_on,
+                                created_by)
+       select $1, $2, $3, $4, $5, $6, $12, $13, $7, $8, $9, $10, $11
         where $2::uuid is null or exists (
           select 1 from halaqa_members
            where halaqa_id = $1 and user_id = $2 and halaqa_role = 'student'
@@ -208,6 +223,8 @@ export class PgAssignmentRepository implements AssignmentRepository {
         input.note,
         input.dueOn,
         input.createdBy,
+        input.range?.words?.from ?? null,
+        input.range?.words?.to ?? null,
       ]
     );
     return rows[0]?.id ?? null;

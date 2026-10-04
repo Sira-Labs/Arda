@@ -34,8 +34,9 @@
 | S2.2 IndoPak layer and alignment for Juzʾ ʿAmma                  | same word count per āya; reviewed differences file     | waits for ADR-0009 question 1 (ʿUthmānī first, ADR-0017 update)                                                                |
 | S2.3 Packs and offline storage (`uthmani-hafs-juz30@1` first)    | installs once; renders with no connection              | done: downloaded once, SHA-256 checked against the app's index, kept in Cache Storage; checked offline in a browser            |
 | S2.4 Muṣḥaf screen with colours and tap-for-rule                 | every rule family labelled; tap opens the rule         | done: `/mushaf`, `/mushaf/:sura`, every coloured letter titled, tap a word for its rules and card; assignments open their āyāt |
-| S3.1 Reciter player with word timings                            | highlight within 100 ms; 0.5×–1×; loop                 |                                                                                                                                |
-| S3.2 Assign on the page (word selection)                         | assignments point at word keys                         |                                                                                                                                |
+| S3.1 Reciter player with word timings                            | highlight within 100 ms; 0.5×–1×; loop                 | waits for the Quran.com API registration (roadmap, waiting on)                                                                 |
+| S3.2 Assign on the page (word selection)                         | assignments point at word keys                         | done: pick the first and last word in the muṣḥaf; word bounds stored; the student's link marks those words                     |
+| S3.3 al-Fātiḥa and al-Baqara (owner, 2026-10-04)                 | the same rules and checks as Juzʾ ʿAmma                | done: `uthmani-hafs-fatiha-baqara@1`; exact re-alignment; long sūras render in batches                                         |
 
 ## S4–S5 · Recite to him (Oct 19 – Nov 1)
 

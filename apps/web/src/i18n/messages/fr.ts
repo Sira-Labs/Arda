@@ -235,6 +235,12 @@ export const fr: Messages = {
         ? `Sourate ${sura}, āya ${from}`
         : `Sourate ${sura}, āyāt ${from}–${to}`,
     times: (count) => `${count} fois`,
+    rangeWords: (sura, from, wordFrom, to, wordTo) =>
+      from !== to
+        ? `Sourate ${sura}, āya ${from} mot ${wordFrom} à āya ${to} mot ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sourate ${sura}, āya ${from}, mot ${wordFrom}`
+          : `Sourate ${sura}, āya ${from}, mots ${wordFrom}–${wordTo}`,
     focus: 'Attention à',
     variant: (rule) =>
       rule === 'idgham-ghunna'
@@ -278,7 +284,11 @@ export const fr: Messages = {
     },
   },
   mushaf: {
-    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    eyebrow: 'Muṣḥaf',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa et al-Baqara',
+      'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+    },
     title: 'Muṣḥaf',
     script:
       'Écriture ʿuthmānī (Médine), riwāyat Ḥafṣ. L’écriture IndoPak de ton muṣḥaf suivra dès que sa source sera clarifiée.',
@@ -286,6 +296,7 @@ export const fr: Messages = {
     ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
     loading: 'Chargement du muṣḥaf …',
     saved: 'Enregistré hors ligne',
+    notSaved: 'En ligne seulement : cet appareil ne peut pas le garder.',
     failure: {
       offline:
         'Ouvre le muṣḥaf une fois avec une connexion\u202f; ensuite il marche aussi hors ligne.',
@@ -308,6 +319,10 @@ export const fr: Messages = {
     follows: (rule) => `décide la règle d’avant\u202f: ${rule}`,
     close: 'Fermer',
     open: 'Ouvrir dans le muṣḥaf',
+    assign: 'Donner un devoir ici',
+    pick: 'Touche le premier puis le dernier mot du devoir.',
+    cancel: 'Annuler',
+    halaqa: 'Ḥalaqa',
     sources: 'Sources',
     text: 'Texte\u202f: Tanzil Project (CC BY 3.0)',
     rules: 'Règles de tajwīd\u202f: cpfair/quran-tajweed (CC BY 4.0)',
