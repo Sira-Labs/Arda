@@ -89,13 +89,16 @@ lock). Keys:
 
 Repository → Settings → Environments → **`staging`**:
 
-| Kind     | Name                        | Value                                             |
-| -------- | --------------------------- | ------------------------------------------------- |
-| variable | `CAPROVER_SERVER`           | `https://captain.<root-domain>`                   |
-| variable | `ARDA_STAGING_URL`          | optional, default `https://arda-stg.siralabs.org` |
-| secret   | `CAPROVER_APP_TOKEN_API`    | arda-api → Deployment → Enable App Token          |
-| secret   | `CAPROVER_APP_TOKEN_WEB`    | arda-web → Deployment → Enable App Token          |
-| secret   | `CAPROVER_APP_TOKEN_BACKUP` | optional, once `arda-backup` exists               |
+| Kind     | Name                        | Value                                                                                 |
+| -------- | --------------------------- | ------------------------------------------------------------------------------------- |
+| variable | `CAPROVER_SERVER`           | `https://captain.<root-domain>`                                                       |
+| variable | `ARDA_STAGING_URL`          | optional, default `https://arda-stg.siralabs.org`                                     |
+| variable | `CAPROVER_APP_API`          | the api app's name when it is not `arda-api`                                          |
+| variable | `CAPROVER_APP_WEB`          | the web app's name when it is not `arda-web`                                          |
+| variable | `CAPROVER_APP_BACKUP`       | the backup app's name when not `arda-backup`                                          |
+| secret   | `CAPROVER_APP_TOKEN_API`    | the app `CAPROVER_APP_API` names (default `arda-api`) → Deployment → Enable App Token |
+| secret   | `CAPROVER_APP_TOKEN_WEB`    | the app `CAPROVER_APP_WEB` names (default `arda-web`) → Deployment → Enable App Token |
+| secret   | `CAPROVER_APP_TOKEN_BACKUP` | optional: the app `CAPROVER_APP_BACKUP` names (default `arda-backup`), once it exists |
 
 Every push to `main`: checks → images (smoke tests, Trivy) → GHCR → deploy api, backup, web by
 digest → wait until staging reports the new `sha-…`. Without `CAPROVER_SERVER` and the tokens
@@ -149,10 +152,11 @@ and/or SMTP authentication, TLS required. ʿArḍa greets the relay with the hos
 
 ## 9. Troubleshooting
 
-| Symptom                                                  | Cause                                                                                                               | Fix                                                                                                                    |
-| -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| api log `config.invalid`                                 | placeholder or short secret, weak DB password, no public URL                                                        | generate secrets as above, **Save & Update**                                                                           |
-| `/healthz` and `/api` answer 502, `/healthz-web` is fine | arda-api is not running (crash loop); before this fix, the one-click defaults (relay host, empty sender) stopped it | check arda-api → App Logs; `config.feature_off` names an incomplete optional setting (the api still runs, sign-in off) |
-| `/healthz` 503 `degraded`                                | schema behind the image (migration failed)                                                                          | api log `migrate.*`; never run two api versions against one DB                                                         |
-| web log `lookup srv-captain--arda-api: no such host`     | upstream name mismatch                                                                                              | `ARDA_API_UPSTREAM=srv-captain--<api app>:8000`                                                                        |
-| image pull `unauthorized`                                | GHCR package private                                                                                                | make the package public (§ quick start)                                                                                |
+| Symptom                                                                        | Cause                                                                                                                                                | Fix                                                                                                                    |
+| ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| api log `config.invalid`                                                       | placeholder or short secret, weak DB password, no public URL                                                                                         | generate secrets as above, **Save & Update**                                                                           |
+| `/healthz` and `/api` answer 502, `/healthz-web` is fine                       | arda-api is not running (crash loop); before this fix, the one-click defaults (relay host, empty sender) stopped it                                  | check arda-api → App Logs; `config.feature_off` names an incomplete optional setting (the api still runs, sign-in off) |
+| `/healthz` 503 `degraded`                                                      | schema behind the image (migration failed)                                                                                                           | api log `migrate.*`; never run two api versions against one DB                                                         |
+| web log `lookup srv-captain--arda-api: no such host`                           | upstream name mismatch                                                                                                                               | `ARDA_API_UPSTREAM=srv-captain--<api app>:8000`                                                                        |
+| deploy: `CapRover rejected the deployment (status 1106): Auth token corrupted` | the token belongs to another app than the one deployed to (an app named `arda-stg-api` while the workflow deploys `arda-api`), or it was regenerated | set `CAPROVER_APP_API`/`_WEB` to the app names in the `staging` environment; copy the current App Token again          |
+| image pull `unauthorized`                                                      | GHCR package private                                                                                                                                 | make the package public (§ quick start)                                                                                |

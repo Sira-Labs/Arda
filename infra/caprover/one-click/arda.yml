@@ -117,7 +117,9 @@ caproverOneClickApp:
       Force HTTPS. (2) Check https://$$cap_domain/healthz → "status":"ok" and "auth":"enabled".
       (3) For automatic deploys enable App Tokens on api and web, store them as GitHub secrets
       CAPROVER_APP_TOKEN_API / _WEB in the environment "staging" and set its variable
-      CAPROVER_SERVER=https://captain.<root-domain>. (4) Add backups with arda-backup.yml.
+      CAPROVER_SERVER=https://captain.<root-domain>; with an app name other than "arda" also
+      set CAPROVER_APP_API=$$cap_appname-api and CAPROVER_APP_WEB=$$cap_appname-web. (4) Add
+      backups with arda-backup.yml.
   displayName: ʿArḍa (db + api + web)
   isOfficial: false
   description: Tajwīd learning with your teacher (العَرْضة) — database, api and web app.
