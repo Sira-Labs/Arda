@@ -52,6 +52,13 @@ const covers = (range: AssignmentRange, place: Place) =>
     n: range.words?.to ?? Number.MAX_SAFE_INTEGER,
   });
 
+/** Whether keys typed into `target` edit something (a field, a list, editable text). */
+const editing = (target: EventTarget | null) =>
+  target instanceof HTMLInputElement ||
+  target instanceof HTMLTextAreaElement ||
+  target instanceof HTMLSelectElement ||
+  (target instanceof HTMLElement && target.isContentEditable);
+
 /** The pack of a script that has the printed page. */
 const entryForPage = (page: number, script: MushafScript): PackIndexEntry | undefined =>
   builtIndex.packs.find(
@@ -101,9 +108,19 @@ export function MushafPage() {
   useEffect(() => {
     // The muṣḥaf reads right to left: the next page lies to the left.
     const onKey = (event: KeyboardEvent) => {
-      if (event.target instanceof HTMLInputElement || selected) return;
-      if (event.key === 'ArrowLeft') turn(1);
-      if (event.key === 'ArrowRight') turn(-1);
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      // The arrows belong to a field being edited (the assignment form's note or ḥalaqa),
+      // and to the browser when a modifier is held (Alt+← is "back").
+      if (
+        selected ||
+        editing(event.target) ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      )
+        return;
+      event.preventDefault();
+      turn(event.key === 'ArrowLeft' ? 1 : -1);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);

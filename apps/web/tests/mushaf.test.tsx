@@ -282,6 +282,12 @@ describe('the muṣḥaf screen (S2.4)', () => {
     expect(screen.getByText('Deine Aufgabe: Āya 2')).toBeInTheDocument();
     await user.keyboard('{ArrowRight}');
     expect(await screen.findByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    // In a field the arrows move the cursor, never the page.
+    const note = document.body.appendChild(document.createElement('textarea'));
+    note.focus();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    note.remove();
   });
 
   it('says when a page is not in the muṣḥaf yet', async () => {
