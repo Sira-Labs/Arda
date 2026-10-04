@@ -1,0 +1,19 @@
+{
+  "name": "@arda/tools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ʿArḍa content tools: import Tanzil and cpfair into word-keyed, checksummed content packs (ADR-0007, ADR-0008, ADR-0010).",
+  "type": "module",
+  "scripts": {
+    "fetch": "vite-node src/cli.ts fetch",
+    "pack": "vite-node src/cli.ts pack",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@arda/quran": "*",
+    "@arda/tajweed": "*",
+    "vite-node": "^2.1.9",
+    "vitest": "^2.1.9"
+  }
+}

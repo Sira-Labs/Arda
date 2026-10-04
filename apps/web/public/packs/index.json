@@ -1,0 +1,31 @@
+{
+  "format": 1,
+  "packs": [
+    {
+      "id": "uthmani-hafs-juz30",
+      "version": 1,
+      "file": "uthmani-hafs-juz30.v1.json",
+      "sha256": "f65b378de03f102677ed96d545b34a4915b46dfb0159e1afaae14f43fb756a79",
+      "bytes": 125820,
+      "script": "uthmani",
+      "riwaya": "hafs",
+      "title": "Juzʾ ʿAmma, ʿUthmānī script (Tanzil), riwāyat Ḥafṣ, with tajwīd rules (cpfair)",
+      "suras": [
+        78,
+        114
+      ],
+      "sources": [
+        {
+          "id": "tanzil-uthmani",
+          "licence": "CC BY 3.0, verbatim copies only",
+          "attribution": "Tanzil Project, https://tanzil.net"
+        },
+        {
+          "id": "cpfair-tajweed",
+          "licence": "CC BY 4.0",
+          "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+        }
+      ]
+    }
+  ]
+}

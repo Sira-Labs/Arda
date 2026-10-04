@@ -3,3 +3,6 @@ dist
 **/coverage
 node_modules
 package-lock.json
+
+# Generated content packs: their bytes are checksummed (tools/README.md)
+apps/web/public/packs
