@@ -129,9 +129,10 @@ the rule taxonomy test passes (03 §3).
 IndoPak 15-line pages (the sheikh's edition, §8) in DigitalKhatt IndoPak; rule colours with labels; tap a coloured letter
 → rule, reciter audio, "practise 5 more". Script switch (IndoPak, Madīna, later Warsh).
 **Acceptance:** Juzʾ ʿAmma renders with every cpfair rule mapped onto the IndoPak word; colour
-is never the only signal. _(Built: Juzʾ ʿAmma in the ʿUthmānī script with every cpfair rule,
-labelled, tap a word for its rules, offline after the first visit; IndoPak, pages and audio
-next, ADR-0017 update.)_
+is never the only signal. _(Built: al-Fātiḥa, al-Baqara and Juzʾ ʿAmma in IndoPak (the sheikh's
+15-line pages, his page numbers) and in the Madīna script (its 604 pages), every cpfair rule
+labelled, tap a word for its rules, turn the pages, offline after the first visit; audio next,
+ADR-0017 updates.)_
 
 ### F4 — Hear: reciter player _(Must)_
 
