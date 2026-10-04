@@ -9,6 +9,7 @@ import { WhichRule } from '@/modules/games/WhichRule';
 import { Halaqa } from '@/modules/halaqa/Halaqa';
 import { Join } from '@/modules/halaqa/Join';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
+import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
@@ -32,6 +33,7 @@ const router = createBrowserRouter([
       { path: '/konto', element: <Account /> },
       { path: '/pfad', element: <Path /> },
       { path: '/mushaf', element: <Mushaf /> },
+      { path: '/mushaf/seite/:page', element: <MushafPage /> },
       { path: '/mushaf/:sura', element: <SuraView /> },
       { path: '/labor', element: <Soon page="lab" /> },
       { path: '/sheikh', element: <Sheikh /> },

@@ -655,3 +655,51 @@ a {
   background: var(--bg-elev-2);
   outline: 2px solid var(--accent-2);
 }
+
+/* The muṣḥaf page (ADR-0017): IndoPak lines as printed, scaled to the column's width so a
+   printed line stays one line; Madīna pages as running text. */
+.mushaf-page {
+  container-type: inline-size;
+}
+.mushaf-page[data-layout='lines'] .mushaf-line {
+  font-size: 4.3cqi;
+  line-height: 2.2;
+  white-space: nowrap;
+  text-align: justify;
+  text-align-last: justify;
+}
+.mushaf-page[data-opening='true'] .mushaf-line {
+  max-inline-size: 72%;
+  margin-inline: auto;
+}
+.mushaf-page[data-layout='lines'] .basmala {
+  font-size: 4.3cqi;
+  margin: 0;
+}
+.sura-heading {
+  margin: 6px 0;
+  padding: 2px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  text-align: center;
+  font-family: var(--font-quran-madina);
+  font-size: 1.2rem;
+  line-height: 2;
+}
+.page-sura + .page-sura::before {
+  content: ' · ';
+}
+.page-number {
+  margin-top: 12px !important;
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--accent);
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

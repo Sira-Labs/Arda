@@ -1,0 +1,387 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { sura as suraOf, type PackIndexEntry } from '@arda/quran';
+import { RuleLegend } from '@/components/RuleLegend';
+import { builtIndex, type MushafPack } from '@/content/packs';
+import { useI18n } from '@/i18n/I18nProvider';
+import type { AssignmentRange } from '@/services/auth';
+import { PageAssign, useTeaching } from './PageAssign';
+import { pageBlocks, surasOn, type Block, type PageWord, type Place } from './pageModel';
+import { useMushafScript, type MushafScript } from './script';
+import { MushafSources } from './Sources';
+import { usePack } from './usePack';
+import { Word, type WordTap } from './Word';
+import { WordSheet } from './WordSheet';
+
+const notAfter = (a: Place, b: Place) =>
+  a.sura < b.sura ||
+  (a.sura === b.sura && (a.aya < b.aya || (a.aya === b.aya && a.n <= b.n)));
+
+const positive = (value: string | null): number | null => {
+  const n = Number(value);
+  return value !== null && Number.isInteger(n) && n >= 1 ? n : null;
+};
+
+/**
+ * The assignment to mark, from the query: `sura`, `von`–`bis`, and with `wvon`/`wbis` the words
+ * it starts and ends at (S3.2). Ignored when it is not a range of that sūra.
+ */
+export function rangeOf(search: URLSearchParams): AssignmentRange | null {
+  const sura = positive(search.get('sura'));
+  const meta = sura === null ? undefined : suraOf(sura);
+  const from = positive(search.get('von'));
+  const to = positive(search.get('bis') ?? search.get('von'));
+  if (!meta || from === null || to === null || from > to || to > meta.ayas) return null;
+  const wordFrom = positive(search.get('wvon'));
+  const wordTo = positive(search.get('wbis'));
+  const words =
+    wordFrom !== null && wordTo !== null && (from < to || wordFrom <= wordTo)
+      ? { from: wordFrom, to: wordTo }
+      : undefined;
+  return { sura: meta.number, from, to, ...(words ? { words } : {}) };
+}
+
+/** Whether the word at `place` is inside `range` (whole āyāt, or from word to word). */
+const covers = (range: AssignmentRange, place: Place) =>
+  place.sura === range.sura &&
+  place.aya >= 1 &&
+  notAfter({ sura: range.sura, aya: range.from, n: range.words?.from ?? 1 }, place) &&
+  notAfter(place, {
+    sura: range.sura,
+    aya: range.to,
+    n: range.words?.to ?? Number.MAX_SAFE_INTEGER,
+  });
+
+/** The pack of a script that has the printed page. */
+const entryForPage = (page: number, script: MushafScript): PackIndexEntry | undefined =>
+  builtIndex.packs.find(
+    (p) => p.script === script && page >= p.pages[0] && page <= p.pages[1]
+  );
+
+/**
+ * `/mushaf/seite/:page` (screen 2, spec F3): one page of the muṣḥaf as printed: the IndoPak
+ * page line by line as in the sheikh's copy, or the Madīna page's āyāt (ADR-0017). Rules are
+ * coloured and named; tap a word for its rules; turn the page with the arrows, a swipe or the
+ * keyboard. `?sura=&von=&bis=` (and `wvon=&wbis=`) marks an assignment on every page it spans.
+ * A teacher can pick words, across pages, and give them as an assignment (S3.2).
+ */
+export function MushafPage() {
+  const { page: param = '' } = useParams();
+  const [search] = useSearchParams();
+  const navigate = useNavigate();
+  const { m } = useI18n();
+  const script = useMushafScript();
+  const page = Number(param);
+  const entry = Number.isInteger(page) ? entryForPage(page, script) : undefined;
+  const result = usePack(entry);
+  const teaching = useTeaching();
+  const [selected, setSelected] = useState<(WordTap & { indopak: boolean }) | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<{ start: Place; end?: Place } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const range = rangeOf(search);
+  const pack = result?.ok ? result.pack : undefined;
+  const blocks = useMemo(() => (pack ? pageBlocks(pack, page) : []), [pack, page]);
+
+  const go = useCallback(
+    (to: number) =>
+      navigate({ pathname: `/mushaf/seite/${to}`, search: search.toString() }),
+    [navigate, search]
+  );
+  const first = entry?.pages[0] ?? page;
+  const last = entry?.pages[1] ?? page;
+  const turn = useCallback(
+    (by: 1 | -1) => {
+      const to = page + by;
+      if (to >= 1 && entryForPage(to, script)) go(to);
+    },
+    [page, script, go]
+  );
+
+  useEffect(() => {
+    // The muṣḥaf reads right to left: the next page lies to the left.
+    const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement || selected) return;
+      if (event.key === 'ArrowLeft') turn(1);
+      if (event.key === 'ArrowRight') turn(-1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [turn, selected]);
+
+  const swipe = useRef<number | null>(null);
+  const close = useCallback(() => setSelected(null), []);
+  const onTap = useCallback(
+    (tap: WordTap, indopak: boolean) => {
+      if (!picking) {
+        setSelected({ ...tap, indopak });
+        return;
+      }
+      const place = tap.place;
+      if (!place || place.aya < 1) return;
+      // An assignment stays in one sūra: a word of another sūra starts the pick again.
+      setPicked((current) =>
+        !current || current.end || current.start.sura !== place.sura
+          ? { start: place }
+          : { start: current.start, end: place }
+      );
+    },
+    [picking]
+  );
+
+  const back = <Link to="/mushaf">{m.mushaf.all}</Link>;
+  if (!entry) {
+    return (
+      <div className="stack">
+        {back}
+        <p role="alert">{m.mushaf.failure.missingPage}</p>
+      </div>
+    );
+  }
+  if (result === null) {
+    return (
+      <div className="stack">
+        {back}
+        <p className="muted" role="status">
+          {m.mushaf.loading}
+        </p>
+      </div>
+    );
+  }
+  if (!pack) {
+    return (
+      <div className="stack">
+        {back}
+        <p role="alert">{m.mushaf.failure[result.ok ? 'missing' : result.failure]}</p>
+      </div>
+    );
+  }
+
+  const indopak = pack.script === 'indopak';
+  const span = picking && picked ? orderedPick(picked) : null;
+  const given = picked?.end && span ? assignmentRange(pack, span) : null;
+  const marked = (place: Place) =>
+    span && notAfter(span.start, place) && notAfter(place, span.end)
+      ? 'picked'
+      : range && covers(range, place)
+        ? 'in-range'
+        : undefined;
+  const word = (w: PageWord) => (
+    <Word
+      key={w.key}
+      tap={{
+        key: w.key,
+        word: w.word,
+        label:
+          w.place.aya === 0
+            ? m.mushaf.sura(w.place.sura)
+            : m.mushaf.word(w.place.sura, w.place.aya, w.place.n),
+        place: w.place,
+      }}
+      className={marked(w.place)}
+      pressed={picking ? marked(w.place) === 'picked' : selected?.key === w.key}
+      onTap={(tap) => onTap(tap, indopak)}
+      indopak={indopak}
+      ayaEnd={w.ayaEnd}
+    />
+  );
+  const suras = surasOn(blocks);
+
+  return (
+    <article className="stack" style={{ gap: 16, maxWidth: 820 }}>
+      <nav className="row" style={{ justifyContent: 'space-between' }}>
+        {back}
+        <span className="row" style={{ gap: 16 }}>
+          {page > first && (
+            <Link
+              to={{ pathname: `/mushaf/seite/${page - 1}`, search: search.toString() }}
+            >
+              {m.mushaf.previousPage}
+            </Link>
+          )}
+          {page < last && (
+            <Link
+              to={{ pathname: `/mushaf/seite/${page + 1}`, search: search.toString() }}
+            >
+              {m.mushaf.nextPage}
+            </Link>
+          )}
+        </span>
+      </nav>
+      <header className="stack" style={{ gap: 6 }}>
+        <p className="eyebrow">
+          {m.mushaf.page(page)} · {m.mushaf.scripts[script].name}
+        </p>
+        <h1 className="h-small">
+          {suras.map((s) => (
+            <span key={s} className="page-sura" lang="ar" dir="rtl">
+              {suraOf(s)?.name}
+            </span>
+          ))}
+        </h1>
+        <p className="muted">{picking ? m.mushaf.pick : m.mushaf.tap}</p>
+        {range && (
+          <p className="chip range-chip" style={{ alignSelf: 'flex-start' }}>
+            {range.words
+              ? m.assignments.rangeWords(
+                  range.sura,
+                  range.from,
+                  range.words.from,
+                  range.to,
+                  range.words.to
+                )
+              : m.mushaf.range(range.from, range.to)}
+          </p>
+        )}
+        {picking && !given && (
+          // Until both words are picked there is no panel yet to cancel from.
+          <button
+            className="btn"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => {
+              setPicking(false);
+              setPicked(null);
+            }}
+          >
+            {m.mushaf.cancel}
+          </button>
+        )}
+        {teaching.length > 0 && !picking && (
+          <button
+            className="btn"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => {
+              setSelected(null);
+              setNotice(null);
+              setPicking(true);
+            }}
+          >
+            {m.mushaf.assign}
+          </button>
+        )}
+        {notice && <p role="status">{notice}</p>}
+      </header>
+
+      <div
+        className="quran mushaf-text mushaf-page"
+        data-script={indopak ? 'indopak' : 'madina'}
+        data-layout={indopak ? 'lines' : 'flow'}
+        // The two opening pages (al-Fātiḥa, al-Baqara's start) print shorter lines.
+        data-opening={indopak && page - pack.layout!.pageOffset <= 2 ? 'true' : undefined}
+        lang="ar"
+        dir="rtl"
+        onTouchStart={(event) => {
+          swipe.current = event.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(event) => {
+          const from = swipe.current;
+          const to = event.changedTouches[0]?.clientX;
+          swipe.current = null;
+          if (from === null || to === undefined || Math.abs(to - from) < 60) return;
+          // Swiping right brings the next page, as when turning the muṣḥaf's pages.
+          turn(to > from ? 1 : -1);
+        }}
+      >
+        {blocks.map((block) => blockView(block, word, indopak, m))}
+        <p className="page-number" aria-hidden="true">
+          {page.toLocaleString('ar-EG')}
+        </p>
+      </div>
+
+      <RuleLegend />
+      <MushafSources />
+      {selected && (
+        <WordSheet
+          word={selected.word}
+          label={selected.label}
+          onClose={close}
+          script={selected.indopak ? 'indopak' : 'madina'}
+        />
+      )}
+      {picking && given && (
+        <PageAssign
+          range={given}
+          onGiven={() => {
+            setPicking(false);
+            setPicked(null);
+            setNotice(m.assignments.form.given);
+          }}
+          onCancel={() => {
+            setPicking(false);
+            setPicked(null);
+          }}
+        />
+      )}
+    </article>
+  );
+}
+
+type Messages = ReturnType<typeof useI18n>['m'];
+
+function blockView(
+  block: Block,
+  word: (w: PageWord) => React.ReactNode,
+  indopak: boolean,
+  m: Messages
+) {
+  switch (block.kind) {
+    case 'heading':
+      return (
+        <p key={`h${block.sura}`} className="sura-heading">
+          <span>{suraOf(block.sura)?.name}</span>
+          <span className="sr-only"> · {m.mushaf.sura(block.sura)}</span>
+        </p>
+      );
+    case 'basmala':
+      return (
+        <p key={`b${block.sura}`} className="basmala">
+          {block.words.map(word)}
+        </p>
+      );
+    case 'line':
+      return (
+        <p key={`l${block.line}`} className="mushaf-line" data-line={block.line}>
+          {block.words.map(word)}
+        </p>
+      );
+    case 'flow':
+      return (
+        <p
+          key={`f${block.words[0]!.key}`}
+          className={indopak ? 'mushaf-line' : undefined}
+        >
+          {block.words.map(word)}
+        </p>
+      );
+  }
+}
+
+/** The words picked so far, in reading order. */
+function orderedPick(picked: { start: Place; end?: Place }): {
+  start: Place;
+  end: Place;
+} {
+  const end = picked.end ?? picked.start;
+  return notAfter(picked.start, end)
+    ? { start: picked.start, end }
+    : { start: end, end: picked.start };
+}
+
+/** The picked words as an assignment's range; whole āyāt when they begin and end so. */
+function assignmentRange(
+  pack: MushafPack,
+  span: { start: Place; end: Place }
+): AssignmentRange | null {
+  const sura = pack.suras.find((s) => s.sura === span.start.sura);
+  const lastWords = sura?.ayat[span.end.aya - 1]?.words.length;
+  if (!sura || !lastWords) return null;
+  const whole = span.start.n === 1 && span.end.n === lastWords;
+  return {
+    sura: sura.sura,
+    from: span.start.aya,
+    to: span.end.aya,
+    ...(whole ? {} : { words: { from: span.start.n, to: span.end.n } }),
+  };
+}
