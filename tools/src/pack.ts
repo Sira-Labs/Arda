@@ -1,67 +1,21 @@
 import { createHash } from 'node:crypto';
-import { sura as suraOf } from '@arda/quran';
+import {
+  sura as suraOf,
+  type Pack,
+  type PackAya,
+  type PackSource,
+  type PackSpan,
+  type PackSura,
+  type PackWord,
+} from '@arda/quran';
 import { PACK_RULES, type PackRuleId } from '@arda/tajweed';
 import { align } from './align';
 import type { Annotation } from './cpfair';
 import type { TanzilText } from './tanzil';
 import { isMark, splitWords, type WordSpan } from './words';
 
-/**
- * A content pack (ADR-0010): the words of a range of sūras in one script, each with the rules
- * on its letters. A word's key is `hafs:sura:aya:n`, n counting from 1 (ADR-0007).
- *
- * A span is `[start, end, rule]` over UTF-16 offsets of the word's text, plus `"f"` when it is
- * the follower of a rule decided by the next letter (shown, not coloured).
- */
-export type PackSpan = [number, number, PackRuleId] | [number, number, PackRuleId, 'f'];
-
-export interface PackWord {
-  /** The word, verbatim from the source. */
-  t: string;
-  /** Rule spans, in reading order. */
-  r?: PackSpan[];
-  /** Pause or sajdah signs after the word. */
-  a?: string;
-}
-
-export interface PackAya {
-  aya: number;
-  words: PackWord[];
-}
-
-export interface PackSura {
-  sura: number;
-  name: string;
-  /**
-   * The basmala before the sūra as Tanzil writes it there (before at-Tīn and al-Qadr with a
-   * shadda on the bāʾ, as in the Madīna muṣḥaf); absent for at-Tawba, and for al-Fātiḥa,
-   * where it is āya 1.
-   */
-  basmala?: PackWord[];
-  ayat: PackAya[];
-}
-
-export interface PackSource {
-  id: string;
-  title: string;
-  url: string;
-  licence: string;
-  attribution: string;
-  sha256: string;
-}
-
-export interface Pack {
-  format: 1;
-  id: string;
-  version: number;
-  script: 'uthmani';
-  riwaya: 'hafs';
-  title: string;
-  sources: PackSource[];
-  /** Tanzil's copyright block, which travels with every file derived from its text. */
-  copyright: string;
-  suras: PackSura[];
-}
+type Word = PackWord<PackRuleId>;
+type Span = PackSpan<PackRuleId>;
 
 export interface PackStats {
   ayat: number;
@@ -84,9 +38,9 @@ export interface PackInput {
 }
 
 /** The rules on one word, as spans of its text (carrier and follower split, see PackSpan). */
-function spansOf(word: WordSpan, annotations: readonly Annotation[]): PackSpan[] {
+function spansOf(word: WordSpan, annotations: readonly Annotation[]): Span[] {
   const chars = [...word.text];
-  const spans: PackSpan[] = [];
+  const spans: Span[] = [];
   for (const a of annotations) {
     if (a.end <= word.start || a.start >= word.end) continue;
     let start = Math.max(a.start, word.start) - word.start;
@@ -112,14 +66,14 @@ function spansOf(word: WordSpan, annotations: readonly Annotation[]): PackSpan[]
   return spans.sort((x, y) => x[0] - y[0] || x[1] - y[1]);
 }
 
-const overlapsIn = (spans: readonly PackSpan[]): number =>
+const overlapsIn = (spans: readonly Span[]): number =>
   spans.filter((s, i) => i > 0 && s[0] < spans[i - 1]![1]).length;
 
 function wordsOf(
   text: readonly string[],
   annotations: readonly Annotation[],
   offset = 0
-): PackWord[] {
+): Word[] {
   return splitWords(text, offset).map((w) => {
     // Offsets in the pack are UTF-16 code units; with Arabic in the BMP they equal code points.
     if ([...w.text].some((c) => c.codePointAt(0)! > 0xffff)) {
@@ -131,7 +85,10 @@ function wordsOf(
 }
 
 /** Builds the pack; throws when the sources do not fit together (see align.ts). */
-export function buildPack(input: PackInput): { pack: Pack; stats: PackStats } {
+export function buildPack(input: PackInput): {
+  pack: Pack<PackRuleId>;
+  stats: PackStats;
+} {
   const stats: PackStats = { ayat: 0, words: 0, spans: 0, realigned: [], overlaps: 0 };
 
   const placed = (key: string, text: readonly string[]) => {
@@ -148,13 +105,13 @@ export function buildPack(input: PackInput): { pack: Pack; stats: PackStats } {
   if (!fatiha) throw new Error('Tanzil: al-Fātiḥa 1 is missing');
   const plain = (text: string) => text.replace(/\u0651/g, '');
 
-  const suras: PackSura[] = [];
+  const suras: PackSura<PackRuleId>[] = [];
   for (let n = input.fromSura; n <= input.toSura; n++) {
     const meta = suraOf(n);
     if (!meta) throw new Error(`no sūra ${n}`);
     const hasBasmala = n !== 9;
-    const ayat: PackAya[] = [];
-    let basmala: PackWord[] | undefined;
+    const ayat: PackAya<PackRuleId>[] = [];
+    let basmala: Word[] | undefined;
     for (let aya = 1; aya <= meta.ayas; aya++) {
       const key = `${n}:${aya}`;
       const full = [...(input.tanzil.ayat.get(key) ?? '')];
@@ -208,7 +165,7 @@ export function buildPack(input: PackInput): { pack: Pack; stats: PackStats } {
 }
 
 /** The bytes of a pack as written, and their SHA-256: the same input gives the same file. */
-export function serialise(pack: Pack): { bytes: Buffer; sha256: string } {
+export function serialise(pack: Pack<PackRuleId>): { bytes: Buffer; sha256: string } {
   const bytes = Buffer.from(`${JSON.stringify(pack)}\n`, 'utf8');
   return { bytes, sha256: createHash('sha256').update(bytes).digest('hex') };
 }

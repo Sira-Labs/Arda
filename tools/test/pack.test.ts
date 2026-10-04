@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
-import { buildPack, serialise, type Pack, type PackWord } from '../src/pack';
+import type { Pack, PackWord } from '@arda/quran';
+import { buildPack, serialise } from '../src/pack';
 import { parseTanzil } from '../src/tanzil';
 
 const BASMALA = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
