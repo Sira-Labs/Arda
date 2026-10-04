@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
   LETTERS,
+  PACK_RULE_IDS,
+  PACK_RULES,
+  isPackRuleId,
   NUN_SAKINA_RULES,
   RULE_FAMILIES,
   RULE_IDS,
@@ -68,5 +71,28 @@ describe('mīm sākina', () => {
 describe('qalqala', () => {
   it('is quṭbu jadd', () => {
     expect(LETTERS.filter(isQalqalaLetter)).toEqual(['ب', 'ج', 'د', 'ط', 'ق']);
+  });
+});
+
+describe('the rules of the content packs (cpfair)', () => {
+  it('map every one of cpfair’s 18 categories to a family', () => {
+    expect(PACK_RULE_IDS).toHaveLength(18);
+    for (const id of PACK_RULE_IDS) {
+      expect(RULE_FAMILIES).toContain(PACK_RULES[id].family);
+    }
+  });
+
+  it('name the sheet’s rule where the sheet teaches it, in its own family', () => {
+    for (const id of PACK_RULE_IDS) {
+      const { rule, family } = PACK_RULES[id];
+      if (rule) expect(RULES[rule].family ?? 'none', id).toBe(family);
+    }
+    expect(PACK_RULES.iqlab.rule).toBe('iqlab');
+    expect(PACK_RULES.idghaam_no_ghunnah).toMatchObject({
+      family: 'silent',
+      decidedByNext: true,
+    });
+    expect(isPackRuleId('madd_6')).toBe(true);
+    expect(isPackRuleId('izhar')).toBe(false);
   });
 });
