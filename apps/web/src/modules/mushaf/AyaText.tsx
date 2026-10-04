@@ -25,17 +25,28 @@ export interface WordTap {
  */
 export const NONE = [0, 0] as const;
 
-/** One word: a button with its rules coloured, and the pause sign after it. */
+/**
+ * The āya-end marker of an IndoPak text as shown: the source's U+202E, a layout aid of
+ * DigitalKhatt's own renderer, is left out so it cannot turn the rest of the line around.
+ */
+const shownAfter = (after: string) => after.replace(/\u202E/g, '');
+
+/**
+ * One word: a button with its rules coloured, and what follows it: a pause sign (ʿUthmānī)
+ * or the āya-end marker as printed (IndoPak).
+ */
 export function Word({
   tap,
   className,
   pressed,
   onTap,
+  indopak = false,
 }: {
   tap: WordTap;
   className?: string;
   pressed: boolean;
   onTap: (tap: WordTap) => void;
+  indopak?: boolean;
 }) {
   return (
     <span className={className}>
@@ -47,7 +58,12 @@ export function Word({
       >
         <TajweedSpans segments={wordSegments(tap.word)} />
       </button>
-      {tap.word.a && <span className="pause-mark">{tap.word.a}</span>}{' '}
+      {tap.word.a &&
+        (indopak ? (
+          <span className="aya-end">{shownAfter(tap.word.a)}</span>
+        ) : (
+          <span className="pause-mark">{tap.word.a}</span>
+        ))}{' '}
     </span>
   );
 }
@@ -67,6 +83,7 @@ export const AyaText = memo(function AyaText({
   picking,
   selectedKey,
   onTap,
+  indopak = false,
 }: {
   sura: number;
   aya: PackAya<PackRuleId>;
@@ -82,6 +99,8 @@ export const AyaText = memo(function AyaText({
   /** The tapped word, when it is in this āya. */
   selectedKey: string | null;
   onTap: (tap: WordTap) => void;
+  /** IndoPak text: the āya-end marker is printed in the text, after its last word. */
+  indopak?: boolean;
 }) {
   const { m } = useI18n();
   return (
@@ -104,14 +123,19 @@ export const AyaText = memo(function AyaText({
             }
             pressed={picking ? isPicked : selectedKey === key}
             onTap={onTap}
+            indopak={indopak}
           />
         );
       })}
-      <span className="aya-end" aria-label={`${aya.aya}`}>
-        {/* The muṣḥaf numbers its āyāt in Arabic-Indic digits in every language. */}
-        {'۝'}
-        {aya.aya.toLocaleString('ar-EG')}
-      </span>{' '}
+      {!indopak && (
+        <>
+          <span className="aya-end" aria-label={`${aya.aya}`}>
+            {/* The muṣḥaf numbers its āyāt in Arabic-Indic digits in every language. */}
+            {'۝'}
+            {aya.aya.toLocaleString('ar-EG')}
+          </span>{' '}
+        </>
+      )}
     </span>
   );
 });

@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { chooseScript, resetScriptForTests } from '@/modules/mushaf/script';
 import type { PackIndex, PackIndexEntry } from '@arda/quran';
 import type { Me } from '@/services/auth';
 import { entryFor, loadPack, type PackCache, type PackLoaderDeps } from '@/content/packs';
@@ -148,9 +149,9 @@ describe('loading a pack (S2.3)', () => {
   });
 
   it('knows which sūras the app has', () => {
-    expect(entryFor(112, index)?.id).toBe('uthmani-hafs-juz30');
-    expect(entryFor(2, index)?.id).toBe('uthmani-hafs-fatiha-baqara');
-    expect(entryFor(3, index)).toBeUndefined();
+    expect(entryFor(112, 'uthmani', index)?.id).toBe('uthmani-hafs-juz30');
+    expect(entryFor(2, 'uthmani', index)?.id).toBe('uthmani-hafs-fatiha-baqara');
+    expect(entryFor(3, 'uthmani', index)).toBeUndefined();
   });
 });
 
@@ -213,6 +214,7 @@ function renderAt(
 
 beforeEach(() => {
   localStorage.clear();
+  resetScriptForTests();
   localStorage.setItem('arda.language', 'de');
 });
 
@@ -269,7 +271,7 @@ describe('the muṣḥaf screen (S2.4)', () => {
     ).toHaveTextContent('Idghām ohne Ghunna · Stumm');
   });
 
-  it('shows a sūra word by word with its basmala and its āyāt numbered', async () => {
+  it('shows a sūra word by word in the IndoPak script, as the sheikh’s muṣḥaf prints it', async () => {
     renderAt('/mushaf/112', loader().deps);
     expect(await screen.findByRole('heading', { name: 'الإخلاص' })).toHaveAttribute(
       'dir',
@@ -278,17 +280,76 @@ describe('the muṣḥaf screen (S2.4)', () => {
     expect(screen.getByText('Sūra 112 · 4 Āyāt')).toBeInTheDocument();
     const text = document.querySelector('.mushaf-text')!;
     expect(text).toHaveAttribute('lang', 'ar');
+    expect(text).toHaveAttribute('data-script', 'indopak');
     expect(text.querySelector('.basmala')?.querySelectorAll('button')).toHaveLength(4);
+    const words = () =>
+      [...text.querySelectorAll('.mushaf-word')].map((b) => b.textContent);
+    expect(words()).toContain('اَحَدٌ');
+    // The āya ends as printed: the marker with its number and the stop sign after it.
+    expect([...text.querySelectorAll('.aya-end')].map((e) => e.textContent)).toEqual([
+      '۝',
+      '۝١ۚ',
+      '۝٢ۚ',
+      '۝٣ۙ',
+      '۝٤\u08D6',
+    ]);
+    // Every coloured letter is named, so colour is never the only signal.
+    for (const coloured of text.querySelectorAll('.tj')) {
+      expect(coloured.getAttribute('title')).toBeTruthy();
+    }
+  });
+
+  it('shows the Madīna (ʿUthmānī) script when chosen, numbering the āyāt itself', async () => {
+    chooseScript('uthmani');
+    renderAt('/mushaf/112', loader().deps);
+    await screen.findByRole('heading', { name: 'الإخلاص' });
+    const text = document.querySelector('.mushaf-text')!;
+    expect(text).toHaveAttribute('data-script', 'madina');
+    expect(
+      [...text.querySelectorAll('.mushaf-word')].map((b) => b.textContent)
+    ).toContain('أَحَدٌ');
     expect([...text.querySelectorAll('.aya-end')].map((e) => e.textContent)).toEqual([
       '۝١',
       '۝٢',
       '۝٣',
       '۝٤',
     ]);
-    // Every coloured letter is named, so colour is never the only signal.
-    for (const coloured of text.querySelectorAll('.tj')) {
-      expect(coloured.getAttribute('title')).toBeTruthy();
-    }
+  });
+
+  it('lets the student choose the script, IndoPak first, and keeps the choice', async () => {
+    renderAt('/mushaf', loader().deps);
+    const user = userEvent.setup();
+    const indopak = await screen.findByRole('radio', { name: 'IndoPak' });
+    expect(indopak).toHaveAttribute('aria-checked', 'true');
+    expect(
+      screen.getByText(
+        'IndoPak-Schrift wie im Muṣḥaf deines Sheikhs (15 Zeilen), riwāyat Ḥafṣ.'
+      )
+    ).toBeInTheDocument();
+    // One tab stop for the group; the arrows choose within it.
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
+      'tabindex',
+      '-1'
+    );
+    indopak.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveFocus();
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
+    await user.keyboard('{ArrowLeft}');
+    expect(indopak).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('radio', { name: 'Madīna' }));
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
+      'aria-checked',
+      'true'
+    );
+    expect(localStorage.getItem('arda.mushafScript')).toBe('uthmani');
+    expect(screen.getByRole('link', { name: /DigitalKhatt/ })).toHaveAttribute(
+      'href',
+      'https://github.com/DigitalKhatt/digitalkhatt-js'
+    );
   });
 
   it('opens a tapped word with its rules and the way to the rule card', async () => {

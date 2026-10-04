@@ -58,12 +58,17 @@ export const browserDeps: PackLoaderDeps = {
   sha256: async (bytes) => hex(await crypto.subtle.digest('SHA-256', bytes)),
 };
 
-/** The pack that holds a sūra in a script, if the app has one. */
+/**
+ * The pack that holds a sūra, in the given script when the app has it there, else in any
+ * script (a sūra only one script has is still shown).
+ */
 export function entryFor(
   sura: number,
+  script?: PackIndexEntry['script'],
   index: PackIndex = builtIndex
 ): PackIndexEntry | undefined {
-  return index.packs.find((p) => sura >= p.suras[0] && sura <= p.suras[1]);
+  const holding = index.packs.filter((p) => sura >= p.suras[0] && sura <= p.suras[1]);
+  return holding.find((p) => p.script === script) ?? holding[0];
 }
 
 /** Whether a parsed file has the pack's shape and only known rules. */

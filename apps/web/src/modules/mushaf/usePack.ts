@@ -16,11 +16,12 @@ const loaded = new WeakMap<PackLoaderDeps, Map<string, Promise<PackResult>>>();
 /** The pack, `null` while it loads; a failed load is tried again on the next mount. */
 export function usePack(entry: PackIndexEntry | undefined): PackResult | null {
   const deps = useContext(PackLoaderContext);
-  const [result, setResult] = useState<PackResult | null>(null);
+  const key = entry ? `${entry.id}@${entry.version}` : '';
+  // The result with the pack it belongs to: another pack (a script switched) starts loading.
+  const [state, setState] = useState<{ key: string; result: PackResult } | null>(null);
   useEffect(() => {
     if (!entry) return;
     let current = true;
-    const key = `${entry.id}@${entry.version}`;
     let cache = loaded.get(deps);
     if (!cache) loaded.set(deps, (cache = new Map()));
     let promise = cache.get(key);
@@ -34,11 +35,12 @@ export function usePack(entry: PackIndexEntry | undefined): PackResult | null {
     }
     void promise.then((value) => {
       if (!value.ok) cache.delete(key);
-      if (current) setResult(value);
+      if (current) setState({ key, result: value });
     });
     return () => {
       current = false;
     };
-  }, [entry, deps]);
-  return entry ? result : { ok: false, failure: 'missing' };
+  }, [entry, key, deps]);
+  if (!entry) return { ok: false, failure: 'missing' };
+  return state?.key === key ? state.result : null;
 }

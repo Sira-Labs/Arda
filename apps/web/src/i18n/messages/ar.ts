@@ -316,10 +316,21 @@ export const ar: Messages = {
     packs: {
       'uthmani-hafs-fatiha-baqara': 'الفاتحة والبقرة',
       'uthmani-hafs-juz30': 'جزء عمّ',
+      'indopak-hafs-fatiha-baqara': 'الفاتحة والبقرة',
+      'indopak-hafs-juz30': 'جزء عمّ',
     },
     title: 'المصحف',
-    script:
-      'بالرسم العثماني (المدني)، رواية حفص. يأتي الرسم الهندي لمصحفك حين يتضح مصدره.',
+    scriptLabel: 'الرسم',
+    scripts: {
+      indopak: {
+        name: 'الهندي',
+        note: 'بالرسم الهندي كما في مصحف شيخك (١٥ سطرًا)، رواية حفص.',
+      },
+      uthmani: {
+        name: 'المدني',
+        note: 'بالرسم العثماني كما في مصحف المدينة، رواية حفص.',
+      },
+    },
     sura: (number) => `سورة ${num(number)}`,
     ayat: (count) => ayatCount(count),
     loading: 'جارٍ تحميل المصحف …',
@@ -348,6 +359,7 @@ export const ar: Messages = {
     halaqa: 'الحلقة',
     sources: 'المصادر',
     text: 'النص: مشروع تنزيل (CC BY 3.0)',
+    textIndopak: 'النص بالرسم الهندي: DigitalKhatt (MIT)',
     rules: 'أحكام التجويد: cpfair/quran-tajweed (CC BY 4.0)',
   },
   signIn: {

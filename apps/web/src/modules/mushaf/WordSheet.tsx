@@ -15,10 +15,13 @@ export function WordSheet({
   word,
   label,
   onClose,
+  script = 'madina',
 }: {
   word: MushafWord;
   label: string;
   onClose: () => void;
+  /** The script the muṣḥaf shows, so the word looks as it does on the page. */
+  script?: 'indopak' | 'madina';
 }) {
   const { m, language } = useI18n();
   const close = useRef<HTMLButtonElement>(null);
@@ -42,7 +45,7 @@ export function WordSheet({
       <p className="eyebrow" id="word-sheet-title">
         {label}
       </p>
-      <TajweedText segments={wordSegments(word)} script="madina" large />
+      <TajweedText segments={wordSegments(word)} script={script} large />
       {carries.length === 0 && decides.length === 0 && (
         <p className="muted">{m.mushaf.noRule}</p>
       )}

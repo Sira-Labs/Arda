@@ -3,25 +3,72 @@ import type { PackIndexEntry } from '@arda/quran';
 import { sura } from '@arda/quran';
 import { builtIndex } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
+import { chooseScript, useMushafScript, type MushafScript } from './script';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 
+const SCRIPTS: readonly MushafScript[] = ['indopak', 'uthmani'];
+
+/** Where an arrow key moves in a radio group: down and forwards in reading direction. */
+function arrowStep(key: string, element: HTMLElement): 1 | -1 | 0 {
+  const rtl = getComputedStyle(element).direction === 'rtl';
+  if (key === 'ArrowDown' || key === (rtl ? 'ArrowLeft' : 'ArrowRight')) return 1;
+  if (key === 'ArrowUp' || key === (rtl ? 'ArrowRight' : 'ArrowLeft')) return -1;
+  return 0;
+}
+
 /**
- * `/mushaf` (screen 2, spec F3): the sūras of the muṣḥaf, one group per pack. Opening it
- * downloads and checks each pack once, so the muṣḥaf works offline afterwards (S2.3).
+ * `/mushaf` (screen 2, spec F3): the sūras of the muṣḥaf in the chosen script (IndoPak first,
+ * the sheikh's; or the Madīna ʿUthmānī), one group per pack. Opening it downloads and checks
+ * each pack once, so the muṣḥaf works offline afterwards (S2.3).
  */
 export function Mushaf() {
   const { m } = useI18n();
+  const script = useMushafScript();
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 720 }}>
       <header className="stack" style={{ gap: 6 }}>
         <p className="eyebrow">{m.mushaf.eyebrow}</p>
         <h1>{m.mushaf.title}</h1>
-        <p className="muted">{m.mushaf.script}</p>
+        <div
+          className="row segmented"
+          role="radiogroup"
+          aria-label={m.mushaf.scriptLabel}
+        >
+          {SCRIPTS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={s === script}
+              // A radio group is one stop in the tab order; the arrows move within it.
+              tabIndex={s === script ? 0 : -1}
+              className={s === script ? 'btn btn-primary' : 'btn'}
+              onClick={() => chooseScript(s)}
+              onKeyDown={(event) => {
+                const step = arrowStep(event.key, event.currentTarget);
+                if (!step) return;
+                event.preventDefault();
+                const next =
+                  SCRIPTS[(SCRIPTS.indexOf(s) + step + SCRIPTS.length) % SCRIPTS.length]!;
+                chooseScript(next);
+                const group = event.currentTarget.parentElement;
+                group
+                  ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                  [SCRIPTS.indexOf(next)]?.focus();
+              }}
+            >
+              {m.mushaf.scripts[s].name}
+            </button>
+          ))}
+        </div>
+        <p className="muted">{m.mushaf.scripts[script].note}</p>
       </header>
-      {builtIndex.packs.map((entry) => (
-        <PackGroup key={entry.id} entry={entry} />
-      ))}
+      {builtIndex.packs
+        .filter((entry) => entry.script === script)
+        .map((entry) => (
+          <PackGroup key={entry.id} entry={entry} />
+        ))}
       <MushafSources />
     </div>
   );

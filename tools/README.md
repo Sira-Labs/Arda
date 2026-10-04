@@ -43,6 +43,17 @@ travels inside every pack, as its terms ask.
    and mīm rule; they differ only on qalqala at a stop and on mīms with shadda that begin an
    āya (three in Juzʾ ʿAmma, three in al-Baqara; tested in `test/pack.test.ts`).
 
+## The IndoPak packs (S2.2)
+
+The IndoPak text is DigitalKhatt's `quran_text_indopak_15.ts` (MIT, pinned in `sources.json`;
+its notice is in `licences/` and travels in every IndoPak pack). `indopak.ts` reads it page by
+page and line by line into Ḥafṣ āyāt, keeping each word verbatim with its page and line; the
+āya marker printed after a word (`۝٣٠ۙ`) is kept after it. `carry.ts` moves the rules of the
+ʿUthmānī pack of the same sūras onto the IndoPak words letter by letter: the two spellings are
+aligned by edit distance over their letters (the small alif, IndoPak's standing kasra and ḍamma
+counted as letters; two neighbours written the other way round as one edit). The build fails
+when an āya has another number of words or a rule finds no letter.
+
 The packs to build are listed in `src/packs.ts` (sūra range, id, version). A pack whose bytes
 change gets a new version; the app's index names only the current one.
 

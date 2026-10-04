@@ -52,6 +52,58 @@
           "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
         }
       ]
+    },
+    {
+      "id": "indopak-hafs-fatiha-baqara",
+      "version": 1,
+      "file": "indopak-hafs-fatiha-baqara.v1.json",
+      "sha256": "8c8ec239a899ba7e987213bf54e47de1feb027c1acd9c92c1ba414b8a6e03963",
+      "bytes": 389926,
+      "script": "indopak",
+      "riwaya": "hafs",
+      "title": "al-Fātiḥa and al-Baqara, IndoPak script, 15 lines (DigitalKhatt), riwāyat Ḥafṣ, with tajwīd rules (cpfair)",
+      "suras": [
+        1,
+        2
+      ],
+      "sources": [
+        {
+          "id": "digitalkhatt-indopak",
+          "licence": "MIT",
+          "attribution": "DigitalKhatt contributors, https://github.com/DigitalKhatt/digitalkhatt-js"
+        },
+        {
+          "id": "cpfair-tajweed",
+          "licence": "CC BY 4.0",
+          "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+        }
+      ]
+    },
+    {
+      "id": "indopak-hafs-juz30",
+      "version": 1,
+      "file": "indopak-hafs-juz30.v1.json",
+      "sha256": "36955ba8591784a559ba9cc0184e1ebc326be9d909c9dd952179fbaa46ed31d5",
+      "bytes": 168597,
+      "script": "indopak",
+      "riwaya": "hafs",
+      "title": "Juzʾ ʿAmma, IndoPak script, 15 lines (DigitalKhatt), riwāyat Ḥafṣ, with tajwīd rules (cpfair)",
+      "suras": [
+        78,
+        114
+      ],
+      "sources": [
+        {
+          "id": "digitalkhatt-indopak",
+          "licence": "MIT",
+          "attribution": "DigitalKhatt contributors, https://github.com/DigitalKhatt/digitalkhatt-js"
+        },
+        {
+          "id": "cpfair-tajweed",
+          "licence": "CC BY 4.0",
+          "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+        }
+      ]
     }
   ]
 }

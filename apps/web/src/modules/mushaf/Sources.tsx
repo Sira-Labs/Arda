@@ -12,6 +12,14 @@ export function MushafSources() {
         </a>
         <br />
         <a
+          href="https://github.com/DigitalKhatt/digitalkhatt-js"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {m.mushaf.textIndopak}
+        </a>
+        <br />
+        <a
           href="https://github.com/cpfair/quran-tajweed"
           target="_blank"
           rel="noreferrer"
