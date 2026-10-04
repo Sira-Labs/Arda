@@ -104,6 +104,9 @@ Built (migration `0004_assignments`, spec T2, ADR-0014):
 | `assignments`            | ḥalaqa, one student or all (`student_id` null), kind, sūra and āyāt, focus rule, repetitions, note, due day, who gave it |
 | `assignment_completions` | who marked which assignment done, and when; what returns to the teacher                                                  |
 
+Migration `0005_assignment_words` adds `word_from` and `word_to`: an assignment may start and
+end at a word of its first and last āya (S3.2), the word keys `hafs:sura:aya:n`.
+
 Both point at the student's membership (`halaqa_id, student_id` → `halaqa_members`): when a
 student leaves, is removed or deletes the account, their own assignments and their completions
 go too. The range is checked against the muṣḥaf (`@arda/quran`) and the rule against
@@ -160,13 +163,13 @@ Built for T1 (`/api/v1/halaqat`, every route checked against every kind of calle
 Built for T2 (mounted at `/api/v1`, every route checked against every kind of caller in
 `assignments.routes.test.ts`):
 
-| Method and path                                    | Action                    | Purpose                                                             |
-| -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------- |
-| `GET /assignments`                                 | `halaqa:join`             | what I still have to do across my active ḥalaqāt, soonest due first |
-| `GET /halaqat/:id/assignments?before=`             | `halaqa:read` (active)    | 50 at a time, latest due first; the teacher also sees who is done   |
-| `POST /halaqat/:id/assignments`                    | `halaqa:manage` (teacher) | give one: kind, student or all, range, rule, repetitions, note, due |
-| `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                        |
-| `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                 |
+| Method and path                                    | Action                    | Purpose                                                                         |
+| -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| `GET /assignments`                                 | `halaqa:join`             | what I still have to do across my active ḥalaqāt, soonest due first             |
+| `GET /halaqat/:id/assignments?before=`             | `halaqa:read` (active)    | 50 at a time, latest due first; the teacher also sees who is done               |
+| `POST /halaqat/:id/assignments`                    | `halaqa:manage` (teacher) | give one: kind, student or all, range (and words), rule, repetitions, note, due |
+| `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                                    |
+| `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                             |
 
 Next: `/api/v1/recitations/*`
 (F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
