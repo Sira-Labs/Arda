@@ -8,6 +8,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/tajweed/package.json packages/tajweed/
 COPY packages/quran/package.json packages/quran/
+COPY tools/package.json tools/
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 # The build bundles the workspace packages (TypeScript source) into dist/main.js.
 COPY packages packages
@@ -22,6 +23,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/tajweed/package.json packages/tajweed/
 COPY packages/quran/package.json packages/quran/
+COPY tools/package.json tools/
 # npm nests packages it cannot hoist (e.g. better-auth) under the workspace; keep that
 # directory even when it is empty so the runtime stage can always copy it.
 # --omit=optional keeps test tooling out of the image: better-auth names vitest as an optional

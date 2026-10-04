@@ -48,7 +48,8 @@ packages/       tajweed: rule taxonomy, letter classes, detection; (next) mappin
 infra/          Dockerfiles, Caddyfile, CapRover captain-definitions and one-click templates,
                 backup scripts
 docs/           specs, ADRs, plan, ops, security
-tools/          (next) content import: Tanzil text, cpfair rules, IndoPak alignment, packs
+tools/          content import: Tanzil text and cpfair rules into checksummed packs;
+                (next) IndoPak alignment, word timings
 ```
 
 ## 3. Stack

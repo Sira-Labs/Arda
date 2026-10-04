@@ -1,0 +1,18 @@
+{
+  "tanzil-uthmani": {
+    "file": "tanzil-quran-uthmani-pause-sajdah.txt",
+    "url": "https://tanzil.net/pub/download/index.php?quranType=uthmani&outType=txt-2&agree=true&marks=true&sajdah=true",
+    "sha256": "f2ea3ad36396d2479778e6ff8d87356051c6538c46e93d630cdde20d2b1ce7d0",
+    "title": "Tanzil Quran Text (Uthmani, Version 1.1), with pause marks and sajdah signs",
+    "licence": "CC BY 3.0, verbatim copies only",
+    "attribution": "Tanzil Project, https://tanzil.net"
+  },
+  "cpfair-tajweed": {
+    "file": "cpfair-tajweed.hafs.uthmani-pause-sajdah.json",
+    "url": "https://raw.githubusercontent.com/cpfair/quran-tajweed/master/output/tajweed.hafs.uthmani-pause-sajdah.json",
+    "sha256": "151d616ad37a4cc21a80f20d5e1104c5b408375107ddd4d71247dea4c05ebf67",
+    "title": "quran-tajweed: tajweed annotations for the Qurʾān (riwāyat Ḥafṣ)",
+    "licence": "CC BY 4.0",
+    "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-tajweed"
+  }
+}

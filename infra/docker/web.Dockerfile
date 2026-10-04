@@ -10,6 +10,7 @@ COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
 COPY packages/tajweed/package.json packages/tajweed/
 COPY packages/quran/package.json packages/quran/
+COPY tools/package.json tools/
 RUN --mount=type=cache,target=/root/.npm npm ci --no-audit --no-fund
 COPY packages packages
 COPY apps/web apps/web

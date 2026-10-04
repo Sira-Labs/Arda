@@ -31,7 +31,11 @@ export default defineConfig({
         // The app shell, fonts and (later) content packs work offline (ADR-0010).
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         // Font subsets for scripts the app does not use; browsers fetch them only on demand.
-        globIgnores: ['**/*-{cyrillic,cyrillic-ext,greek,vietnamese}-*.woff2'],
+        // Content packs are downloaded when first needed and checked, not precached (ADR-0010).
+        globIgnores: [
+          '**/*-{cyrillic,cyrillic-ext,greek,vietnamese}-*.woff2',
+          'packs/**',
+        ],
         navigateFallback: 'index.html',
         // Server routes are never answered with the app shell.
         navigateFallbackDenylist: [/^\/api\//, /^\/healthz/, /^\/media\//],
