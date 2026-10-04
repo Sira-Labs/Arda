@@ -15,7 +15,7 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { isAyaRange } from '@arda/quran';
+import { hasWords, isAyaRange } from '@arda/quran';
 import { RULE_IDS } from '@arda/tajweed';
 import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
@@ -75,9 +75,8 @@ const NewAssignmentBody = z
       })
       .strict()
       .refine(isAyaRange, { message: 'range' })
-      .refine((r) => !r.words || r.from < r.to || r.words.from <= r.words.to, {
-        message: 'range',
-      })
+      // Each bound a word of its āya (as the pack splits it), in reading order.
+      .refine((r) => !r.words || hasWords(r, r.words), { message: 'range' })
       .nullable()
       .default(null),
     focusRule: z.enum(RULE_IDS).nullable().default(null),

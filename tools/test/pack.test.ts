@@ -4,7 +4,8 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
-import type { Pack, PackIndex, PackWord } from '@arda/quran';
+import { wordCount, type Pack, type PackIndex, type PackWord } from '@arda/quran';
+import { countsModule, wordCounts } from '../src/counts';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
 import { parseTanzil } from '../src/tanzil';
@@ -203,6 +204,16 @@ describe('the packs in the app', () => {
     expect(spans(4, 9)).toEqual(['ikhfa(f)=ق', 'qalqalah=ب']);
   });
 
+  it('split their āyāt into as many words as @arda/quran counts (the API checks by them)', () => {
+    for (const { pack } of shipped) {
+      for (const s of pack.suras) {
+        for (const a of s.ayat) {
+          expect(a.words.length, `${s.sura}:${a.aya}`).toBe(wordCount(s.sura, a.aya));
+        }
+      }
+    }
+  });
+
   it('agree with the engine on every nūn and mīm rule (ADR-0008)', () => {
     // cpfair also marks qalqala on the last letter when stopping, which the engine leaves to
     // unit 7 (waqf); and the engine sees a mīm with shadda at the start of an āya as ghunna
@@ -243,5 +254,15 @@ describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
       });
       expect(serialise(rebuilt).sha256, spec.id).toBe(entry.sha256);
     }
+  });
+
+  it('gives the words per āya in @arda/quran, unchanged', () => {
+    const tanzil = parseTanzil(
+      readFileSync(`${cache}${sources['tanzil-uthmani']!.file}`, 'utf8')
+    );
+    const file = fileURLToPath(
+      new URL('../../packages/quran/src/words.ts', import.meta.url)
+    );
+    expect(countsModule(wordCounts(tanzil))).toBe(readFileSync(file, 'utf8'));
   });
 });

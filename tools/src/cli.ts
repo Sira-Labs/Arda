@@ -3,6 +3,7 @@
  *
  *   npm run fetch -w @arda/tools   download the pinned sources into tools/.cache, checked
  *   npm run pack -w @arda/tools    build the packs from them into apps/web/public/packs
+ *   npm run counts -w @arda/tools  write the words per āya to packages/quran/src/words.ts
  *
  * Sources and their checksums are pinned in tools/sources.json; a source that changed fails
  * the build instead of changing the Qurʾān text the app shows.
@@ -12,6 +13,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parseCpfair } from './cpfair';
 import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
+import { countsModule, wordCounts } from './counts';
 import { buildPack, serialise } from './pack';
 import { PACKS } from './packs';
 import { parseTanzil } from './tanzil';
@@ -19,6 +21,9 @@ import { parseTanzil } from './tanzil';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cacheDir = `${root}.cache/`;
 const outDir = fileURLToPath(new URL('../../apps/web/public/packs/', import.meta.url));
+const countsFile = fileURLToPath(
+  new URL('../../packages/quran/src/words.ts', import.meta.url)
+);
 
 interface SourceEntry {
   file: string;
@@ -58,7 +63,8 @@ async function fetchSources(): Promise<void> {
   }
 }
 
-async function buildPacks(): Promise<void> {
+/** The pinned sources from the cache, checked. */
+async function readSources() {
   const sources = await loadSources();
   const read = (id: keyof Sources) => readFile(`${cacheDir}${sources[id].file}`, 'utf8');
 
@@ -81,7 +87,11 @@ async function buildPacks(): Promise<void> {
     attribution: s.attribution,
     sha256: s.sha256,
   }));
-  const annotations = parseCpfair(cpfairRaw);
+  return { tanzil, annotations: parseCpfair(cpfairRaw), packSources };
+}
+
+async function buildPacks(): Promise<void> {
+  const { tanzil, annotations, packSources } = await readSources();
   await mkdir(outDir, { recursive: true });
   const entries: PackIndexEntry[] = [];
   for (const spec of PACKS) {
@@ -118,10 +128,19 @@ async function buildPacks(): Promise<void> {
   await writeFile(`${outDir}index.json`, `${JSON.stringify(index, null, 2)}\n`);
 }
 
+/** Words per āya of the whole muṣḥaf, split as in the packs, for the API's range check. */
+async function writeCounts(): Promise<void> {
+  const { tanzil } = await readSources();
+  const counts = wordCounts(tanzil);
+  await writeFile(countsFile, countsModule(counts));
+  process.stdout.write(`${countsFile}: ${counts.flat().length} āyāt\n`);
+}
+
 const command = process.argv[2];
 if (command === 'fetch') await fetchSources();
 else if (command === 'pack') await buildPacks();
+else if (command === 'counts') await writeCounts();
 else {
-  process.stderr.write('usage: cli.ts fetch | pack\n');
+  process.stderr.write('usage: cli.ts fetch | pack | counts\n');
   process.exitCode = 2;
 }

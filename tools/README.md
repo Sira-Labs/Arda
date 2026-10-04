@@ -6,6 +6,7 @@ app downloads. Nothing here runs in the app or the api.
 ```sh
 npm run fetch -w @arda/tools   # the pinned sources into tools/.cache (not committed)
 npm run pack -w @arda/tools    # build apps/web/public/packs/<id>.v<version>.json and index.json
+npm run counts -w @arda/tools  # words per āya of the whole muṣḥaf → packages/quran/src/words.ts
 npm test -w @arda/tools        # also rebuilds the pack byte for byte when the sources are there
 ```
 
@@ -32,6 +33,8 @@ travels inside every pack, as its terms ask.
    with a map back to today's letters, which places 6215 of 6236 āyāt exactly. The rest (such
    as ٱلْـَٰٔنَ) fall back to a checked shift: each rule has a signature (the letter it starts
    on), an āya is accepted only when every annotation fits, and the build fails otherwise.
+   Over the whole muṣḥaf one āya fits neither yet (al-Aʿrāf 69); a pack holding it will need
+   its own mapping.
    cpfair's classifier has no licence, so it is not run.
 3. **Spans** (`pack.ts`): each rule becomes spans of the word's text. For the rules decided by
    the next letter (ikhfāʾ, idghām, iqlāb), the nūn, mīm or tanwīn letter is the carrier, and

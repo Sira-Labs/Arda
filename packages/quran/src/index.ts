@@ -3,7 +3,8 @@
  * web app and the api. The text itself comes in content packs (ADR-0010), not from here.
  */
 export { SURAS, sura, type Sura } from './suras';
-export { isAyaRange, type AyaRange } from './range';
+export { hasWords, isAyaRange, type AyaRange, type WordBounds } from './range';
+export { wordCount } from './words';
 export {
   wordKey,
   type Pack,

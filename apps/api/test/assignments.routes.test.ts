@@ -327,8 +327,11 @@ describe('giving and doing assignments (T2)', () => {
     const open = await json(await call('member', 'GET', '/assignments'));
     expect(open.assignments.find((a: Json) => a.range?.words)?.range).toEqual(words);
     for (const range of [
-      // Backwards inside one āya, a word 0, more words than any āya has, an unknown key.
+      // Backwards inside one āya, a word 0, more words than any āya has, an unknown key,
+      // and words past the end of their āya (113:2 has four words, 113:3 five).
       { sura: 113, from: 2, to: 2, words: { from: 3, to: 2 } },
+      { sura: 113, from: 2, to: 3, words: { from: 5, to: 2 } },
+      { sura: 113, from: 2, to: 3, words: { from: 1, to: 6 } },
       { sura: 113, from: 2, to: 3, words: { from: 0, to: 2 } },
       { sura: 113, from: 2, to: 3, words: { from: 1, to: 129 } },
       { sura: 113, from: 2, to: 3, words: { from: 1, to: 2, key: 'x' } },
