@@ -312,7 +312,11 @@ export const ar: Messages = {
     },
   },
   mushaf: {
-    eyebrow: 'المصحف · جزء عمّ',
+    eyebrow: 'المصحف',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'الفاتحة والبقرة',
+      'uthmani-hafs-juz30': 'جزء عمّ',
+    },
     title: 'المصحف',
     script:
       'بالرسم العثماني (المدني)، رواية حفص. يأتي الرسم الهندي لمصحفك حين يتضح مصدره.',

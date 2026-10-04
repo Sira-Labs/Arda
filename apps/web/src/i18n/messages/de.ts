@@ -303,7 +303,11 @@ export const de = {
     },
   },
   mushaf: {
-    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    eyebrow: 'Muṣḥaf',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa und al-Baqara',
+      'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+    } as Record<string, string>,
     title: 'Muṣḥaf',
     script:
       'ʿUthmānī-Schrift (Madīna), riwāyat Ḥafṣ. Die IndoPak-Schrift deines Muṣḥaf folgt, sobald ihre Quelle geklärt ist.',

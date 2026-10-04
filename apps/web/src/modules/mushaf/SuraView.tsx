@@ -1,28 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
-import { sura as suraOf, wordKey } from '@arda/quran';
+import { sura as suraOf } from '@arda/quran';
 import { RuleLegend } from '@/components/RuleLegend';
-import { TajweedSpans } from '@/components/TajweedText';
 import { entryFor } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { AssignmentRange } from '@/services/auth';
 import { PageAssign, useTeaching } from './PageAssign';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
+import { AyaText, NONE, Word, type Place, type WordTap } from './AyaText';
 import { WordSheet } from './WordSheet';
-import { wordSegments, type MushafWord } from './words';
-
-interface Selected {
-  key: string;
-  word: MushafWord;
-  label: string;
-}
-
-/** A word's place: āya and its number in the āya, from 1. */
-interface Place {
-  aya: number;
-  n: number;
-}
 
 const notAfter = (a: Place, b: Place) => a.aya < b.aya || (a.aya === b.aya && a.n <= b.n);
 
@@ -48,10 +35,20 @@ function rangeOf(search: URLSearchParams, ayas: number): AssignmentRange | null 
   return { sura: 0, from, to, ...(words ? { words } : {}) };
 }
 
-/** Whether the word at `place` is inside `range` (whole āyāt, or from word to word). */
-const covers = (range: AssignmentRange, place: Place) =>
-  notAfter({ aya: range.from, n: range.words?.from ?? 1 }, place) &&
-  notAfter(place, { aya: range.to, n: range.words?.to ?? Number.MAX_SAFE_INTEGER });
+/** The words of āya `aya` between `start` and `end` (both included), or `NONE`. */
+function wordsOf(aya: number, start: Place, end: Place): readonly [number, number] {
+  if (aya < start.aya || aya > end.aya) return NONE;
+  return [
+    aya === start.aya ? start.n : 1,
+    aya === end.aya ? end.n : Number.MAX_SAFE_INTEGER,
+  ];
+}
+
+/**
+ * Āyāt rendered at first, and added per tick after: al-Baqara has 286 āyāt and 6121 words, and
+ * rendering them in one go keeps a slow phone busy for seconds before anything shows.
+ */
+const BATCH = 40;
 
 /**
  * `/mushaf/:sura` (screen 2, spec F3): one sūra with its rules coloured and named, word by
@@ -67,18 +64,44 @@ export function SuraView() {
   const entry = meta ? entryFor(number) : undefined;
   const result = usePack(entry);
   const teaching = useTeaching();
-  const [selected, setSelected] = useState<Selected | null>(null);
+  const [selected, setSelected] = useState<WordTap | null>(null);
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<{ start: Place; end?: Place } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const close = useCallback(() => setSelected(null), []);
   const range = meta ? rangeOf(search, meta.ayas) : null;
-  const ready = result?.ok === true;
+  const sura = result?.ok ? result.pack.suras.find((s) => s.sura === number) : undefined;
+  const total = sura?.ayat.length ?? 0;
+  // How many āyāt are rendered, per sūra: the first batch, or up to the end of the assignment.
+  const first = Math.max(BATCH, range?.to ?? 0);
+  const [shown, setShown] = useState({ sura: number, count: first });
+  const count = shown.sura === number ? shown.count : first;
 
   useEffect(() => {
-    if (ready && range) document.getElementById(`aya-${range.from}`)?.scrollIntoView?.();
+    if (count >= total) return;
+    const timer = setTimeout(() => setShown({ sura: number, count: count + BATCH }), 0);
+    return () => clearTimeout(timer);
+  }, [number, count, total]);
+
+  useEffect(() => {
+    if (sura && range) document.getElementById(`aya-${range.from}`)?.scrollIntoView?.();
     // Scroll once the sūra is there, and again when the range changes.
-  }, [ready, range?.from]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [sura !== undefined, range?.from]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const close = useCallback(() => setSelected(null), []);
+  const onTap = useCallback(
+    (tap: WordTap) => {
+      if (!picking) setSelected(tap);
+      else if (tap.place) {
+        const place = tap.place;
+        setPicked((current) =>
+          !current || current.end
+            ? { start: place }
+            : { start: current.start, end: place }
+        );
+      }
+    },
+    [picking]
+  );
 
   const back = <Link to="/mushaf">{m.mushaf.all}</Link>;
   if (!meta || !entry) {
@@ -107,7 +130,6 @@ export function SuraView() {
       </div>
     );
   }
-  const sura = result.pack.suras.find((s) => s.sura === number);
   if (!sura) {
     return (
       <div className="stack">
@@ -125,10 +147,6 @@ export function SuraView() {
       ? { start: picked.start, end }
       : { start: end, end: picked.start };
   };
-  const pick = (place: Place) =>
-    setPicked((current) =>
-      !current || current.end ? { start: place } : { start: current.start, end: place }
-    );
 
   /** The picked words as an assignment's range; whole āyāt when they begin and end so. */
   const assignmentRange = (): AssignmentRange | null => {
@@ -145,34 +163,12 @@ export function SuraView() {
   };
 
   const span = picking ? pickedRange() : null;
-  const digits = (n: number) => n.toLocaleString('ar-EG');
-  const word = (w: MushafWord, key: string, label: string, place?: Place) => {
-    const isPicked =
-      span && place && notAfter(span.start, place) && notAfter(place, span.end);
-    const isAssigned = range?.words && place && covers(range, place);
-    return (
-      <span
-        key={key}
-        className={isPicked ? 'picked' : isAssigned ? 'in-range' : undefined}
-      >
-        <button
-          type="button"
-          className="mushaf-word"
-          aria-pressed={picking ? Boolean(isPicked) : selected?.key === key}
-          onClick={() => {
-            if (picking) {
-              if (place) pick(place);
-            } else {
-              setSelected({ key, word: w, label });
-            }
-          }}
-        >
-          <TajweedSpans segments={wordSegments(w)} />
-        </button>
-        {w.a && <span className="pause-mark">{w.a}</span>}{' '}
-      </span>
-    );
-  };
+  const marked = range?.words
+    ? {
+        start: { aya: range.from, n: range.words.from },
+        end: { aya: range.to, n: range.words.to },
+      }
+    : null;
   const given = assignmentRange();
 
   return (
@@ -229,37 +225,48 @@ export function SuraView() {
       <div className="quran mushaf-text" data-script="madina" lang="ar" dir="rtl">
         {sura.basmala && (
           <p className="basmala">
-            {sura.basmala.map((w, i) =>
-              word(w, `basmala:${number}:${i + 1}`, m.mushaf.sura(number))
-            )}
+            {sura.basmala.map((word, i) => {
+              const key = `basmala:${number}:${i + 1}`;
+              return (
+                <Word
+                  key={key}
+                  tap={{ key, word, label: m.mushaf.sura(number) }}
+                  pressed={!picking && selected?.key === key}
+                  onTap={onTap}
+                />
+              );
+            })}
           </p>
         )}
         <p>
-          {sura.ayat.map((aya) => (
-            <span
-              key={aya.aya}
-              id={`aya-${aya.aya}`}
-              className={
-                range && !range.words && aya.aya >= range.from && aya.aya <= range.to
-                  ? 'aya in-range'
-                  : 'aya'
-              }
-            >
-              {aya.words.map((w, i) =>
-                word(
-                  w,
-                  wordKey('hafs', number, aya.aya, i + 1),
-                  m.mushaf.word(number, aya.aya, i + 1),
-                  { aya: aya.aya, n: i + 1 }
-                )
-              )}
-              <span className="aya-end" aria-label={`${aya.aya}`}>
-                {/* The muṣḥaf numbers its āyāt in Arabic-Indic digits in every language. */}
-                {'۝'}
-                {digits(aya.aya)}
-              </span>{' '}
-            </span>
-          ))}
+          {sura.ayat.slice(0, count).map((aya) => {
+            const [markFrom, markTo] = marked
+              ? wordsOf(aya.aya, marked.start, marked.end)
+              : NONE;
+            const [pickFrom, pickTo] = span
+              ? wordsOf(aya.aya, span.start, span.end)
+              : NONE;
+            return (
+              <AyaText
+                key={aya.aya}
+                sura={number}
+                aya={aya}
+                whole={
+                  range !== null &&
+                  !range.words &&
+                  aya.aya >= range.from &&
+                  aya.aya <= range.to
+                }
+                markFrom={markFrom}
+                markTo={markTo}
+                pickFrom={pickFrom}
+                pickTo={pickTo}
+                picking={picking}
+                selectedKey={selected?.place?.aya === aya.aya ? selected.key : null}
+                onTap={onTap}
+              />
+            );
+          })}
         </p>
       </div>
 

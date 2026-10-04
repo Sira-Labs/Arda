@@ -278,7 +278,11 @@ export const en: Messages = {
     },
   },
   mushaf: {
-    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    eyebrow: 'Muṣḥaf',
+    packs: {
+      'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa and al-Baqara',
+      'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+    },
     title: 'Muṣḥaf',
     script:
       'ʿUthmānī script (Madīna), riwāyat Ḥafṣ. The IndoPak script of your muṣḥaf follows once its source is cleared.',

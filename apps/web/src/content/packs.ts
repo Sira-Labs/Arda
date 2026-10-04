@@ -2,7 +2,10 @@ import type { Pack, PackIndex, PackIndexEntry } from '@arda/quran';
 import { isPackRuleId, type PackRuleId } from '@arda/tajweed';
 // The index is part of the app build: the checksum a downloaded pack must match ships with
 // the app itself, so a pack changed on the way or on the server is refused (threat T6).
-import builtIndex from '../../public/packs/index.json';
+import indexFile from '../../public/packs/index.json';
+
+/** The packs this build of the app ships, with the checksum each must match. */
+export const builtIndex = indexFile as PackIndex;
 
 export type MushafPack = Pack<PackRuleId>;
 
@@ -34,7 +37,7 @@ const hex = (buffer: ArrayBuffer) =>
   [...new Uint8Array(buffer)].map((b) => b.toString(16).padStart(2, '0')).join('');
 
 export const browserDeps: PackLoaderDeps = {
-  index: builtIndex as PackIndex,
+  index: builtIndex,
   fetch: (url) => fetch(url),
   cache: async () => {
     if (typeof caches === 'undefined') return null;
@@ -51,7 +54,7 @@ export const browserDeps: PackLoaderDeps = {
 /** The pack that holds a sūra in a script, if the app has one. */
 export function entryFor(
   sura: number,
-  index: PackIndex = builtIndex as PackIndex
+  index: PackIndex = builtIndex
 ): PackIndexEntry | undefined {
   return index.packs.find((p) => sura >= p.suras[0] && sura <= p.suras[1]);
 }

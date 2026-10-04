@@ -76,5 +76,7 @@ export function wordRules(word: MushafWord): {
     const list = role === 'f' ? decides : carries;
     if (!list.includes(id)) list.push(id);
   }
-  return { carries, decides };
+  // A follower inside the word that carries the rule (the seat of a tanwīn) decides nothing
+  // before it.
+  return { carries, decides: decides.filter((id) => !carries.includes(id)) };
 }

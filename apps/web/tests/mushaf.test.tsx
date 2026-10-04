@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -19,8 +19,9 @@ import { fakeApi, Providers } from './render';
 
 const PACKS = resolve(__dirname, '../public/packs');
 const index = JSON.parse(readFileSync(resolve(PACKS, 'index.json'), 'utf8')) as PackIndex;
-const juz30 = index.packs[0]!;
+const juz30 = index.packs.find((p) => p.id === 'uthmani-hafs-juz30')!;
 const bytes = readFileSync(resolve(PACKS, juz30.file));
+const fileOf = (name: string) => readFileSync(resolve(PACKS, name));
 
 const sha256 = async (data: ArrayBuffer) =>
   createHash('sha256').update(new Uint8Array(data)).digest('hex');
@@ -50,8 +51,11 @@ function loader(
     fetch: async (url) => {
       calls.push(url);
       if (options.online === false) throw new TypeError('offline');
-      return url === `/packs/${juz30.file}`
-        ? new Response(new Uint8Array(options.body ?? bytes))
+      if (url === `/packs/${juz30.file}`)
+        return new Response(new Uint8Array(options.body ?? bytes));
+      const other = index.packs.find((p) => url === `/packs/${p.file}`);
+      return other
+        ? new Response(new Uint8Array(fileOf(other.file)))
         : new Response(null, { status: 404 });
     },
     cache: async () => cache,
@@ -140,7 +144,8 @@ describe('loading a pack (S2.3)', () => {
 
   it('knows which sūras the app has', () => {
     expect(entryFor(112, index)?.id).toBe('uthmani-hafs-juz30');
-    expect(entryFor(2, index)).toBeUndefined();
+    expect(entryFor(2, index)?.id).toBe('uthmani-hafs-fatiha-baqara');
+    expect(entryFor(3, index)).toBeUndefined();
   });
 });
 
@@ -207,18 +212,44 @@ beforeEach(() => {
 });
 
 describe('the muṣḥaf screen (S2.4)', () => {
-  it('lists the sūras of Juzʾ ʿAmma and keeps them for offline use', async () => {
+  it('lists the sūras of each pack and keeps the packs for offline use', async () => {
     renderAt('/mushaf', loader().deps);
-    expect(await screen.findByRole('status')).toHaveTextContent('Offline gespeichert');
-    const links = screen
-      .getAllByRole('link')
-      .filter((a) => a.getAttribute('href')?.match(/^\/mushaf\/\d+$/));
+    const baqara = await screen.findByRole('region', { name: 'al-Fātiḥa und al-Baqara' });
+    const juz30 = screen.getByRole('region', { name: 'Juzʾ ʿAmma' });
+    expect(await within(baqara).findByRole('status')).toHaveTextContent(
+      'Offline gespeichert'
+    );
+    expect(await within(juz30).findByRole('status')).toHaveTextContent(
+      'Offline gespeichert'
+    );
+    expect(within(baqara).getAllByRole('link')).toHaveLength(2);
+    const links = within(juz30).getAllByRole('link');
     expect(links).toHaveLength(37);
     expect(within(links[34]!).getByText('الإخلاص')).toHaveAttribute('lang', 'ar');
+    expect(within(baqara).getByText('البقرة')).toHaveAttribute('dir', 'rtl');
     expect(screen.getByRole('link', { name: /Tanzil Project/ })).toHaveAttribute(
       'href',
       'https://tanzil.net'
     );
+  });
+
+  it('shows al-Baqara, all 286 āyāt, with its rules', async () => {
+    renderAt('/mushaf/2?von=2&bis=2', loader().deps);
+    expect(await screen.findByRole('heading', { name: 'البقرة' })).toBeInTheDocument();
+    // The āyāt come in batches (40 at first), so that a long sūra shows at once.
+    expect(document.querySelectorAll('.aya').length).toBeLessThan(286);
+    await waitFor(() => expect(document.querySelectorAll('.aya')).toHaveLength(286), {
+      timeout: 10_000,
+    });
+    expect(document.querySelectorAll('.basmala button')).toHaveLength(4);
+    const user = userEvent.setup();
+    // al-Baqara 2: "hudan li-l-muttaqīn", the tanwīn merging into the lām without ghunna.
+    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
+    expect(aya2).toHaveClass('in-range');
+    await user.click(within(aya2).getAllByRole('button')[5]!);
+    expect(
+      screen.getByRole('dialog', { name: 'Sūra 2, Āya 2, Wort 6' })
+    ).toHaveTextContent('Idghām ohne Ghunna · Stumm');
   });
 
   it('shows a sūra word by word with its basmala and its āyāt numbered', async () => {
@@ -306,7 +337,7 @@ describe('the muṣḥaf screen (S2.4)', () => {
   });
 
   it('says when a sūra is not in the muṣḥaf yet, or cannot be loaded', async () => {
-    renderAt('/mushaf/2', loader().deps);
+    renderAt('/mushaf/3', loader().deps);
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Diese Sūra ist noch nicht im Muṣḥaf.'
     );
