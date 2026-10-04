@@ -326,6 +326,20 @@ describe('the muṣḥaf screen (S2.4)', () => {
         'IndoPak-Schrift wie im Muṣḥaf deines Sheikhs (15 Zeilen), riwāyat Ḥafṣ.'
       )
     ).toBeInTheDocument();
+    // One tab stop for the group; the arrows choose within it.
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
+      'tabindex',
+      '-1'
+    );
+    indopak.focus();
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveFocus();
+    expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
+      'tabindex',
+      '0'
+    );
+    await user.keyboard('{ArrowLeft}');
+    expect(indopak).toHaveAttribute('aria-checked', 'true');
     await user.click(screen.getByRole('radio', { name: 'Madīna' }));
     expect(screen.getByRole('radio', { name: 'Madīna' })).toHaveAttribute(
       'aria-checked',

@@ -9,6 +9,14 @@ import { usePack } from './usePack';
 
 const SCRIPTS: readonly MushafScript[] = ['indopak', 'uthmani'];
 
+/** Where an arrow key moves in a radio group: down and forwards in reading direction. */
+function arrowStep(key: string, element: HTMLElement): 1 | -1 | 0 {
+  const rtl = getComputedStyle(element).direction === 'rtl';
+  if (key === 'ArrowDown' || key === (rtl ? 'ArrowLeft' : 'ArrowRight')) return 1;
+  if (key === 'ArrowUp' || key === (rtl ? 'ArrowRight' : 'ArrowLeft')) return -1;
+  return 0;
+}
+
 /**
  * `/mushaf` (screen 2, spec F3): the sūras of the muṣḥaf in the chosen script (IndoPak first,
  * the sheikh's; or the Madīna ʿUthmānī), one group per pack. Opening it downloads and checks
@@ -33,8 +41,22 @@ export function Mushaf() {
               type="button"
               role="radio"
               aria-checked={s === script}
+              // A radio group is one stop in the tab order; the arrows move within it.
+              tabIndex={s === script ? 0 : -1}
               className={s === script ? 'btn btn-primary' : 'btn'}
               onClick={() => chooseScript(s)}
+              onKeyDown={(event) => {
+                const step = arrowStep(event.key, event.currentTarget);
+                if (!step) return;
+                event.preventDefault();
+                const next =
+                  SCRIPTS[(SCRIPTS.indexOf(s) + step + SCRIPTS.length) % SCRIPTS.length]!;
+                chooseScript(next);
+                const group = event.currentTarget.parentElement;
+                group
+                  ?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
+                  [SCRIPTS.indexOf(next)]?.focus();
+              }}
             >
               {m.mushaf.scripts[s].name}
             </button>
