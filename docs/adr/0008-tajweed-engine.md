@@ -41,3 +41,16 @@ data does not cover), but the open annotations are reviewed by many users alread
 
 Juzʾ ʿAmma in IndoPak with rules is the first content pack (ADR-0010). Riwāyāt beyond Ḥafṣ need
 our own rules or another source (ADR-0017).
+
+## Update 2026-10-04: import built (S2.1)
+
+- `tools/` imports cpfair's annotations (CC BY 4.0) onto the Tanzil text 1.1 (CC BY 3.0), both
+  pinned by checksum. cpfair indexed Tanzil's 2017 text, which differs by a character or two
+  in 20 āyāt of Juzʾ ʿAmma; the annotations there are moved by a checked shift (each rule's
+  start letter must fit), and the import fails rather than guess. cpfair's classifier has no
+  licence and is not run.
+- `PACK_RULES` in `@arda/tajweed` maps cpfair's 18 categories to the colour families and to the
+  sheet's rules.
+- Cross-check: on Juzʾ ʿAmma the pack and `detect()` agree on every nūn and mīm rule; they
+  differ only where expected (qalqala at a stop, which the engine leaves to unit 7, and three
+  mīms with shadda at the start of an āya). The comparison is a test.

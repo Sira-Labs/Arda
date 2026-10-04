@@ -5,15 +5,25 @@
 
 ## 1. Content packs
 
-| Pack                   | Contents                                                                                         | Source                                                                                   | Status |
-| ---------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ------ |
-| `indopak-hafs-juz30@1` | IndoPak text of Juzʾ ʿAmma per word, page/line (13-line), rule spans, al-Ḥuṣarī muʿallim timings | Tanzil (base), cpfair (rules), IndoPak source per ADR-0009, Quran.com timings (streamed) | first  |
-| `units-2-4@1`          | Rule cards, examples, games for units 2–4                                                        | the sheikh's sheet, reviewed by him                                                      | first  |
-| `makharij@1`           | 28 letters → point, area, ṣifāt; SVGs                                                            | own work, CC BY 4.0                                                                      | week 4 |
-| `madina-hafs-juz30@1`  | Madīna script layer                                                                              | Tanzil / DigitalKhatt Madīna                                                             | second |
+| Pack                   | Contents                                                                                         | Source                                                                                   | Status                        |
+| ---------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------- |
+| `uthmani-hafs-juz30@1` | ʿUthmānī text of Juzʾ ʿAmma per word (Tanzil 1.1), basmala per sūra, rule spans                  | Tanzil (text), cpfair (rules), built by `tools/`                                         | built                         |
+| `indopak-hafs-juz30@1` | IndoPak text of Juzʾ ʿAmma per word, page/line (13-line), rule spans, al-Ḥuṣarī muʿallim timings | Tanzil (base), cpfair (rules), IndoPak source per ADR-0009, Quran.com timings (streamed) | waits for ADR-0009 question 1 |
+| `units-2-4@1`          | Rule cards, examples, games for units 2–4                                                        | the sheikh's sheet, reviewed by him                                                      | first                         |
+| `makharij@1`           | 28 letters → point, area, ṣifāt; SVGs                                                            | own work, CC BY 4.0                                                                      | week 4                        |
+| `madina-hafs-juz30@1`  | Madīna script layer                                                                              | Tanzil / DigitalKhatt Madīna                                                             | second                        |
 
 Every pack has a manifest (id, version, sources with licence and attribution, checksum) and is
-built reproducibly by `tools/`.
+built reproducibly by `tools/` (see `tools/README.md`). The built packs and their index live in
+`apps/web/public/packs/` for now, served same-origin under `/packs/`; they move to the
+`arda-content` bucket under `/media/` when packs are released apart from the app (ADR-0010).
+
+**Pack format (version 1).** `suras[].ayat[].words[]`, each word `{ t, r?, a? }`: its text
+verbatim, its rule spans `[start, end, rule, "f"?]` (UTF-16 offsets into `t`; `rule` is one of
+cpfair's categories, mapped to a colour family and, where the sheet teaches it, a rule by
+`PACK_RULES` in `@arda/tajweed`; `"f"` marks the follower of a rule decided by the next letter),
+and the pause or sajdah signs after it. A sūra carries its basmala as written before it. The
+word key is `hafs:sura:aya:n` with n counting the words from 1.
 
 ## 2. Word keys
 
