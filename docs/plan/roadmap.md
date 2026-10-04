@@ -87,7 +87,7 @@ gantt
 | ------------------------------------------------------------ | ------------------ | -------------------- | ----------------------------- | ------------------------------------------------- |
 | The sheikh made a teacher on staging (admin action with 2FA) | owner              | now                  | G1 with him                   | open; a staging helper or admin page can do it    |
 | Answers 1 and 4: iqlāb with ghunna; his lessons              | the sheikh         | S2 (Oct 5)           | unit 2 sign-off, pilot set-up | open                                              |
-| Answer 2: his IndoPak edition (13, 15 or 16 lines)           | the sheikh         | S2 (Oct 5)           | the page layout               | open                                              |
+| Answer 2: his IndoPak edition (13, 15 or 16 lines)           | the sheikh         | S2 (Oct 5)           | the page layout               | answered: 15 lines (ADR-0017 update)              |
 | IndoPak word-by-word text licence (ADR-0009 question 1)      | Tarteel, via owner | S2 (Oct 5)           | the IndoPak layer             | open; fallback: transform Tanzil per installation |
 | Answer 3: the reference reciter                              | the sheikh         | S3 (Oct 12)          | the player                    | open                                              |
 | Quran.com API registration for word timings                  | owner              | S3 (Oct 12)          | the player                    | open                                              |

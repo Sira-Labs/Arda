@@ -126,7 +126,7 @@ the rule taxonomy test passes (03 §3).
 
 ### F3 — The muṣḥaf with tajwīd colours _(Must)_
 
-IndoPak 13-line pages in DigitalKhatt IndoPak; rule colours with labels; tap a coloured letter
+IndoPak 15-line pages (the sheikh's edition, §8) in DigitalKhatt IndoPak; rule colours with labels; tap a coloured letter
 → rule, reciter audio, "practise 5 more". Script switch (IndoPak, Madīna, later Warsh).
 **Acceptance:** Juzʾ ʿAmma renders with every cpfair rule mapped onto the IndoPak word; colour
 is never the only signal. _(Built: Juzʾ ʿAmma in the ʿUthmānī script with every cpfair rule,
@@ -224,7 +224,9 @@ Each step ships to staging and is usable on its own.
 ## 8. Questions for the sheikh (they decide the first content pack)
 
 1. **Iqlāb:** we teach it with ghunna, as the sheet does. Does he confirm?
-2. **His muṣḥaf:** which IndoPak edition, 13, 15 or 16 lines?
+2. **His muṣḥaf:** which IndoPak edition, 13, 15 or 16 lines? _Answered 2026-10-04: 15 lines,
+   the edition with Urdu word meanings (al-Bayān fī maʿānī kalimāt al-Qurʾān al-Karīm bil-lugha
+   al-Urdiyya); ADR-0017 update._
 3. **Reference voice:** which reciter should students imitate?
 4. **His lessons:** one-to-one or a ḥalqa, how often live, and will he review the rule texts
    (or record short examples himself)?
