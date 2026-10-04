@@ -36,13 +36,22 @@ export interface PackRule {
    * the carrier, the rest is the follower (shown, not coloured).
    */
   decidedByNext: boolean;
+  /**
+   * The rule's name for the rules later units teach: the transliterated term and the Arabic
+   * name, kept as terms in every language (ADR-0020). `null` for the sheet's rules, which are
+   * named by `RULES`, and for silent letters, which the family names.
+   */
+  name: { term: string; arabic: string } | null;
 }
 
-const r = (family: RuleFamily, rule: RuleId | null, decidedByNext = false): PackRule => ({
-  family,
-  rule,
-  decidedByNext,
-});
+const r = (
+  family: RuleFamily,
+  rule: RuleId | null,
+  decidedByNext = false,
+  name: PackRule['name'] = null
+): PackRule => ({ family, rule, decidedByNext, name });
+const named = (family: RuleFamily, term: string, arabic: string): PackRule =>
+  r(family, null, false, { term, arabic });
 
 /** How each pack rule is drawn and which rule of the sheet it is. */
 export const PACK_RULES: Readonly<Record<PackRuleId, PackRule>> = {
@@ -50,21 +59,21 @@ export const PACK_RULES: Readonly<Record<PackRuleId, PackRule>> = {
   idghaam_ghunnah: r('ghunna', 'idgham-ghunna', true),
   idghaam_no_ghunnah: r('silent', 'idgham-no-ghunna', true),
   // Two letters of (nearly) the same place: the first is not pronounced (unit 7).
-  idghaam_mutajanisayn: r('silent', null),
-  idghaam_mutaqaribayn: r('silent', null),
+  idghaam_mutajanisayn: named('silent', 'Idghām mutajānisayn', 'إِدْغَام مُتَجَانِسَيْن'),
+  idghaam_mutaqaribayn: named('silent', 'Idghām mutaqāribayn', 'إِدْغَام مُتَقَارِبَيْن'),
   idghaam_shafawi: r('ghunna', 'idgham-shafawi', true),
   ikhfa: r('ghunna', 'ikhfa', true),
   ikhfa_shafawi: r('ghunna', 'ikhfa-shafawi', true),
   iqlab: r('ghunna', 'iqlab', true),
-  madd_2: r('madd-2', null),
+  madd_2: named('madd-2', 'Madd ṭabīʿī', 'مَدّ طَبِيعِيّ'),
   // ʿĀriḍ li-s-sukūn and līn: 2, 4 or 6 counts when stopping; drawn as the light madd.
-  madd_246: r('madd-2', null),
-  madd_muttasil: r('madd-4', null),
-  madd_munfasil: r('madd-4', null),
-  madd_6: r('madd-6', null),
+  madd_246: named('madd-2', 'Madd ʿāriḍ', 'مَدّ عَارِض لِلسُّكُون'),
+  madd_muttasil: named('madd-4', 'Madd muttaṣil', 'مَدّ مُتَّصِل'),
+  madd_munfasil: named('madd-4', 'Madd munfaṣil', 'مَدّ مُنْفَصِل'),
+  madd_6: named('madd-6', 'Madd lāzim', 'مَدّ لَازِم'),
   qalqalah: r('qalqala', 'qalqala'),
-  hamzat_wasl: r('silent', null),
-  lam_shamsiyyah: r('silent', null),
+  hamzat_wasl: named('silent', 'Hamzat al-waṣl', 'هَمْزَة الوَصْل'),
+  lam_shamsiyyah: named('silent', 'Lām shamsiyya', 'لَام شَمْسِيَّة'),
   silent: r('silent', null),
 };
 

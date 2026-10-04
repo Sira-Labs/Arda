@@ -11,7 +11,8 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { parseCpfair } from './cpfair';
-import { buildPack, serialise, type PackSource } from './pack';
+import type { PackIndex, PackSource } from '@arda/quran';
+import { buildPack, serialise } from './pack';
 import { parseTanzil } from './tanzil';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -43,6 +44,14 @@ async function fetchSources(): Promise<void> {
     if (!response.ok)
       throw new Error(`${id}: HTTP ${response.status} from ${source.url}`);
     const bytes = Buffer.from(await response.arrayBuffer());
+    // Checked before it is kept, so a changed source is named here, not found later.
+    const digest =
+      id === 'tanzil-uthmani'
+        ? parseTanzil(bytes.toString('utf8')).textSha256
+        : sha256(bytes);
+    if (digest !== source.sha256) {
+      throw new Error(`${id}: checksum ${digest} is not the pinned one (${source.url})`);
+    }
     await writeFile(`${cacheDir}${source.file}`, bytes);
     process.stdout.write(`${id}: ${bytes.length} bytes → .cache/${source.file}\n`);
   }
@@ -86,7 +95,7 @@ async function buildPacks(): Promise<void> {
   const file = `${pack.id}.v${pack.version}.json`;
   await mkdir(outDir, { recursive: true });
   await writeFile(`${outDir}${file}`, bytes);
-  const index = {
+  const index: PackIndex = {
     format: 1,
     packs: [
       {
@@ -98,7 +107,7 @@ async function buildPacks(): Promise<void> {
         script: pack.script,
         riwaya: pack.riwaya,
         title: pack.title,
-        suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura],
+        suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura] as [number, number],
         sources: packSources.map(({ id, licence, attribution }) => ({
           id,
           licence,

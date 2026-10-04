@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { StudentAssignment } from '@/services/auth';
 import { AssignmentDetails, DueLabel } from './AssignmentDetails';
+import { entryFor } from '@/content/packs';
 import { GAME_PATH, cardPath, linkFor } from './format';
 
 /**
@@ -23,6 +24,8 @@ export function StudentAssignmentItem({
   const { m } = useI18n();
   const link = linkFor(assignment.kind, assignment.focusRule);
   const done = assignment.doneAt !== null;
+  const range = assignment.range;
+  const inMushaf = range && entryFor(range.sura) ? range : null;
   return (
     <li className="assignment-row">
       <AssignmentDetails assignment={assignment} />
@@ -39,6 +42,14 @@ export function StudentAssignmentItem({
             to={link === 'card' ? cardPath(assignment.focusRule) : GAME_PATH}
           >
             {link === 'card' ? m.assignments.openCard : m.assignments.play}
+          </Link>
+        )}
+        {!done && inMushaf && (
+          <Link
+            className="btn"
+            to={`/mushaf/${inMushaf.sura}?von=${inMushaf.from}&bis=${inMushaf.to}`}
+          >
+            {m.mushaf.open}
           </Link>
         )}
         {done ? (

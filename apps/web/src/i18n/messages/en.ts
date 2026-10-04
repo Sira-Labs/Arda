@@ -271,6 +271,38 @@ export const en: Messages = {
       given: 'Assignment given.',
     },
   },
+  mushaf: {
+    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    title: 'Muṣḥaf',
+    script:
+      'ʿUthmānī script (Madīna), riwāyat Ḥafṣ. The IndoPak script of your muṣḥaf follows once its source is cleared.',
+    sura: (number) => `Sūra ${number}`,
+    ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
+    loading: 'Loading the muṣḥaf …',
+    saved: 'Saved for offline use',
+    failure: {
+      offline: 'Open the muṣḥaf once with a connection; after that it works offline too.',
+      checksum: 'The muṣḥaf data arrived damaged. Please reload the page.',
+      invalid: 'The muṣḥaf data arrived damaged. Please reload the page.',
+      missing: 'This sūra is not in the muṣḥaf yet.',
+    },
+    tap: 'Tap a word to see its rules.',
+    all: 'All sūras',
+    previous: 'Previous sūra',
+    next: 'Next sūra',
+    range: (from, to) =>
+      from === to
+        ? `Your assignment: āya ${from}`
+        : `Your assignment: āyāt ${from}–${to}`,
+    word: (sura, aya, n) => `Sūra ${sura}, āya ${aya}, word ${n}`,
+    noRule: 'No rule is marked here: read it clearly.',
+    follows: (rule) => `decides the rule before it: ${rule}`,
+    close: 'Close',
+    open: 'Open in the muṣḥaf',
+    sources: 'Sources',
+    text: 'Text: Tanzil Project (CC BY 3.0)',
+    rules: 'Tajwīd rules: cpfair/quran-tajweed (CC BY 4.0)',
+  },
   signIn: {
     eyebrow: 'Sign in',
     title: 'Welcome to ʿArḍa',

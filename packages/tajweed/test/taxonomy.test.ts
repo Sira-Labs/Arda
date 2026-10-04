@@ -92,6 +92,12 @@ describe('the rules of the content packs (cpfair)', () => {
       family: 'silent',
       decidedByNext: true,
     });
+    // Every rule can be named: by RULES, by its own term, or (silent letters) by the family.
+    for (const id of PACK_RULE_IDS) {
+      const { rule, name } = PACK_RULES[id];
+      expect(rule === null || name === null, id).toBe(true);
+    }
+    expect(PACK_RULES.madd_6.name).toEqual({ term: 'Madd lāzim', arabic: 'مَدّ لَازِم' });
     expect(isPackRuleId('madd_6')).toBe(true);
     expect(isPackRuleId('izhar')).toBe(false);
   });

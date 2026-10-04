@@ -21,6 +21,13 @@ function studentCount(count: number): string {
   return count <= 10 ? `${num(count)} طلاب` : `${num(count)} طالبًا`;
 }
 
+/** "n āyāt" with the Arabic number agreement. */
+function ayatCount(count: number): string {
+  if (count === 1) return 'آية واحدة';
+  if (count === 2) return 'آيتان';
+  return count <= 10 ? `${num(count)} آيات` : `${num(count)} آية`;
+}
+
 /** "n times" with the Arabic number agreement. */
 function times(count: number): string {
   if (count === 1) return 'مرة واحدة';
@@ -297,6 +304,36 @@ export const ar: Messages = {
       submit: 'إعطاء المهمة',
       given: 'أُعطيت المهمة.',
     },
+  },
+  mushaf: {
+    eyebrow: 'المصحف · جزء عمّ',
+    title: 'المصحف',
+    script:
+      'بالرسم العثماني (المدني)، رواية حفص. يأتي الرسم الهندي لمصحفك حين يتضح مصدره.',
+    sura: (number) => `سورة ${num(number)}`,
+    ayat: (count) => ayatCount(count),
+    loading: 'جارٍ تحميل المصحف …',
+    saved: 'محفوظ للاستخدام دون اتصال',
+    failure: {
+      offline: 'افتح المصحف مرة واحدة مع الاتصال، ثم يعمل دونه أيضًا.',
+      checksum: 'وصلت بيانات المصحف تالفة. أعد تحميل الصفحة من فضلك.',
+      invalid: 'وصلت بيانات المصحف تالفة. أعد تحميل الصفحة من فضلك.',
+      missing: 'هذه السورة ليست في المصحف بعد.',
+    },
+    tap: 'اضغط على كلمة لترى أحكامها.',
+    all: 'كل السور',
+    previous: 'السورة السابقة',
+    next: 'السورة التالية',
+    range: (from, to) =>
+      from === to ? `مهمتك: الآية ${num(from)}` : `مهمتك: الآيات ${num(from)}–${num(to)}`,
+    word: (sura, aya, n) => `سورة ${num(sura)}، الآية ${num(aya)}، الكلمة ${num(n)}`,
+    noRule: 'لا حكم معلَّم هنا: اقرأ بوضوح.',
+    follows: (rule) => `يحدد الحكم الذي قبله: ${rule}`,
+    close: 'إغلاق',
+    open: 'افتح في المصحف',
+    sources: 'المصادر',
+    text: 'النص: مشروع تنزيل (CC BY 3.0)',
+    rules: 'أحكام التجويد: cpfair/quran-tajweed (CC BY 4.0)',
   },
   signIn: {
     eyebrow: 'الدخول',

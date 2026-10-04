@@ -277,6 +277,41 @@ export const fr: Messages = {
       given: 'Devoir donné.',
     },
   },
+  mushaf: {
+    eyebrow: 'Muṣḥaf · Juzʾ ʿAmma',
+    title: 'Muṣḥaf',
+    script:
+      'Écriture ʿuthmānī (Médine), riwāyat Ḥafṣ. L’écriture IndoPak de ton muṣḥaf suivra dès que sa source sera clarifiée.',
+    sura: (number) => `Sourate ${number}`,
+    ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
+    loading: 'Chargement du muṣḥaf …',
+    saved: 'Enregistré hors ligne',
+    failure: {
+      offline:
+        'Ouvre le muṣḥaf une fois avec une connexion\u202f; ensuite il marche aussi hors ligne.',
+      checksum:
+        'Les données du muṣḥaf sont arrivées abîmées. Recharge la page, s’il te plaît.',
+      invalid:
+        'Les données du muṣḥaf sont arrivées abîmées. Recharge la page, s’il te plaît.',
+      missing: 'Cette sourate n’est pas encore dans le muṣḥaf.',
+    },
+    tap: 'Touche un mot pour voir ses règles.',
+    all: 'Toutes les sourates',
+    previous: 'Sourate précédente',
+    next: 'Sourate suivante',
+    range: (from, to) =>
+      from === to
+        ? `Ton devoir\u202f: āya ${from}`
+        : `Ton devoir\u202f: āyāt ${from}–${to}`,
+    word: (sura, aya, n) => `Sourate ${sura}, āya ${aya}, mot ${n}`,
+    noRule: 'Aucune règle n’est marquée ici\u202f: lis clairement.',
+    follows: (rule) => `décide la règle d’avant\u202f: ${rule}`,
+    close: 'Fermer',
+    open: 'Ouvrir dans le muṣḥaf',
+    sources: 'Sources',
+    text: 'Texte\u202f: Tanzil Project (CC BY 3.0)',
+    rules: 'Règles de tajwīd\u202f: cpfair/quran-tajweed (CC BY 4.0)',
+  },
   signIn: {
     eyebrow: 'Connexion',
     title: 'Bienvenue sur ʿArḍa',
