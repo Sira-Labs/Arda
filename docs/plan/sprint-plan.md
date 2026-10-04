@@ -36,6 +36,7 @@
 | S2.4 Muṣḥaf screen with colours and tap-for-rule                 | every rule family labelled; tap opens the rule         | done: `/mushaf`, `/mushaf/:sura`, every coloured letter titled, tap a word for its rules and card; assignments open their āyāt |
 | S3.1 Reciter player with word timings                            | highlight within 100 ms; 0.5×–1×; loop                 | waits for the Quran.com API registration (roadmap, waiting on)                                                                 |
 | S3.2 Assign on the page (word selection)                         | assignments point at word keys                         | done: pick the first and last word in the muṣḥaf; word bounds stored; the student's link marks those words                     |
+| S3.3 al-Fātiḥa and al-Baqara (owner, 2026-10-04)                 | the same rules and checks as Juzʾ ʿAmma                | done: `uthmani-hafs-fatiha-baqara@1`; exact re-alignment; long sūras render in batches                                         |
 
 ## S4–S5 · Recite to him (Oct 19 – Nov 1)
 

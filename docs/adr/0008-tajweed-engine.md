@@ -54,3 +54,12 @@ our own rules or another source (ADR-0017).
 - Cross-check: on Juzʾ ʿAmma the pack and `detect()` agree on every nūn and mīm rule; they
   differ only where expected (qalqala at a stop, which the engine leaves to unit 7, and three
   mīms with shadda at the start of an āya). The comparison is a test.
+
+## Update 2026-10-04: exact re-alignment, al-Baqara
+
+- The shift missed one āya (al-Muṭaffifīn 14) in pack v1. The differences from 2017 are now
+  known exactly (a space before each pause sign, the hamza after a lām on a tatweel, the small
+  yāʾ), and `toTanzil2017` maps cpfair's offsets through them: 6215 of 6236 āyāt fit exactly,
+  the rest fall back to the checked shift. `uthmani-hafs-juz30@2` corrects five āyāt of v1.
+- al-Fātiḥa and al-Baqara are a second pack. The cross-check holds there as well: the same two
+  kinds of difference, and nothing else.

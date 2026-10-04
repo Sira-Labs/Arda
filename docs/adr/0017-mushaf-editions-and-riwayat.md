@@ -29,7 +29,7 @@ Unit 8 (riwāyāt) and non-Ḥafṣ packs need rule data beyond cpfair's (ADR-00
 
 The IndoPak word-by-word text still has no source with a clear licence (ADR-0009 question 1),
 and building it from Tanzil would change the text, which Tanzil's terms forbid. So the first
-pack, `uthmani-hafs-juz30@1`, carries Tanzil's ʿUthmānī text (the Madīna spelling) with
+pack, `uthmani-hafs-juz30` (now version 2), carries Tanzil's ʿUthmānī text (the Madīna spelling) with
 cpfair's rules, and the first muṣḥaf screen shows it. Word keys are the same for every script
 (ADR-0007): the IndoPak layer is added to them as a second pack when its source is cleared,
 without touching assignments or progress. The student is told which script is shown.
