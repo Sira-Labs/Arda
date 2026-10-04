@@ -11,7 +11,7 @@ The student reads an IndoPak muṣḥaf. Others read the Madīna muṣḥaf or o
 
 | Muṣḥaf          | Riwāya                | Layout                    | In ʿArḍa  |
 | --------------- | --------------------- | ------------------------- | --------- |
-| IndoPak         | Ḥafṣ                  | 13 lines (also 15 and 16) | **first** |
+| IndoPak         | Ḥafṣ                  | 15 lines (also 13 and 16) | **first** |
 | Madīna          | Ḥafṣ                  | 15 lines                  | second    |
 | Madīna editions | Warsh, Qālūn, ad-Dūrī | 15 lines                  | later     |
 
@@ -33,3 +33,14 @@ pack, `uthmani-hafs-juz30` (now version 2), carries Tanzil's ʿUthmānī text (t
 cpfair's rules, and the first muṣḥaf screen shows it. Word keys are the same for every script
 (ADR-0007): the IndoPak layer is added to them as a second pack when its source is cleared,
 without touching assignments or progress. The student is told which script is shown.
+
+## Update 2026-10-04: the sheikh's muṣḥaf is the 15-line IndoPak
+
+The sheikh reads a 15-line IndoPak muṣḥaf with Urdu word meanings in the margin (_al-Bayān fī
+maʿānī kalimāt al-Qurʾān al-Karīm bil-lugha al-Urdiyya_; owner's photos of pages 6, 7, 597 and
+598). So the IndoPak layer targets the 15-line page: page and line breaks as in his copy, IndoPak
+pause signs (ط ج لا ز صلے قلے), rukūʿ and manzil marks. His printed copy is the reference the
+screen is checked against; it is not a source of the digital text, whose typesetting belongs to
+its publisher (ADR-0009 question 1 stays open). The Urdu meanings are not wanted for now.
+Until the IndoPak layer exists, the ʿUthmānī text shows Tanzil's Madīna pause signs
+(ۖ ۗ ۚ ۛ ۘ ۙ ۜ), unchanged.
