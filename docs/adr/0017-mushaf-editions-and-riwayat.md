@@ -44,3 +44,18 @@ screen is checked against; it is not a source of the digital text, whose typeset
 its publisher (ADR-0009 question 1 stays open). The Urdu meanings are not wanted for now.
 Until the IndoPak layer exists, the ʿUthmānī text shows Tanzil's Madīna pause signs
 (ۖ ۗ ۚ ۛ ۘ ۙ ۜ), unchanged.
+
+## Update 2026-10-04: the IndoPak layer ships, IndoPak first
+
+- DigitalKhatt's 15-line IndoPak text (ADR-0009 update) breaks pages where the sheikh's copy
+  does: the same āyāt on every page checked (6, 7, 597, 598), the page number one lower. Packs
+  keep DigitalKhatt's numbers and `layout.pageOffset: 1` gives his; within a page, a line may
+  break a word earlier or later than his print.
+- `indopak-hafs-fatiha-baqara@1` and `indopak-hafs-juz30@1` carry the words verbatim with their
+  page and line, the āya markers as printed, and the ʿUthmānī packs' rules. Word keys are
+  identical in both scripts (same words per āya in all shipped sūras; in the whole muṣḥaf only
+  37:130 and 72:16 differ, where IndoPak joins or splits a word).
+- Al-Fātiḥa: the source numbers it the IndoPak way (basmala unnumbered, 6 ending at
+  عَلَيْهِمْ); keys stay Ḥafṣ (Kūfan), the basmala is āya 1 and the printed 6–7 are āya 7.
+- The muṣḥaf shows IndoPak first; the student can switch to the Madīna (ʿUthmānī) script, and
+  the choice is kept on the device.

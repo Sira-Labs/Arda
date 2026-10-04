@@ -41,3 +41,19 @@ the owner's consent; (4) every source is listed with its licence on an in-app "Q
 
 Until question 1 is answered, IndoPak text in packs comes from a source with a clear licence,
 or the pack is built per installation from the Tanzil text plus a published transformation.
+
+## Update 2026-10-04: the IndoPak text from DigitalKhatt (question 1 no longer blocks)
+
+- **Source:** `quran_text_indopak_15.ts` in [DigitalKhatt/digitalkhatt-js](https://github.com/DigitalKhatt/digitalkhatt-js).
+  It is the IndoPak text as the 15-line muṣḥaf prints it: 610 pages, with sūra headings, āya
+  markers and IndoPak stop signs. The repository's MIT licence allows copying and redistribution
+  with the notice; the notice travels in every IndoPak pack (`copyright`), and the source is
+  credited on the "Quellen" page. Pinned by commit and SHA-256 in `tools/sources.json`.
+- **Other IndoPak texts:** the Quran.com/QUL text carries "do not distribute without credits"
+  for charitable use only, and Quran Foundation's developer terms forbid redistribution, so
+  they are not used (checked 2026-10-04; `risan/quran-json` came to the same result).
+- **Provenance:** DigitalKhatt is sponsored by Tarteel, and the text may share an origin with
+  QUL's. We rely on the licence the DigitalKhatt repository publishes; question 1 to Tarteel
+  stays open as a courtesy, no longer as a blocker.
+- **Rules:** cpfair's annotations (CC BY 4.0) are carried letter by letter from the ʿUthmānī
+  text onto the IndoPak words (`tools/src/carry.ts`); every rule of every shipped pack lands.
