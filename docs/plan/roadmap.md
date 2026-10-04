@@ -8,11 +8,13 @@
   months.**
 - Every sprint ends on staging (`arda-stg.siralabs.org`) and is usable on its own.
 
-## Status now (2026-10-03)
+## Status now (2026-10-04)
 
-| Done                                                                                                       | In review                                                            | Next                                                     |
-| ---------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- | -------------------------------------------------------- |
-| S0 foundation; S1.1–S1.5: staging with sign-in, tajwīd engine, unit 2 cards and games, ḥalaqāt and invites | S1.6 assignments ([PR #6](https://github.com/Sira-Labs/Arda/pull/6)) | S2: content import and the IndoPak muṣḥaf for Juzʾ ʿAmma |
+| Done                                                                                                                                                 | In review                         | Next                                                                     |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------------------------------------------------------------------------ |
+| P0; P1 (S1.1–S1.6: staging, engine, unit 2 and games, ḥalaqāt, assignments); S2.1 content import ([PR #7](https://github.com/Sira-Labs/Arda/pull/7)) | S2.3/S2.4 muṣḥaf, offline (PR #8) | S3.1 reciter player, S3.2 assign on the page; IndoPak layer when cleared |
+
+Owner, 2026-10-04: keep going and merge PRs automatically; a status report every evening.
 
 ## Why this order
 
