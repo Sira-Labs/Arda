@@ -1,8 +1,22 @@
 import { sura } from '@arda/quran';
 import { useI18n } from '@/i18n/I18nProvider';
-import type { AssignmentBase } from '@/services/auth';
+import type { Messages } from '@/i18n/messages';
+import type { AssignmentBase, AssignmentRange } from '@/services/auth';
 import { ruleName } from '@/tajweed/rules';
 import { dueState, formatDay, formatMoment } from './format';
+
+/** "Sūra 2, Āyāt 1–5", or with the words it starts and ends at (S3.2). */
+export function rangeText(m: Messages, range: AssignmentRange): string {
+  return range.words
+    ? m.assignments.rangeWords(
+        range.sura,
+        range.from,
+        range.words.from,
+        range.to,
+        range.words.to
+      )
+    : m.assignments.range(range.sura, range.from, range.to);
+}
 
 /** What every view of an assignment shows: the kind, the āyāt, the rule to watch, the note. */
 export function AssignmentDetails({ assignment }: { assignment: AssignmentBase }) {
@@ -17,7 +31,7 @@ export function AssignmentDetails({ assignment }: { assignment: AssignmentBase }
       </strong>
       {range && (
         <span>
-          {m.assignments.range(range.sura, range.from, range.to)}
+          {rangeText(m, range)}
           {named && (
             <>
               {' · '}

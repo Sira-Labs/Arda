@@ -245,6 +245,18 @@ export const de = {
     range: (sura: number, from: number, to: number) =>
       from === to ? `Sūra ${sura}, Āya ${from}` : `Sūra ${sura}, Āyāt ${from}–${to}`,
     times: (count: number) => (count === 1 ? 'einmal' : `${count}-mal`),
+    rangeWords: (
+      sura: number,
+      from: number,
+      wordFrom: number,
+      to: number,
+      wordTo: number
+    ) =>
+      from !== to
+        ? `Sūra ${sura}, Āya ${from} Wort ${wordFrom} bis Āya ${to} Wort ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sūra ${sura}, Āya ${from}, Wort ${wordFrom}`
+          : `Sūra ${sura}, Āya ${from}, Wörter ${wordFrom}–${wordTo}`,
     focus: 'Achte auf',
     /** Tells the two idghām rules apart, whose term is the same; `null` for the others. */
     variant: (rule: RuleId): string | null =>
@@ -316,6 +328,10 @@ export const de = {
     follows: (rule: string) => `entscheidet die Regel davor: ${rule}`,
     close: 'Schließen',
     open: 'Im Muṣḥaf öffnen',
+    assign: 'Aufgabe hier geben',
+    pick: 'Tippe auf das erste und dann auf das letzte Wort der Aufgabe.',
+    cancel: 'Abbrechen',
+    halaqa: 'Ḥalaqa',
     sources: 'Quellen',
     text: 'Text: Tanzil Project (CC BY 3.0)',
     rules: 'Tajwīd-Regeln: cpfair/quran-tajweed (CC BY 4.0)',

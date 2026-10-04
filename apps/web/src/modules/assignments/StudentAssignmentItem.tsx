@@ -47,7 +47,11 @@ export function StudentAssignmentItem({
         {!done && inMushaf && (
           <Link
             className="btn"
-            to={`/mushaf/${inMushaf.sura}?von=${inMushaf.from}&bis=${inMushaf.to}`}
+            to={`/mushaf/${inMushaf.sura}?von=${inMushaf.from}&bis=${inMushaf.to}${
+              inMushaf.words
+                ? `&wvon=${inMushaf.words.from}&wbis=${inMushaf.words.to}`
+                : ''
+            }`}
           >
             {m.mushaf.open}
           </Link>

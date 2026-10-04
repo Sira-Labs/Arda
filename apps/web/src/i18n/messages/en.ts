@@ -229,6 +229,12 @@ export const en: Messages = {
     range: (sura, from, to) =>
       from === to ? `Sūra ${sura}, āya ${from}` : `Sūra ${sura}, āyāt ${from}–${to}`,
     times: (count) => (count === 1 ? 'once' : count === 2 ? 'twice' : `${count} times`),
+    rangeWords: (sura, from, wordFrom, to, wordTo) =>
+      from !== to
+        ? `Sūra ${sura}, āya ${from} word ${wordFrom} to āya ${to} word ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sūra ${sura}, āya ${from}, word ${wordFrom}`
+          : `Sūra ${sura}, āya ${from}, words ${wordFrom}–${wordTo}`,
     focus: 'Focus on',
     variant: (rule) =>
       rule === 'idgham-ghunna'
@@ -299,6 +305,10 @@ export const en: Messages = {
     follows: (rule) => `decides the rule before it: ${rule}`,
     close: 'Close',
     open: 'Open in the muṣḥaf',
+    assign: 'Give an assignment here',
+    pick: 'Tap the first and then the last word of the assignment.',
+    cancel: 'Cancel',
+    halaqa: 'Ḥalaqa',
     sources: 'Sources',
     text: 'Text: Tanzil Project (CC BY 3.0)',
     rules: 'Tajwīd rules: cpfair/quran-tajweed (CC BY 4.0)',

@@ -235,6 +235,12 @@ export const fr: Messages = {
         ? `Sourate ${sura}, āya ${from}`
         : `Sourate ${sura}, āyāt ${from}–${to}`,
     times: (count) => `${count} fois`,
+    rangeWords: (sura, from, wordFrom, to, wordTo) =>
+      from !== to
+        ? `Sourate ${sura}, āya ${from} mot ${wordFrom} à āya ${to} mot ${wordTo}`
+        : wordFrom === wordTo
+          ? `Sourate ${sura}, āya ${from}, mot ${wordFrom}`
+          : `Sourate ${sura}, āya ${from}, mots ${wordFrom}–${wordTo}`,
     focus: 'Attention à',
     variant: (rule) =>
       rule === 'idgham-ghunna'
@@ -308,6 +314,10 @@ export const fr: Messages = {
     follows: (rule) => `décide la règle d’avant\u202f: ${rule}`,
     close: 'Fermer',
     open: 'Ouvrir dans le muṣḥaf',
+    assign: 'Donner un devoir ici',
+    pick: 'Touche le premier puis le dernier mot du devoir.',
+    cancel: 'Annuler',
+    halaqa: 'Ḥalaqa',
     sources: 'Sources',
     text: 'Texte\u202f: Tanzil Project (CC BY 3.0)',
     rules: 'Règles de tajwīd\u202f: cpfair/quran-tajweed (CC BY 4.0)',

@@ -7,6 +7,7 @@ import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { PackIndex, PackIndexEntry } from '@arda/quran';
+import type { Me } from '@/services/auth';
 import { entryFor, loadPack, type PackCache, type PackLoaderDeps } from '@/content/packs';
 import { de } from '@/i18n/messages/de';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
@@ -178,9 +179,13 @@ describe('a word and its rules', () => {
   });
 });
 
-function renderAt(path: string, deps: PackLoaderDeps, extra?: ReactNode) {
-  const api = fakeApi({}, null);
-  return render(
+function renderAt(
+  path: string,
+  deps: PackLoaderDeps,
+  extra?: ReactNode,
+  api: ReturnType<typeof fakeApi> = fakeApi({}, null)
+) {
+  render(
     <Providers client={api.client}>
       <PackLoaderContext.Provider value={deps}>
         <MemoryRouter initialEntries={[path]}>
@@ -193,6 +198,7 @@ function renderAt(path: string, deps: PackLoaderDeps, extra?: ReactNode) {
       </PackLoaderContext.Provider>
     </Providers>
   );
+  return api;
 }
 
 beforeEach(() => {
@@ -344,6 +350,178 @@ describe('assignments in the muṣḥaf', () => {
     expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
       'href',
       '/mushaf/112?von=1&bis=4'
+    );
+  });
+});
+
+const HALAQA = '11111111-1111-4111-8111-111111111111';
+const TEACHER: Me = {
+  id: 't',
+  email: 'sheikh@example.org',
+  name: 'Sheikh Ahmad',
+  role: 'teacher',
+  timeZone: null,
+  language: 'de',
+};
+const teacherApi = () =>
+  fakeApi(
+    {
+      'GET /api/v1/halaqat': () =>
+        Response.json({
+          halaqat: [
+            {
+              id: HALAQA,
+              name: 'Juzʾ ʿAmma',
+              oneToOne: false,
+              role: 'teacher',
+              status: 'active',
+              teacherName: 'Sheikh Ahmad',
+              students: 1,
+              pending: 0,
+            },
+          ],
+        }),
+      [`GET /api/v1/halaqat/${HALAQA}`]: () =>
+        Response.json({
+          role: 'teacher',
+          halaqa: {
+            id: HALAQA,
+            name: 'Juzʾ ʿAmma',
+            oneToOne: false,
+            teacherName: null,
+            createdAt: '',
+          },
+          members: [
+            {
+              userId: 's',
+              name: 'Amina',
+              email: 'amina@example.org',
+              role: 'student',
+              status: 'active',
+              joinedAt: '',
+            },
+          ],
+          invite: null,
+        }),
+      [`POST /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+        Response.json({ id: 'new' }, { status: 201 }),
+    },
+    TEACHER
+  );
+
+describe('assigning on the page (S3.2)', () => {
+  it('gives the words a teacher picks, from a word to a word', async () => {
+    const api = renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    expect(
+      screen.getByText('Tippe auf das erste und dann auf das letzte Wort der Aufgabe.')
+    ).toBeInTheDocument();
+    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
+    // The last word first: picking works in either order.
+    await user.click(within(aya(3)).getAllByRole('button')[3]!);
+    await user.click(within(aya(2)).getAllByRole('button')[1]!);
+    const panel = await screen.findByRole('dialog', { name: 'Aufgabe hier geben' });
+    expect(panel).toHaveTextContent('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4');
+    expect(within(panel).queryByLabelText('Sūra')).not.toBeInTheDocument();
+    expect(
+      await within(panel).findByRole('option', { name: 'Amina' })
+    ).toBeInTheDocument();
+    await user.click(within(panel).getByRole('button', { name: 'Aufgabe geben' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Aufgabe gegeben.');
+    expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      kind: 'recite',
+      range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('gives whole āyāt when the pick begins and ends with them', async () => {
+    const api = renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
+    await user.click(within(aya(1)).getAllByRole('button')[0]!);
+    await user.click(within(aya(2)).getAllByRole('button').at(-1)!);
+    const panel = await screen.findByRole('dialog');
+    expect(panel).toHaveTextContent('Sūra 113, Āyāt 1–2');
+    await user.click(within(panel).getByRole('button', { name: 'Aufgabe geben' }));
+    await screen.findByRole('status');
+    expect(api.calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      range: { sura: 113, from: 1, to: 2 },
+    });
+    expect(
+      (api.calls.find((c) => c.method === 'POST')?.body as { range: object }).range
+    ).not.toHaveProperty('words');
+  });
+
+  it('is offered to teachers only', async () => {
+    renderAt('/mushaf/113', loader().deps);
+    await screen.findByRole('heading', { name: 'الفلق' });
+    expect(
+      screen.queryByRole('button', { name: 'Aufgabe hier geben' })
+    ).not.toBeInTheDocument();
+  });
+
+  it('marks exactly the words of an assignment', async () => {
+    renderAt('/mushaf/113?von=2&bis=3&wvon=2&wbis=4', loader().deps);
+    expect(
+      await screen.findByText('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4')
+    ).toBeInTheDocument();
+    const words = (n: number) =>
+      [...document.querySelectorAll(`#aya-${n} > span`)].filter((s) =>
+        s.querySelector('button')
+      );
+    // al-Falaq 2 has four words (from the second on), 3 has five (to the fourth).
+    expect(words(2).map((w) => w.classList.contains('in-range'))).toEqual([
+      false,
+      true,
+      true,
+      true,
+    ]);
+    expect(words(3).map((w) => w.classList.contains('in-range'))).toEqual([
+      true,
+      true,
+      true,
+      true,
+      false,
+    ]);
+    expect(document.querySelectorAll('.aya.in-range')).toHaveLength(0);
+  });
+
+  it('links from an assignment to its words', () => {
+    renderAt(
+      '/heute',
+      loader().deps,
+      <ul>
+        <StudentAssignmentItem
+          assignment={{
+            id: 'a',
+            kind: 'read',
+            studentId: null,
+            range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+            focusRule: null,
+            repetitions: 2,
+            note: null,
+            dueOn: '2026-10-09',
+            createdAt: '2026-10-01T10:00:00Z',
+            halaqaId: 'h',
+            halaqaName: 'H',
+            fromName: null,
+            doneAt: null,
+          }}
+          busy={false}
+          onMark={() => {}}
+        />
+      </ul>
+    );
+    // The Arabic name of the sūra follows in the same line.
+    expect(
+      screen.getByText(/^Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4/)
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
+      'href',
+      '/mushaf/113?von=2&bis=3&wvon=2&wbis=4'
     );
   });
 });

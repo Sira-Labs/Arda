@@ -5,6 +5,8 @@ import { RuleLegend } from '@/components/RuleLegend';
 import { TajweedSpans } from '@/components/TajweedText';
 import { entryFor } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
+import type { AssignmentRange } from '@/services/auth';
+import { PageAssign, useTeaching } from './PageAssign';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 import { WordSheet } from './WordSheet';
@@ -16,25 +18,45 @@ interface Selected {
   label: string;
 }
 
-/** Āyāt `von`–`bis` from the query (an assignment), when they are a range of this sūra. */
-function rangeOf(
-  search: URLSearchParams,
-  ayas: number
-): { from: number; to: number } | null {
-  const from = Number(search.get('von'));
-  const to = Number(search.get('bis') ?? search.get('von'));
-  return Number.isInteger(from) &&
-    Number.isInteger(to) &&
-    from >= 1 &&
-    from <= to &&
-    to <= ayas
-    ? { from, to }
-    : null;
+/** A word's place: āya and its number in the āya, from 1. */
+interface Place {
+  aya: number;
+  n: number;
 }
+
+const notAfter = (a: Place, b: Place) => a.aya < b.aya || (a.aya === b.aya && a.n <= b.n);
+
+const positive = (value: string | null): number | null => {
+  const n = Number(value);
+  return value !== null && Number.isInteger(n) && n >= 1 ? n : null;
+};
+
+/**
+ * The assignment's āyāt from the query: `von`–`bis`, and with `wvon`/`wbis` the words it starts
+ * and ends at (S3.2). Ignored when it is not a range of this sūra.
+ */
+function rangeOf(search: URLSearchParams, ayas: number): AssignmentRange | null {
+  const from = positive(search.get('von'));
+  const to = positive(search.get('bis') ?? search.get('von'));
+  if (from === null || to === null || from > to || to > ayas) return null;
+  const wordFrom = positive(search.get('wvon'));
+  const wordTo = positive(search.get('wbis'));
+  const words =
+    wordFrom !== null && wordTo !== null && (from < to || wordFrom <= wordTo)
+      ? { from: wordFrom, to: wordTo }
+      : undefined;
+  return { sura: 0, from, to, ...(words ? { words } : {}) };
+}
+
+/** Whether the word at `place` is inside `range` (whole āyāt, or from word to word). */
+const covers = (range: AssignmentRange, place: Place) =>
+  notAfter({ aya: range.from, n: range.words?.from ?? 1 }, place) &&
+  notAfter(place, { aya: range.to, n: range.words?.to ?? Number.MAX_SAFE_INTEGER });
 
 /**
  * `/mushaf/:sura` (screen 2, spec F3): one sūra with its rules coloured and named, word by
- * word; tap a word for its rules. `?von=&bis=` marks an assignment's āyāt and scrolls to them.
+ * word; tap a word for its rules. `?von=&bis=` (and `wvon=&wbis=`) marks an assignment and
+ * scrolls to it. A teacher can pick words here and give them as an assignment (S3.2).
  */
 export function SuraView() {
   const { sura: param = '' } = useParams();
@@ -44,7 +66,11 @@ export function SuraView() {
   const meta = Number.isInteger(number) ? suraOf(number) : undefined;
   const entry = meta ? entryFor(number) : undefined;
   const result = usePack(entry);
+  const teaching = useTeaching();
   const [selected, setSelected] = useState<Selected | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<{ start: Place; end?: Place } | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const close = useCallback(() => setSelected(null), []);
   const range = meta ? rangeOf(search, meta.ayas) : null;
   const ready = result?.ok === true;
@@ -91,20 +117,63 @@ export function SuraView() {
     );
   }
 
+  /** The words picked so far, in reading order. */
+  const pickedRange = (): { start: Place; end: Place } | null => {
+    if (!picked) return null;
+    const end = picked.end ?? picked.start;
+    return notAfter(picked.start, end)
+      ? { start: picked.start, end }
+      : { start: end, end: picked.start };
+  };
+  const pick = (place: Place) =>
+    setPicked((current) =>
+      !current || current.end ? { start: place } : { start: current.start, end: place }
+    );
+
+  /** The picked words as an assignment's range; whole āyāt when they begin and end so. */
+  const assignmentRange = (): AssignmentRange | null => {
+    const span = pickedRange();
+    if (!picked?.end || !span) return null;
+    const lastWords = sura.ayat[span.end.aya - 1]!.words.length;
+    const whole = span.start.n === 1 && span.end.n === lastWords;
+    return {
+      sura: number,
+      from: span.start.aya,
+      to: span.end.aya,
+      ...(whole ? {} : { words: { from: span.start.n, to: span.end.n } }),
+    };
+  };
+
+  const span = picking ? pickedRange() : null;
   const digits = (n: number) => n.toLocaleString('ar-EG');
-  const word = (w: MushafWord, key: string, label: string) => (
-    <span key={key}>
-      <button
-        type="button"
-        className="mushaf-word"
-        aria-pressed={selected?.key === key}
-        onClick={() => setSelected({ key, word: w, label })}
+  const word = (w: MushafWord, key: string, label: string, place?: Place) => {
+    const isPicked =
+      span && place && notAfter(span.start, place) && notAfter(place, span.end);
+    const isAssigned = range?.words && place && covers(range, place);
+    return (
+      <span
+        key={key}
+        className={isPicked ? 'picked' : isAssigned ? 'in-range' : undefined}
       >
-        <TajweedSpans segments={wordSegments(w)} />
-      </button>
-      {w.a && <span className="pause-mark">{w.a}</span>}{' '}
-    </span>
-  );
+        <button
+          type="button"
+          className="mushaf-word"
+          aria-pressed={picking ? Boolean(isPicked) : selected?.key === key}
+          onClick={() => {
+            if (picking) {
+              if (place) pick(place);
+            } else {
+              setSelected({ key, word: w, label });
+            }
+          }}
+        >
+          <TajweedSpans segments={wordSegments(w)} />
+        </button>
+        {w.a && <span className="pause-mark">{w.a}</span>}{' '}
+      </span>
+    );
+  };
+  const given = assignmentRange();
 
   return (
     <article className="stack" style={{ gap: 20, maxWidth: 820 }}>
@@ -126,12 +195,35 @@ export function SuraView() {
         <h1 className="sura-title" lang="ar" dir="rtl">
           {sura.name}
         </h1>
-        <p className="muted">{m.mushaf.tap}</p>
+        <p className="muted">{picking ? m.mushaf.pick : m.mushaf.tap}</p>
         {range && (
           <p className="chip range-chip" style={{ alignSelf: 'flex-start' }}>
-            {m.mushaf.range(range.from, range.to)}
+            {range.words
+              ? m.assignments.rangeWords(
+                  number,
+                  range.from,
+                  range.words.from,
+                  range.to,
+                  range.words.to
+                )
+              : m.mushaf.range(range.from, range.to)}
           </p>
         )}
+        {teaching.length > 0 && !picking && (
+          <button
+            className="btn"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => {
+              setSelected(null);
+              setNotice(null);
+              setPicking(true);
+            }}
+          >
+            {m.mushaf.assign}
+          </button>
+        )}
+        {notice && <p role="status">{notice}</p>}
       </header>
 
       <div className="quran mushaf-text" data-script="madina" lang="ar" dir="rtl">
@@ -148,7 +240,7 @@ export function SuraView() {
               key={aya.aya}
               id={`aya-${aya.aya}`}
               className={
-                range && aya.aya >= range.from && aya.aya <= range.to
+                range && !range.words && aya.aya >= range.from && aya.aya <= range.to
                   ? 'aya in-range'
                   : 'aya'
               }
@@ -157,7 +249,8 @@ export function SuraView() {
                 word(
                   w,
                   wordKey('hafs', number, aya.aya, i + 1),
-                  m.mushaf.word(number, aya.aya, i + 1)
+                  m.mushaf.word(number, aya.aya, i + 1),
+                  { aya: aya.aya, n: i + 1 }
                 )
               )}
               <span className="aya-end" aria-label={`${aya.aya}`}>
@@ -174,6 +267,20 @@ export function SuraView() {
       <MushafSources />
       {selected && (
         <WordSheet word={selected.word} label={selected.label} onClose={close} />
+      )}
+      {picking && given && (
+        <PageAssign
+          range={given}
+          onGiven={() => {
+            setPicking(false);
+            setPicked(null);
+            setNotice(m.assignments.form.given);
+          }}
+          onCancel={() => {
+            setPicking(false);
+            setPicked(null);
+          }}
+        />
       )}
     </article>
   );

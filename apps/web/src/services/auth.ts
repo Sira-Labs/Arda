@@ -95,6 +95,8 @@ export interface AssignmentRange {
   sura: number;
   from: number;
   to: number;
+  /** Word `from` of āya `from` to word `to` of āya `to`, from 1 (S3.2); absent: whole āyāt. */
+  words?: { from: number; to: number };
 }
 
 /** What every view of an assignment shows (spec T2, ADR-0014). */

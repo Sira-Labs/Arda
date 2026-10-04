@@ -643,3 +643,15 @@ a {
 .mushaf-sources a {
   color: inherit;
 }
+.mushaf-text .in-range,
+.mushaf-text .picked {
+  border-radius: 6px;
+  box-decoration-break: clone;
+}
+.mushaf-text span.in-range {
+  background: var(--range-bg);
+}
+.mushaf-text .picked {
+  background: var(--bg-elev-2);
+  outline: 2px solid var(--accent-2);
+}
