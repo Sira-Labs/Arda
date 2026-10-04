@@ -288,10 +288,21 @@ export const fr: Messages = {
     packs: {
       'uthmani-hafs-fatiha-baqara': 'al-Fātiḥa et al-Baqara',
       'uthmani-hafs-juz30': 'Juzʾ ʿAmma',
+      'indopak-hafs-fatiha-baqara': 'al-Fātiḥa et al-Baqara',
+      'indopak-hafs-juz30': 'Juzʾ ʿAmma',
     },
     title: 'Muṣḥaf',
-    script:
-      'Écriture ʿuthmānī (Médine), riwāyat Ḥafṣ. L’écriture IndoPak de ton muṣḥaf suivra dès que sa source sera clarifiée.',
+    scriptLabel: 'Écriture',
+    scripts: {
+      indopak: {
+        name: 'IndoPak',
+        note: 'Écriture IndoPak comme dans le muṣḥaf de ton sheikh (15 lignes), riwāyat Ḥafṣ.',
+      },
+      uthmani: {
+        name: 'Médine',
+        note: 'Écriture ʿuthmānī comme dans le muṣḥaf de Médine, riwāyat Ḥafṣ.',
+      },
+    },
     sura: (number) => `Sourate ${number}`,
     ayat: (count) => (count === 1 ? '1 āya' : `${count} āyāt`),
     loading: 'Chargement du muṣḥaf …',
@@ -325,6 +336,7 @@ export const fr: Messages = {
     halaqa: 'Ḥalaqa',
     sources: 'Sources',
     text: 'Texte\u202f: Tanzil Project (CC BY 3.0)',
+    textIndopak: 'Texte IndoPak\u202f: DigitalKhatt (MIT)',
     rules: 'Règles de tajwīd\u202f: cpfair/quran-tajweed (CC BY 4.0)',
   },
   signIn: {

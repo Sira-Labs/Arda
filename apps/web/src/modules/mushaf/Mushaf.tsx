@@ -3,25 +3,50 @@ import type { PackIndexEntry } from '@arda/quran';
 import { sura } from '@arda/quran';
 import { builtIndex } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
+import { chooseScript, useMushafScript, type MushafScript } from './script';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 
+const SCRIPTS: readonly MushafScript[] = ['indopak', 'uthmani'];
+
 /**
- * `/mushaf` (screen 2, spec F3): the sūras of the muṣḥaf, one group per pack. Opening it
- * downloads and checks each pack once, so the muṣḥaf works offline afterwards (S2.3).
+ * `/mushaf` (screen 2, spec F3): the sūras of the muṣḥaf in the chosen script (IndoPak first,
+ * the sheikh's; or the Madīna ʿUthmānī), one group per pack. Opening it downloads and checks
+ * each pack once, so the muṣḥaf works offline afterwards (S2.3).
  */
 export function Mushaf() {
   const { m } = useI18n();
+  const script = useMushafScript();
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 720 }}>
       <header className="stack" style={{ gap: 6 }}>
         <p className="eyebrow">{m.mushaf.eyebrow}</p>
         <h1>{m.mushaf.title}</h1>
-        <p className="muted">{m.mushaf.script}</p>
+        <div
+          className="row segmented"
+          role="radiogroup"
+          aria-label={m.mushaf.scriptLabel}
+        >
+          {SCRIPTS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              role="radio"
+              aria-checked={s === script}
+              className={s === script ? 'btn btn-primary' : 'btn'}
+              onClick={() => chooseScript(s)}
+            >
+              {m.mushaf.scripts[s].name}
+            </button>
+          ))}
+        </div>
+        <p className="muted">{m.mushaf.scripts[script].note}</p>
       </header>
-      {builtIndex.packs.map((entry) => (
-        <PackGroup key={entry.id} entry={entry} />
-      ))}
+      {builtIndex.packs
+        .filter((entry) => entry.script === script)
+        .map((entry) => (
+          <PackGroup key={entry.id} entry={entry} />
+        ))}
       <MushafSources />
     </div>
   );

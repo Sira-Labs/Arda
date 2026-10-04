@@ -7,6 +7,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { AssignmentRange } from '@/services/auth';
 import { PageAssign, useTeaching } from './PageAssign';
 import { MushafSources } from './Sources';
+import { useMushafScript } from './script';
 import { usePack } from './usePack';
 import { AyaText, NONE, Word, type Place, type WordTap } from './AyaText';
 import { WordSheet } from './WordSheet';
@@ -61,7 +62,8 @@ export function SuraView() {
   const { m } = useI18n();
   const number = Number(param);
   const meta = Number.isInteger(number) ? suraOf(number) : undefined;
-  const entry = meta ? entryFor(number) : undefined;
+  const script = useMushafScript();
+  const entry = meta ? entryFor(number, script) : undefined;
   const result = usePack(entry);
   const teaching = useTeaching();
   const [selected, setSelected] = useState<WordTap | null>(null);
@@ -162,6 +164,7 @@ export function SuraView() {
     };
   };
 
+  const indopak = result.pack.script === 'indopak';
   const span = picking ? pickedRange() : null;
   const marked = range?.words
     ? {
@@ -236,7 +239,12 @@ export function SuraView() {
         {notice && <p role="status">{notice}</p>}
       </header>
 
-      <div className="quran mushaf-text" data-script="madina" lang="ar" dir="rtl">
+      <div
+        className="quran mushaf-text"
+        data-script={indopak ? 'indopak' : 'madina'}
+        lang="ar"
+        dir="rtl"
+      >
         {sura.basmala && (
           <p className="basmala">
             {sura.basmala.map((word, i) => {
@@ -247,6 +255,7 @@ export function SuraView() {
                   tap={{ key, word, label: m.mushaf.sura(number) }}
                   pressed={!picking && selected?.key === key}
                   onTap={onTap}
+                  indopak={indopak}
                 />
               );
             })}
@@ -278,6 +287,7 @@ export function SuraView() {
                 picking={picking}
                 selectedKey={selected?.place?.aya === aya.aya ? selected.key : null}
                 onTap={onTap}
+                indopak={indopak}
               />
             );
           })}
@@ -287,7 +297,12 @@ export function SuraView() {
       <RuleLegend />
       <MushafSources />
       {selected && (
-        <WordSheet word={selected.word} label={selected.label} onClose={close} />
+        <WordSheet
+          word={selected.word}
+          label={selected.label}
+          onClose={close}
+          script={indopak ? 'indopak' : 'madina'}
+        />
       )}
       {picking && given && (
         <PageAssign
