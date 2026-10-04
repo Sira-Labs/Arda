@@ -316,11 +316,13 @@ export const fr: Messages = {
       invalid:
         'Les données du muṣḥaf sont arrivées abîmées. Recharge la page, s’il te plaît.',
       missing: 'Cette sourate n’est pas encore dans le muṣḥaf.',
+      missingPage: 'Cette page n’est pas encore dans le muṣḥaf.',
     },
     tap: 'Touche un mot pour voir ses règles.',
     all: 'Toutes les sourates',
-    previous: 'Sourate précédente',
-    next: 'Sourate suivante',
+    previousPage: 'Page précédente',
+    nextPage: 'Page suivante',
+    page: (n: number) => `Page ${n}`,
     range: (from, to) =>
       from === to
         ? `Ton devoir\u202f: āya ${from}`

@@ -307,11 +307,13 @@ export const en: Messages = {
       checksum: 'The muṣḥaf data arrived damaged. Please reload the page.',
       invalid: 'The muṣḥaf data arrived damaged. Please reload the page.',
       missing: 'This sūra is not in the muṣḥaf yet.',
+      missingPage: 'This page is not in the muṣḥaf yet.',
     },
     tap: 'Tap a word to see its rules.',
     all: 'All sūras',
-    previous: 'Previous sūra',
-    next: 'Next sūra',
+    previousPage: 'Previous page',
+    nextPage: 'Next page',
+    page: (n: number) => `Page ${n}`,
     range: (from, to) =>
       from === to
         ? `Your assignment: āya ${from}`

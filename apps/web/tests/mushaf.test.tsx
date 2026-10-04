@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -12,6 +12,7 @@ import type { Me } from '@/services/auth';
 import { entryFor, loadPack, type PackCache, type PackLoaderDeps } from '@/content/packs';
 import { de } from '@/i18n/messages/de';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
+import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
 import { PackLoaderContext } from '@/modules/mushaf/usePack';
 import { packRuleName, wordSegments } from '@/modules/mushaf/words';
@@ -190,6 +191,10 @@ describe('a word and its rules', () => {
   });
 });
 
+/** A word's button, by its key (`hafs:113:2:1`). */
+const wordAt = (key: string) =>
+  document.querySelector<HTMLElement>(`[data-word="${key}"] > button`)!;
+
 function renderAt(
   path: string,
   deps: PackLoaderDeps,
@@ -202,6 +207,7 @@ function renderAt(
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/mushaf" element={<Mushaf />} />
+            <Route path="/mushaf/seite/:page" element={<MushafPage />} />
             <Route path="/mushaf/:sura" element={<SuraView />} />
             <Route path="*" element={extra ?? null} />
           </Routes>
@@ -252,68 +258,85 @@ describe('the muṣḥaf screen (S2.4)', () => {
     );
   });
 
-  it('shows al-Baqara, all 286 āyāt, with its rules', async () => {
+  it('opens a sūra on its page, as printed, and turns the pages', async () => {
     renderAt('/mushaf/2?von=2&bis=2', loader().deps);
-    expect(await screen.findByRole('heading', { name: 'البقرة' })).toBeInTheDocument();
-    // The āyāt come in batches (40 at first), so that a long sūra shows at once.
-    expect(document.querySelectorAll('.aya').length).toBeLessThan(286);
-    await waitFor(() => expect(document.querySelectorAll('.aya')).toHaveLength(286), {
-      timeout: 10_000,
-    });
+    // IndoPak: al-Baqara 2 is on the sheikh's page 3, the first after al-Fātiḥa's.
+    expect(await screen.findByText('Seite 3 · IndoPak')).toBeInTheDocument();
     expect(document.querySelectorAll('.basmala button')).toHaveLength(4);
+    const lines = [...document.querySelectorAll('.mushaf-line')].map((l) =>
+      Number(l.getAttribute('data-line'))
+    );
+    expect(Math.max(...lines)).toBeLessThanOrEqual(15);
     const user = userEvent.setup();
     // al-Baqara 2: "hudan li-l-muttaqīn", the tanwīn merging into the lām without ghunna.
-    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
-    expect(aya2).toHaveClass('in-range');
-    await user.click(within(aya2).getAllByRole('button')[5]!);
+    const hudan = wordAt('hafs:2:2:6');
+    expect(hudan.parentElement).toHaveClass('in-range');
+    await user.click(hudan);
     expect(
       screen.getByRole('dialog', { name: 'Sūra 2, Āya 2, Wort 6' })
     ).toHaveTextContent('Idghām ohne Ghunna · Stumm');
+    await user.keyboard('{Escape}');
+    // The next page lies to the left; the assignment stays marked across pages.
+    await user.click(screen.getByRole('link', { name: 'Nächste Seite' }));
+    expect(await screen.findByText('Seite 4 · IndoPak')).toBeInTheDocument();
+    expect(screen.getByText('Deine Aufgabe: Āya 2')).toBeInTheDocument();
+    await user.keyboard('{ArrowRight}');
+    expect(await screen.findByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    // In a field the arrows move the cursor, never the page.
+    const note = document.body.appendChild(document.createElement('textarea'));
+    note.focus();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    note.remove();
+  });
+
+  it('says when a page is not in the muṣḥaf yet', async () => {
+    renderAt('/mushaf/seite/300', loader().deps);
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Diese Seite ist noch nicht im Muṣḥaf.'
+    );
   });
 
   it('shows a sūra word by word in the IndoPak script, as the sheikh’s muṣḥaf prints it', async () => {
     renderAt('/mushaf/112', loader().deps);
-    expect(await screen.findByRole('heading', { name: 'الإخلاص' })).toHaveAttribute(
+    expect(await screen.findByText('Seite 610 · IndoPak')).toBeInTheDocument();
+    expect(screen.getByText('الإخلاص', { selector: '.page-sura' })).toHaveAttribute(
       'dir',
       'rtl'
     );
-    expect(screen.getByText('Sūra 112 · 4 Āyāt')).toBeInTheDocument();
     const text = document.querySelector('.mushaf-text')!;
     expect(text).toHaveAttribute('lang', 'ar');
     expect(text).toHaveAttribute('data-script', 'indopak');
-    expect(text.querySelector('.basmala')?.querySelectorAll('button')).toHaveLength(4);
-    const words = () =>
-      [...text.querySelectorAll('.mushaf-word')].map((b) => b.textContent);
-    expect(words()).toContain('اَحَدٌ');
+    expect(text).toHaveAttribute('data-layout', 'lines');
+    expect(text.querySelectorAll('[data-word^="basmala:112:"]')).toHaveLength(4);
+    expect(wordAt('hafs:112:1:4')).toHaveTextContent('اَحَدٌ');
     // The āya ends as printed: the marker with its number and the stop sign after it.
-    expect([...text.querySelectorAll('.aya-end')].map((e) => e.textContent)).toEqual([
-      '۝',
-      '۝١ۚ',
-      '۝٢ۚ',
-      '۝٣ۙ',
-      '۝٤\u08D6',
-    ]);
+    const ends = [
+      ...text.querySelectorAll('[data-word^="basmala:112:"] .aya-end'),
+      ...text.querySelectorAll('[data-word^="hafs:112:"] .aya-end'),
+    ].map((e) => e.textContent);
+    expect(ends).toEqual(['۝', '۝١ۚ', '۝٢ۚ', '۝٣ۙ', '۝٤ࣖ']);
     // Every coloured letter is named, so colour is never the only signal.
     for (const coloured of text.querySelectorAll('.tj')) {
       expect(coloured.getAttribute('title')).toBeTruthy();
     }
   });
 
-  it('shows the Madīna (ʿUthmānī) script when chosen, numbering the āyāt itself', async () => {
+  it('shows the Madīna (ʿUthmānī) page when chosen, numbering the āyāt itself', async () => {
     chooseScript('uthmani');
     renderAt('/mushaf/112', loader().deps);
-    await screen.findByRole('heading', { name: 'الإخلاص' });
+    expect(await screen.findByText('Seite 604 · Madīna')).toBeInTheDocument();
     const text = document.querySelector('.mushaf-text')!;
     expect(text).toHaveAttribute('data-script', 'madina');
+    expect(text).toHaveAttribute('data-layout', 'flow');
+    expect(wordAt('hafs:112:1:4')).toHaveTextContent('أَحَدٌ');
     expect(
-      [...text.querySelectorAll('.mushaf-word')].map((b) => b.textContent)
-    ).toContain('أَحَدٌ');
-    expect([...text.querySelectorAll('.aya-end')].map((e) => e.textContent)).toEqual([
-      '۝١',
-      '۝٢',
-      '۝٣',
-      '۝٤',
-    ]);
+      [...text.querySelectorAll('[data-word^="hafs:112:"] .aya-end')].map(
+        (e) => e.textContent
+      )
+    ).toEqual(['۝١', '۝٢', '۝٣', '۝٤']);
+    // al-Ikhlāṣ, al-Falaq and an-Nās share the last page.
+    expect([...document.querySelectorAll('.sura-heading')]).toHaveLength(3);
   });
 
   it('lets the student choose the script, IndoPak first, and keeps the choice', async () => {
@@ -355,9 +378,9 @@ describe('the muṣḥaf screen (S2.4)', () => {
   it('opens a tapped word with its rules and the way to the rule card', async () => {
     renderAt('/mushaf/113', loader().deps);
     const user = userEvent.setup();
-    const aya2 = await screen.findByText((_, el) => el?.id === 'aya-2');
-    const [min, sharr] = within(aya2).getAllByRole('button');
-    await user.click(min!);
+    await screen.findByText('الفلق', { selector: '.page-sura' });
+    const min = wordAt('hafs:113:2:1');
+    await user.click(min);
     const sheet = screen.getByRole('dialog', { name: 'Sūra 113, Āya 2, Wort 1' });
     expect(sheet).toHaveTextContent('Ikhfāʾ · Ghunna');
     expect(within(sheet).getByRole('link', { name: 'Zur Regelkarte' })).toHaveAttribute(
@@ -366,7 +389,7 @@ describe('the muṣḥaf screen (S2.4)', () => {
     );
     expect(min).toHaveAttribute('aria-pressed', 'true');
 
-    await user.click(sharr!);
+    await user.click(wordAt('hafs:113:2:2'));
     expect(screen.getByRole('dialog')).toHaveTextContent(
       'entscheidet die Regel davor: Ikhfāʾ'
     );
@@ -375,16 +398,16 @@ describe('the muṣḥaf screen (S2.4)', () => {
   });
 
   it('names the later rules too, and says when a word has none', async () => {
+    chooseScript('uthmani');
     renderAt('/mushaf/112', loader().deps);
     const user = userEvent.setup();
-    const aya2 = await screen.findByText((_, el) => el?.id === 'aya-2');
-    const [allahu, samad] = within(aya2).getAllByRole('button');
-    await user.click(samad!);
+    await screen.findByText('الإخلاص', { selector: '.page-sura' });
+    await user.click(wordAt('hafs:112:2:2'));
     const sheet = screen.getByRole('dialog');
     expect(sheet).toHaveTextContent('Hamzat al-waṣl · Stumm');
     expect(sheet).toHaveTextContent('Lām shamsiyya · Stumm');
     // ٱللَّهُ opens the āya: there its hamzat al-waṣl is pronounced, so nothing is marked.
-    await user.click(allahu!);
+    await user.click(wordAt('hafs:112:2:1'));
     expect(screen.getByRole('dialog')).toHaveTextContent(
       'Hier ist keine Regel markiert: klar lesen.'
     );
@@ -393,22 +416,25 @@ describe('the muṣḥaf screen (S2.4)', () => {
   it('marks an assignment’s āyāt', async () => {
     renderAt('/mushaf/113?von=2&bis=3', loader().deps);
     expect(await screen.findByText('Deine Aufgabe: Āyāt 2–3')).toBeInTheDocument();
-    const marked = [...document.querySelectorAll('.aya.in-range')].map((e) => e.id);
-    expect(marked).toEqual(['aya-2', 'aya-3']);
+    const marked = [...document.querySelectorAll('.in-range[data-word]')].map((e) =>
+      e.getAttribute('data-word')!.split(':').slice(1, 3).join(':')
+    );
+    expect([...new Set(marked)]).toEqual(['113:2', '113:3']);
+    expect(marked).toHaveLength(9);
   });
 
   it('ignores a range that is not in the sūra', async () => {
     renderAt('/mushaf/113?von=4&bis=9', loader().deps);
-    await screen.findByRole('heading', { name: 'الفلق' });
-    expect(document.querySelectorAll('.aya.in-range')).toHaveLength(0);
+    await screen.findByText('الفلق', { selector: '.page-sura' });
+    expect(document.querySelectorAll('.in-range')).toHaveLength(0);
   });
 
   it('names a rule once when its family has the same name', async () => {
     renderAt('/mushaf/78', loader().deps);
     const user = userEvent.setup();
-    const aya1 = await screen.findByText((_, el) => el?.id === 'aya-1');
+    await screen.findByText('النبإ', { selector: '.page-sura' });
     // عَمَّ: the mīm with shadda is the ghunna rule, in the ghunna family.
-    await user.click(within(aya1).getAllByRole('button')[0]!);
+    await user.click(wordAt('hafs:78:1:1'));
     const sheet = screen.getByRole('dialog');
     expect(sheet).toHaveTextContent('Ghunna');
     expect(sheet).not.toHaveTextContent('Ghunna · Ghunna');
@@ -526,10 +552,9 @@ describe('assigning on the page (S3.2)', () => {
     expect(
       screen.getByText('Tippe auf das erste und dann auf das letzte Wort der Aufgabe.')
     ).toBeInTheDocument();
-    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
     // The last word first: picking works in either order.
-    await user.click(within(aya(3)).getAllByRole('button')[3]!);
-    await user.click(within(aya(2)).getAllByRole('button')[1]!);
+    await user.click(wordAt('hafs:113:3:4'));
+    await user.click(wordAt('hafs:113:2:2'));
     const panel = await screen.findByRole('dialog', { name: 'Aufgabe hier geben' });
     expect(panel).toHaveTextContent('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4');
     expect(within(panel).queryByLabelText('Sūra')).not.toBeInTheDocument();
@@ -545,19 +570,29 @@ describe('assigning on the page (S3.2)', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 
+  it('starts again when the second word is in another sūra', async () => {
+    renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
+    await user.click(wordAt('hafs:113:5:1'));
+    await user.click(wordAt('hafs:114:1:1'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(wordAt('hafs:114:1:1').parentElement).toHaveClass('picked');
+    expect(wordAt('hafs:113:5:1').parentElement).not.toHaveClass('picked');
+  });
+
   it('can be left before both words are picked', async () => {
     renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
-    const aya2 = screen.getByText((_, el) => el?.id === 'aya-2');
-    await user.click(within(aya2).getAllByRole('button')[1]!);
+    await user.click(wordAt('hafs:113:2:2'));
     await user.click(screen.getByRole('button', { name: 'Abbrechen' }));
     expect(
       screen.getByText('Tippe auf ein Wort, um seine Regeln zu sehen.')
     ).toBeInTheDocument();
     expect(document.querySelector('.picked')).toBeNull();
     // Tapping a word shows its rules again.
-    await user.click(within(aya2).getAllByRole('button')[0]!);
+    await user.click(wordAt('hafs:113:2:1'));
     expect(
       screen.getByRole('dialog', { name: 'Sūra 113, Āya 2, Wort 1' })
     ).toBeInTheDocument();
@@ -567,9 +602,8 @@ describe('assigning on the page (S3.2)', () => {
     const api = renderAt('/mushaf/113', loader().deps, undefined, teacherApi());
     const user = userEvent.setup();
     await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
-    const aya = (n: number) => screen.getByText((_, el) => el?.id === `aya-${n}`);
-    await user.click(within(aya(1)).getAllByRole('button')[0]!);
-    await user.click(within(aya(2)).getAllByRole('button').at(-1)!);
+    await user.click(wordAt('hafs:113:1:1'));
+    await user.click(wordAt('hafs:113:2:4'));
     const panel = await screen.findByRole('dialog');
     expect(panel).toHaveTextContent('Sūra 113, Āyāt 1–2');
     await user.click(within(panel).getByRole('button', { name: 'Aufgabe geben' }));
@@ -584,7 +618,7 @@ describe('assigning on the page (S3.2)', () => {
 
   it('is offered to teachers only', async () => {
     renderAt('/mushaf/113', loader().deps);
-    await screen.findByRole('heading', { name: 'الفلق' });
+    await screen.findByText('الفلق', { selector: '.page-sura' });
     expect(
       screen.queryByRole('button', { name: 'Aufgabe hier geben' })
     ).not.toBeInTheDocument();
@@ -595,25 +629,13 @@ describe('assigning on the page (S3.2)', () => {
     expect(
       await screen.findByText('Sūra 113, Āya 2 Wort 2 bis Āya 3 Wort 4')
     ).toBeInTheDocument();
-    const words = (n: number) =>
-      [...document.querySelectorAll(`#aya-${n} > span`)].filter((s) =>
-        s.querySelector('button')
+    const marks = (aya: number, count: number) =>
+      Array.from({ length: count }, (_, i) =>
+        wordAt(`hafs:113:${aya}:${i + 1}`).parentElement!.classList.contains('in-range')
       );
     // al-Falaq 2 has four words (from the second on), 3 has five (to the fourth).
-    expect(words(2).map((w) => w.classList.contains('in-range'))).toEqual([
-      false,
-      true,
-      true,
-      true,
-    ]);
-    expect(words(3).map((w) => w.classList.contains('in-range'))).toEqual([
-      true,
-      true,
-      true,
-      true,
-      false,
-    ]);
-    expect(document.querySelectorAll('.aya.in-range')).toHaveLength(0);
+    expect(marks(2, 4)).toEqual([false, true, true, true]);
+    expect(marks(3, 5)).toEqual([true, true, true, true, false]);
   });
 
   it('links from an assignment to its words', () => {

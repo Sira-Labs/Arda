@@ -4,6 +4,7 @@
  *   npm run fetch -w @arda/tools   download the pinned sources into tools/.cache, checked
  *   npm run pack -w @arda/tools    build the packs from them into apps/web/public/packs
  *   npm run counts -w @arda/tools  write the words per āya to packages/quran/src/words.ts
+ *   npm run pages -w @arda/tools   write the Madīna pages to packages/quran/src/pages.ts
  *
  * Sources and their checksums are pinned in tools/sources.json; a source that changed fails
  * the build instead of changing the Qurʾān text the app shows.
@@ -14,7 +15,8 @@ import { fileURLToPath } from 'node:url';
 import { parseCpfair } from './cpfair';
 import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
-import { buildSpec } from './build';
+import { madinaPageStarts, pagesModule } from './pages';
+import { buildSpec, pagesOf } from './build';
 import { serialise } from './pack';
 import { parseIndopak } from './indopak';
 import { PACKS } from './packs';
@@ -23,6 +25,9 @@ import { parseTanzil } from './tanzil';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cacheDir = `${root}.cache/`;
 const outDir = fileURLToPath(new URL('../../apps/web/public/packs/', import.meta.url));
+const pagesFile = fileURLToPath(
+  new URL('../../packages/quran/src/pages.ts', import.meta.url)
+);
 const countsFile = fileURLToPath(
   new URL('../../packages/quran/src/words.ts', import.meta.url)
 );
@@ -37,7 +42,7 @@ interface SourceEntry {
   attribution: string;
 }
 type Sources = Record<
-  'tanzil-uthmani' | 'cpfair-tajweed' | 'digitalkhatt-indopak',
+  'tanzil-uthmani' | 'tanzil-metadata' | 'cpfair-tajweed' | 'digitalkhatt-indopak',
   SourceEntry
 >;
 
@@ -125,6 +130,7 @@ async function buildPacks(): Promise<void> {
       riwaya: pack.riwaya,
       title: pack.title,
       suras: [pack.suras[0]!.sura, pack.suras.at(-1)!.sura],
+      pages: pagesOf(pack),
       sources: pack.sources.map(({ id, licence, attribution }) => ({
         id,
         licence,
@@ -145,11 +151,24 @@ async function writeCounts(): Promise<void> {
   process.stdout.write(`${countsFile}: ${counts.flat().length} āyāt\n`);
 }
 
+/** The Madīna page table, from the pinned Tanzil metadata. */
+async function writePages(): Promise<void> {
+  const sources = await loadSources();
+  const raw = await readFile(`${cacheDir}${sources['tanzil-metadata'].file}`, 'utf8');
+  if (sha256(raw) !== sources['tanzil-metadata'].sha256) {
+    throw new Error('tanzil-metadata: checksum differs from the pinned one');
+  }
+  const starts = madinaPageStarts(raw);
+  await writeFile(pagesFile, pagesModule(starts));
+  process.stdout.write(`${pagesFile}: ${starts.length} pages\n`);
+}
+
 const command = process.argv[2];
 if (command === 'fetch') await fetchSources();
 else if (command === 'pack') await buildPacks();
 else if (command === 'counts') await writeCounts();
+else if (command === 'pages') await writePages();
 else {
-  process.stderr.write('usage: cli.ts fetch | pack | counts\n');
+  process.stderr.write('usage: cli.ts fetch | pack | counts | pages\n');
   process.exitCode = 2;
 }

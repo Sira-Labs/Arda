@@ -59,3 +59,15 @@ Until the IndoPak layer exists, the ʿUthmānī text shows Tanzil's Madīna paus
   عَلَيْهِمْ); keys stay Ḥafṣ (Kūfan), the basmala is āya 1 and the printed 6–7 are āya 7.
 - The muṣḥaf shows IndoPak first; the student can switch to the Madīna (ʿUthmānī) script, and
   the choice is kept on the device.
+
+## Update 2026-10-04: the muṣḥaf as printed pages (S3.4)
+
+- The muṣḥaf shows one page at a time (`/mushaf/seite/:page`), as the chosen edition prints it:
+  IndoPak line by line, each printed line one line on screen (scaled to the width), with the
+  sheikh's page numbers; Madīna by its 604 pages (Tanzil's Quran Metadata, in `@arda/quran`),
+  as running text, since we have no line data for it. A page shows what the app's packs hold.
+- `/mushaf/:sura` opens the page the sūra (or an assignment's first āya) starts on; the
+  assignment is marked on every page it spans, and a teacher can pick words across pages
+  within one sūra.
+- Pages turn with the arrows, a swipe (right: next page, as the muṣḥaf opens) or the keyboard
+  (← next, → previous).

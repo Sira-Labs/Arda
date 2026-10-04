@@ -7,6 +7,7 @@ import { parseCpfair } from '../src/cpfair';
 import { wordCount, type Pack, type PackIndex, type PackWord } from '@arda/quran';
 import { countsModule, wordCounts } from '../src/counts';
 import { buildSpec } from '../src/build';
+import { madinaPageStarts, pagesModule } from '../src/pages';
 import { parseIndopak } from '../src/indopak';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
@@ -362,5 +363,13 @@ describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
       new URL('../../packages/quran/src/words.ts', import.meta.url)
     );
     expect(countsModule(wordCounts(tanzil))).toBe(readFileSync(file, 'utf8'));
+  });
+
+  it('gives the Madīna pages in @arda/quran, unchanged', () => {
+    const metadata = readFileSync(`${cache}${sources['tanzil-metadata']!.file}`, 'utf8');
+    const file = fileURLToPath(
+      new URL('../../packages/quran/src/pages.ts', import.meta.url)
+    );
+    expect(pagesModule(madinaPageStarts(metadata))).toBe(readFileSync(file, 'utf8'));
   });
 });

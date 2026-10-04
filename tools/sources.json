@@ -22,5 +22,13 @@
     "title": "DigitalKhatt IndoPak text, 15-line layout (digitalkhatt-js)",
     "licence": "MIT",
     "attribution": "DigitalKhatt contributors, https://github.com/DigitalKhatt/digitalkhatt-js"
+  },
+  "tanzil-metadata": {
+    "file": "tanzil-quran-data.js",
+    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "sha256": "9e9930c592aaa34b5c7a79ff4e99ffdc782263a266090bfe2c49e4ed4bac4ca4",
+    "title": "Tanzil Quran Metadata 1.0 (sūras, Madīna pages)",
+    "licence": "CC BY 3.0",
+    "attribution": "Tanzil Project, https://tanzil.net"
   }
 }

@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { SURAS, hasWords, wordCount } from '../src/index';
+import {
+  MADINA_PAGES,
+  SURAS,
+  hasWords,
+  madinaPage,
+  madinaPageStart,
+  wordCount,
+} from '../src/index';
 
 describe('words per āya', () => {
   it('has a count for every āya and none beyond', () => {
@@ -35,5 +42,24 @@ describe('word bounds of an assignment', () => {
     expect(hasWords({ sura: 2, from: 2, to: 2 }, { from: 5, to: 3 })).toBe(false);
     expect(hasWords(range, { from: 0, to: 3 })).toBe(false);
     expect(hasWords({ sura: 2, from: 1, to: 287 }, { from: 1, to: 1 })).toBe(false);
+  });
+});
+
+describe('the Madīna pages', () => {
+  it('has 604 pages, each starting with an āya', () => {
+    expect(MADINA_PAGES).toBe(604);
+    expect(madinaPageStart(1)).toEqual([1, 1]);
+    expect(madinaPageStart(2)).toEqual([2, 1]);
+    expect(madinaPageStart(604)).toEqual([112, 1]);
+    expect(madinaPageStart(605)).toBeUndefined();
+  });
+
+  it('finds the page of an āya', () => {
+    expect(madinaPage(1, 7)).toBe(1);
+    expect(madinaPage(2, 5)).toBe(2);
+    expect(madinaPage(2, 6)).toBe(3);
+    expect(madinaPage(2, 30)).toBe(6);
+    expect(madinaPage(2, 37)).toBe(6);
+    expect(madinaPage(114, 6)).toBe(604);
   });
 });
