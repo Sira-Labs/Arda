@@ -1,30 +1,57 @@
 import { storedChoice } from './storedChoice';
 
+/** Where the recordings are; each host is one media-src allows (Caddyfile). */
+const EVERYAYAH = 'https://everyayah.com/data';
+const QURANICAUDIO = 'https://download.quranicaudio.com/quran';
+
 /**
- * The reciters the muṣḥaf plays (ADR-0011): al-Ḥuṣarī's teaching recitation (muʿallim, the
- * default), his murattal, and Māhir al-Muʿayqilī (owner, 2026-10-05). The recordings are
- * EveryAyah's, one file per āya, streamed with credit and never stored by the app. Word
- * timings (quran-align) exist for al-Ḥuṣarī's two; Māhir al-Muʿayqilī plays āya by āya.
+ * The reciters the muṣḥaf plays (ADR-0011), streamed with credit and never stored by the app,
+ * each marked word by word: al-Ḥuṣarī's teaching recitation (muʿallim, the default) and his
+ * murattal, EveryAyah's one file per āya timed by quran-align; and Māhir al-Muʿayqilī (owner,
+ * 2026-10-05), QuranicAudio's one file per sūra timed by Quranic Universal Audio.
  */
 export const RECITERS = [
-  { id: 'husary-muallim', folder: 'Husary_Muallim_128kbps', timed: true },
-  { id: 'husary', folder: 'Husary_64kbps', timed: true },
-  { id: 'maher', folder: 'MaherAlMuaiqly128kbps', timed: false },
+  { id: 'husary-muallim', by: 'aya', audio: `${EVERYAYAH}/Husary_Muallim_128kbps/` },
+  { id: 'husary', by: 'aya', audio: `${EVERYAYAH}/Husary_64kbps/` },
+  { id: 'maher', by: 'sura', audio: `${QURANICAUDIO}/maher_almu3aiqly/year1440/` },
 ] as const;
 
 export type ReciterId = (typeof RECITERS)[number]['id'];
 export type Reciter = (typeof RECITERS)[number];
 
-/** Where EveryAyah serves the recordings; the host is the one media-src allows (Caddyfile). */
-export const AUDIO_HOST = 'https://everyayah.com';
+/** Where an āya is heard: a file, from `start` to `end` (ms; to the file's end without one). */
+export interface Recording {
+  src: string;
+  start: number;
+  end?: number;
+}
 
 const pad = (n: number) => String(n).padStart(3, '0');
 
-/** The recording of one āya; āya 0 is a sūra's basmala, recorded once as al-Fātiḥa 1. */
-export const ayaAudio = (reciter: Reciter, sura: number, aya: number): string =>
-  aya === 0
-    ? `${AUDIO_HOST}/data/${reciter.folder}/001001.mp3`
-    : `${AUDIO_HOST}/data/${reciter.folder}/${pad(sura)}${pad(aya)}.mp3`;
+/**
+ * The recording of an āya; āya 0 is a sūra's basmala. By āya, the basmala is recorded once,
+ * as al-Fātiḥa 1; by sūra, it is what precedes the sūra's first āya in its file. A reciter
+ * recorded by sūra needs the āyāt's spans (its timings); without them there is none.
+ */
+export function recordingOf(
+  reciter: Reciter,
+  sura: number,
+  aya: number,
+  spans?: Readonly<Record<string, readonly [number, number]>>
+): Recording | null {
+  if (reciter.by === 'aya') {
+    return {
+      src: `${reciter.audio}${aya === 0 ? '001001' : pad(sura) + pad(aya)}.mp3`,
+      start: 0,
+    };
+  }
+  const span = spans?.[`${sura}:${aya === 0 ? 1 : aya}`];
+  if (!span) return null;
+  const src = `${reciter.audio}${pad(sura)}.mp3`;
+  return aya === 0
+    ? { src, start: 0, end: span[0] }
+    : { src, start: span[0], end: span[1] };
+}
 
 export const reciterOf = (id: ReciterId): Reciter => RECITERS.find((r) => r.id === id)!;
 
