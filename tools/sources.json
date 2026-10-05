@@ -38,5 +38,13 @@
     "title": "quran-align word timings for EveryAyah recordings (release 2016-11-24)",
     "licence": "CC BY 4.0",
     "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-align"
+  },
+  "qua-maher": {
+    "file": "qua-v3.2.0-maher_al_muaiqly_qdc.zip",
+    "url": "https://github.com/QUD-Technologies/quranic-universal-audio/releases/download/v3.2.0/maher_al_muaiqly_qdc.zip",
+    "sha256": "538c8ec00170eacfd908872177d4d5446a062f9a0f98c8ddbad467cd78b9b567",
+    "title": "Quranic Universal Audio v3.2.0: Maher Al-Muaiqly (QuranicAudio, year 1440), word timestamps",
+    "licence": "CC BY 4.0",
+    "attribution": "Quranic Universal Audio (QUD Technologies), https://github.com/QUD-Technologies/quranic-universal-audio"
   }
 }

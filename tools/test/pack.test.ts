@@ -17,9 +17,11 @@ import { juzStarts, madinaPageStarts, pagesModule } from '../src/pages';
 import { parseIndopak } from '../src/indopak';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
+import { gunzipSync } from 'node:zlib';
 import { parseTanzil } from '../src/tanzil';
 import {
   TIMED_RECITERS,
+  buildSurahTimings,
   buildTimings,
   serialiseTimings,
   shippedSuras,
@@ -387,23 +389,30 @@ describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
   });
 
   it('gives the reciters’ word timings in the app, unchanged', () => {
-    const source = sources['quran-align'] as { file: string; sha256: string };
-    const archive = readFileSync(`${cache}${source.file}`);
-    expect(createHash('sha256').update(archive).digest('hex')).toBe(source.sha256);
     for (const reciter of TIMED_RECITERS) {
-      const timings = buildTimings(
-        unzipFile(archive, reciter.file).toString('utf8'),
-        reciter,
-        shippedSuras(),
-        {
-          licence: 'CC BY 4.0',
-          attribution: 'Collin Fair (cpfair), https://github.com/cpfair/quran-align',
-        }
-      );
-      const file = fileURLToPath(
+      const source = sources[reciter.from] as {
+        file: string;
+        sha256: string;
+        licence: string;
+        attribution: string;
+      };
+      const archive = readFileSync(`${cache}${source.file}`);
+      expect(createHash('sha256').update(archive).digest('hex')).toBe(source.sha256);
+      const credit = { licence: source.licence, attribution: source.attribution };
+      const file = unzipFile(archive, reciter.file);
+      const timings =
+        reciter.from === 'quran-align'
+          ? buildTimings(file.toString('utf8'), reciter, shippedSuras(), credit)
+          : buildSurahTimings(
+              gunzipSync(file).toString('utf8'),
+              reciter,
+              shippedSuras(),
+              credit
+            );
+      const shipped = fileURLToPath(
         new URL(`../../apps/web/public/audio/timings/${reciter.id}.json`, import.meta.url)
       );
-      expect(serialiseTimings(timings)).toBe(readFileSync(file, 'utf8'));
+      expect(serialiseTimings(timings)).toBe(readFileSync(shipped, 'utf8'));
     }
   });
 

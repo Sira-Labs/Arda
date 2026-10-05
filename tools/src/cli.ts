@@ -13,6 +13,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { gunzipSync } from 'node:zlib';
 import { parseCpfair } from './cpfair';
 import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
@@ -22,7 +23,13 @@ import { serialise } from './pack';
 import { parseIndopak } from './indopak';
 import { PACKS } from './packs';
 import { parseTanzil } from './tanzil';
-import { TIMED_RECITERS, buildTimings, serialiseTimings, shippedSuras } from './timings';
+import {
+  TIMED_RECITERS,
+  buildSurahTimings,
+  buildTimings,
+  serialiseTimings,
+  shippedSuras,
+} from './timings';
 import { unzipFile } from './zip';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
@@ -52,7 +59,8 @@ type Sources = Record<
   | 'tanzil-metadata'
   | 'cpfair-tajweed'
   | 'digitalkhatt-indopak'
-  | 'quran-align',
+  | 'quran-align'
+  | 'qua-maher',
   SourceEntry
 >;
 
@@ -173,21 +181,27 @@ async function writePages(): Promise<void> {
   process.stdout.write(`${pagesFile}: ${starts.length} pages\n`);
 }
 
-/** Word timings of the reciters the player highlights, for the sūras the app ships. */
+/** Word timings of the reciters the player marks, for the sūras the app ships. */
 async function writeTimings(): Promise<void> {
   const sources = await loadSources();
-  const source = sources['quran-align'];
-  const archive = await readFile(`${cacheDir}${source.file}`);
-  if (sha256(archive) !== source.sha256) {
-    throw new Error('quran-align: checksum differs from the pinned one');
-  }
   await mkdir(timingsDir, { recursive: true });
   for (const reciter of TIMED_RECITERS) {
-    const raw = unzipFile(archive, reciter.file).toString('utf8');
-    const timings = buildTimings(raw, reciter, shippedSuras(), {
-      licence: source.licence,
-      attribution: source.attribution,
-    });
+    const source = sources[reciter.from];
+    const archive = await readFile(`${cacheDir}${source.file}`);
+    if (sha256(archive) !== source.sha256) {
+      throw new Error(`${reciter.from}: checksum differs from the pinned one`);
+    }
+    const credit = { licence: source.licence, attribution: source.attribution };
+    const file = unzipFile(archive, reciter.file);
+    const timings =
+      reciter.from === 'quran-align'
+        ? buildTimings(file.toString('utf8'), reciter, shippedSuras(), credit)
+        : buildSurahTimings(
+            gunzipSync(file).toString('utf8'),
+            reciter,
+            shippedSuras(),
+            credit
+          );
     const text = serialiseTimings(timings);
     await writeFile(`${timingsDir}${reciter.id}.json`, text);
     process.stdout.write(`${reciter.id}.json: ${text.length} bytes\n`);
