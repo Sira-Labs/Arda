@@ -49,3 +49,18 @@ allow caching.
   docked above the navigation (pause or go on, repeat, stop), and the page scrolls to keep the
   recited word in sight; the controls never scroll away. "Seite anhören", the reciter and the
   speed stay above the page.
+
+## Update 2026-10-05: Māhir al-Muʿayqilī word by word
+
+- The owner tried him and found the marking did not follow him. EveryAyah's recordings of
+  him have no open word timings, but [Quranic Universal Audio](https://github.com/QUD-Technologies/quranic-universal-audio)
+  (release v3.2.0, timings CC BY 4.0) times QuranicAudio's sūra-by-sūra recording of him
+  (year 1440, `download.quranicaudio.com/quran/maher_almu3aiqly/year1440/NNN.mp3`) word by
+  word. In every shipped āya its words are ours, in number and order (repeated words appear
+  again where he repeats them).
+- He is now played from those sūra files: each āya from its span within the file. At the
+  span's end the player goes on into the next āya without a seek, so the voice runs on; for a
+  repeat it pauses and seeks back. The basmala is what precedes the first āya in the file.
+- `npm run timings -w @arda/tools` writes his timings with each āya's span (`by: "sura"`),
+  checked and pinned like the others. `media-src` adds `https://download.quranicaudio.com`;
+  QuranicAudio's terms stand as EveryAyah's (ADR-0009, question 2).
