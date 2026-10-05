@@ -139,7 +139,8 @@ ADR-0017 updates.)_
 
 Word, āya or range; 0.5×–1×; loop with pause; "yours vs reciter". Default al-Ḥuṣarī
 muʿallim (ADR-0011). **Acceptance:** word highlighting follows the timings within 100 ms.
-_(Built: the page or a word's āya, al-Ḥuṣarī muʿallim and murattal marked word by word,
+_(Built: the page, or a tapped word's āya played on or repeated, a docked player that stays
+in reach, al-Ḥuṣarī muʿallim and murattal marked word by word,
 Māhir al-Muʿayqilī āya by āya, 0.5×–1×, repeat with a pause; "yours vs reciter" comes with
 recording, F7.)_
 

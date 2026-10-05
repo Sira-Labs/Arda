@@ -43,3 +43,9 @@ allow caching.
   it. Timings for him would come from running quran-align on his recordings (later).
 - **Playback:** the page or a tapped word's āya; 0.5×, 0.75×, 1×; repeat with a 1.2 s pause to
   repeat after him; a turned page falls silent. Reciter and speed are kept on the device.
+- **Choosing an āya (owner, 2026-10-05, after trying it):** tapping a word marks its āya, and
+  the word's sheet offers the āya first: "Abspielen" plays from it to the page's end,
+  "Wiederholen" loops it alone. While a recitation plays or is paused, a compact player is
+  docked above the navigation (pause or go on, repeat, stop), and the page scrolls to keep the
+  recited word in sight; the controls never scroll away. "Seite anhören", the reciter and the
+  speed stay above the page.
