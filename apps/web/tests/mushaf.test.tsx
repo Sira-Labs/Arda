@@ -481,6 +481,21 @@ describe('the muṣḥaf screen (S2.4)', () => {
       expect(audio.played[1]).toBe(recording('Husary_Muallim_128kbps', '087002'));
     });
 
+    it('ends the āya when repeat is turned off in the pause before it comes again', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await screen.findByRole('button', { name: 'Seite anhören' });
+      await user.click(wordAt('hafs:87:2:1'));
+      await user.click(screen.getByRole('button', { name: 'Wiederholen' }));
+      audio.fire('ended');
+      const dock = screen.getByRole('region', { name: 'Es läuft' });
+      await user.click(within(dock).getByRole('button', { name: 'Wiederholen' }));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      expect(audio.played).toHaveLength(1);
+      expect(screen.queryByRole('region', { name: 'Es läuft' })).toBeNull();
+    });
+
     it('does not repeat a page that was left during the pause before the repeat', async () => {
       const { audio, deps } = fakePlayer();
       renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);

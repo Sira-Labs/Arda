@@ -254,7 +254,7 @@ export function MushafPage() {
     <article
       className="stack"
       // Room below the page for the docked player or sheet, so they never cover its end.
-      data-docked={selected || player.current ? 'true' : undefined}
+      data-docked={selected ? 'sheet' : player.current ? 'player' : undefined}
       style={{ gap: 16, maxWidth: 820 }}
     >
       {back}

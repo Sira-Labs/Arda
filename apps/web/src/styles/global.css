@@ -807,8 +807,13 @@ a {
 .word-sheet .mini-player-aya {
   flex-basis: 100%;
 }
-article[data-docked='true'] {
+article[data-docked='player'] {
   padding-block-end: 120px;
+}
+/* The word's sheet may grow to 70% of the screen (it scrolls inside): the page's end can
+   always be scrolled clear of it. */
+article[data-docked='sheet'] {
+  padding-block-end: calc(70vh + var(--nav-height, 72px) + 32px);
 }
 .page-turn {
   display: flex;

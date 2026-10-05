@@ -98,7 +98,7 @@ export function MiniPlayer({ player }: { player: Player }) {
         aria-label={t.loop}
         title={t.loop}
         aria-pressed={player.loop}
-        onClick={() => player.setLoop(!player.loop)}
+        onClick={player.toggleLoop}
       >
         <span aria-hidden="true">↻</span>
       </button>
