@@ -348,7 +348,13 @@ export const ar: Messages = {
     player: {
       label: 'استماع',
       playPage: 'استمع إلى الصفحة',
-      playAya: 'استمع إلى الآية',
+      play: 'تشغيل',
+      stop: 'إيقاف',
+      aya: (sura, aya) =>
+        aya === 0
+          ? `سورة ${num(sura)} · البسملة`
+          : `سورة ${num(sura)} · الآية ${num(aya)}`,
+      nowPlaying: 'قيد التشغيل',
       pause: 'إيقاف مؤقت',
       resume: 'متابعة',
       reciter: 'القارئ',

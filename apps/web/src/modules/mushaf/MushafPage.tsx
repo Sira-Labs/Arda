@@ -18,9 +18,9 @@ import {
   type Place,
 } from './pageModel';
 import { useMushafScript, type MushafScript } from './script';
-import { PlayerBar } from './PlayerBar';
+import { MiniPlayer, PlayerBar } from './PlayerBar';
 import { usePageSwipe } from './swipe';
-import { usePlayer } from './usePlayer';
+import { usePlayer, type PlayItem, type Recited } from './usePlayer';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 import { Word, type WordTap } from './Word';
@@ -135,6 +135,8 @@ export function MushafPage() {
   useEffect(() => stop, [page, stop]);
   const lines = useRef<HTMLDivElement>(null);
   useLineFit(lines, blocks);
+  const recitation = useMemo(() => pageRecitation(blocks), [blocks]);
+  useFollowRecitation(lines, player.recited);
 
   useEffect(() => {
     // The muṣḥaf reads right to left: the next page lies to the left.
@@ -214,6 +216,10 @@ export function MushafPage() {
         ? 'in-range'
         : undefined;
   const recited = player.recited;
+  // The tapped word's āya is marked while its sheet is open (owner, 2026-10-05).
+  const chosen = !picking ? selected?.place : undefined;
+  const inChosen = (place: Place) =>
+    !!chosen && place.sura === chosen.sura && place.aya === chosen.aya;
   const recitedNow = (place: Place) =>
     !!recited &&
     place.sura === recited.sura &&
@@ -235,6 +241,7 @@ export function MushafPage() {
       className={marked(w.place)}
       pressed={picking ? marked(w.place) === 'picked' : selected?.key === w.key}
       playing={recitedNow(w.place)}
+      chosen={inChosen(w.place)}
       onTap={(tap) => onTap(tap, indopak)}
       indopak={indopak}
       ayaEnd={w.ayaEnd}
@@ -244,7 +251,12 @@ export function MushafPage() {
   const head = pageHeader(blocks);
 
   return (
-    <article className="stack" style={{ gap: 16, maxWidth: 820 }}>
+    <article
+      className="stack"
+      // Room below the page for the docked player or sheet, so they never cover its end.
+      data-docked={selected || player.current ? 'true' : undefined}
+      style={{ gap: 16, maxWidth: 820 }}
+    >
       {back}
       <header className="stack" style={{ gap: 6 }}>
         <p className="eyebrow">
@@ -311,7 +323,7 @@ export function MushafPage() {
         {notice && <p role="status">{notice}</p>}
       </header>
 
-      <PlayerBar player={player} page={pageRecitation(blocks)} />
+      <PlayerBar player={player} page={recitation} />
       <div className="mushaf-sheet" data-script={indopak ? 'indopak' : 'madina'}>
         {head && (
           // The printed head: the para on the right, the page, the sūra on the left. The
@@ -378,16 +390,27 @@ export function MushafPage() {
           label={selected.label}
           onClose={close}
           script={selected.indopak ? 'indopak' : 'madina'}
-          onListen={
+          aya={
             selected.place
-              ? () => {
-                  player.play([{ sura: selected.place!.sura, aya: selected.place!.aya }]);
-                  close();
+              ? {
+                  label: m.mushaf.player.aya(selected.place.sura, selected.place.aya),
+                  // From this āya to the page's end; or this āya again and again.
+                  onPlay: () => {
+                    player.play(fromAya(recitation, selected.place!));
+                    close();
+                  },
+                  onRepeat: () => {
+                    player.repeat([
+                      { sura: selected.place!.sura, aya: selected.place!.aya },
+                    ]);
+                    close();
+                  },
                 }
               : undefined
           }
         />
       )}
+      {!selected && !(picking && given) && <MiniPlayer player={player} />}
       {picking && given && (
         <PageAssign
           range={given}
@@ -444,6 +467,32 @@ function blockView(
         </p>
       );
   }
+}
+
+/** The page's āyāt from `place`'s on (itself alone if the page does not list it). */
+function fromAya(recitation: readonly PlayItem[], place: Place): readonly PlayItem[] {
+  const at = recitation.findIndex((r) => r.sura === place.sura && r.aya === place.aya);
+  return at < 0 ? [{ sura: place.sura, aya: place.aya }] : recitation.slice(at);
+}
+
+/**
+ * Keeps the word being recited in sight: when it moves below the docked player or above the
+ * screen, the page scrolls it to the middle.
+ */
+function useFollowRecitation(
+  page: React.RefObject<HTMLElement | null>,
+  recited: Recited | null
+) {
+  const key = recited ? `${recited.sura}:${recited.aya}:${recited.from}` : '';
+  useEffect(() => {
+    const word = key ? page.current?.querySelector('[data-playing="true"]') : null;
+    if (!word || typeof word.scrollIntoView !== 'function') return;
+    const { top, bottom } = word.getBoundingClientRect();
+    // The dock and the navigation take the lowest part of the screen.
+    if (top >= 72 && bottom <= window.innerHeight - 220) return;
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    word.scrollIntoView({ block: 'center', behavior: still ? 'auto' : 'smooth' });
+  }, [key, page]);
 }
 
 /** The words picked so far, in reading order. */

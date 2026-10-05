@@ -171,13 +171,18 @@ export function usePlayer() {
     return () => cancelAnimationFrame(frame);
   }, [playing]);
 
-  const play = useCallback((queue: readonly PlayItem[]) => {
+  const start = useCallback((queue: readonly PlayItem[], looping: boolean) => {
     if (queue.length === 0) return;
     clearTimeout(again.current);
     setFailed(false);
+    setLoop(looping);
     setTrack({ queue, index: 0 });
     setPlaying(true);
   }, []);
+  /** Plays the āyāt once, one after another. */
+  const play = useCallback((queue: readonly PlayItem[]) => start(queue, false), [start]);
+  /** Plays the āyāt again and again, with a pause to repeat after the reciter. */
+  const repeat = useCallback((queue: readonly PlayItem[]) => start(queue, true), [start]);
   const pause = useCallback(() => {
     clearTimeout(again.current);
     setPlaying(false);
@@ -211,9 +216,12 @@ export function usePlayer() {
     playing,
     /** Paused within a list of āyāt, ready to go on. */
     paused: !playing && track !== null,
+    /** The āya being played or paused in, if any. */
+    current: item ?? null,
     failed,
     recited,
     play,
+    repeat,
     pause,
     resume,
     stop,

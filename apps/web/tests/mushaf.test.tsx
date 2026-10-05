@@ -443,22 +443,38 @@ describe('the muṣḥaf screen (S2.4)', () => {
       await user.click(screen.getByRole('button', { name: '0.5×' }));
       expect(audio.playbackRate).toBe(0.5);
       expect(localStorage.getItem('arda.speed')).toBe('0.5');
-      await user.click(screen.getByRole('button', { name: 'Anhalten' }));
+      // The player stays docked at the bottom: paused, on again where it stopped, stopped.
+      const dock = screen.getByRole('region', { name: 'Es läuft' });
+      expect(dock).toHaveTextContent('Sūra 87 · Āya 1');
+      await user.click(within(dock).getByRole('button', { name: 'Anhalten' }));
       expect(audio.paused).toBe(true);
-      await user.click(screen.getByRole('button', { name: 'Weiter' }));
+      await user.click(within(dock).getByRole('button', { name: 'Weiter' }));
       expect(audio.paused).toBe(false);
       expect(audio.currentTime).toBe(2.5);
+      await user.click(within(dock).getByRole('button', { name: 'Stopp' }));
+      expect(audio.paused).toBe(true);
+      expect(screen.queryByRole('region', { name: 'Es läuft' })).toBeNull();
     });
 
     it('plays a tapped word’s āya, again and again when asked to repeat', async () => {
       const { audio, deps } = fakePlayer();
       renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
       const user = userEvent.setup();
-      await user.click(await screen.findByRole('button', { name: 'Wiederholen' }));
+      await screen.findByRole('button', { name: 'Seite anhören' });
       await user.click(wordAt('hafs:87:2:1'));
-      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      // The tapped word's āya is marked, and its sheet offers to play or repeat it.
+      expect(wordAt('hafs:87:2:2').parentElement).toHaveAttribute('data-chosen', 'true');
+      expect(wordAt('hafs:87:1:1').parentElement).not.toHaveAttribute('data-chosen');
+      const sheet = screen.getByRole('dialog', { name: 'Sūra 87, Āya 2, Wort 1' });
+      expect(sheet).toHaveTextContent('Sūra 87 · Āya 2');
+      await user.click(within(sheet).getByRole('button', { name: 'Wiederholen' }));
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(audio.played).toEqual([recording('Husary_Muallim_128kbps', '087002')]);
+      const dock = screen.getByRole('region', { name: 'Es läuft' });
+      expect(within(dock).getByRole('button', { name: 'Wiederholen' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
       audio.fire('ended');
       // After a pause to repeat after him, the āya again.
       await waitFor(() => expect(audio.played).toHaveLength(2), { timeout: 2500 });
@@ -469,9 +485,9 @@ describe('the muṣḥaf screen (S2.4)', () => {
       const { audio, deps } = fakePlayer();
       renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
       const user = userEvent.setup();
-      await user.click(await screen.findByRole('button', { name: 'Wiederholen' }));
+      await screen.findByRole('button', { name: 'Seite anhören' });
       await user.click(wordAt('hafs:87:2:1'));
-      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      await user.click(screen.getByRole('button', { name: 'Wiederholen' }));
       audio.fire('ended');
       await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
       expect(await screen.findByText('Seite 599 · IndoPak')).toBeInTheDocument();
@@ -494,7 +510,7 @@ describe('the muṣḥaf screen (S2.4)', () => {
         )
       ).toBeInTheDocument();
       await user.click(wordAt('hafs:87:1:1'));
-      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      await user.click(screen.getByRole('button', { name: 'Abspielen' }));
       expect(audio.played).toEqual([recording('MaherAlMuaiqly128kbps', '087001')]);
       for (const n of [1, 2, 3]) {
         expect(wordAt(`hafs:87:1:${n}`).parentElement).toHaveAttribute(
@@ -503,6 +519,9 @@ describe('the muṣḥaf screen (S2.4)', () => {
         );
       }
       expect(asked).not.toContain('maher');
+      // "Play" goes on from the tapped āya to the next.
+      audio.fire('ended');
+      expect(audio.played.at(-1)).toBe(recording('MaherAlMuaiqly128kbps', '087002'));
     });
 
     it('says when the recitation cannot be loaded, and falls silent on a turned page', async () => {

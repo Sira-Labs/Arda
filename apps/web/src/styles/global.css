@@ -231,6 +231,18 @@ a {
   background: var(--accent-2);
   color: var(--on-accent-2);
 }
+/* A toggle that is on (repeat, a chosen speed) is filled, not only announced. */
+.btn[aria-pressed='true'] {
+  background: var(--accent-2);
+  color: var(--on-accent-2);
+}
+/* A round button with only a sign; its name is in aria-label. */
+.btn-icon {
+  inline-size: var(--tap);
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.1rem;
+}
 .input {
   min-height: var(--tap);
   padding: 0 14px;
@@ -765,6 +777,38 @@ a {
 .player-row {
   flex-wrap: wrap;
   gap: 8px 12px;
+}
+/* The āya chosen by tapping a word, while its sheet offers to play or repeat it. */
+.mushaf-text [data-chosen='true'] {
+  border-radius: 6px;
+  background: var(--range-bg);
+  box-decoration-break: clone;
+}
+/* The player docked above the navigation, in reach however far the page scrolls. */
+.dock {
+  position: fixed;
+  inset-inline: 16px;
+  inset-block-end: calc(
+    16px + var(--nav-height, 72px) + env(safe-area-inset-bottom, 0px)
+  );
+  z-index: 20;
+  max-inline-size: 560px;
+  margin-inline: auto;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+}
+.mini-player {
+  gap: 8px;
+  padding: 8px 12px;
+}
+.mini-player-aya {
+  flex: 1;
+  font-weight: 700;
+}
+.word-sheet .mini-player-aya {
+  flex-basis: 100%;
+}
+article[data-docked='true'] {
+  padding-block-end: 120px;
 }
 .page-turn {
   display: flex;

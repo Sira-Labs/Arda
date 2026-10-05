@@ -339,7 +339,11 @@ export const de = {
     player: {
       label: 'Anhören',
       playPage: 'Seite anhören',
-      playAya: 'Āya anhören',
+      play: 'Abspielen',
+      stop: 'Stopp',
+      aya: (sura: number, aya: number) =>
+        aya === 0 ? `Sūra ${sura} · Basmala` : `Sūra ${sura} · Āya ${aya}`,
+      nowPlaying: 'Es läuft',
       pause: 'Anhalten',
       resume: 'Weiter',
       reciter: 'Rezitator',
