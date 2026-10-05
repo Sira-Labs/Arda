@@ -1,6 +1,6 @@
 # ADR-0011: Reciter audio: streamed with credit, word timings for slow and loop
 
-- Status: proposed
+- Status: accepted (2026-10-05)
 - Date: 2026-10-03
 
 ## Context
@@ -24,3 +24,22 @@ question 3).
 
 Offline playback is possible only for the sheikh's own recordings and for sources whose terms
 allow caching.
+
+## Update 2026-10-05: the player ships (S3.1)
+
+- **Reciters (owner, 2026-10-05):** al-Ḥuṣarī, muʿallim (the default) and murattal, and Māhir
+  al-Muʿayqilī. The sheikh's answer to question 3 may add or reorder them.
+- **Recordings:** EveryAyah's āya-by-āya files (`everyayah.com/data/<folder>/SSSAAA.mp3`; a
+  sūra's basmala is al-Fātiḥa 1), streamed with credit, never mirrored or precached by the
+  app. `media-src` allows `https://everyayah.com` only. ADR-0009 question 2 (EveryAyah's terms
+  for a free app) stays open; if the answer is no, the folder names change, not the player.
+- **Word timings:** quran-align (Collin Fair, CC BY 4.0) times every word of EveryAyah's
+  al-Ḥuṣarī recordings against the Tanzil words, the words our keys count (6,225 of 6,236
+  āyāt match the word count exactly; in the shipped sūras every āya does, 2:181 lacks one
+  word's time). `npm run timings -w @arda/tools` keeps those of the shipped sūras in
+  `apps/web/public/audio/timings/`, checked and pinned like the packs. So the Quran.com API
+  registration is no longer needed for the player.
+- **Māhir al-Muʿayqilī** has no open word timings: his āya is marked whole while he recites
+  it. Timings for him would come from running quran-align on his recordings (later).
+- **Playback:** the page or a tapped word's āya; 0.5×, 0.75×, 1×; repeat with a 1.2 s pause to
+  repeat after him; a turned page falls silent. Reciter and speed are kept on the device.

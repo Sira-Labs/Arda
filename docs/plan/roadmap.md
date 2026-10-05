@@ -8,14 +8,16 @@
   months.**
 - Every sprint ends on staging (`arda-stg.siralabs.org`) and is usable on its own.
 
-## Status now (2026-10-04)
+## Status now (2026-10-05)
 
-| Done                                                                                                                                                                                                                                                       | In review                        | Next                                               |
-| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | -------------------------------------------------- |
-| P0; P1 (S1.1–S1.6: staging, engine, unit 2 and games, ḥalaqāt, assignments); S2.1–S2.4 muṣḥaf, offline, IndoPak first; S3.2 assign on the page; S3.3 al-Fātiḥa and al-Baqara ([PRs #7–#12](https://github.com/Sira-Labs/Arda/pulls?q=is%3Apr+is%3Amerged)) | S3.4 the muṣḥaf as printed pages | S3.1 reciter player (waits for timings); units 3–4 |
+| Done                                                                                                                                                                                                                                                                                | In review               | Next      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- | --------- |
+| P0; P1 (S1.1–S1.6: staging, engine, unit 2 and games, ḥalaqāt, assignments); S2.1–S2.4 muṣḥaf, offline, IndoPak first; S3.2 assign on the page; S3.3 al-Fātiḥa and al-Baqara; S3.4–S3.5 printed pages ([PRs #7–#14](https://github.com/Sira-Labs/Arda/pulls?q=is%3Apr+is%3Amerged)) | S3.1 the reciter player | units 3–4 |
 
 Owner, 2026-10-04: keep going and merge PRs automatically; a status report every evening; al-Baqara
 next (added to S3 as S3.3); the muṣḥaf as printed pages, IndoPak as the sheikh's (S3.4).
+Owner, 2026-10-05: the page as a printed muṣḥaf, zoom never turns it (S3.5); the language at hand
+on Today; reciters al-Ḥuṣarī and Māhir al-Muʿayqilī (S3.1).
 
 ## Why this order
 
@@ -83,19 +85,19 @@ gantt
 
 ## Waiting on
 
-| Item                                                         | From               | Needed by            | Blocks                        | Status                                               |
-| ------------------------------------------------------------ | ------------------ | -------------------- | ----------------------------- | ---------------------------------------------------- |
-| The sheikh made a teacher on staging (admin action with 2FA) | owner              | now                  | G1 with him                   | open; a staging helper or admin page can do it       |
-| Answers 1 and 4: iqlāb with ghunna; his lessons              | the sheikh         | S2 (Oct 5)           | unit 2 sign-off, pilot set-up | open                                                 |
-| Answer 2: his IndoPak edition (13, 15 or 16 lines)           | the sheikh         | S2 (Oct 5)           | the page layout               | answered: 15 lines (ADR-0017 update)                 |
-| IndoPak word-by-word text licence (ADR-0009 question 1)      | Tarteel, via owner | S2 (Oct 5)           | the IndoPak layer             | resolved: DigitalKhatt's text (MIT), ADR-0009 update |
-| Answer 3: the reference reciter                              | the sheikh         | S3 (Oct 12)          | the player                    | open                                                 |
-| Quran.com API registration for word timings                  | owner              | S3 (Oct 12)          | the player                    | open                                                 |
-| RustFS buckets for recordings                                | owner              | S4 (Oct 19)          | recording                     | open                                                 |
-| Production server and its secrets                            | owner              | S5 (Oct 26)          | the pilot                     | open                                                 |
-| GPU host or CPU budget for the speech model (ADR-0013)       | owner              | S6 (Nov 2)           | the measurement               | open                                                 |
-| Native review of the French and Arabic texts                 | owner              | before the pilot     | learners outside German       | open                                                 |
-| `ARDA_ANTHROPIC_API_KEY` for translated remarks (ADR-0020)   | owner              | S4 (voice notes, T6) | remarks in other languages    | open; works without it, untranslated                 |
+| Item                                                         | From               | Needed by            | Blocks                        | Status                                                           |
+| ------------------------------------------------------------ | ------------------ | -------------------- | ----------------------------- | ---------------------------------------------------------------- |
+| The sheikh made a teacher on staging (admin action with 2FA) | owner              | now                  | G1 with him                   | open; a staging helper or admin page can do it                   |
+| Answers 1 and 4: iqlāb with ghunna; his lessons              | the sheikh         | S2 (Oct 5)           | unit 2 sign-off, pilot set-up | open                                                             |
+| Answer 2: his IndoPak edition (13, 15 or 16 lines)           | the sheikh         | S2 (Oct 5)           | the page layout               | answered: 15 lines (ADR-0017 update)                             |
+| IndoPak word-by-word text licence (ADR-0009 question 1)      | Tarteel, via owner | S2 (Oct 5)           | the IndoPak layer             | resolved: DigitalKhatt's text (MIT), ADR-0009 update             |
+| Answer 3: the reference reciter                              | the sheikh         | S3 (Oct 12)          | the player                    | owner chose al-Ḥuṣarī and Māhir al-Muʿayqilī; the sheikh may add |
+| Quran.com API registration for word timings                  | owner              | S3 (Oct 12)          | the player                    | not needed: quran-align timings (CC BY 4.0), ADR-0011 update     |
+| RustFS buckets for recordings                                | owner              | S4 (Oct 19)          | recording                     | open                                                             |
+| Production server and its secrets                            | owner              | S5 (Oct 26)          | the pilot                     | open                                                             |
+| GPU host or CPU budget for the speech model (ADR-0013)       | owner              | S6 (Nov 2)           | the measurement               | open                                                             |
+| Native review of the French and Arabic texts                 | owner              | before the pilot     | learners outside German       | open                                                             |
+| `ARDA_ANTHROPIC_API_KEY` for translated remarks (ADR-0020)   | owner              | S4 (voice notes, T6) | remarks in other languages    | open; works without it, untranslated                             |
 
 ## Portfolio capacity
 
