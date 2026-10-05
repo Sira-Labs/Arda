@@ -660,21 +660,106 @@ a {
    printed line stays one line; Madīna pages as running text. */
 .mushaf-page {
   container-type: inline-size;
+  /* Back into place when a swipe falls short (swipe.ts). */
+  transition: transform 160ms ease-out;
 }
 .mushaf-page[data-layout='lines'] .mushaf-line {
-  font-size: 4.3cqi;
-  line-height: 2.2;
+  /* --fit: the page's lines sized to fill the column (fit.ts) */
+  font-size: calc(4.3cqi * var(--fit, 1));
+  line-height: 2.1;
   white-space: nowrap;
   text-align: justify;
   text-align-last: justify;
+  border-block-end: 1px solid var(--mushaf-rule);
+}
+.mushaf-page[data-layout='lines'] .mushaf-line:last-child {
+  border-block-end: none;
+}
+.mushaf-page[data-measuring='true'] .mushaf-line {
+  text-align: start;
+  text-align-last: start;
 }
 .mushaf-page[data-opening='true'] .mushaf-line {
   max-inline-size: 72%;
   margin-inline: auto;
 }
 .mushaf-page[data-layout='lines'] .basmala {
-  font-size: 4.3cqi;
+  font-size: calc(4.3cqi * var(--fit, 1));
   margin: 0;
+  border-block-end: 1px solid var(--mushaf-rule);
+}
+
+/* The sheet: paper in a double blue frame, as the printed muṣḥaf (owner, 2026-10-05). On a
+   phone it takes the whole width, so the lines are as large as they can be. */
+.mushaf-sheet {
+  overflow: hidden;
+  padding: 4px 10px 8px;
+  border: 4px double var(--mushaf-frame);
+  border-radius: 4px;
+  background: var(--mushaf-paper);
+  box-shadow:
+    inset 0 0 0 3px var(--mushaf-paper),
+    inset 0 0 0 4px var(--mushaf-frame);
+}
+@media (max-width: 600px) {
+  .mushaf-sheet {
+    margin-inline: -12px;
+    padding-inline: 8px;
+  }
+}
+.mushaf-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 2px 4px;
+  border-block-end: 1px solid var(--mushaf-frame);
+  font-family: var(--font-arabic);
+  font-size: 1rem;
+  color: var(--mushaf-frame);
+}
+.mushaf-head-page {
+  font-weight: 700;
+  color: var(--text);
+}
+/* Ink as printed: the IndoPak face is drawn finer than the print, so it is thickened a little. */
+.mushaf-page[data-script='indopak'] {
+  -webkit-text-stroke: 0.012em currentColor;
+}
+/* Plain ink: the rules stay in the word sheet, the page looks as the sheikh's copy. */
+.mushaf-page[data-colours='plain'] .tj {
+  color: inherit;
+}
+.mushaf-page[data-colours='plain'] .tj-follower {
+  text-decoration: none;
+}
+.mushaf-page[data-entering='next'] {
+  animation: page-from-left 220ms ease-out;
+}
+.mushaf-page[data-entering='previous'] {
+  animation: page-from-right 220ms ease-out;
+}
+@keyframes page-from-left {
+  from {
+    transform: translateX(-24%);
+    opacity: 0.2;
+  }
+}
+@keyframes page-from-right {
+  from {
+    transform: translateX(24%);
+    opacity: 0.2;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mushaf-page {
+    animation: none !important;
+    transition: none;
+  }
+}
+.page-turn {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
 }
 .sura-heading {
   margin: 6px 0;
@@ -688,12 +773,6 @@ a {
 }
 .page-sura + .page-sura::before {
   content: ' · ';
-}
-.page-number {
-  margin-top: 12px !important;
-  text-align: center;
-  font-size: 1.1rem;
-  color: var(--accent);
 }
 .sr-only {
   position: absolute;

@@ -1,4 +1,4 @@
-import { madinaPage, wordKey, type PackSura } from '@arda/quran';
+import { juzOf, madinaPage, wordKey, type PackSura } from '@arda/quran';
 import type { PackRuleId } from '@arda/tajweed';
 import type { MushafPack } from '@/content/packs';
 import type { MushafWord } from './words';
@@ -135,3 +135,19 @@ export const surasOn = (blocks: readonly Block[]): number[] => [
     )
   ),
 ];
+
+/**
+ * What the printed page names in its header: the sūra and the juzʾ (para) of its first āya,
+ * or of the sūra whose heading opens it.
+ */
+export function pageHeader(
+  blocks: readonly Block[]
+): { sura: number; juz: number } | undefined {
+  for (const b of blocks) {
+    if (b.kind === 'heading') return { sura: b.sura, juz: juzOf(b.sura, 1) };
+    const first = 'words' in b ? b.words.find((w) => w.place.aya >= 1) : undefined;
+    if (first)
+      return { sura: first.place.sura, juz: juzOf(first.place.sura, first.place.aya) };
+  }
+  return undefined;
+}
