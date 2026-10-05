@@ -27,6 +27,7 @@ export function Word({
   indopak = false,
   ayaEnd,
   playing = false,
+  chosen = false,
 }: {
   tap: WordTap;
   className?: string;
@@ -37,6 +38,8 @@ export function Word({
   ayaEnd?: number;
   /** The reciter is reciting this word (or its āya, without word timings). */
   playing?: boolean;
+  /** Its āya is the one chosen to play or repeat. */
+  chosen?: boolean;
 }) {
   const after = tap.word.a;
   return (
@@ -44,6 +47,7 @@ export function Word({
       className={className}
       data-word={tap.key}
       data-playing={playing ? 'true' : undefined}
+      data-chosen={chosen ? 'true' : undefined}
     >
       <button
         type="button"

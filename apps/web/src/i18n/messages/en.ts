@@ -314,7 +314,11 @@ export const en: Messages = {
     player: {
       label: 'Listen',
       playPage: 'Listen to the page',
-      playAya: 'Listen to the āya',
+      play: 'Play',
+      stop: 'Stop',
+      aya: (sura: number, aya: number) =>
+        aya === 0 ? `Sūra ${sura} · Basmala` : `Sūra ${sura} · Āya ${aya}`,
+      nowPlaying: 'Now playing',
       pause: 'Pause',
       resume: 'Go on',
       reciter: 'Reciter',

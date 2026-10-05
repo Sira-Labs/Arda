@@ -8,24 +8,24 @@ import { PlayIcon } from './PlayerBar';
 import { packRuleName, wordRules, wordSegments, type MushafWord } from './words';
 
 /**
- * A tapped word (spec F3: "tap a letter → sheet with rule"): the word large, each rule it
- * carries with its colour family and the way to its rule card, and the rule it decides for
- * the word before.
+ * A tapped word (spec F3: "tap a letter → sheet with rule"): its āya to play or repeat, the
+ * word large, each rule it carries with its colour family and the way to its rule card, and
+ * the rule it decides for the word before.
  */
 export function WordSheet({
   word,
   label,
   onClose,
   script = 'madina',
-  onListen,
+  aya,
 }: {
   word: MushafWord;
   label: string;
   onClose: () => void;
   /** The script the muṣḥaf shows, so the word looks as it does on the page. */
   script?: 'indopak' | 'madina';
-  /** Plays the word's āya (spec F4). */
-  onListen?: () => void;
+  /** The word's āya, marked on the page, to play once or repeat (spec F4). */
+  aya?: { label: string; onPlay: () => void; onRepeat: () => void };
 }) {
   const { m, language } = useI18n();
   const close = useRef<HTMLButtonElement>(null);
@@ -46,6 +46,18 @@ export function WordSheet({
       role="dialog"
       aria-labelledby="word-sheet-title"
     >
+      {aya && (
+        // The āya first: play it or repeat it, the choice a reciter's student makes most.
+        <div className="row player-row">
+          <span className="mini-player-aya">{aya.label}</span>
+          <button className="btn btn-primary" type="button" onClick={aya.onPlay}>
+            <PlayIcon pause={false} /> {m.mushaf.player.play}
+          </button>
+          <button className="btn" type="button" onClick={aya.onRepeat}>
+            <span aria-hidden="true">↻</span> {m.mushaf.player.loop}
+          </button>
+        </div>
+      )}
       <p className="eyebrow" id="word-sheet-title">
         {label}
       </p>
@@ -82,16 +94,6 @@ export function WordSheet({
           </li>
         ))}
       </ul>
-      {onListen && (
-        <button
-          className="btn btn-primary"
-          type="button"
-          style={{ alignSelf: 'flex-start' }}
-          onClick={onListen}
-        >
-          <PlayIcon pause={false} /> {m.mushaf.player.playAya}
-        </button>
-      )}
       <button
         ref={close}
         className="btn"

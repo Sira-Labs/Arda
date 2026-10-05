@@ -323,7 +323,11 @@ export const fr: Messages = {
     player: {
       label: 'Écouter',
       playPage: 'Écouter la page',
-      playAya: 'Écouter l’āya',
+      play: 'Lire',
+      stop: 'Arrêter',
+      aya: (sura: number, aya: number) =>
+        aya === 0 ? `Sourate ${sura} · Basmala` : `Sourate ${sura} · Āya ${aya}`,
+      nowPlaying: 'En cours',
       pause: 'Pause',
       resume: 'Reprendre',
       reciter: 'Récitateur',

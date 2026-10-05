@@ -71,6 +71,10 @@ export function usePlayer() {
   // The pause before a repeat; cleared when the reader stops, pauses or plays something else,
   // so it cannot bring back a list of āyāt that was left.
   const again = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const cancelAgain = useCallback(() => {
+    clearTimeout(again.current);
+    again.current = undefined;
+  }, []);
   const latest = useRef({ track, loop });
   latest.current = { track, loop };
 
@@ -102,10 +106,10 @@ export function usePlayer() {
       if (current.index + 1 < current.queue.length) {
         setTrack({ queue: current.queue, index: current.index + 1 });
       } else if (looping) {
-        again.current = setTimeout(
-          () => setTrack({ queue: current.queue, index: 0 }),
-          LOOP_PAUSE_MS
-        );
+        again.current = setTimeout(() => {
+          again.current = undefined;
+          setTrack({ queue: current.queue, index: 0 });
+        }, LOOP_PAUSE_MS);
       } else {
         setPlaying(false);
         setTrack(null);
@@ -123,14 +127,14 @@ export function usePlayer() {
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('error', onError);
     return () => {
-      clearTimeout(again.current);
+      cancelAgain();
       audio.pause();
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('timeupdate', onTime);
       audio.removeEventListener('error', onError);
       audioRef.current = null;
     };
-  }, [deps]);
+  }, [deps, cancelAgain]);
 
   // A new āya (or reciter): its recording from the start.
   const item = track?.queue[track.index];
@@ -171,26 +175,46 @@ export function usePlayer() {
     return () => cancelAnimationFrame(frame);
   }, [playing]);
 
-  const play = useCallback((queue: readonly PlayItem[]) => {
-    if (queue.length === 0) return;
-    clearTimeout(again.current);
-    setFailed(false);
-    setTrack({ queue, index: 0 });
-    setPlaying(true);
-  }, []);
+  const start = useCallback(
+    (queue: readonly PlayItem[], looping: boolean) => {
+      if (queue.length === 0) return;
+      cancelAgain();
+      setFailed(false);
+      setLoop(looping);
+      setTrack({ queue, index: 0 });
+      setPlaying(true);
+    },
+    [cancelAgain]
+  );
+  /** Plays the āyāt once, one after another. */
+  const play = useCallback((queue: readonly PlayItem[]) => start(queue, false), [start]);
+  /** Plays the āyāt again and again, with a pause to repeat after the reciter. */
+  const repeat = useCallback((queue: readonly PlayItem[]) => start(queue, true), [start]);
   const pause = useCallback(() => {
-    clearTimeout(again.current);
+    cancelAgain();
     setPlaying(false);
-  }, []);
+  }, [cancelAgain]);
   const resume = useCallback(() => {
     setFailed(false);
     setPlaying(true);
   }, []);
+  /**
+   * Repeat on or off. Turned off in the pause before a repeat, the āya is done: it is not
+   * played once more.
+   */
+  const toggleLoop = useCallback(() => {
+    if (latest.current.loop && again.current !== undefined) {
+      cancelAgain();
+      setPlaying(false);
+      setTrack(null);
+    }
+    setLoop((on) => !on);
+  }, [cancelAgain]);
   const stop = useCallback(() => {
-    clearTimeout(again.current);
+    cancelAgain();
     setPlaying(false);
     setTrack(null);
-  }, []);
+  }, [cancelAgain]);
 
   let recited: Recited | null = null;
   if (item && playing) {
@@ -207,13 +231,16 @@ export function usePlayer() {
   return {
     reciter,
     loop,
-    setLoop,
+    toggleLoop,
     playing,
     /** Paused within a list of āyāt, ready to go on. */
     paused: !playing && track !== null,
+    /** The āya being played or paused in, if any. */
+    current: item ?? null,
     failed,
     recited,
     play,
+    repeat,
     pause,
     resume,
     stop,
