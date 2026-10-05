@@ -36,7 +36,9 @@ the owner's consent; (4) every source is listed with its licence on an in-app "Q
 ## Open questions (owner: product owner)
 
 1. Tarteel: licence of the QUL IndoPak word-by-word text and layouts.
-2. EveryAyah: terms for streaming in a free, open-source app.
+2. EveryAyah and QuranicAudio: terms for streaming in a free, open-source app. Until they
+   answer, their recordings are only streamed from their own servers, with credit (rule 2), never
+   bundled, mirrored or cached by the app; if either says no, its reciters are switched off.
 3. mp3quran.net: permission to mirror selected teaching recitations.
 
 ## Consequences

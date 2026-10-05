@@ -92,6 +92,7 @@ gantt
 | Answer 2: his IndoPak edition (13, 15 or 16 lines)           | the sheikh         | S2 (Oct 5)           | the page layout               | answered: 15 lines (ADR-0017 update)                             |
 | IndoPak word-by-word text licence (ADR-0009 question 1)      | Tarteel, via owner | S2 (Oct 5)           | the IndoPak layer             | resolved: DigitalKhatt's text (MIT), ADR-0009 update             |
 | Answer 3: the reference reciter                              | the sheikh         | S3 (Oct 12)          | the player                    | owner chose al-Ḥuṣarī and Māhir al-Muʿayqilī; the sheikh may add |
+| EveryAyah and QuranicAudio: streaming terms (ADR-0009 q. 2)  | owner              | S3 (Oct 12)          | keeping the reciters on       | open; streamed with credit meanwhile                             |
 | Quran.com API registration for word timings                  | owner              | S3 (Oct 12)          | the player                    | not needed: quran-align timings (CC BY 4.0), ADR-0011 update     |
 | RustFS buckets for recordings                                | owner              | S4 (Oct 19)          | recording                     | open                                                             |
 | Production server and its secrets                            | owner              | S5 (Oct 26)          | the pilot                     | open                                                             |
