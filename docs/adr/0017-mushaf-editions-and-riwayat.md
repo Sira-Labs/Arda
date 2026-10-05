@@ -71,3 +71,22 @@ Until the IndoPak layer exists, the ʿUthmānī text shows Tanzil's Madīna paus
   within one sūra.
 - Pages turn with the arrows, a swipe (right: next page, as the muṣḥaf opens) or the keyboard
   (← next, → previous).
+
+## Update 2026-10-05: the page as a printed muṣḥaf (S3.5)
+
+- The sheikh's copy, from its imprint: _Tafsīr al-Qurʾān al-Majīd_ in Urdu by Ḥāfiẓ al-Ḥaqq
+  Amīn, Dār Ithrāʾ al-Fikr, Riyadh, 2nd ed. 1441 AH, 624 pages, 20 × 28 cm (ISBN
+  978-603-02-8266-5), all rights reserved. Its text pages are the 15-line IndoPak layout
+  DigitalKhatt follows. We take nothing from the print itself.
+- Its calligraphy is the heavy South Asian hand (Qudratullah style). The faces drawn after it
+  (QuranWBW's IndoPak Nastaleeq, PDMS Saleem) carry no licence that allows bundling, so the
+  page keeps DigitalKhatt IndoPak (OFL), drawn a little heavier on screen; the closest we may
+  ship. A licensed face in that hand would replace it without touching the packs.
+- The page looks like the printed one: paper in a double blue frame, a rule under every line,
+  the head with the para (name and number), the page number and the sūra, in Arabic-Indic
+  digits. Each page's lines are sized so its longest line fills the width, as the calligrapher
+  fills it, instead of leaving gaps between words.
+- Plain ink: the student can switch the tajwīd colours off and read the page as printed; tap a
+  word and its rules still show. The choice is kept on the device.
+- Turning: the page follows a finger moving sideways and turns past 60 px; buttons below it.
+  Pinch-zooming, two fingers and moving a zoomed-in view never turn the page.

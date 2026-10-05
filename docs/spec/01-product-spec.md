@@ -131,7 +131,8 @@ IndoPak 15-line pages (the sheikh's edition, §8) in DigitalKhatt IndoPak; rule 
 **Acceptance:** Juzʾ ʿAmma renders with every cpfair rule mapped onto the IndoPak word; colour
 is never the only signal. _(Built: al-Fātiḥa, al-Baqara and Juzʾ ʿAmma in IndoPak (the sheikh's
 15-line pages, his page numbers) and in the Madīna script (its 604 pages), every cpfair rule
-labelled, tap a word for its rules, turn the pages, offline after the first visit; audio next,
+labelled, tap a word for its rules, plain ink on request, framed and ruled like the print,
+turn the pages by swiping (never while zoomed), offline after the first visit; audio next,
 ADR-0017 updates.)_
 
 ### F4 — Hear: reciter player _(Must)_

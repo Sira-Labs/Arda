@@ -23,17 +23,18 @@ muṣḥaf page is the centre of the app.
 
 ## 2. Tokens
 
-| Token                                     | Paper (default)                              | Night                 | Use                                            |
-| ----------------------------------------- | -------------------------------------------- | --------------------- | ---------------------------------------------- |
-| `--bg`                                    | `#f6f1e7`                                    | `#0f1714`             | page                                           |
-| `--bg-elev` / `--bg-elev-2`               | `#fffdf8` / `#ede5d5`                        | `#17221e` / `#22302b` | cards, the muṣḥaf page / raised controls       |
-| `--ink` / `--on-ink`                      | `#10201b` / `#f4eee2`                        | `#0b1310` / same      | statement surfaces: the sheikh's card, the nav |
-| `--text` / `--text-muted`                 | `#1b2420` / `#56615b`                        | `#f4eee2` / `#a9b5ae` | text (15.7:1 / 6.3:1 on paper)                 |
-| `--border`                                | `#dcd2bf`                                    | `#2e3d37`             | hairlines                                      |
-| `--accent`                                | `#8a5a12`                                    | `#e8a93b`             | eyebrows, links (text-safe saffron)            |
-| `--accent-fill` / `--on-accent`           | `#e8a93b` / `#1a1206`                        | same                  | the one primary action (9.0:1)                 |
-| `--accent-2` / `--on-accent-2`            | `#1f7a6d` / `#f4eee2`                        | `#3fb5a3` / `#06201c` | progress, done, teacher actions                |
-| `--good` / `--check` / `--bad` / `--info` | teal / saffron-brown / `#b4432b` / `#25609b` | lighter variants      | feedback; `check` is not a failure             |
+| Token                                                 | Paper (default)                              | Night                                 | Use                                                                  |
+| ----------------------------------------------------- | -------------------------------------------- | ------------------------------------- | -------------------------------------------------------------------- |
+| `--bg`                                                | `#f6f1e7`                                    | `#0f1714`                             | page                                                                 |
+| `--bg-elev` / `--bg-elev-2`                           | `#fffdf8` / `#ede5d5`                        | `#17221e` / `#22302b`                 | cards, the muṣḥaf page / raised controls                             |
+| `--mushaf-paper` / `--mushaf-frame` / `--mushaf-rule` | `#fffdf8` / `#3b6f8c` / frame at 35 %        | `#17221e` / `#6fa3c0` / frame at 30 % | the printed page: paper, its double frame, the rules under its lines |
+| `--ink` / `--on-ink`                                  | `#10201b` / `#f4eee2`                        | `#0b1310` / same                      | statement surfaces: the sheikh's card, the nav                       |
+| `--text` / `--text-muted`                             | `#1b2420` / `#56615b`                        | `#f4eee2` / `#a9b5ae`                 | text (15.7:1 / 6.3:1 on paper)                                       |
+| `--border`                                            | `#dcd2bf`                                    | `#2e3d37`                             | hairlines                                                            |
+| `--accent`                                            | `#8a5a12`                                    | `#e8a93b`                             | eyebrows, links (text-safe saffron)                                  |
+| `--accent-fill` / `--on-accent`                       | `#e8a93b` / `#1a1206`                        | same                                  | the one primary action (9.0:1)                                       |
+| `--accent-2` / `--on-accent-2`                        | `#1f7a6d` / `#f4eee2`                        | `#3fb5a3` / `#06201c`                 | progress, done, teacher actions                                      |
+| `--good` / `--check` / `--bad` / `--info`             | teal / saffron-brown / `#b4432b` / `#25609b` | lighter variants                      | feedback; `check` is not a failure                                   |
 
 Shape: radii 12 / 16 / 24 px; tap target 44 px; spacing unit 16 px; floating nav 72 px.
 
@@ -86,20 +87,20 @@ Rules for using it:
 
 ## 6. Screens (from the deck)
 
-| #   | Screen           | Route                      | Key elements                                                                                                                                  | Status                                                                                    |
-| --- | ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| —   | Sign-in          | `/anmelden`                | email → link + code; passkey; "no password"                                                                                                   | built                                                                                     |
-| —   | Account          | `/konto`                   | devices, passkey, sign-out                                                                                                                    | built                                                                                     |
-| 0   | Today            | `/`                        | "Von meinem Sheikh" (ink card) first, next unit (paper card, +XP chip), colour legend                                                         | built (assignments live; next unit placeholder)                                           |
-| 1   | Rule card        | `/pfad/:unit/:rule`        | Arabic rule name, rule on one line, coloured example on paper, Play / Slow 0.5×, numbered steps, "where sources differ" note, Ask al-Muʿallim | built for unit 2 (no audio, no Ask yet)                                                   |
-| 2   | Muṣḥaf           | `/mushaf`, `/mushaf/:sura` | IndoPak page, script chips (IndoPak · Madīna · Warsh), tap a letter → ink sheet with rule, "Hear it · Practise 5 more", legend                | built: Juzʾ ʿAmma, ʿUthmānī script, tap a word for its rules, offline; IndoPak pages next |
-| 3   | Letter lab       | `/labor/:letter`           | side view of the head, five coloured areas, numbered points, letter list per area                                                             | week 4                                                                                    |
-| 4   | Games            | `/pfad/:unit/spiel/:game`  | Which rule? · Sort the 28 · Hold the ghunna; XP, quests, streak shields; review at `/pfad/wiederholen`                                        | built: Which rule?, Sort the 28, review                                                   |
-| 5   | Recite           | `/rezitieren/:range`       | text with `gut` / `prüfen` per word (label next to colour), finding card, Yours ↔ Reciter, **Send to my sheikh** (primary)                    | week 4                                                                                    |
-| 6   | Sheikh (student) | `/sheikh`                  | "Von meinem Sheikh" list: type chip, range, focus, due date; voice notes                                                                      | built on Today and the ḥalaqa page (T2); voice notes later                                |
-| 7   | Ḥalaqa (teacher) | `/halaqa/:id`              | invite link and QR code, students waiting and approved, assignments and who is done; then the listening queue, the ʿarḍ log, rule by rule     | built: invites, members, assignments (T1, T2)                                             |
-| 8   | Live lesson      | `/live/:id`                | shared page, his pointer, recording cut by āya                                                                                                | later                                                                                     |
-| 9   | AI flags         | inside 7                   | filled mark (his) vs ring (AI), one tap yes/no                                                                                                | later                                                                                     |
+| #   | Screen           | Route                      | Key elements                                                                                                                                  | Status                                                                                  |
+| --- | ---------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| —   | Sign-in          | `/anmelden`                | email → link + code; passkey; "no password"                                                                                                   | built                                                                                   |
+| —   | Account          | `/konto`                   | devices, passkey, sign-out                                                                                                                    | built                                                                                   |
+| 0   | Today            | `/`                        | "Von meinem Sheikh" (ink card) first, next unit (paper card, +XP chip), colour legend                                                         | built (assignments live; next unit placeholder)                                         |
+| 1   | Rule card        | `/pfad/:unit/:rule`        | Arabic rule name, rule on one line, coloured example on paper, Play / Slow 0.5×, numbered steps, "where sources differ" note, Ask al-Muʿallim | built for unit 2 (no audio, no Ask yet)                                                 |
+| 2   | Muṣḥaf           | `/mushaf`, `/mushaf/:sura` | IndoPak page, script chips (IndoPak · Madīna · Warsh), tap a letter → ink sheet with rule, "Hear it · Practise 5 more", legend                | built: IndoPak and Madīna printed pages (S3.4, S3.5), tap a word for its rules, offline |
+| 3   | Letter lab       | `/labor/:letter`           | side view of the head, five coloured areas, numbered points, letter list per area                                                             | week 4                                                                                  |
+| 4   | Games            | `/pfad/:unit/spiel/:game`  | Which rule? · Sort the 28 · Hold the ghunna; XP, quests, streak shields; review at `/pfad/wiederholen`                                        | built: Which rule?, Sort the 28, review                                                 |
+| 5   | Recite           | `/rezitieren/:range`       | text with `gut` / `prüfen` per word (label next to colour), finding card, Yours ↔ Reciter, **Send to my sheikh** (primary)                    | week 4                                                                                  |
+| 6   | Sheikh (student) | `/sheikh`                  | "Von meinem Sheikh" list: type chip, range, focus, due date; voice notes                                                                      | built on Today and the ḥalaqa page (T2); voice notes later                              |
+| 7   | Ḥalaqa (teacher) | `/halaqa/:id`              | invite link and QR code, students waiting and approved, assignments and who is done; then the listening queue, the ʿarḍ log, rule by rule     | built: invites, members, assignments (T1, T2)                                           |
+| 8   | Live lesson      | `/live/:id`                | shared page, his pointer, recording cut by āya                                                                                                | later                                                                                   |
+| 9   | AI flags         | inside 7                   | filled mark (his) vs ring (AI), one tap yes/no                                                                                                | later                                                                                   |
 
 ## 7. Components
 
