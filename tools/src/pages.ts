@@ -16,6 +16,20 @@ export function madinaPageStarts(metadata: string): [number, number][] {
   return starts.slice(0, -1);
 }
 
+/** Where each of the thirty ajzāʾ starts, as Tanzil's Quran Metadata 1.0 lists them. */
+export function juzStarts(metadata: string): [number, number][] {
+  const block = /QuranData\.Juz = \[([\s\S]*?)\];/.exec(metadata);
+  if (!block) throw new Error('Tanzil metadata: no juz list');
+  const starts = [...block[1]!.matchAll(/\[(\d+), (\d+)\]/g)].map(
+    (m) => [Number(m[1]), Number(m[2])] as [number, number]
+  );
+  // The list ends with a sentinel after the last juzʾ (sūra 115).
+  if (starts.at(-1)?.[0] !== 115 || starts.length !== 31) {
+    throw new Error(`Tanzil metadata: ${starts.length} juz entries`);
+  }
+  return starts.slice(0, -1);
+}
+
 export function pagesModule(starts: readonly [number, number][]): string {
   const rows: string[] = [];
   for (let i = 0; i < starts.length; i += 10) {

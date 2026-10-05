@@ -38,6 +38,7 @@
 | S3.2 Assign on the page (word selection)                         | assignments point at word keys                          | done: pick the first and last word in the muṣḥaf; word bounds stored; the student's link marks those words                                                                         |
 | S3.3 al-Fātiḥa and al-Baqara (owner, 2026-10-04)                 | the same rules and checks as Juzʾ ʿAmma                 | done: `uthmani-hafs-fatiha-baqara@1`; exact re-alignment; long sūras render in batches                                                                                             |
 | S3.4 The muṣḥaf as printed pages (owner, 2026-10-04)             | IndoPak pages as the sheikh's; Madīna pages as Madīna's | done: `/mushaf/seite/:page`; IndoPak line by line with his page numbers; Madīna pages from Tanzil's metadata; turn by arrows, swipe or keys; assignments and picking across pages  |
+| S3.5 The page as a printed muṣḥaf (owner, 2026-10-05)            | reads like the copy; zooming never turns the page       | done: framed and ruled, head with para, page and sūra; lines fill the width; plain ink switch; the page follows the finger; pinch and zoomed views never turn it                   |
 
 ## S4–S5 · Recite to him (Oct 19 – Nov 1)
 

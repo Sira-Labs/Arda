@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { resetColoursForTests } from '@/modules/mushaf/colours';
 import { chooseScript, resetScriptForTests } from '@/modules/mushaf/script';
 import type { PackIndex, PackIndexEntry } from '@arda/quran';
 import type { Me } from '@/services/auth';
@@ -221,6 +222,7 @@ function renderAt(
 beforeEach(() => {
   localStorage.clear();
   resetScriptForTests();
+  resetColoursForTests();
   localStorage.setItem('arda.language', 'de');
 });
 
@@ -277,17 +279,80 @@ describe('the muṣḥaf screen (S2.4)', () => {
     ).toHaveTextContent('Idghām ohne Ghunna · Stumm');
     await user.keyboard('{Escape}');
     // The next page lies to the left; the assignment stays marked across pages.
-    await user.click(screen.getByRole('link', { name: 'Nächste Seite' }));
+    await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
     expect(await screen.findByText('Seite 4 · IndoPak')).toBeInTheDocument();
     expect(screen.getByText('Deine Aufgabe: Āya 2')).toBeInTheDocument();
+    // The turned-to page slides in from the left, where the next page lies.
+    expect(document.querySelector('.mushaf-page')).toHaveAttribute(
+      'data-entering',
+      'next'
+    );
     await user.keyboard('{ArrowRight}');
     expect(await screen.findByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    expect(document.querySelector('.mushaf-page')).toHaveAttribute(
+      'data-entering',
+      'previous'
+    );
     // In a field the arrows move the cursor, never the page.
     const note = document.body.appendChild(document.createElement('textarea'));
     note.focus();
     await user.keyboard('{ArrowLeft}');
     expect(screen.getByText('Seite 3 · IndoPak')).toBeInTheDocument();
     note.remove();
+  });
+
+  it('shows the page as printed: its head, and plain ink on request', async () => {
+    renderAt('/mushaf/seite/7', loader().deps);
+    expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+    // The head names the para (al-Baqara 30 is in the first) and the sūra, as printed.
+    const head = document.querySelector('.mushaf-head')!;
+    expect(head).toHaveAttribute('dir', 'rtl');
+    expect(head).toHaveTextContent('الٓمّٓ ١');
+    expect(head).toHaveTextContent('البقرة ٢');
+    expect(head).toHaveTextContent('٧');
+    const colours = screen.getByRole('button', { name: 'Tajwīd-Farben' });
+    expect(colours).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.setup().click(colours);
+    expect(colours).toHaveAttribute('aria-pressed', 'false');
+    expect(document.querySelector('.mushaf-page')).toHaveAttribute(
+      'data-colours',
+      'plain'
+    );
+    expect(localStorage.getItem('arda.mushafColours')).toBe('plain');
+  });
+
+  describe('turning by swiping', () => {
+    const at = (x: number, y = 300) => ({ clientX: x, clientY: y });
+    const swipe = (from: object[], to: object[]) => {
+      const page = document.querySelector('.mushaf-page')!;
+      fireEvent.touchStart(page, { touches: from });
+      fireEvent.touchMove(page, { touches: to });
+      fireEvent.touchEnd(page, { touches: [], changedTouches: to });
+    };
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('turns with one finger sideways, never while scrolling or pinching', async () => {
+      renderAt('/mushaf/seite/7', loader().deps);
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      // Mostly up or down: scrolling.
+      swipe([at(100, 500)], [at(170, 300)]);
+      // Two fingers apart: zooming in.
+      swipe([at(150), at(250)], [at(60), at(340)]);
+      expect(screen.getByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      // To the right: the next page of a right-to-left book.
+      swipe([at(100)], [at(300)]);
+      expect(await screen.findByText('Seite 8 · IndoPak')).toBeInTheDocument();
+      swipe([at(300)], [at(100)]);
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+    });
+
+    it('moves a zoomed-in view instead of turning the page', async () => {
+      vi.stubGlobal('visualViewport', { scale: 2.5 });
+      renderAt('/mushaf/seite/7', loader().deps);
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      swipe([at(100)], [at(300)]);
+      expect(screen.getByText('Seite 7 · IndoPak')).toBeInTheDocument();
+    });
   });
 
   it('says when a page is not in the muṣḥaf yet', async () => {
@@ -587,9 +652,7 @@ describe('assigning on the page (S3.2)', () => {
     await user.click(await screen.findByRole('button', { name: 'Aufgabe hier geben' }));
     await user.click(wordAt('hafs:113:2:2'));
     await user.click(screen.getByRole('button', { name: 'Abbrechen' }));
-    expect(
-      screen.getByText('Tippe auf ein Wort, um seine Regeln zu sehen.')
-    ).toBeInTheDocument();
+    expect(screen.getByText(de.mushaf.tap)).toBeInTheDocument();
     expect(document.querySelector('.picked')).toBeNull();
     // Tapping a word shows its rules again.
     await user.click(wordAt('hafs:113:2:1'));

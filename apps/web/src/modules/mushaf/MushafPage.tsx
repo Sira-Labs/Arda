@@ -1,13 +1,23 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { sura as suraOf, type PackIndexEntry } from '@arda/quran';
+import { JUZ_NAMES, sura as suraOf, type PackIndexEntry } from '@arda/quran';
 import { RuleLegend } from '@/components/RuleLegend';
 import { builtIndex, type MushafPack } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { AssignmentRange } from '@/services/auth';
+import { chooseColours, useMushafColours } from './colours';
+import { useLineFit } from './fit';
 import { PageAssign, useTeaching } from './PageAssign';
-import { pageBlocks, surasOn, type Block, type PageWord, type Place } from './pageModel';
+import {
+  pageBlocks,
+  pageHeader,
+  surasOn,
+  type Block,
+  type PageWord,
+  type Place,
+} from './pageModel';
 import { useMushafScript, type MushafScript } from './script';
+import { usePageSwipe } from './swipe';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 import { Word, type WordTap } from './Word';
@@ -59,6 +69,9 @@ const editing = (target: EventTarget | null) =>
   target instanceof HTMLSelectElement ||
   (target instanceof HTMLElement && target.isContentEditable);
 
+/** A number as the muṣḥaf prints it, in Arabic-Indic digits in every language. */
+const arabic = (n: number) => n.toLocaleString('ar-EG');
+
 /** The pack of a script that has the printed page. */
 const entryForPage = (page: number, script: MushafScript): PackIndexEntry | undefined =>
   builtIndex.packs.find(
@@ -67,9 +80,10 @@ const entryForPage = (page: number, script: MushafScript): PackIndexEntry | unde
 
 /**
  * `/mushaf/seite/:page` (screen 2, spec F3): one page of the muṣḥaf as printed: the IndoPak
- * page line by line as in the sheikh's copy, or the Madīna page's āyāt (ADR-0017). Rules are
- * coloured and named; tap a word for its rules; turn the page with the arrows, a swipe or the
- * keyboard. `?sura=&von=&bis=` (and `wvon=&wbis=`) marks an assignment on every page it spans.
+ * page line by line as in the sheikh's copy, framed and ruled, with the sūra, page and para in
+ * its head; or the Madīna page's āyāt (ADR-0017). Rules are coloured and named, or hidden for
+ * plain ink; tap a word for its rules; turn the page with the buttons, a swipe or the
+ * keyboard; pinch-zooming never turns it. `?sura=&von=&bis=` (and `wvon=&wbis=`) marks an assignment on every page it spans.
  * A teacher can pick words, across pages, and give them as an assignment (S3.2).
  */
 export function MushafPage() {
@@ -78,6 +92,7 @@ export function MushafPage() {
   const navigate = useNavigate();
   const { m } = useI18n();
   const script = useMushafScript();
+  const colours = useMushafColours();
   const page = Number(param);
   const entry = Number.isInteger(page) ? entryForPage(page, script) : undefined;
   const result = usePack(entry);
@@ -95,15 +110,24 @@ export function MushafPage() {
       navigate({ pathname: `/mushaf/seite/${to}`, search: search.toString() }),
     [navigate, search]
   );
-  const first = entry?.pages[0] ?? page;
-  const last = entry?.pages[1] ?? page;
+  // The page the last turn went to and which way, so that page slides in from that side;
+  // a page reached otherwise (history, a link) does not replay an old slide.
+  const [entering, setEntering] = useState<{
+    to: number;
+    way: 'next' | 'previous';
+  } | null>(null);
   const turn = useCallback(
     (by: 1 | -1) => {
       const to = page + by;
-      if (to >= 1 && entryForPage(to, script)) go(to);
+      if (to < 1 || !entryForPage(to, script)) return;
+      setEntering({ to, way: by === 1 ? 'next' : 'previous' });
+      go(to);
     },
     [page, script, go]
   );
+  const swipe = usePageSwipe(turn);
+  const lines = useRef<HTMLDivElement>(null);
+  useLineFit(lines, blocks);
 
   useEffect(() => {
     // The muṣḥaf reads right to left: the next page lies to the left.
@@ -126,7 +150,6 @@ export function MushafPage() {
     return () => window.removeEventListener('keydown', onKey);
   }, [turn, selected]);
 
-  const swipe = useRef<number | null>(null);
   const close = useCallback(() => setSelected(null), []);
   const onTap = useCallback(
     (tap: WordTap, indopak: boolean) => {
@@ -203,28 +226,11 @@ export function MushafPage() {
     />
   );
   const suras = surasOn(blocks);
+  const head = pageHeader(blocks);
 
   return (
     <article className="stack" style={{ gap: 16, maxWidth: 820 }}>
-      <nav className="row" style={{ justifyContent: 'space-between' }}>
-        {back}
-        <span className="row" style={{ gap: 16 }}>
-          {page > first && (
-            <Link
-              to={{ pathname: `/mushaf/seite/${page - 1}`, search: search.toString() }}
-            >
-              {m.mushaf.previousPage}
-            </Link>
-          )}
-          {page < last && (
-            <Link
-              to={{ pathname: `/mushaf/seite/${page + 1}`, search: search.toString() }}
-            >
-              {m.mushaf.nextPage}
-            </Link>
-          )}
-        </span>
-      </nav>
+      {back}
       <header className="stack" style={{ gap: 6 }}>
         <p className="eyebrow">
           {m.mushaf.page(page)} · {m.mushaf.scripts[script].name}
@@ -237,6 +243,15 @@ export function MushafPage() {
           ))}
         </h1>
         <p className="muted">{picking ? m.mushaf.pick : m.mushaf.tap}</p>
+        <button
+          type="button"
+          className={colours === 'tajweed' ? 'btn btn-quiet' : 'btn'}
+          aria-pressed={colours === 'tajweed'}
+          style={{ alignSelf: 'flex-start' }}
+          onClick={() => chooseColours(colours === 'tajweed' ? 'plain' : 'tajweed')}
+        >
+          {m.mushaf.colours}
+        </button>
         {range && (
           <p className="chip range-chip" style={{ alignSelf: 'flex-start' }}>
             {range.words
@@ -281,31 +296,63 @@ export function MushafPage() {
         {notice && <p role="status">{notice}</p>}
       </header>
 
-      <div
-        className="quran mushaf-text mushaf-page"
-        data-script={indopak ? 'indopak' : 'madina'}
-        data-layout={indopak ? 'lines' : 'flow'}
-        // The two opening pages (al-Fātiḥa, al-Baqara's start) print shorter lines.
-        data-opening={indopak && page - pack.layout!.pageOffset <= 2 ? 'true' : undefined}
-        lang="ar"
-        dir="rtl"
-        onTouchStart={(event) => {
-          swipe.current = event.touches[0]?.clientX ?? null;
-        }}
-        onTouchEnd={(event) => {
-          const from = swipe.current;
-          const to = event.changedTouches[0]?.clientX;
-          swipe.current = null;
-          if (from === null || to === undefined || Math.abs(to - from) < 60) return;
-          // Swiping right brings the next page, as when turning the muṣḥaf's pages.
-          turn(to > from ? 1 : -1);
-        }}
-      >
-        {blocks.map((block) => blockView(block, word, indopak, m))}
-        <p className="page-number" aria-hidden="true">
-          {page.toLocaleString('ar-EG')}
-        </p>
+      <div className="mushaf-sheet" data-script={indopak ? 'indopak' : 'madina'}>
+        {head && (
+          // The printed head: the para on the right, the page, the sūra on the left. The
+          // screen's own header above names them for screen readers.
+          <div className="mushaf-head" lang="ar" dir="rtl" aria-hidden="true">
+            <span>
+              {indopak ? JUZ_NAMES[head.juz - 1] : 'الجزء'} {arabic(head.juz)}
+            </span>
+            <span className="mushaf-head-page">{arabic(page)}</span>
+            <span>
+              {suraOf(head.sura)?.name} {arabic(head.sura)}
+            </span>
+          </div>
+        )}
+        <div
+          key={page}
+          ref={lines}
+          className="quran mushaf-text mushaf-page"
+          data-script={indopak ? 'indopak' : 'madina'}
+          data-layout={indopak ? 'lines' : 'flow'}
+          data-colours={colours}
+          data-entering={entering?.to === page ? entering.way : undefined}
+          // The two opening pages (al-Fātiḥa, al-Baqara's start) print shorter lines.
+          data-opening={
+            indopak && page - pack.layout!.pageOffset <= 2 ? 'true' : undefined
+          }
+          lang="ar"
+          dir="rtl"
+          style={
+            swipe.offset
+              ? { transform: `translateX(${swipe.offset}px)`, transition: 'none' }
+              : undefined
+          }
+          {...swipe.handlers}
+        >
+          {blocks.map((block) => blockView(block, word, indopak, m))}
+        </div>
       </div>
+      <nav className="page-turn" aria-label={m.mushaf.page(page)}>
+        {/* A right-to-left book: the next page lies to the left. */}
+        <button
+          type="button"
+          className="btn"
+          disabled={!entryForPage(page + 1, script)}
+          onClick={() => turn(1)}
+        >
+          <span aria-hidden="true">←</span> {m.mushaf.nextPage}
+        </button>
+        <button
+          type="button"
+          className="btn"
+          disabled={page <= 1 || !entryForPage(page - 1, script)}
+          onClick={() => turn(-1)}
+        >
+          {m.mushaf.previousPage} <span aria-hidden="true">→</span>
+        </button>
+      </nav>
 
       <RuleLegend />
       <MushafSources />

@@ -6,6 +6,7 @@ export { SURAS, sura, type Sura } from './suras';
 export { hasWords, isAyaRange, type AyaRange, type WordBounds } from './range';
 export { wordCount } from './words';
 export { MADINA_PAGES, madinaPage, madinaPageStart } from './pages';
+export { JUZ_NAMES, JUZ_STARTS, juzOf } from './juz';
 export {
   wordKey,
   type Pack,
