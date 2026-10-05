@@ -32,9 +32,11 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2,json}'],
         // Font subsets for scripts the app does not use; browsers fetch them only on demand.
         // Content packs are downloaded when first needed and checked, not precached (ADR-0010).
+        // Word timings go with streamed recitations, so they are fetched with them (ADR-0011).
         globIgnores: [
           '**/*-{cyrillic,cyrillic-ext,greek,vietnamese}-*.woff2',
           'packs/**',
+          'audio/**',
         ],
         navigateFallback: 'index.html',
         // Server routes are never answered with the app shell.

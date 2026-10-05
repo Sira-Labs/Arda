@@ -11,13 +11,16 @@ import { PageAssign, useTeaching } from './PageAssign';
 import {
   pageBlocks,
   pageHeader,
+  pageRecitation,
   surasOn,
   type Block,
   type PageWord,
   type Place,
 } from './pageModel';
 import { useMushafScript, type MushafScript } from './script';
+import { PlayerBar } from './PlayerBar';
 import { usePageSwipe } from './swipe';
+import { usePlayer } from './usePlayer';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 import { Word, type WordTap } from './Word';
@@ -126,6 +129,10 @@ export function MushafPage() {
     [page, script, go]
   );
   const swipe = usePageSwipe(turn);
+  const player = usePlayer();
+  const { stop } = player;
+  // A turned page starts silent: the recitation was of the page before.
+  useEffect(() => stop, [page, stop]);
   const lines = useRef<HTMLDivElement>(null);
   useLineFit(lines, blocks);
 
@@ -206,6 +213,13 @@ export function MushafPage() {
       : range && covers(range, place)
         ? 'in-range'
         : undefined;
+  const recited = player.recited;
+  const recitedNow = (place: Place) =>
+    !!recited &&
+    place.sura === recited.sura &&
+    place.aya === recited.aya &&
+    place.n >= recited.from &&
+    place.n <= recited.to;
   const word = (w: PageWord) => (
     <Word
       key={w.key}
@@ -220,6 +234,7 @@ export function MushafPage() {
       }}
       className={marked(w.place)}
       pressed={picking ? marked(w.place) === 'picked' : selected?.key === w.key}
+      playing={recitedNow(w.place)}
       onTap={(tap) => onTap(tap, indopak)}
       indopak={indopak}
       ayaEnd={w.ayaEnd}
@@ -296,6 +311,7 @@ export function MushafPage() {
         {notice && <p role="status">{notice}</p>}
       </header>
 
+      <PlayerBar player={player} page={pageRecitation(blocks)} />
       <div className="mushaf-sheet" data-script={indopak ? 'indopak' : 'madina'}>
         {head && (
           // The printed head: the para on the right, the page, the sūra on the left. The
@@ -362,6 +378,14 @@ export function MushafPage() {
           label={selected.label}
           onClose={close}
           script={selected.indopak ? 'indopak' : 'madina'}
+          onListen={
+            selected.place
+              ? () => {
+                  player.play([{ sura: selected.place!.sura, aya: selected.place!.aya }]);
+                  close();
+                }
+              : undefined
+          }
         />
       )}
       {picking && given && (

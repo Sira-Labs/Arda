@@ -45,6 +45,7 @@
   --mushaf-paper: #fffdf8;
   --mushaf-frame: #3b6f8c;
   --mushaf-rule: rgb(59 111 140 / 0.35);
+  --playing-bg: rgb(31 122 109 / 0.22); /* the word the reciter is reciting */
 
   /* Type */
   --font-ui: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
@@ -97,5 +98,6 @@
   --mushaf-paper: #17221e;
   --mushaf-frame: #6fa3c0;
   --mushaf-rule: rgb(111 163 192 / 0.3);
+  --playing-bg: rgb(63 181 163 / 0.28);
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }

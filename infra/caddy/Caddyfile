@@ -21,8 +21,8 @@
 	header {
 		# style-src needs 'unsafe-inline' for React style attributes. Fonts are bundled ('self').
 		# Reciter audio is streamed from its publishers with credit (ADR-0011); each host is added
-		# to media-src when its source is switched on, never a wildcard.
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
+		# to media-src when its source is switched on, never a wildcard: EveryAyah's recordings.
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob: https://everyayah.com; connect-src 'self'; worker-src 'self'; manifest-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'"
 		# The app is HTTPS-only (CapRover forces HTTPS); browsers must never try plain HTTP.
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"

@@ -756,6 +756,16 @@ a {
     transition: none;
   }
 }
+/* The reciter's word, or āya without word timings (spec F4): marked as the voice moves. */
+.mushaf-text [data-playing='true'] {
+  border-radius: 6px;
+  background: var(--playing-bg);
+  box-decoration-break: clone;
+}
+.player-row {
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
 .page-turn {
   display: flex;
   justify-content: space-between;
