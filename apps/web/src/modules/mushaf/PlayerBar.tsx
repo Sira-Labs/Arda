@@ -63,7 +63,6 @@ export function PlayerBar({
           ))}
         </div>
       </div>
-      {!player.reciter.timed && <p className="muted">{t.ayaByAya}</p>}
       {player.failed && <p role="alert">{t.failed}</p>}
     </section>
   );

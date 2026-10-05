@@ -203,6 +203,8 @@ describe('a word and its rules', () => {
 class FakeAudio extends EventTarget {
   src = '';
   currentTime = 0;
+  /** The file's length is known at once: seeking needs no waiting. */
+  readyState = 4;
   playbackRate = 1;
   defaultPlaybackRate = 1;
   paused = true;
@@ -229,12 +231,16 @@ class FakeAudio extends EventTarget {
   }
 }
 
-/** A player that records into one fake audio element; al-Aʿlā 1 timed word by word. */
+/**
+ * A player that records into one fake audio element. Al-Aʿlā 1 is timed word by word: by āya
+ * for al-Ḥuṣarī, and for Māhir al-Muʿayqilī within the sūra's file, al-Aʿlā 2 after it.
+ */
 function fakePlayer() {
   const audio = new FakeAudio();
   const asked: ReciterId[] = [];
-  const timings: Timings = {
+  const byAya: Timings = {
     reciter: 'husary-muallim',
+    by: 'aya',
     ayat: {
       '87:1': [
         [0, 1, 0, 1000],
@@ -243,11 +249,29 @@ function fakePlayer() {
       ],
     },
   };
+  const bySura: Timings = {
+    reciter: 'maher',
+    by: 'sura',
+    ayat: {
+      '87:1': [
+        [0, 1, 8020, 8820],
+        [1, 2, 8820, 9290],
+        [2, 3, 9290, 10070],
+        [3, 4, 10070, 11800],
+      ],
+      '87:2': [
+        [0, 1, 13130, 14080],
+        [1, 2, 14080, 14820],
+        [2, 3, 14820, 16600],
+      ],
+    },
+    spans: { '87:1': [7930, 11940], '87:2': [13010, 16740] },
+  };
   const deps: PlayerDeps = {
     createAudio: () => audio as unknown as HTMLAudioElement,
     fetchTimings: async (id) => {
       asked.push(id);
-      return timings;
+      return id === 'maher' ? bySura : byAya;
     },
   };
   return { audio, asked, deps };
@@ -511,32 +535,53 @@ describe('the muṣḥaf screen (S2.4)', () => {
       expect(screen.getByRole('button', { name: 'Seite anhören' })).toBeInTheDocument();
     });
 
-    it('plays Māhir al-Muʿayqilī āya by āya, marking the whole āya', async () => {
-      const { audio, asked, deps } = fakePlayer();
+    it('plays Māhir al-Muʿayqilī from his sūra’s file, word by word, on into the next āya', async () => {
+      const { audio, deps } = fakePlayer();
       renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
       const user = userEvent.setup();
       await user.selectOptions(
         await screen.findByRole('combobox', { name: 'Rezitator' }),
         'Māhir al-Muʿayqilī'
       );
-      expect(
-        screen.getByText(
-          'Bei diesem Rezitator wird Āya für Āya markiert, nicht Wort für Wort.'
-        )
-      ).toBeInTheDocument();
       await user.click(wordAt('hafs:87:1:1'));
       await user.click(screen.getByRole('button', { name: 'Abspielen' }));
-      expect(audio.played).toEqual([recording('MaherAlMuaiqly128kbps', '087001')]);
-      for (const n of [1, 2, 3]) {
-        expect(wordAt(`hafs:87:1:${n}`).parentElement).toHaveAttribute(
-          'data-playing',
-          'true'
-        );
-      }
-      expect(asked).not.toContain('maher');
-      // "Play" goes on from the tapped āya to the next.
-      audio.fire('ended');
-      expect(audio.played.at(-1)).toBe(recording('MaherAlMuaiqly128kbps', '087002'));
+      const sura =
+        'https://download.quranicaudio.com/quran/maher_almu3aiqly/year1440/087.mp3';
+      // The sūra's file, from where al-Aʿlā 1 starts in it.
+      await waitFor(() => expect(audio.played).toEqual([sura]));
+      expect(audio.currentTime).toBeCloseTo(7.93);
+      audio.at(9);
+      expect(wordAt('hafs:87:1:2').parentElement).toHaveAttribute('data-playing', 'true');
+      expect(wordAt('hafs:87:1:3').parentElement).not.toHaveAttribute('data-playing');
+      // The āya's end is in the middle of the file: on into al-Aʿlā 2, no seek, same file.
+      audio.at(11.95);
+      expect(screen.getByRole('region', { name: 'Es läuft' })).toHaveTextContent(
+        'Sūra 87 · Āya 2'
+      );
+      expect(audio.src).toBe(sura);
+      expect(audio.currentTime).toBe(11.95);
+      audio.at(13.5);
+      expect(wordAt('hafs:87:2:1').parentElement).toHaveAttribute('data-playing', 'true');
+    });
+
+    it('repeats Māhir al-Muʿayqilī’s āya from its start in the sūra’s file', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.selectOptions(
+        await screen.findByRole('combobox', { name: 'Rezitator' }),
+        'Māhir al-Muʿayqilī'
+      );
+      await user.click(wordAt('hafs:87:2:1'));
+      await user.click(screen.getByRole('button', { name: 'Wiederholen' }));
+      await waitFor(() => expect(audio.currentTime).toBeCloseTo(13.01));
+      // At the āya's end the file is paused for the pause to repeat, then the āya again.
+      audio.at(16.75);
+      expect(audio.paused).toBe(true);
+      await waitFor(() => expect(audio.currentTime).toBeCloseTo(13.01), {
+        timeout: 2500,
+      });
+      expect(audio.paused).toBe(false);
     });
 
     it('says when the recitation cannot be loaded, and falls silent on a turned page', async () => {

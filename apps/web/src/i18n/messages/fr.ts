@@ -338,10 +338,12 @@ export const fr: Messages = {
         husary: 'al-Ḥuṣarī · murattal',
         maher: 'Māhir al-Muʿayqilī',
       },
-      ayaByAya: 'Avec ce récitateur, l’āya est marquée, pas chaque mot.',
       failed: 'La récitation ne se charge pas. Vérifie ta connexion.',
       sourceAudio: 'Récitation : EveryAyah.com',
       sourceTimings: 'Temps des mots : quran-align (Collin Fair), CC BY 4.0',
+      sourceQuranicAudio: 'Récitation de Māhir al-Muʿayqilī : QuranicAudio.com',
+      sourceQua:
+        'Temps des mots de Māhir al-Muʿayqilī : Quranic Universal Audio, CC BY 4.0',
     },
     all: 'Toutes les sourates',
     previousPage: 'Page précédente',

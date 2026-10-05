@@ -37,6 +37,18 @@ export function MushafSources() {
         <a href="https://github.com/cpfair/quran-align" target="_blank" rel="noreferrer">
           {m.mushaf.player.sourceTimings}
         </a>
+        <br />
+        <a href="https://quranicaudio.com" target="_blank" rel="noreferrer">
+          {m.mushaf.player.sourceQuranicAudio}
+        </a>
+        <br />
+        <a
+          href="https://github.com/QUD-Technologies/quranic-universal-audio"
+          target="_blank"
+          rel="noreferrer"
+        >
+          {m.mushaf.player.sourceQua}
+        </a>
       </p>
     </footer>
   );

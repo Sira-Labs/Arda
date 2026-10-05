@@ -24,6 +24,7 @@ offline pack. The repository is Apache-2.0; content packs are downloaded by ever
 | Reciters    | mp3quran.net (242 reciters, 20 riwāyāt)                                          | no published terms                                                  | Streamed with credit; ask before mirroring            |
 | Reciters    | EveryAyah / QuranicAudio                                                         | non-commercial personal use                                         | Streamed with credit; confirm terms                   |
 | Reciters    | quran-align word timings for EveryAyah (al-Ḥuṣarī and 10 others)                 | CC BY 4.0                                                           | Bundled for the shipped sūras, credited (ADR-0011)    |
+| Reciters    | Quranic Universal Audio word timings (Māhir al-Muʿayqilī on QuranicAudio)        | CC BY 4.0                                                           | Bundled for the shipped sūras, credited (ADR-0011)    |
 | Feedback    | Quran Muʿallim (obadx), phonemes + 10 ṣifāt                                      | MIT                                                                 | Self-hosted speech check (ADR-0013)                   |
 | Lessons     | LiveKit                                                                          | Apache 2.0                                                          | Self-hosted (ADR-0015)                                |
 | Makhārij    | no usable open drawings                                                          | —                                                                   | Our own SVGs, CC BY 4.0 (ADR-0018)                    |
@@ -35,7 +36,9 @@ the owner's consent; (4) every source is listed with its licence on an in-app "Q
 ## Open questions (owner: product owner)
 
 1. Tarteel: licence of the QUL IndoPak word-by-word text and layouts.
-2. EveryAyah: terms for streaming in a free, open-source app.
+2. EveryAyah and QuranicAudio: terms for streaming in a free, open-source app. Until they
+   answer, their recordings are only streamed from their own servers, with credit (rule 2), never
+   bundled, mirrored or cached by the app; if either says no, its reciters are switched off.
 3. mp3quran.net: permission to mirror selected teaching recitations.
 
 ## Consequences

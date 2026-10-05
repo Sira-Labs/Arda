@@ -8,12 +8,13 @@ import {
 } from 'react';
 import { logger } from '@/services/logger';
 import {
-  ayaAudio,
   reciterOf,
+  recordingOf,
   useReciter,
   useSpeed,
   type Reciter,
   type ReciterId,
+  type Recording,
 } from './reciters';
 import { fetchTimings, wordsAt, type FetchTimings, type Timings } from './timings';
 
@@ -39,6 +40,20 @@ export const PlayerContext = createContext<PlayerDeps>({
 /** A pause before a loop starts again, to repeat after the reciter (spec F4). */
 const LOOP_PAUSE_MS = 1200;
 
+/** How far ahead of an āya's start the voice may be and still go on into it without a seek. */
+const RUN_ON_MS = 1500;
+
+/** Moves to `ms` in the recording, once the browser knows the file if it does not yet. */
+function seek(audio: HTMLAudioElement, ms: number) {
+  if (audio.readyState >= 1) {
+    audio.currentTime = ms / 1000;
+    return;
+  }
+  audio.addEventListener('loadedmetadata', () => (audio.currentTime = ms / 1000), {
+    once: true,
+  });
+}
+
 interface Track {
   queue: readonly PlayItem[];
   index: number;
@@ -51,9 +66,10 @@ export interface Recited extends PlayItem {
 }
 
 /**
- * The reciter player (spec F4, ADR-0011): plays a list of āyāt one recording after another,
- * at the chosen speed, once or in a loop with a pause; says which words are being recited,
- * word by word where timings exist, else the whole āya.
+ * The reciter player (spec F4, ADR-0011): plays a list of āyāt one after another, each from
+ * its own file or from its span in its sūra's file, at the chosen speed, once or in a loop
+ * with a pause; says which words are being recited, word by word where timings exist, else
+ * the whole āya.
  */
 export function usePlayer() {
   const deps = useContext(PlayerContext);
@@ -77,10 +93,12 @@ export function usePlayer() {
   }, []);
   const latest = useRef({ track, loop });
   latest.current = { track, loop };
+  // The āya's recording now playing, and whether its end has been dealt with.
+  const recording = useRef<Recording | null>(null);
+  const done = useRef(false);
 
   // The chosen reciter's timings, fetched when the reciter is chosen.
   useEffect(() => {
-    if (!reciter.timed) return;
     let live = true;
     deps
       .fetchTimings(reciter.id)
@@ -100,22 +118,11 @@ export function usePlayer() {
   useEffect(() => {
     const audio = deps.createAudio();
     audioRef.current = audio;
-    const onEnded = () => {
-      const { track: current, loop: looping } = latest.current;
-      if (!current) return;
-      if (current.index + 1 < current.queue.length) {
-        setTrack({ queue: current.queue, index: current.index + 1 });
-      } else if (looping) {
-        again.current = setTimeout(() => {
-          again.current = undefined;
-          setTrack({ queue: current.queue, index: 0 });
-        }, LOOP_PAUSE_MS);
-      } else {
-        setPlaying(false);
-        setTrack(null);
-      }
+    const onEnded = () => finish.current();
+    const onTime = () => {
+      setPosition(audio.currentTime * 1000);
+      reachEnd.current();
     };
-    const onTime = () => setPosition(audio.currentTime * 1000);
     const onError = () => {
       log.debug('recitation failed to load', { src: audio.src });
       // Playing again starts afresh, so the recording is asked for again.
@@ -136,14 +143,64 @@ export function usePlayer() {
     };
   }, [deps, cancelAgain]);
 
-  // A new āya (or reciter): its recording from the start.
+  /**
+   * The āya is over: on to the next, or after a pause the first again (repeat), or done. A
+   * sūra's file runs on past the āya, so it is paused while the repeat waits.
+   */
+  const finish = useRef(() => {});
+  finish.current = () => {
+    const { track: current, loop: looping } = latest.current;
+    if (!current || done.current) return;
+    done.current = true;
+    if (current.index + 1 < current.queue.length) {
+      setTrack({ queue: current.queue, index: current.index + 1 });
+    } else if (looping) {
+      audioRef.current?.pause();
+      again.current = setTimeout(() => {
+        again.current = undefined;
+        setTrack({ queue: current.queue, index: 0 });
+      }, LOOP_PAUSE_MS);
+    } else {
+      setPlaying(false);
+      setTrack(null);
+    }
+  };
+  /** In a sūra's file, the āya ends at its span's end, not the file's. */
+  const reachEnd = useRef(() => {});
+  reachEnd.current = () => {
+    const end = recording.current?.end;
+    const audio = audioRef.current;
+    if (audio && end !== undefined && audio.currentTime * 1000 >= end) finish.current();
+  };
+
+  // A new āya (or reciter): its recording, from its start. By sūra this waits for the
+  // timings, which say where the āya is; going on into the next āya of the same file needs
+  // no seek, so the voice runs on without a break.
   const item = track?.queue[track.index];
+  const known = timings?.id === reciter.id ? timings.data : undefined;
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !track || !item) return;
-    audio.src = ayaAudio(reciter, item.sura, item.aya);
-    setPosition(0);
-  }, [track, item, reciter]);
+    if (reciter.by === 'sura' && known === undefined) return;
+    const next = recordingOf(reciter, item.sura, item.aya, known?.spans);
+    if (!next) {
+      log.debug('no recording for the āya', { reciter: reciter.id, ...item });
+      setFailed(true);
+      setPlaying(false);
+      setTrack(null);
+      return;
+    }
+    const here = audio.currentTime * 1000;
+    const runsOn =
+      recording.current?.src === next.src &&
+      here <= next.start + 50 &&
+      next.start - here < RUN_ON_MS;
+    if (recording.current?.src !== next.src) audio.src = next.src;
+    if (!runsOn) seek(audio, next.start);
+    recording.current = next;
+    done.current = false;
+    setPosition(next.start);
+  }, [track, item, reciter, known]);
 
   // Play or pause, at the chosen speed (a new source resets the rate to the default one).
   useEffect(() => {
@@ -151,7 +208,8 @@ export function usePlayer() {
     if (!audio) return;
     audio.defaultPlaybackRate = speed;
     audio.playbackRate = speed;
-    if (!track || !playing) {
+    // By sūra, nothing plays before the timings have said where the āya is.
+    if (!track || !playing || (reciter.by === 'sura' && known === undefined)) {
       audio.pause();
       return;
     }
@@ -162,7 +220,7 @@ export function usePlayer() {
       setFailed(true);
       setPlaying(false);
     });
-  }, [track, playing, speed, reciter]);
+  }, [track, playing, speed, reciter, known]);
 
   // Word by word needs the time more often than `timeupdate` gives it.
   useEffect(() => {
@@ -170,6 +228,7 @@ export function usePlayer() {
     let frame = requestAnimationFrame(function tick() {
       const audio = audioRef.current;
       if (audio) setPosition(audio.currentTime * 1000);
+      reachEnd.current();
       frame = requestAnimationFrame(tick);
     });
     return () => cancelAnimationFrame(frame);
@@ -218,10 +277,10 @@ export function usePlayer() {
 
   let recited: Recited | null = null;
   if (item && playing) {
-    const segments =
-      reciter.timed && timings?.id === reciter.id
-        ? timings.data?.ayat[item.aya === 0 ? '1:1' : `${item.sura}:${item.aya}`]
-        : undefined;
+    // By āya, the basmala's file is al-Fātiḥa 1, and so are its times; by sūra it has none.
+    const key =
+      item.aya !== 0 ? `${item.sura}:${item.aya}` : reciter.by === 'aya' ? '1:1' : '';
+    const segments = known?.ayat[key];
     const words = segments
       ? wordsAt(segments, position)
       : { from: 1, to: Number.MAX_SAFE_INTEGER };
