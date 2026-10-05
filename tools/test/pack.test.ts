@@ -18,6 +18,13 @@ import { parseIndopak } from '../src/indopak';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
 import { parseTanzil } from '../src/tanzil';
+import {
+  TIMED_RECITERS,
+  buildTimings,
+  serialiseTimings,
+  shippedSuras,
+} from '../src/timings';
+import { unzipFile } from '../src/zip';
 
 const BASMALA = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
 const COPYRIGHT =
@@ -377,6 +384,27 @@ describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
       new URL('../../packages/quran/src/pages.ts', import.meta.url)
     );
     expect(pagesModule(madinaPageStarts(metadata))).toBe(readFileSync(file, 'utf8'));
+  });
+
+  it('gives the reciters’ word timings in the app, unchanged', () => {
+    const source = sources['quran-align'] as { file: string; sha256: string };
+    const archive = readFileSync(`${cache}${source.file}`);
+    expect(createHash('sha256').update(archive).digest('hex')).toBe(source.sha256);
+    for (const reciter of TIMED_RECITERS) {
+      const timings = buildTimings(
+        unzipFile(archive, reciter.file).toString('utf8'),
+        reciter,
+        shippedSuras(),
+        {
+          licence: 'CC BY 4.0',
+          attribution: 'Collin Fair (cpfair), https://github.com/cpfair/quran-align',
+        }
+      );
+      const file = fileURLToPath(
+        new URL(`../../apps/web/public/audio/timings/${reciter.id}.json`, import.meta.url)
+      );
+      expect(serialiseTimings(timings)).toBe(readFileSync(file, 'utf8'));
+    }
   });
 
   it('starts the ajzāʾ in @arda/quran where Tanzil’s metadata does', () => {

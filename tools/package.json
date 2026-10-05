@@ -9,6 +9,7 @@
     "pack": "vite-node src/cli.ts pack",
     "counts": "vite-node src/cli.ts counts",
     "pages": "vite-node src/cli.ts pages",
+    "timings": "vite-node src/cli.ts timings",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },
