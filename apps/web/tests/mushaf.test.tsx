@@ -465,6 +465,21 @@ describe('the muṣḥaf screen (S2.4)', () => {
       expect(audio.played[1]).toBe(recording('Husary_Muallim_128kbps', '087002'));
     });
 
+    it('does not repeat a page that was left during the pause before the repeat', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Wiederholen' }));
+      await user.click(wordAt('hafs:87:2:1'));
+      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      audio.fire('ended');
+      await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
+      expect(await screen.findByText('Seite 599 · IndoPak')).toBeInTheDocument();
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      expect(audio.played).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Seite anhören' })).toBeInTheDocument();
+    });
+
     it('plays Māhir al-Muʿayqilī āya by āya, marking the whole āya', async () => {
       const { audio, asked, deps } = fakePlayer();
       renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);

@@ -68,6 +68,9 @@ export function usePlayer() {
     null
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  // The pause before a repeat; cleared when the reader stops, pauses or plays something else,
+  // so it cannot bring back a list of āyāt that was left.
+  const again = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const latest = useRef({ track, loop });
   latest.current = { track, loop };
 
@@ -93,14 +96,13 @@ export function usePlayer() {
   useEffect(() => {
     const audio = deps.createAudio();
     audioRef.current = audio;
-    let again: ReturnType<typeof setTimeout> | undefined;
     const onEnded = () => {
       const { track: current, loop: looping } = latest.current;
       if (!current) return;
       if (current.index + 1 < current.queue.length) {
         setTrack({ queue: current.queue, index: current.index + 1 });
       } else if (looping) {
-        again = setTimeout(
+        again.current = setTimeout(
           () => setTrack({ queue: current.queue, index: 0 }),
           LOOP_PAUSE_MS
         );
@@ -121,7 +123,7 @@ export function usePlayer() {
     audio.addEventListener('timeupdate', onTime);
     audio.addEventListener('error', onError);
     return () => {
-      clearTimeout(again);
+      clearTimeout(again.current);
       audio.pause();
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('timeupdate', onTime);
@@ -171,16 +173,21 @@ export function usePlayer() {
 
   const play = useCallback((queue: readonly PlayItem[]) => {
     if (queue.length === 0) return;
+    clearTimeout(again.current);
     setFailed(false);
     setTrack({ queue, index: 0 });
     setPlaying(true);
   }, []);
-  const pause = useCallback(() => setPlaying(false), []);
+  const pause = useCallback(() => {
+    clearTimeout(again.current);
+    setPlaying(false);
+  }, []);
   const resume = useCallback(() => {
     setFailed(false);
     setPlaying(true);
   }, []);
   const stop = useCallback(() => {
+    clearTimeout(again.current);
     setPlaying(false);
     setTrack(null);
   }, []);
