@@ -282,8 +282,17 @@ describe('the muṣḥaf screen (S2.4)', () => {
     await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
     expect(await screen.findByText('Seite 4 · IndoPak')).toBeInTheDocument();
     expect(screen.getByText('Deine Aufgabe: Āya 2')).toBeInTheDocument();
+    // The turned-to page slides in from the left, where the next page lies.
+    expect(document.querySelector('.mushaf-page')).toHaveAttribute(
+      'data-entering',
+      'next'
+    );
     await user.keyboard('{ArrowRight}');
     expect(await screen.findByText('Seite 3 · IndoPak')).toBeInTheDocument();
+    expect(document.querySelector('.mushaf-page')).toHaveAttribute(
+      'data-entering',
+      'previous'
+    );
     // In a field the arrows move the cursor, never the page.
     const note = document.body.appendChild(document.createElement('textarea'));
     note.focus();

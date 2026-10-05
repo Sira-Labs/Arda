@@ -110,13 +110,17 @@ export function MushafPage() {
       navigate({ pathname: `/mushaf/seite/${to}`, search: search.toString() }),
     [navigate, search]
   );
-  // Which way the last turn went, so the new page slides in from that side.
-  const [entering, setEntering] = useState<'next' | 'previous' | null>(null);
+  // The page the last turn went to and which way, so that page slides in from that side;
+  // a page reached otherwise (history, a link) does not replay an old slide.
+  const [entering, setEntering] = useState<{
+    to: number;
+    way: 'next' | 'previous';
+  } | null>(null);
   const turn = useCallback(
     (by: 1 | -1) => {
       const to = page + by;
       if (to < 1 || !entryForPage(to, script)) return;
-      setEntering(by === 1 ? 'next' : 'previous');
+      setEntering({ to, way: by === 1 ? 'next' : 'previous' });
       go(to);
     },
     [page, script, go]
@@ -313,7 +317,7 @@ export function MushafPage() {
           data-script={indopak ? 'indopak' : 'madina'}
           data-layout={indopak ? 'lines' : 'flow'}
           data-colours={colours}
-          data-entering={entering ?? undefined}
+          data-entering={entering?.to === page ? entering.way : undefined}
           // The two opening pages (al-Fātiḥa, al-Baqara's start) print shorter lines.
           data-opening={
             indopak && page - pack.layout!.pageOffset <= 2 ? 'true' : undefined
