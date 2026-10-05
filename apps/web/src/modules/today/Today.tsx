@@ -3,6 +3,7 @@ import { Icon } from '@/components/Icon';
 import { RuleLegend } from '@/components/RuleLegend';
 import { TajweedText } from '@/components/TajweedText';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
+import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { cardName } from '@/content/unit2';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
@@ -47,10 +48,17 @@ export function Today() {
           <p className="eyebrow">{m.today.eyebrow}</p>
           <h1>{m.today.greeting(me?.name ?? null)}</h1>
         </div>
-        <Link className="btn" to={me ? '/konto' : '/anmelden'}>
-          <Icon name="account" />
-          {me ? m.today.account : m.today.signIn}
-        </Link>
+        <div
+          className="row"
+          style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}
+        >
+          {/* The language at hand on the first screen, not only in the account (owner, 2026-10-05). */}
+          <LanguagePicker compact />
+          <Link className="btn" to={me ? '/konto' : '/anmelden'}>
+            <Icon name="account" />
+            {me ? m.today.account : m.today.signIn}
+          </Link>
+        </div>
       </header>
       {offline && (
         <p className="muted" role="status">

@@ -468,3 +468,29 @@ describe('assignments in Arabic', () => {
     expect(document.documentElement).toHaveAttribute('dir', 'rtl');
   });
 });
+
+describe('the language on Today', () => {
+  it('switches the app to English from the first screen', async () => {
+    const api = renderAt(
+      '/',
+      {
+        'GET /api/v1/halaqat': Response.json({ halaqat: [] }),
+        'GET /api/v1/assignments': Response.json({ assignments: [] }),
+        '/api/v1/account/settings': new Response(null, { status: 204 }),
+      },
+      STUDENT
+    );
+    const user = userEvent.setup();
+    await user.selectOptions(
+      await screen.findByRole('combobox', { name: 'Sprache' }),
+      'en'
+    );
+    expect(await screen.findByRole('combobox', { name: 'Language' })).toHaveValue('en');
+    expect(document.documentElement).toHaveAttribute('lang', 'en');
+    await waitFor(() =>
+      expect(api.calls.filter((c) => c.path === '/api/v1/account/settings')).toEqual([
+        { path: '/api/v1/account/settings', method: 'PATCH', body: { language: 'en' } },
+      ])
+    );
+  });
+});
