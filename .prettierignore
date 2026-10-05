@@ -6,6 +6,8 @@ package-lock.json
 
 # Generated content packs: their bytes are checksummed (tools/README.md)
 apps/web/public/packs
+# Generated word timings (tools timings), one āya per line
+apps/web/public/audio
 
 # Downloaded sources (tools fetch), never committed
 tools/.cache

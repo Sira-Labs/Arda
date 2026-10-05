@@ -30,5 +30,13 @@
     "title": "Tanzil Quran Metadata 1.0 (sūras, Madīna pages)",
     "licence": "CC BY 3.0",
     "attribution": "Tanzil Project, https://tanzil.net"
+  },
+  "quran-align": {
+    "file": "quran-align-data-2016-11-24.zip",
+    "url": "https://github.com/cpfair/quran-align/releases/download/release-2016-11-24/quran-align-data-2016-11-24.zip",
+    "sha256": "5eeb045d8a7895208c94d2d7ec243567f8f550728835411527c4ffa1e789c9b7",
+    "title": "quran-align word timings for EveryAyah recordings (release 2016-11-24)",
+    "licence": "CC BY 4.0",
+    "attribution": "Collin Fair (cpfair), https://github.com/cpfair/quran-align"
   }
 }

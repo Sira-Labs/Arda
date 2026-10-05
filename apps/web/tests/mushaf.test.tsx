@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -16,6 +16,13 @@ import { Mushaf } from '@/modules/mushaf/Mushaf';
 import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
 import { PackLoaderContext } from '@/modules/mushaf/usePack';
+import {
+  resetReciterForTests,
+  resetSpeedForTests,
+  type ReciterId,
+} from '@/modules/mushaf/reciters';
+import type { Timings } from '@/modules/mushaf/timings';
+import { PlayerContext, type PlayerDeps } from '@/modules/mushaf/usePlayer';
 import { packRuleName, wordSegments } from '@/modules/mushaf/words';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { fakeApi, Providers } from './render';
@@ -192,6 +199,60 @@ describe('a word and its rules', () => {
   });
 });
 
+/** An audio element that plays nothing: it remembers what it was asked to play. */
+class FakeAudio extends EventTarget {
+  src = '';
+  currentTime = 0;
+  playbackRate = 1;
+  defaultPlaybackRate = 1;
+  paused = true;
+  played: string[] = [];
+  play() {
+    this.paused = false;
+    this.played.push(this.src);
+    return Promise.resolve();
+  }
+  pause() {
+    this.paused = true;
+  }
+  /** The recording reaches `seconds`, as the browser reports it. */
+  at(seconds: number) {
+    this.currentTime = seconds;
+    act(() => {
+      this.dispatchEvent(new Event('timeupdate'));
+    });
+  }
+  fire(type: 'ended' | 'error') {
+    act(() => {
+      this.dispatchEvent(new Event(type));
+    });
+  }
+}
+
+/** A player that records into one fake audio element; al-Aʿlā 1 timed word by word. */
+function fakePlayer() {
+  const audio = new FakeAudio();
+  const asked: ReciterId[] = [];
+  const timings: Timings = {
+    reciter: 'husary-muallim',
+    ayat: {
+      '87:1': [
+        [0, 1, 0, 1000],
+        [1, 2, 1000, 2000],
+        [2, 3, 2000, 3000],
+      ],
+    },
+  };
+  const deps: PlayerDeps = {
+    createAudio: () => audio as unknown as HTMLAudioElement,
+    fetchTimings: async (id) => {
+      asked.push(id);
+      return timings;
+    },
+  };
+  return { audio, asked, deps };
+}
+
 /** A word's button, by its key (`hafs:113:2:1`). */
 const wordAt = (key: string) =>
   document.querySelector<HTMLElement>(`[data-word="${key}"] > button`)!;
@@ -200,20 +261,23 @@ function renderAt(
   path: string,
   deps: PackLoaderDeps,
   extra?: ReactNode,
-  api: ReturnType<typeof fakeApi> = fakeApi({}, null)
+  api: ReturnType<typeof fakeApi> = fakeApi({}, null),
+  player: PlayerDeps = fakePlayer().deps
 ) {
   render(
     <Providers client={api.client}>
-      <PackLoaderContext.Provider value={deps}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/mushaf" element={<Mushaf />} />
-            <Route path="/mushaf/seite/:page" element={<MushafPage />} />
-            <Route path="/mushaf/:sura" element={<SuraView />} />
-            <Route path="*" element={extra ?? null} />
-          </Routes>
-        </MemoryRouter>
-      </PackLoaderContext.Provider>
+      <PlayerContext.Provider value={player}>
+        <PackLoaderContext.Provider value={deps}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/mushaf" element={<Mushaf />} />
+              <Route path="/mushaf/seite/:page" element={<MushafPage />} />
+              <Route path="/mushaf/:sura" element={<SuraView />} />
+              <Route path="*" element={extra ?? null} />
+            </Routes>
+          </MemoryRouter>
+        </PackLoaderContext.Provider>
+      </PlayerContext.Provider>
     </Providers>
   );
   return api;
@@ -223,6 +287,8 @@ beforeEach(() => {
   localStorage.clear();
   resetScriptForTests();
   resetColoursForTests();
+  resetReciterForTests();
+  resetSpeedForTests();
   localStorage.setItem('arda.language', 'de');
 });
 
@@ -352,6 +418,108 @@ describe('the muṣḥaf screen (S2.4)', () => {
       expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
       swipe([at(100)], [at(300)]);
       expect(screen.getByText('Seite 7 · IndoPak')).toBeInTheDocument();
+    });
+  });
+
+  describe('the reciter (S3.1)', () => {
+    const recording = (folder: string, file: string) =>
+      `https://everyayah.com/data/${folder}/${file}.mp3`;
+
+    it('recites the page āya by āya, marking each word as it is recited', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Seite anhören' }));
+      // Al-Aʿlā opens the page: its basmala first, al-Ḥuṣarī's teaching recitation.
+      expect(audio.played).toEqual([recording('Husary_Muallim_128kbps', '001001')]);
+      audio.fire('ended');
+      expect(audio.played.at(-1)).toBe(recording('Husary_Muallim_128kbps', '087001'));
+      audio.at(1.5);
+      expect(wordAt('hafs:87:1:2').parentElement).toHaveAttribute('data-playing', 'true');
+      expect(wordAt('hafs:87:1:1').parentElement).not.toHaveAttribute('data-playing');
+      audio.at(2.5);
+      expect(wordAt('hafs:87:1:3').parentElement).toHaveAttribute('data-playing', 'true');
+      // Slower, then paused and on again where it stopped.
+      await user.click(screen.getByRole('button', { name: '0.5×' }));
+      expect(audio.playbackRate).toBe(0.5);
+      expect(localStorage.getItem('arda.speed')).toBe('0.5');
+      await user.click(screen.getByRole('button', { name: 'Anhalten' }));
+      expect(audio.paused).toBe(true);
+      await user.click(screen.getByRole('button', { name: 'Weiter' }));
+      expect(audio.paused).toBe(false);
+      expect(audio.currentTime).toBe(2.5);
+    });
+
+    it('plays a tapped word’s āya, again and again when asked to repeat', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Wiederholen' }));
+      await user.click(wordAt('hafs:87:2:1'));
+      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(audio.played).toEqual([recording('Husary_Muallim_128kbps', '087002')]);
+      audio.fire('ended');
+      // After a pause to repeat after him, the āya again.
+      await waitFor(() => expect(audio.played).toHaveLength(2), { timeout: 2500 });
+      expect(audio.played[1]).toBe(recording('Husary_Muallim_128kbps', '087002'));
+    });
+
+    it('does not repeat a page that was left during the pause before the repeat', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Wiederholen' }));
+      await user.click(wordAt('hafs:87:2:1'));
+      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      audio.fire('ended');
+      await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
+      expect(await screen.findByText('Seite 599 · IndoPak')).toBeInTheDocument();
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      expect(audio.played).toHaveLength(1);
+      expect(screen.getByRole('button', { name: 'Seite anhören' })).toBeInTheDocument();
+    });
+
+    it('plays Māhir al-Muʿayqilī āya by āya, marking the whole āya', async () => {
+      const { audio, asked, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.selectOptions(
+        await screen.findByRole('combobox', { name: 'Rezitator' }),
+        'Māhir al-Muʿayqilī'
+      );
+      expect(
+        screen.getByText(
+          'Bei diesem Rezitator wird Āya für Āya markiert, nicht Wort für Wort.'
+        )
+      ).toBeInTheDocument();
+      await user.click(wordAt('hafs:87:1:1'));
+      await user.click(screen.getByRole('button', { name: 'Āya anhören' }));
+      expect(audio.played).toEqual([recording('MaherAlMuaiqly128kbps', '087001')]);
+      for (const n of [1, 2, 3]) {
+        expect(wordAt(`hafs:87:1:${n}`).parentElement).toHaveAttribute(
+          'data-playing',
+          'true'
+        );
+      }
+      expect(asked).not.toContain('maher');
+    });
+
+    it('says when the recitation cannot be loaded, and falls silent on a turned page', async () => {
+      const { audio, deps } = fakePlayer();
+      renderAt('/mushaf/seite/598', loader().deps, undefined, undefined, deps);
+      const user = userEvent.setup();
+      await user.click(await screen.findByRole('button', { name: 'Seite anhören' }));
+      audio.fire('error');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'Der Vortrag lädt nicht. Prüfe deine Verbindung.'
+      );
+      await user.click(screen.getByRole('button', { name: 'Seite anhören' }));
+      expect(audio.paused).toBe(false);
+      await user.click(screen.getByRole('button', { name: 'Nächste Seite' }));
+      expect(await screen.findByText('Seite 599 · IndoPak')).toBeInTheDocument();
+      expect(audio.paused).toBe(true);
+      expect(screen.getByRole('button', { name: 'Seite anhören' })).toBeInTheDocument();
     });
   });
 

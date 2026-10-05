@@ -4,6 +4,7 @@ import { PACK_RULES } from '@arda/tajweed';
 import { TajweedText } from '@/components/TajweedText';
 import { useI18n } from '@/i18n/I18nProvider';
 import { cardPath, hasCard } from '@/modules/assignments/format';
+import { PlayIcon } from './PlayerBar';
 import { packRuleName, wordRules, wordSegments, type MushafWord } from './words';
 
 /**
@@ -16,12 +17,15 @@ export function WordSheet({
   label,
   onClose,
   script = 'madina',
+  onListen,
 }: {
   word: MushafWord;
   label: string;
   onClose: () => void;
   /** The script the muṣḥaf shows, so the word looks as it does on the page. */
   script?: 'indopak' | 'madina';
+  /** Plays the word's āya (spec F4). */
+  onListen?: () => void;
 }) {
   const { m, language } = useI18n();
   const close = useRef<HTMLButtonElement>(null);
@@ -78,6 +82,16 @@ export function WordSheet({
           </li>
         ))}
       </ul>
+      {onListen && (
+        <button
+          className="btn btn-primary"
+          type="button"
+          style={{ alignSelf: 'flex-start' }}
+          onClick={onListen}
+        >
+          <PlayIcon pause={false} /> {m.mushaf.player.playAya}
+        </button>
+      )}
       <button
         ref={close}
         className="btn"

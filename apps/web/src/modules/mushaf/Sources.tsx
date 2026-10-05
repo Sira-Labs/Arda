@@ -1,6 +1,9 @@
 import { useI18n } from '@/i18n/I18nProvider';
 
-/** Credit for the text and the rules, with links, as their licences ask (ADR-0009). */
+/**
+ * Credit for the text, the rules, the recitations and their timings, with links, as their
+ * licences ask (ADR-0009, ADR-0011).
+ */
 export function MushafSources() {
   const { m } = useI18n();
   return (
@@ -25,6 +28,14 @@ export function MushafSources() {
           rel="noreferrer"
         >
           {m.mushaf.rules}
+        </a>
+        <br />
+        <a href="https://everyayah.com" target="_blank" rel="noreferrer">
+          {m.mushaf.player.sourceAudio}
+        </a>
+        <br />
+        <a href="https://github.com/cpfair/quran-align" target="_blank" rel="noreferrer">
+          {m.mushaf.player.sourceTimings}
         </a>
       </p>
     </footer>

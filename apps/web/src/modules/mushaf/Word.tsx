@@ -26,6 +26,7 @@ export function Word({
   onTap,
   indopak = false,
   ayaEnd,
+  playing = false,
 }: {
   tap: WordTap;
   className?: string;
@@ -34,10 +35,16 @@ export function Word({
   indopak?: boolean;
   /** ʿUthmānī text: the āya ends after this word. */
   ayaEnd?: number;
+  /** The reciter is reciting this word (or its āya, without word timings). */
+  playing?: boolean;
 }) {
   const after = tap.word.a;
   return (
-    <span className={className} data-word={tap.key}>
+    <span
+      className={className}
+      data-word={tap.key}
+      data-playing={playing ? 'true' : undefined}
+    >
       <button
         type="button"
         className="mushaf-word"

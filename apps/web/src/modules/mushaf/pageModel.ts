@@ -151,3 +151,24 @@ export function pageHeader(
   }
   return undefined;
 }
+
+/**
+ * What a reciter recites for the page, in order: each āya with a word on it (one begun on the
+ * page before is recited whole), and a sūra's basmala as āya 0.
+ */
+export function pageRecitation(
+  blocks: readonly Block[]
+): { sura: number; aya: number }[] {
+  const items: { sura: number; aya: number }[] = [];
+  const add = (sura: number, aya: number) => {
+    const last = items.at(-1);
+    if (!last || last.sura !== sura || last.aya !== aya) items.push({ sura, aya });
+  };
+  for (const b of blocks) {
+    if (b.kind === 'basmala') add(b.sura, 0);
+    else if (b.kind === 'line' || b.kind === 'flow') {
+      b.words.forEach((w) => add(w.place.sura, w.place.aya));
+    }
+  }
+  return items;
+}
