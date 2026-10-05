@@ -4,10 +4,16 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
-import { wordCount, type Pack, type PackIndex, type PackWord } from '@arda/quran';
+import {
+  JUZ_STARTS,
+  wordCount,
+  type Pack,
+  type PackIndex,
+  type PackWord,
+} from '@arda/quran';
 import { countsModule, wordCounts } from '../src/counts';
 import { buildSpec } from '../src/build';
-import { madinaPageStarts, pagesModule } from '../src/pages';
+import { juzStarts, madinaPageStarts, pagesModule } from '../src/pages';
 import { parseIndopak } from '../src/indopak';
 import { buildPack, serialise } from '../src/pack';
 import { PACKS } from '../src/packs';
@@ -371,5 +377,10 @@ describe.skipIf(!haveSources)('rebuilding from the pinned sources', () => {
       new URL('../../packages/quran/src/pages.ts', import.meta.url)
     );
     expect(pagesModule(madinaPageStarts(metadata))).toBe(readFileSync(file, 'utf8'));
+  });
+
+  it('starts the ajzāʾ in @arda/quran where Tanzil’s metadata does', () => {
+    const metadata = readFileSync(`${cache}${sources['tanzil-metadata']!.file}`, 'utf8');
+    expect(JUZ_STARTS).toEqual(juzStarts(metadata));
   });
 });
