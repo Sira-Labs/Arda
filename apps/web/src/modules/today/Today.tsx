@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Icon } from '@/components/Icon';
+import { BRAND_NAME, Logo } from '@/components/Logo';
 import { RuleLegend } from '@/components/RuleLegend';
 import { TajweedText } from '@/components/TajweedText';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
@@ -44,13 +45,16 @@ export function Today() {
 
   return (
     <div className="stack" style={{ gap: 24 }}>
-      <header className="row" style={{ justifyContent: 'space-between' }}>
-        <div className="stack" style={{ gap: 4 }}>
+      {/* On phones the mark opens the header row, where the bottom bar has no brand; on wide
+          screens the sidebar carries it (global.css, .today-header). */}
+      <header className="today-header">
+        <Logo variant="tile" size={44} label={BRAND_NAME} className="today-mark" />
+        <div className="stack today-title" style={{ gap: 4 }}>
           <p className="eyebrow">{m.today.eyebrow}</p>
           <h1>{m.today.greeting(me?.name ?? null)}</h1>
         </div>
         <div
-          className="row"
+          className="row today-tools"
           style={{ gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}
         >
           {/* The language at hand on the first screen, not only in the account (owner, 2026-10-05). */}

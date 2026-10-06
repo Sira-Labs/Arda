@@ -28,6 +28,9 @@ export const de = {
     lab: 'Labor',
     sheikh: 'Sheikh',
   },
+  brand: {
+    tagline: 'Rezitieren, gehört werden, korrigiert werden.',
+  },
   language: {
     label: 'Sprache',
   },
