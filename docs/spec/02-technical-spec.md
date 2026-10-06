@@ -113,12 +113,21 @@ go too. The range is checked against the muṣḥaf (`@arda/quran`) and the rule
 `@arda/tajweed` by the API; the database keeps the shape (read and recite need āyāt, learn and
 practise a rule). Word keys replace the sūra and āya columns when the content packs arrive.
 
+Built (migration `0006_recordings`, spec F7 and T3, ADR-0012):
+
+| Table             | Purpose                                                                                                                                                                                                                     |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recordings`      | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when |
+| `recording_audio` | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                             |
+
+Both cascade with the student's membership, so leaving, being removed or deleting the account
+deletes the student's recordings; the export lists them without the sound.
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table                  | Story    | Key fields                                                                                  |
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `recitations`          | F7       | student, halaqa, range, object key, duration, status, consent                               |
-| `recitation_marks`     | T3       | recitation, word key, second, rule, remark, voice note key, by teacher                      |
+| `recitation_marks`     | T3       | recording, word key, second, rule, remark, voice note key, by teacher                       |
 | `arḍ_log` (`arda_log`) | T4       | student, sūra/range, date, verdict, note                                                    |
 | `check_results`        | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
 | `flags`                | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
@@ -171,8 +180,20 @@ Built for T2 (mounted at `/api/v1`, every route checked against every kind of ca
 | `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                                    |
 | `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                             |
 
-Next: `/api/v1/recitations/*`
-(F7, T3), `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
+Built for F7 and T3 (mounted at `/api/v1`, every route checked against every kind of caller
+in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari needs, and
+`Cache-Control: private, no-store`):
+
+| Method and path                                         | Action                    | Purpose                                                                                                         |
+| ------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `POST /halaqat/:id/recordings?clientId=…`               | `halaqa:study` (student)  | send a take: the body is the sound (WebM, Ogg, MP4), the query what it recites; ≤ 6 MB, 10 min, 500 per student |
+| `GET /halaqat/:id/recordings?before=`                   | `halaqa:review` (teacher) | the queue, 50 at a time: waiting first, oldest first, then answered                                             |
+| `GET /halaqat/:id/recordings/:rid/audio`                | `halaqa:review`           | hear it                                                                                                         |
+| `PUT /halaqat/:id/recordings/:rid/review`               | `halaqa:review`           | answer `{ verdict, remark?, note? }`; again replaces it                                                         |
+| `GET /recordings?before=`                               | `recitation:own`          | my recordings and their answers, newest first                                                                   |
+| `GET /recordings/:rid/audio`, `DELETE /recordings/:rid` | `recitation:own`          | hear or delete my own                                                                                           |
+
+Next: `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.
 
 ## 6. Configuration (`ARDA_*`)

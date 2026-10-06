@@ -161,8 +161,11 @@ against the clock), "Hold the ghunna" (hum with the beat: two counts, not one, n
 
 Record a word, āya or range; the app's first check (when switched on for that rule, ADR-0013)
 marks words `good` / `check` with the rule; one tap sends it to the sheikh; he marks words and
-can answer with his voice. Recordings stay private (ADR-0012). **Acceptance:** recording and
-upload work offline-first; only teachers of the ḥalaqa can play it.
+can answer with his voice. Recordings stay private (ADR-0012). _(Built: record an āya from a
+tapped word or an assignment's range, consent asked once, listen back, send to a chosen
+ḥalaqa; takes recorded offline wait in the outbox and go when the device is online; "Deine
+Rezitationen" on Today with the answer. Next: the first check, ADR-0013.)_ **Acceptance:**
+recording and upload work offline-first; only teachers of the ḥalaqa can play it.
 
 ### T — Teacher and student _(Must)_
 
@@ -171,7 +174,9 @@ upload work offline-first; only teachers of the ḥalaqa can play it.
   Nochmal rezitieren, Üben_ or a voice note, due date, reminder; "Von meinem Sheikh" comes
   first on Today; done goes back to him.
 - **T3 Listening queue.** Recordings waiting for him, the pre-check beside each; tap a word to
-  mark it; reply by voice.
+  mark it; reply by voice. _(Built: "Zum Abhören" on the ḥalaqa page, play, `good`/`again`, a
+  quick remark (sīn, zāy and rāʾ among them) and his own words. Next: marks on words, voice
+  replies, the pre-check.)_
 - **T4 The ʿarḍ log.** Which sūras each student recited, when, and his verdict: the notebook of
   the chain, kept for him.
 - **T5 Rule by rule.** Who still struggles with which rule.
@@ -180,7 +185,8 @@ upload work offline-first; only teachers of the ḥalaqa can play it.
   written remarks are machine-translated with tajwīd terms and āyāt unchanged, labelled
   "maschinell übersetzt", the original one tap away; voice notes stay his voice, with a
   transcript and its translation underneath. _(Built: quick remarks, the preview of written
-  remarks for teachers, the translation service. Next: delivery with T3.)_
+  remarks for teachers, the translation service, quick remarks delivered with T3. Next: written
+  remarks translated on delivery.)_
   **Acceptance:** the sheikh can assign and review entirely on a phone; a student never sees
   another student's recordings; a student reading German, French or Arabic understands a
   remark written in English, and can always see the original.
