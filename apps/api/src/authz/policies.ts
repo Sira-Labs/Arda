@@ -49,6 +49,8 @@ export const RBAC_MATRIX = {
   'halaqa:study': ['student', 'teacher', 'admin'],
   /** Hear students' recitations and mark them; scoped: teacher of that ḥalaqa. */
   'halaqa:review': ['teacher', 'admin'],
+  /** List, hear and delete one's own recitations (ADR-0012); the queries keep to one's own. */
+  'recitation:own': ['student', 'teacher', 'admin'],
   /** Translate a written remark into a student's language (ADR-0020; costs money). */
   'feedback:translate': ['teacher', 'admin'],
   /** List and search users in the admin area. */

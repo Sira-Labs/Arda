@@ -29,6 +29,7 @@ import { ClaudeTranslator } from './translation/claudeTranslator.js';
 import { PgTranslationRepository } from './translation/repository.js';
 import { PgAssignmentRepository } from './assignments/repository.js';
 import { PgHalaqaRepository } from './halaqat/repository.js';
+import { PgRecordingRepository } from './recordings/repository.js';
 import { TranslationService } from './translation/service.js';
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
@@ -156,6 +157,7 @@ async function main(): Promise<void> {
     translations: { service: translations, auth, log },
     halaqat: { repo: halaqat, auth, log },
     assignments: { repo: new PgAssignmentRepository(pool), halaqat, auth, log },
+    recordings: { repo: new PgRecordingRepository(pool), halaqat, auth, log },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,
     authzLog: log,

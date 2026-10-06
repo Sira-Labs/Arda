@@ -13,6 +13,10 @@ import { PgAdminRepository } from '../src/admin/repository.js';
 import { PgAccountRepository } from '../src/account/repository.js';
 import { PgPrivacyRepository } from '../src/privacy/repository.js';
 import {
+  PgRecordingRepository,
+  type NewRecording,
+} from '../src/recordings/repository.js';
+import {
   PgSecondFactorRepository,
   SecondFactorService,
 } from '../src/account/secondFactor.js';
@@ -1374,6 +1378,192 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           (await pool.query('select count(*) from assignment_completions')).rows[0].count
         )
       ).toBe(0);
+    });
+  });
+  describe('recordings (F7, T3, ADR-0012)', () => {
+    const TEACHER = '50000000-0000-4000-8000-000000000001';
+    const AMINA = '50000000-0000-4000-8000-000000000002';
+    const YUSUF = '50000000-0000-4000-8000-000000000003';
+    const NOW = new Date('2026-10-06T12:00:00Z');
+    const SOUND = Buffer.from('fake opus bytes');
+    let halaqat: PgHalaqaRepository;
+    let repo: PgRecordingRepository;
+    let halaqaId: string;
+    let takes = 0;
+    const take = (
+      studentId: string,
+      input: Partial<NewRecording> = {}
+    ): NewRecording => ({
+      clientId: `60000000-0000-4000-8000-${String(++takes).padStart(12, '0')}`,
+      halaqaId,
+      studentId,
+      assignmentId: null,
+      range: { sura: 112, from: 1, to: 4 },
+      mime: 'audio/webm',
+      durationMs: 4200,
+      audio: SOUND,
+      ...input,
+    });
+    const page = { limit: 50 };
+
+    beforeEach(async () => {
+      halaqat = new PgHalaqaRepository(pool);
+      repo = new PgRecordingRepository(pool);
+      await pool.query(
+        `insert into users (id, email, name, role) values
+           ($1, 'sheikh@example.org', 'Sheikh Ahmad', 'teacher'),
+           ($2, 'amina@example.org', 'Amina', 'student'),
+           ($3, 'yusuf@example.org', 'Yusuf', 'student')`,
+        [TEACHER, AMINA, YUSUF]
+      );
+      halaqaId = await halaqat.create({
+        name: 'Juzʾ ʿAmma',
+        oneToOne: false,
+        teacherId: TEACHER,
+      });
+      for (const userId of [AMINA, YUSUF]) {
+        const tokenHash = hashInviteToken(newInviteToken());
+        await halaqat.createInvite({
+          halaqaId,
+          tokenHash,
+          actorId: TEACHER,
+          expiresAt: new Date(NOW.getTime() + 60_000),
+        });
+        await halaqat.join(tokenHash, userId, NOW);
+        await halaqat.approve(halaqaId, userId, TEACHER);
+      }
+    });
+
+    it('stores a take once, only from an active student, within the limit', async () => {
+      const input = take(AMINA);
+      const first = await repo.save(input, 10);
+      expect(first.status).toBe('created');
+      expect(await repo.save(input, 10)).toEqual({
+        status: 'existing',
+        id: (first as { id: string }).id,
+      });
+      expect((await repo.save(take(TEACHER), 10)).status).toBe('not_member');
+      expect((await repo.save(take(AMINA), 1)).status).toBe('limit');
+      const audio = await repo.ownAudio(AMINA, (first as { id: string }).id);
+      expect(audio).toEqual({ mime: 'audio/webm', data: SOUND });
+      expect(await repo.ownAudio(YUSUF, (first as { id: string }).id)).toBeNull();
+    });
+
+    it('answers an assignment only of this student in this ḥalaqa', async () => {
+      const assignments = new PgAssignmentRepository(pool);
+      const give = (studentId: string | null) =>
+        assignments.create({
+          halaqaId,
+          studentId,
+          kind: 'recite',
+          range: { sura: 112, from: 1, to: 4 },
+          focusRule: null,
+          repetitions: null,
+          note: null,
+          dueOn: '2026-10-09',
+          createdBy: TEACHER,
+        }) as Promise<string>;
+      const forYusuf = await give(YUSUF);
+      const forAll = await give(null);
+      expect((await repo.save(take(AMINA, { assignmentId: forYusuf }), 10)).status).toBe(
+        'assignment'
+      );
+      const saved = await repo.save(take(AMINA, { assignmentId: forAll }), 10);
+      expect(saved.status).toBe('created');
+      // The assignment taken back keeps the recording.
+      await assignments.remove(halaqaId, forAll);
+      expect((await repo.own(AMINA, page)).recordings[0]!.assignmentId).toBeNull();
+    });
+
+    it('queues what waits first, takes the answer, and pages both lists', async () => {
+      const ids: string[] = [];
+      for (const studentId of [AMINA, YUSUF, AMINA]) {
+        const saved = await repo.save(take(studentId), 10);
+        ids.push((saved as { id: string }).id);
+      }
+      expect(
+        await repo.review(
+          halaqaId,
+          ids[0]!,
+          { verdict: 'again', remark: 'sinVoiced', note: 'Das sīn stimmlos.' },
+          TEACHER
+        )
+      ).toBe(true);
+      expect(
+        await repo.review(
+          '70000000-0000-4000-8000-000000000001',
+          ids[1]!,
+          { verdict: 'good', remark: null, note: null },
+          TEACHER
+        )
+      ).toBe(false);
+
+      const queue = await repo.queue(halaqaId, page);
+      expect(queue.recordings.map((r) => r.id)).toEqual([ids[1], ids[2], ids[0]]);
+      expect(queue.recordings[2]).toMatchObject({
+        studentId: AMINA,
+        studentName: 'Amina',
+        studentEmail: 'amina@example.org',
+        range: { sura: 112, from: 1, to: 4 },
+        bytes: SOUND.length,
+        durationMs: 4200,
+        review: {
+          verdict: 'again',
+          remark: 'sinVoiced',
+          note: 'Das sīn stimmlos.',
+          reviewerName: 'Sheikh Ahmad',
+          reviewedAt: expect.any(String),
+        },
+      });
+      const firstPage = await repo.queue(halaqaId, { limit: 2 });
+      expect(firstPage.more).toBe(true);
+      const rest = await repo.queue(halaqaId, {
+        limit: 2,
+        before: firstPage.recordings[1]!.id,
+      });
+      expect(rest.recordings.map((r) => r.id)).toEqual([ids[0]]);
+
+      const own = await repo.own(AMINA, { limit: 1 });
+      expect(own.recordings.map((r) => r.id)).toEqual([ids[2]]);
+      expect(own.recordings[0]!.halaqaName).toBe('Juzʾ ʿAmma');
+      const older = await repo.own(AMINA, { limit: 1, before: ids[2] });
+      expect(older.recordings.map((r) => r.id)).toEqual([ids[0]]);
+      expect(older.recordings[0]!.review?.verdict).toBe('again');
+      expect(await repo.halaqaAudio(halaqaId, ids[1]!)).not.toBeNull();
+    });
+
+    it('deletes on request, when the student leaves, and with the account; exports the rest', async () => {
+      const kept = (await repo.save(take(AMINA), 10)) as { id: string };
+      const removed = (await repo.save(take(AMINA), 10)) as { id: string };
+      const yusufs = (await repo.save(take(YUSUF), 10)) as { id: string };
+      await repo.review(
+        halaqaId,
+        kept.id,
+        { verdict: 'good', remark: null, note: null },
+        TEACHER
+      );
+      expect(await repo.remove(YUSUF, removed.id)).toBe(false);
+      expect(await repo.remove(AMINA, removed.id)).toBe(true);
+      const count = async (table: string) =>
+        Number((await pool.query(`select count(*) from ${table}`)).rows[0].count);
+      expect(await count('recording_audio')).toBe(2);
+
+      const aminaExport = await new PgPrivacyRepository(pool).export(AMINA);
+      expect(aminaExport.recordings).toEqual([
+        expect.objectContaining({ id: kept.id, sent_by_you: true, verdict: 'good' }),
+      ]);
+      expect(JSON.stringify(aminaExport.recordings)).not.toContain('fake opus');
+      const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
+      expect(teacherExport.recordings).toEqual([
+        expect.objectContaining({ id: kept.id, answered_by_you: true }),
+      ]);
+
+      expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
+      expect(await repo.halaqaAudio(halaqaId, kept.id)).toBeNull();
+      await pool.query('delete from users where id = $1', [YUSUF]);
+      expect(await repo.halaqaAudio(halaqaId, yusufs.id)).toBeNull();
+      expect(await count('recordings')).toBe(0);
+      expect(await count('recording_audio')).toBe(0);
     });
   });
 });
