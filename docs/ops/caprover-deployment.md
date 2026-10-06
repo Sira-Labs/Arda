@@ -112,7 +112,9 @@ the deploy is skipped with a notice.
 4. `https://arda-stg.siralabs.org/healthz` → `"status":"ok"`, `"auth":"enabled"`.
 5. Sign in with the owner's address; make the account admin once from the database:
    `update users set role = 'admin' where email = '<owner>';` then set up 2FA on the account
-   page; make the sheikh a `teacher` in the admin area.
+   page (Konto → Zwei-Faktor-Anmeldung, any authenticator app). After the sheikh has signed in
+   once, make him a `teacher` in the admin area (Konto → Zur Verwaltung, `/verwaltung`). An
+   admin can do everything a teacher does, so the owner can try the teacher's side first.
 6. App tokens → GitHub environment `staging` (§5).
 7. Backups (§7).
 

@@ -439,6 +439,37 @@ export const de = {
     languageHint:
       'In dieser Sprache siehst du die App, bekommst Mails und liest die Rückmeldungen deines Sheikhs.',
   },
+  twoFactor: {
+    title: 'Zwei-Faktor-Anmeldung',
+    intro:
+      'Für die Verwaltung brauchst du zusätzlich einen Code aus einer Authenticator-App (z. B. Google Authenticator, Microsoft Authenticator oder 1Password).',
+    setUp: 'Einrichten',
+    scan: 'Scanne den QR-Code mit deiner Authenticator-App oder gib den Schlüssel von Hand ein.',
+    qr: 'QR-Code für die Authenticator-App',
+    secret: 'Schlüssel',
+    code: 'Sechsstelliger Code',
+    confirm: 'Bestätigen',
+    confirmNeeded: 'Bestätige diese Sitzung mit einem Code aus deiner Authenticator-App.',
+    confirmed: 'Für diese Sitzung bestätigt.',
+  },
+  admin: {
+    eyebrow: 'Verwaltung',
+    title: 'Nutzer·innen und Rollen',
+    open: 'Zur Verwaltung',
+    intro:
+      'Hier machst du einen Sheikh zum Lehrer. Er muss sich vorher einmal angemeldet haben. Jede Änderung wird protokolliert.',
+    search: 'Suchen (E-Mail oder Name)',
+    searchButton: 'Suchen',
+    none: 'Niemand gefunden.',
+    role: 'Rolle',
+    you: 'du',
+    blocked: 'gesperrt',
+    block: 'Sperren',
+    unblock: 'Entsperren',
+    saved: (name: string) => `Gespeichert: ${name}`,
+    more: 'Weitere laden',
+    unverified: 'E-Mail nicht bestätigt',
+  },
   passkey: {
     'already-added': 'Auf diesem Gerät ist schon ein Passkey für ʿArḍa eingerichtet.',
     'stale-session':
@@ -502,6 +533,13 @@ export const de = {
       from === to ? `Sūra ${sura} · Āya ${from}` : `Sūra ${sura} · Āyāt ${from}–${to}`,
   },
   errors: {
+    second_factor_required: 'Bestätige zuerst die Zwei-Faktor-Anmeldung.',
+    cannot_change_self: 'Deine eigene Rolle kannst du hier nicht ändern.',
+    invalid_code: 'Der Code stimmt nicht.',
+    locked: 'Zu viele falsche Codes. Warte 15 Minuten.',
+    already_enabled: 'Die Zwei-Faktor-Anmeldung ist schon eingerichtet.',
+    not_set_up: 'Richte die Zwei-Faktor-Anmeldung zuerst ein.',
+    invalid_query: 'Die Suche ist ungültig.',
     offline: 'Keine Verbindung.',
     unauthorized: 'Bitte melde dich an.',
     forbidden: 'Dafür fehlt die Berechtigung.',

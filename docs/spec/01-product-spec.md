@@ -105,7 +105,10 @@ Suffa's sign-in, ported (ADR-0004).
   on its next request; another user's session can never be ended.
 - **A4 Admin.** Users list and search, change role, disable (ends all sessions), audit log;
   every admin action needs TOTP confirmed in this session. **Acceptance:** without 2FA → 403
-  `second_factor_required`; a used code works once; every change is in the audit log.
+  `second_factor_required`; a used code works once; every change is in the audit log. _(Web
+  built (owner, 2026-10-06): the second factor set up and confirmed on the account page with a
+  QR code; `/verwaltung` lists and searches people, changes a role (a sheikh becomes a teacher)
+  and blocks or unblocks; one's own role is never offered. Next: the audit log on the page.)_
 - **A5 Privacy.** Export everything as JSON; delete the account by typing the own address.
   **Acceptance:** export contains no tokens or keys; deletion cascades and is audited without
   the person.
