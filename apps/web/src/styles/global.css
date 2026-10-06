@@ -180,7 +180,8 @@ a {
   font-weight: 600;
 }
 :root[lang='ar'] .app-brand .logo-wordmark {
-  font-family: var(--font-display);
+  /* The Arabic name in the sheikh's script, as on the sign-in header (design §11). */
+  font-family: var(--font-quran-indopak);
 }
 .logo-lockup {
   display: inline-flex;
