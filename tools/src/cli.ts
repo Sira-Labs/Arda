@@ -15,7 +15,7 @@
  */
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { parseCpfair } from './cpfair';
@@ -220,6 +220,13 @@ async function writeTimings(): Promise<void> {
   }
 }
 
+/** Writes `path` whole or not at all: a run stopped midway leaves no half file behind. */
+async function writeWhole(path: string, data: string | Buffer): Promise<void> {
+  const partial = `${path}.${process.pid}.partial`;
+  await writeFile(partial, data);
+  await rename(partial, path);
+}
+
 /** 16 kHz mono PCM of an mp3, decoded by ffmpeg. */
 function decode(mp3: Buffer): Promise<Int16Array> {
   return new Promise((resolve, reject) => {
@@ -271,13 +278,13 @@ async function writeLabClips(): Promise<void> {
         const response = await fetch(`${MUALLIM_AUDIO}${file}`);
         if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
         mp3 = Buffer.from(await response.arrayBuffer());
-        await writeFile(`${audioDir}${file}`, mp3);
+        await writeWhole(`${audioDir}${file}`, mp3);
       }
       loudness.set(file, envelope(await decode(mp3), 16000));
     }
     clips[key] = wordBounds(loudness.get(file)!, [timed.start, timed.end], timed.last);
   }
-  await writeFile(
+  await writeWhole(
     clipsFile,
     serialiseClips({
       reciter: 'husary-muallim',
