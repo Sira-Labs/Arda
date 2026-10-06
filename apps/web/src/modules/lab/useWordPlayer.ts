@@ -3,6 +3,7 @@ import { logger } from '@/services/logger';
 import { reciterOf, recordingOf, useSpeed } from '../mushaf/reciters';
 import type { Timings } from '../mushaf/timings';
 import { PlayerContext } from '../mushaf/usePlayer';
+import { LAB_PAIRS, LAB_WORDS } from './words';
 
 const log = logger.child('lab-player');
 
@@ -19,7 +20,15 @@ export interface WordClip {
   end: number;
 }
 
-/** The clip of `hafs:sura:aya:n` in the teaching recitation, when the word is timed alone. */
+/** The lab's words by key, with where each really sounds. */
+const MEASURED = new Map(
+  [...LAB_WORDS, ...LAB_PAIRS.flatMap((pair) => pair.words)].map((w) => [w.key, w.clip])
+);
+
+/**
+ * The clip of `hafs:sura:aya:n` in the teaching recitation, when the word is timed alone: the
+ * measured bounds of a lab word (its whole first and last sound), else its timing.
+ */
 export function clipOf(
   key: string,
   timings: Timings | null | undefined
@@ -31,7 +40,8 @@ export function clipOf(
   );
   const recording = recordingOf(LAB_RECITER, sura, aya);
   if (!segment || !recording) return null;
-  return { src: recording.src, start: segment[2], end: segment[3] };
+  const [start, end] = MEASURED.get(key) ?? [segment[2], segment[3]];
+  return { src: recording.src, start, end };
 }
 
 /** Moves to `ms`, once the browser knows the file if it does not yet. */

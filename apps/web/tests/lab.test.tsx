@@ -240,12 +240,17 @@ describe('the letter lab (F5)', () => {
       name: 'Anhören: Sūra 87, Āya 1, Wort 1',
     });
     await user.click(word);
-    // sabbiḥ: the first word of al-Aʿlā 1 in al-Ḥuṣarī's teaching recitation.
-    const [, , start, end] = timings.ayat['87:1']![0]!;
+    // sabbiḥ: the first word of al-Aʿlā 1 in al-Ḥuṣarī's teaching recitation, from its
+    // measured start (the sīn's hiss before the timed start at its first vowel).
+    const [, , timedStart] = timings.ayat['87:1']![0]!;
+    const [start, end] = LAB_WORDS.find((w) => w.key === 'hafs:87:1:1')!.clip;
+    expect(start).toBeLessThan(timedStart);
     expect(audio.played).toEqual([`${MUALLIM}087001.mp3`]);
     expect(audio.currentTime).toBe(start / 1000);
     expect(audio.playbackRate).toBe(0.5);
     expect(word).toHaveAttribute('data-playing', 'true');
+    audio.at((end - 10) / 1000);
+    expect(audio.paused).toBe(false);
     audio.at(end / 1000);
     expect(audio.paused).toBe(true);
     expect(word).not.toHaveAttribute('data-playing');
@@ -274,7 +279,7 @@ describe('the letter lab (F5)', () => {
     await user.click(both[0]!);
     // wa-ʿasā (al-Baqara 216), then wa-ʿaṣā (an-Nāziʿāt 21).
     expect(audio.played).toEqual([`${MUALLIM}002216.mp3`]);
-    const [, , , end] = timings.ayat['2:216']!.find(([from]) => from === 6)!;
+    const [, end] = LAB_PAIRS[0]!.words[0].clip;
     audio.at(end / 1000);
     await act(() => new Promise((done) => setTimeout(done, 800)));
     expect(audio.played).toEqual([`${MUALLIM}002216.mp3`, `${MUALLIM}079021.mp3`]);

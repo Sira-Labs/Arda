@@ -18,6 +18,11 @@ export interface LabWord {
   indopak: string;
   /** The letter the word is about, as UTF-16 offsets into the text of each script. */
   focus: { uthmani: readonly [number, number]; indopak: readonly [number, number] };
+  /**
+   * Where the word sounds in its āya's file, in milliseconds, measured in the sound
+   * (tools/src/labClips.ts): the timings start at the first vowel and cut a sīn's hiss.
+   */
+  clip: readonly [number, number];
 }
 
 /** Two words to hear one after the other: one letter differs (exact) or more (near). */

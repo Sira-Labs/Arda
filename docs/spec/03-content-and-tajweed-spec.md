@@ -116,6 +116,13 @@ Whistling words hold one whistling letter only, so the listening quiz has one an
 pause signs inside a word are left out (a word alone is no stop). Pairs are exact when letters
 and harakāt agree but for the one letter (only وَعَسَىٰٓ / وَعَصَىٰ here), else near.
 
+Each word plays from where it really sounds, measured once in the recitation itself
+(`npm run lab-clips -w @arda/tools`, `tools/src/labClips.ts`, into `tools/lab-clips.json`):
+the word timings start a word at its first vowel and end an āya's last word early, which cut
+off a sīn's hiss and the end of سِجِّيلٍ (owner, 2026-10-06). A clip reaches back to the
+silence before the word when there is one within 300 ms, forward to the next pause (for the
+āya's last word, to the silence after it), and only ever grows the timed clip.
+
 | Letter | Makhraj (as drafted)                                                                         | Ṣifāt                                                     |
 | ------ | -------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
 | س      | tip of the tongue at the lower incisors (some: upper), a narrow gap                          | hams, rakhāwa, istifāl, infitāḥ, iṣmāt, ṣafīr             |

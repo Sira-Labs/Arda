@@ -3,12 +3,15 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Pack, PackIndex } from '@arda/quran';
 import {
+  LAB_KEYS,
   LAB_PICKS,
   PAUSE_SIGNS,
   buildLab,
   labModule,
+  timedWord,
   type ShippedTimings,
 } from '../src/lab';
+import { FRAME_MS, serialiseClips, wordBounds, type LabClips } from '../src/labClips';
 
 const web = (path: string) =>
   fileURLToPath(new URL(`../../apps/web/${path}`, import.meta.url));
@@ -21,13 +24,15 @@ const packs = index.packs.map(
 const timings = JSON.parse(
   readFileSync(web('public/audio/timings/husary-muallim.json'), 'utf8')
 ) as ShippedTimings;
+const clipsFile = fileURLToPath(new URL('../lab-clips.json', import.meta.url));
+const clips = JSON.parse(readFileSync(clipsFile, 'utf8')) as LabClips;
 const shipped = {
   uthmani: packs.filter((p) => p.script === 'uthmani'),
   indopak: packs.filter((p) => p.script === 'indopak'),
 };
 
 describe('the letter lab’s words', () => {
-  const lab = buildLab(shipped, timings);
+  const lab = buildLab(shipped, timings, clips);
 
   it('are the ones the app ships, byte for byte', () => {
     expect(labModule(lab)).toBe(readFileSync(web('src/modules/lab/words.ts'), 'utf8'));
@@ -76,6 +81,69 @@ describe('the letter lab’s words', () => {
   });
 
   it('refuse a pick that is not timed as a word of its own', () => {
-    expect(() => buildLab(shipped, { ayat: {} })).toThrow(/not timed/);
+    expect(() => buildLab(shipped, { ayat: {} }, clips)).toThrow(/not timed/);
+  });
+});
+
+describe('where a lab word sounds (owner, 2026-10-06: the sīn was cut off)', () => {
+  /** An envelope of `ms` milliseconds of silence, with loud and quiet stretches set. */
+  const sound = (ms: number, parts: [from: number, to: number, level: number][]) => {
+    const frames = new Float64Array(ms / FRAME_MS);
+    for (const [from, to, level] of parts) {
+      for (let f = from / FRAME_MS; f < to / FRAME_MS; f++) frames[f] = level;
+    }
+    return frames;
+  };
+
+  it('reaches back to the hiss before the timed start, after the silence before it', () => {
+    // A sīn's hiss from 150 ms, quiet but not silent; the vowel (timed start) at 300 ms.
+    const word = sound(2000, [
+      [150, 300, 120],
+      [300, 1200, 2000],
+    ]);
+    expect(wordBounds(word, [300, 1200], false)).toEqual([120, 1260]);
+  });
+
+  it('keeps the timed start, a little earlier, when the word follows the one before', () => {
+    // No pause before: a ghunna runs into the word (min sijjīl).
+    const word = sound(3000, [
+      [0, 1000, 1500],
+      [1000, 2000, 2000],
+    ]);
+    expect(wordBounds(word, [1000, 2000], false)[0]).toBe(970);
+  });
+
+  it('lets the āya’s last word sound to its end, past a short stop inside it', () => {
+    // sijjīl: si, the held jīm (a short stop), jīlin; the timing ends inside it.
+    const word = sound(9000, [
+      [5800, 6150, 1500],
+      [6150, 6250, 0],
+      [6250, 7450, 1800],
+    ]);
+    expect(wordBounds(word, [5780, 6780], true)).toEqual([5750, 7510]);
+    // Any other word ends at the next pause, not at the end of the āya.
+    expect(wordBounds(word, [5780, 6000], false)[1]).toBe(6210);
+  });
+
+  it('only ever grows the timed clip', () => {
+    const silent = new Float64Array(500);
+    const [start, end] = wordBounds(silent, [1000, 2000], true);
+    expect(start).toBeLessThanOrEqual(1000);
+    expect(end).toBeGreaterThanOrEqual(2000);
+  });
+
+  it('is measured for every word the lab plays, around its timing', () => {
+    expect(Object.keys(clips.clips)).toEqual([...LAB_KEYS]);
+    for (const key of LAB_KEYS) {
+      const timed = timedWord(timings, key)!;
+      const [start, end] = clips.clips[key]!;
+      expect(start, key).toBeLessThanOrEqual(timed.start);
+      expect(start, key).toBeGreaterThanOrEqual(timed.start - 400);
+      expect(end, key).toBeGreaterThanOrEqual(timed.end);
+      expect(end - timed.end, key).toBeLessThanOrEqual(timed.last ? 1600 : 400);
+    }
+    // sijjīl, the āya's last word, now sounds to its end.
+    expect(clips.clips['105:4:4']![1]).toBeGreaterThan(7400);
+    expect(serialiseClips(clips)).toBe(readFileSync(clipsFile, 'utf8'));
   });
 });
