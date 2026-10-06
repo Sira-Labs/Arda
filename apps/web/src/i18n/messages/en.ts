@@ -11,6 +11,9 @@ export const en: Messages = {
     lab: 'Lab',
     sheikh: 'Sheikh',
   },
+  brand: {
+    tagline: 'Recite, be heard, be corrected.',
+  },
   language: { label: 'Language' },
   today: {
     eyebrow: 'Today',

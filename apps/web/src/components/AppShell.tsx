@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { Messages } from '@/i18n/messages';
 import { Icon, type IconName } from './Icon';
+import { LogoLockup } from './Logo';
 
 /**
  * One navigation for both layouts (docs/spec/04-design-system.md): a floating bottom bar on
@@ -25,7 +26,10 @@ export function AppShell() {
   return (
     <div className="app">
       <nav className="app-nav" aria-label={m.nav.label}>
-        <span className="app-brand">{m.nav.brand}</span>
+        {/* The brand tops the sidebar; the phone's bottom bar has room for the five places only. */}
+        <span className="app-brand">
+          <LogoLockup name={m.nav.brand} />
+        </span>
         {NAVIGATION.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === '/'}>
             <Icon name={item.icon} />

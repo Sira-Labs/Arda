@@ -52,6 +52,9 @@ export const ar: Messages = {
     lab: 'المختبر',
     sheikh: 'الشيخ',
   },
+  brand: {
+    tagline: 'اقرأ، ويُستمع إليك، وتُصحَّح.',
+  },
   language: { label: 'اللغة' },
   today: {
     eyebrow: 'اليوم',

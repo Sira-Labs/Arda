@@ -25,6 +25,11 @@
   --accent-2: #1f7a6d;
   --on-accent-2: #f4eee2;
   --focus: #8a5a12;
+  --on-ink-muted: #b9c7bf; /* secondary text on ink */
+
+  /* The logo (docs/spec/04-design-system.md §11): the same in both themes, always on ink */
+  --brand-saffron: #e8a93b; /* the eight-pointed star */
+  --brand-teal: #3fb5a3; /* its centre and rings */
 
   /* Feedback */
   --good: #1f7a6d;

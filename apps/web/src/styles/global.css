@@ -165,12 +165,95 @@ a {
   .app-brand {
     display: block;
     padding: 0 12px 20px;
-    font-family: var(--font-display);
     font-size: 1.6rem;
     color: var(--on-ink);
   }
   .app-main {
     padding: 40px 32px;
+  }
+}
+
+/* The logo (docs/spec/04-design-system.md §11). Fraunces has no ʿayn (U+02BF): Amiri, which
+   ships with the app, draws it instead of whichever serif the device has. */
+.logo-wordmark {
+  font-family: 'Fraunces Variable', 'Amiri', Georgia, serif;
+  font-weight: 600;
+}
+:root[lang='ar'] .app-brand .logo-wordmark {
+  /* The Arabic name in the sheikh's script, as on the sign-in header (design §11). */
+  font-family: var(--font-quran-indopak);
+}
+.logo-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  line-height: 1;
+}
+.logo-lockup svg {
+  flex-shrink: 0;
+}
+/* Today's header: mark and tools in one row, the greeting below (phones); greeting and tools
+   side by side, the mark left to the sidebar (from 960 px). */
+.today-header {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'mark tools'
+    'title title';
+  align-items: center;
+  gap: 16px 12px;
+}
+.today-mark {
+  grid-area: mark;
+}
+.today-title {
+  grid-area: title;
+  min-width: 0;
+}
+.today-tools {
+  grid-area: tools;
+}
+@media (min-width: 960px) {
+  /* The sidebar carries the brand on wide screens. */
+  .today-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'title tools';
+  }
+  .today-mark {
+    display: none;
+  }
+}
+/* Sign-in: the ink header hangs from the top of the page with rounded lower corners; on
+   phones it reaches the screen's edges. */
+.brand-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin: -24px -16px 8px;
+  padding: 32px 24px 28px;
+  background: var(--ink);
+  color: var(--on-ink);
+  border-radius: 0 0 32px 32px;
+  text-align: center;
+}
+.brand-header-arabic {
+  font-family: var(--font-quran-indopak);
+  font-size: 3.6rem;
+  line-height: 1.5;
+}
+.brand-header-name {
+  font-size: 1.8rem;
+  line-height: 1.2;
+}
+.brand-header-tagline {
+  color: var(--on-ink-muted);
+  font-size: 0.95rem;
+}
+@media (min-width: 600px) {
+  .brand-header {
+    margin: 0 0 8px;
+    border-radius: var(--radius-lg);
   }
 }
 

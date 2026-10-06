@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo.svg" alt="ʿArḍa (العَرْضة): an eight-pointed saffron star in two teal rings, beside the name" width="420" />
+</p>
+
 # ʿArḍa (العَرْضة)
 
 **Recite, be heard, be corrected. Tajwīd, learned the way it was always taught.**
