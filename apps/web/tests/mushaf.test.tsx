@@ -735,6 +735,26 @@ describe('the muṣḥaf screen (S2.4)', () => {
     expect(marked).toHaveLength(9);
   });
 
+  it('records an āya from its sheet, and an assignment from its marked range (S4.1)', async () => {
+    const user = userEvent.setup();
+    renderAt('/mushaf/112', loader().deps);
+    await screen.findByText('الإخلاص', { selector: '.page-sura' });
+    await user.click(wordAt('hafs:112:2:1'));
+    await user.click(screen.getByRole('button', { name: 'Aufnehmen' }));
+    const panel = screen.getByRole('dialog');
+    expect(panel).toHaveTextContent('Sūra 112 · Āya 2 aufnehmen');
+    // Nobody is signed in: recording asks to sign in first.
+    expect(within(panel).getByRole('link', { name: 'Anmelden' })).toBeInTheDocument();
+  });
+
+  it('offers to record the assignment it opened', async () => {
+    const id = '33333333-3333-4333-8333-333333333333';
+    renderAt(`/mushaf/113?von=2&bis=3&aufgabe=${id}&halaqa=${id}`, loader().deps);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufgabe aufnehmen' }));
+    expect(screen.getByRole('dialog')).toHaveTextContent('Sūra 113 · Āyāt 2–3 aufnehmen');
+  });
+
   it('ignores a range that is not in the sūra', async () => {
     renderAt('/mushaf/113?von=4&bis=9', loader().deps);
     await screen.findByText('الفلق', { selector: '.page-sura' });
@@ -796,7 +816,7 @@ describe('assignments in the muṣḥaf', () => {
     );
     expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
       'href',
-      '/mushaf/112?von=1&bis=4'
+      '/mushaf/112?von=1&bis=4&aufgabe=a&halaqa=h'
     );
   });
 });
@@ -980,7 +1000,7 @@ describe('assigning on the page (S3.2)', () => {
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
       'href',
-      '/mushaf/113?von=2&bis=3&wvon=2&wbis=4'
+      '/mushaf/113?von=2&bis=3&wvon=2&wbis=4&aufgabe=a&halaqa=h'
     );
   });
 });

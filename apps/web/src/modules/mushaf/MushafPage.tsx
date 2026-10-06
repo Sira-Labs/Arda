@@ -4,7 +4,8 @@ import { JUZ_NAMES, sura as suraOf, type PackIndexEntry } from '@arda/quran';
 import { RuleLegend } from '@/components/RuleLegend';
 import { builtIndex, type MushafPack } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
-import type { AssignmentRange } from '@/services/auth';
+import { RecordPanel } from '@/modules/recite/RecordPanel';
+import type { AssignmentRange, RecitedRange } from '@/services/auth';
 import { chooseColours, useMushafColours } from './colours';
 import { useLineFit } from './fit';
 import { PageAssign, useTeaching } from './PageAssign';
@@ -53,6 +54,10 @@ export function rangeOf(search: URLSearchParams): AssignmentRange | null {
       : undefined;
   return { sura: meta.number, from, to, ...(words ? { words } : {}) };
 }
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** A uuid from the query, or `null`. */
+const uuidOf = (value: string | null) => (value && UUID.test(value) ? value : null);
 
 /** Whether the word at `place` is inside `range` (whole āyāt, or from word to word). */
 const covers = (range: AssignmentRange, place: Place) =>
@@ -104,7 +109,11 @@ export function MushafPage() {
   const [picking, setPicking] = useState(false);
   const [picked, setPicked] = useState<{ start: Place; end?: Place } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [recording, setRecording] = useState<RecitedRange | null>(null);
   const range = rangeOf(search);
+  // The assignment the marked range belongs to, so its recording answers it (S4.1).
+  const assignment = range ? uuidOf(search.get('aufgabe')) : null;
+  const assignmentHalaqa = range ? uuidOf(search.get('halaqa')) : null;
   const pack = result?.ok ? result.pack : undefined;
   const blocks = useMemo(() => (pack ? pageBlocks(pack, page) : []), [pack, page]);
 
@@ -146,6 +155,7 @@ export function MushafPage() {
       // and to the browser when a modifier is held (Alt+← is "back").
       if (
         selected ||
+        recording ||
         editing(event.target) ||
         event.altKey ||
         event.ctrlKey ||
@@ -157,9 +167,10 @@ export function MushafPage() {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [turn, selected]);
+  }, [turn, selected, recording]);
 
   const close = useCallback(() => setSelected(null), []);
+  const closeRecording = useCallback(() => setRecording(null), []);
   const onTap = useCallback(
     (tap: WordTap, indopak: boolean) => {
       if (!picking) {
@@ -254,7 +265,9 @@ export function MushafPage() {
     <article
       className="stack"
       // Room below the page for the docked player or sheet, so they never cover its end.
-      data-docked={selected ? 'sheet' : player.current ? 'player' : undefined}
+      data-docked={
+        selected || recording ? 'sheet' : player.current ? 'player' : undefined
+      }
       style={{ gap: 16, maxWidth: 820 }}
     >
       {back}
@@ -291,6 +304,21 @@ export function MushafPage() {
                 )
               : m.mushaf.range(range.from, range.to)}
           </p>
+        )}
+        {range && !picking && (
+          <button
+            className="btn btn-primary"
+            type="button"
+            style={{ alignSelf: 'flex-start' }}
+            onClick={() => {
+              setSelected(null);
+              player.stop();
+              setRecording({ sura: range.sura, from: range.from, to: range.to });
+            }}
+          >
+            <span className="record-dot" aria-hidden="true" />{' '}
+            {assignment ? m.recite.recordAssignment : m.recite.recordSection}
+          </button>
         )}
         {picking && !given && (
           // Until both words are picked there is no panel yet to cancel from.
@@ -405,12 +433,38 @@ export function MushafPage() {
                     ]);
                     close();
                   },
+                  // The basmala before a sūra (āya 0) is not an āya to send.
+                  onRecord:
+                    selected.place.aya >= 1
+                      ? () => {
+                          const { sura, aya } = selected.place!;
+                          player.stop();
+                          close();
+                          setRecording({ sura, from: aya, to: aya });
+                        }
+                      : undefined,
                 }
               : undefined
           }
         />
       )}
-      {!selected && !(picking && given) && <MiniPlayer player={player} />}
+      {recording && (
+        <RecordPanel
+          range={recording}
+          // An assignment's take answers it; a single āya from the page answers nothing.
+          assignmentId={
+            range &&
+            recording.sura === range.sura &&
+            recording.from === range.from &&
+            recording.to === range.to
+              ? assignment
+              : null
+          }
+          halaqaId={assignmentHalaqa}
+          onClose={closeRecording}
+        />
+      )}
+      {!selected && !recording && !(picking && given) && <MiniPlayer player={player} />}
       {picking && given && (
         <PageAssign
           range={given}

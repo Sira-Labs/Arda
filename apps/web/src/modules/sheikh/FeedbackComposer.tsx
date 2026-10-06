@@ -9,16 +9,8 @@ import {
 } from '@/i18n/languages';
 import { CATALOGS, type RemarkId } from '@/i18n/messages';
 import type { TranslateOutcome } from '@/services/auth';
+import { REMARKS } from '@/modules/recite/remarks';
 import { useSession } from '@/state/session';
-
-const REMARKS: readonly RemarkId[] = [
-  'ghunnaShort',
-  'ghunnaLong',
-  'nunTooClear',
-  'qalqalaMissing',
-  'maddShort',
-  'good',
-];
 
 /** Text shown in the student's language and direction. */
 function InLanguage({ language, children }: { language: Language; children: string }) {

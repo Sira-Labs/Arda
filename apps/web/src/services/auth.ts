@@ -5,6 +5,7 @@
  */
 import type { RuleId } from '@arda/tajweed';
 import type { Language } from '@/i18n/languages';
+import type { RemarkId } from '@/i18n/messages';
 import { apiRequest, type ApiResult, type Fetch } from './api/request';
 
 export type Role = 'student' | 'teacher' | 'admin';
@@ -144,6 +145,64 @@ export interface NewAssignment {
 }
 
 const HALAQAT = '/api/v1/halaqat';
+
+/** What a recitation recites: āyāt of one sūra. */
+export interface RecitedRange {
+  sura: number;
+  from: number;
+  to: number;
+}
+
+export type Verdict = 'good' | 'again';
+
+/** The teacher's answer to a recitation (apps/api/src/recordings/repository.ts). */
+export interface RecitationReview {
+  verdict: Verdict;
+  remark: RemarkId | null;
+  note: string | null;
+  reviewerName: string | null;
+  reviewedAt: string;
+}
+
+interface RecitationBase {
+  id: string;
+  halaqaId: string;
+  assignmentId: string | null;
+  range: RecitedRange;
+  mime: string;
+  bytes: number;
+  durationMs: number;
+  createdAt: string;
+  review: RecitationReview | null;
+}
+
+/** One of the student's own recitations. */
+export interface OwnRecitation extends RecitationBase {
+  halaqaName: string;
+}
+
+/** A recitation in a teacher's queue. */
+export interface QueuedRecitation extends RecitationBase {
+  studentId: string;
+  studentName: string | null;
+  studentEmail: string | null;
+}
+
+export interface RecitationPage<T> {
+  recordings: T[];
+  more: boolean;
+}
+
+/** A take to send: its sound and what it recites. */
+export interface RecitationUpload {
+  clientId: string;
+  halaqaId: string;
+  assignmentId: string | null;
+  range: RecitedRange;
+  mime: string;
+  durationMs: number;
+  blob: Blob;
+}
 
 export class AuthClient {
   constructor(private readonly fetchImpl: Fetch = (...args) => fetch(...args)) {}
@@ -329,6 +388,88 @@ export class AuthClient {
       this.fetchImpl,
       `${HALAQAT}/${encodeURIComponent(halaqaId)}/assignments/${encodeURIComponent(id)}/done`,
       done ? { method: 'PUT', body: '{}' } : { method: 'DELETE' }
+    );
+  }
+
+  /**
+   * Sends a take to the ḥalaqa: the sound as the body, what it recites in the query. The same
+   * client id again returns the stored one, so the outbox may retry safely.
+   */
+  async sendRecitation(take: RecitationUpload): Promise<ApiResult<{ id: string }>> {
+    const query = new URLSearchParams({
+      clientId: take.clientId,
+      sura: String(take.range.sura),
+      from: String(take.range.from),
+      to: String(take.range.to),
+      durationMs: String(Math.max(1, Math.round(take.durationMs))),
+      ...(take.assignmentId ? { assignment: take.assignmentId } : {}),
+    });
+    let response: Response;
+    try {
+      response = await this.fetchImpl(
+        `${HALAQAT}/${encodeURIComponent(take.halaqaId)}/recordings?${query.toString()}`,
+        {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'content-type': take.mime },
+          body: take.blob,
+        }
+      );
+    } catch {
+      return { ok: false, status: 0, code: 'offline' };
+    }
+    const body = (await response.json().catch(() => null)) as {
+      id?: string;
+      error?: string;
+    } | null;
+    if (!response.ok)
+      return { ok: false, status: response.status, code: body?.error ?? '' };
+    return { ok: true, value: { id: body?.id ?? '' } };
+  }
+
+  /** The signed-in student's recitations, newest first. */
+  myRecitations(before?: string): Promise<ApiResult<RecitationPage<OwnRecitation>>> {
+    const query = before ? `?before=${encodeURIComponent(before)}` : '';
+    return apiRequest(this.fetchImpl, `/api/v1/recordings${query}`);
+  }
+
+  deleteRecitation(id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, `/api/v1/recordings/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  /** Where the student hears their own recitation (same origin, the session cookie). */
+  ownRecitationAudio(id: string): string {
+    return `/api/v1/recordings/${encodeURIComponent(id)}/audio`;
+  }
+
+  /** The ḥalaqa's recitations: those waiting first. */
+  recitationQueue(
+    halaqaId: string,
+    before?: string
+  ): Promise<ApiResult<RecitationPage<QueuedRecitation>>> {
+    const query = before ? `?before=${encodeURIComponent(before)}` : '';
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings${query}`
+    );
+  }
+
+  /** Where a teacher hears a recitation sent to the ḥalaqa. */
+  queuedRecitationAudio(halaqaId: string, id: string): string {
+    return `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings/${encodeURIComponent(id)}/audio`;
+  }
+
+  reviewRecitation(
+    halaqaId: string,
+    id: string,
+    review: { verdict: Verdict; remark: RemarkId | null; note: string | null }
+  ): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings/${encodeURIComponent(id)}/review`,
+      { method: 'PUT', body: JSON.stringify(review) }
     );
   }
 

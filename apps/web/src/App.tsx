@@ -12,6 +12,7 @@ import { Mushaf } from '@/modules/mushaf/Mushaf';
 import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
 import { Path } from '@/modules/path/Path';
+import { OutboxSender } from '@/modules/recite/OutboxSender';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
 import { Soon } from '@/modules/Soon';
@@ -49,6 +50,7 @@ export function App() {
     <SessionProvider>
       <I18nProvider>
         <ReviewProvider>
+          <OutboxSender />
           <RouterProvider router={router} />
         </ReviewProvider>
       </I18nProvider>

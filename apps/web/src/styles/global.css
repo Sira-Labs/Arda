@@ -841,3 +841,61 @@ article[data-docked='sheet'] {
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* Recitations (spec F7, S4.1/S4.2). */
+.record-dot {
+  display: inline-block;
+  inline-size: 10px;
+  block-size: 10px;
+  border-radius: 50%;
+  background: var(--bad);
+  flex: none;
+}
+.recording-now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+}
+.recording-now .record-dot {
+  animation: record-pulse 1.2s ease-in-out infinite;
+}
+@keyframes record-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recording-now .record-dot {
+    animation: none;
+  }
+}
+.record-panel audio,
+.recording-row audio {
+  inline-size: 100%;
+  max-inline-size: 420px;
+}
+.recording-row {
+  padding-block-start: 12px;
+  border-top: 1px solid var(--border);
+}
+.recording-row:first-child {
+  border-top: none;
+  padding-block-start: 0;
+}
+/* "Again" is the teacher asking for another take, never a failure: not red. */
+.chip[data-verdict='good'] {
+  background: var(--good);
+  color: var(--on-accent-2);
+}
+.chip[data-verdict='again'] {
+  background: var(--bg-elev-2);
+  color: var(--check);
+}
+.recitation-answer {
+  padding: 8px 12px;
+  border-inline-start: 3px solid var(--accent-2);
+  background: var(--bg-elev-2);
+  border-radius: var(--radius-sm);
+}

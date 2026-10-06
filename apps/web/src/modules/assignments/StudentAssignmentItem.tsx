@@ -51,7 +51,7 @@ export function StudentAssignmentItem({
               inMushaf.words
                 ? `&wvon=${inMushaf.words.from}&wbis=${inMushaf.words.to}`
                 : ''
-            }`}
+            }&aufgabe=${assignment.id}&halaqa=${assignment.halaqaId}`}
           >
             {m.mushaf.open}
           </Link>

@@ -405,6 +405,54 @@ export const en: Messages = {
     offline: 'No connection – try again in a moment.',
     failed: 'That did not work. Try again, or use a link or code.',
   },
+  recite: {
+    record: 'Record',
+    title: (sura, from, to) =>
+      from === to
+        ? `Record sūra ${sura} · āya ${from}`
+        : `Record sūra ${sura} · āyāt ${from}–${to}`,
+    recordAssignment: 'Record the assignment',
+    recordSection: 'Record this passage',
+    consentTitle: 'Before you record',
+    consentText:
+      'Only you and the teachers of the ḥalaqa you send it to can hear your recording. It stays private until you delete it and is used for nothing else.',
+    consentAgree: 'I agree',
+    start: 'Start recording',
+    stop: 'Stop',
+    running: (time) => `Recording · ${time}`,
+    again: 'Record again',
+    send: 'Send to my sheikh',
+    sendTo: 'Send to',
+    sent: 'Sent. Your sheikh will listen to it.',
+    queued: 'Saved. It will be sent as soon as you are online again.',
+    noHalaqa: "Join your sheikh's ḥalaqa first; then you can send him recordings.",
+    denied: 'The microphone is not allowed. Allow it in your browser settings.',
+    unsupported: 'This browser cannot record.',
+    close: 'Close',
+    pending: (count) =>
+      count === 1
+        ? '1 recording is waiting for a connection.'
+        : `${count} recordings are waiting for a connection.`,
+    mine: 'Your recitations',
+    waiting: 'waiting for your sheikh',
+    verdicts: { good: 'good', again: 'again' },
+    from: (name) => (name ? `${name} writes:` : 'Your sheikh writes:'),
+    delete: 'Delete',
+    queue: 'To listen to',
+    queueEmpty: 'No recording is waiting right now.',
+    answered: 'Answered',
+    good: 'Good',
+    againVerdict: 'Again',
+    remark: 'Quick remark',
+    noRemark: '– none –',
+    note: 'Your own words (optional)',
+    answer: 'Send answer',
+    change: 'Change',
+    older: 'Show older',
+    seconds: (ms) => `${Math.max(1, Math.round(ms / 1000))} s`,
+    range: (sura, from, to) =>
+      from === to ? `Sūra ${sura} · āya ${from}` : `Sūra ${sura} · āyāt ${from}–${to}`,
+  },
   errors: {
     offline: 'No connection.',
     unauthorized: 'Please sign in.',
@@ -421,6 +469,10 @@ export const en: Messages = {
     halaqa_full: 'This one-to-one ḥalaqa already has a student.',
     too_many_halaqat: 'You have reached the maximum number of ḥalaqāt.',
     too_many_assignments: 'This ḥalaqa has reached the maximum number of assignments.',
+    too_many_recordings:
+      'You have reached the maximum number of recordings. Delete older ones.',
+    too_large: 'The recording is too long.',
+    unsupported_media_type: 'This recording format is not supported.',
     generic: (status) => `Server error (${status}).`,
   },
   remarks: {
@@ -430,6 +482,9 @@ export const en: Messages = {
     qalqalaMissing: 'Qalqala missing – let the sound bounce back briefly.',
     maddShort: 'Madd too short – lengthen it more.',
     good: 'Good, keep it like this.',
+    sinVoiced: 'Your sīn buzzes – keep it voiceless and sharp, never like a z.',
+    zayVoiceless: 'Zāy is voiced – let it buzz, but keep it thin.',
+    raRolled: 'Rāʾ with the tip of the tongue, one light tap – do not roll it.',
   },
   feedback: {
     eyebrow: 'For the sheikh',

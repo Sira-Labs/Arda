@@ -25,7 +25,12 @@ export function WordSheet({
   /** The script the muṣḥaf shows, so the word looks as it does on the page. */
   script?: 'indopak' | 'madina';
   /** The word's āya, marked on the page, to play once or repeat (spec F4). */
-  aya?: { label: string; onPlay: () => void; onRepeat: () => void };
+  aya?: {
+    label: string;
+    onPlay: () => void;
+    onRepeat: () => void;
+    onRecord?: () => void;
+  };
 }) {
   const { m, language } = useI18n();
   const close = useRef<HTMLButtonElement>(null);
@@ -56,6 +61,12 @@ export function WordSheet({
           <button className="btn" type="button" onClick={aya.onRepeat}>
             <span aria-hidden="true">↻</span> {m.mushaf.player.loop}
           </button>
+          {aya.onRecord && (
+            // Recite it yourself and send it to the sheikh (spec F7).
+            <button className="btn" type="button" onClick={aya.onRecord}>
+              <span className="record-dot" aria-hidden="true" /> {m.recite.record}
+            </button>
+          )}
         </div>
       )}
       <p className="eyebrow" id="word-sheet-title">

@@ -8,6 +8,7 @@ import { cardName } from '@/content/unit2';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
+import { MyRecitations } from '@/modules/recite/MyRecitations';
 import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
 
@@ -113,6 +114,8 @@ export function Today() {
         )}
         {open.failure && <p role="alert">{errorMessage(m, open.failure)}</p>}
       </section>
+
+      <MyRecitations />
 
       <section className="card stack" aria-labelledby="next-unit">
         <div className="row" style={{ justifyContent: 'space-between' }}>

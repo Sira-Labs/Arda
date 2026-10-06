@@ -21,6 +21,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'halaqa:read': ['admin'], // without a ḥalaqa scope only admins
   'halaqa:study': [], // without a ḥalaqa scope nobody, admins included
   'halaqa:review': ['admin'], // without a ḥalaqa scope only admins
+  'recitation:own': ['student', 'teacher', 'admin'], // one's own; the queries keep to it
   'feedback:translate': ['teacher', 'admin'],
   'admin:users:read': ['admin'],
   'admin:users:write': ['admin'],

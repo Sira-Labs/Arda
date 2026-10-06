@@ -28,3 +28,21 @@ of step 5 of the loop ("recite") and of the teacher's listening queue.
 
 The microphone is allowed only for the app's own origin (`Permissions-Policy`), and recording
 works offline with upload from the outbox.
+
+## Update 2026-10-06: built before the bucket
+
+The owner wants the sheikh to hear recitations before the RustFS buckets exist, so S4.1 and
+S4.2 shipped with an interim store:
+
+- **Where the sound lives:** in Postgres, table `recording_audio` (migration `0006`), apart
+  from the `recordings` list. The repository interface hides it; moving to `arda-recordings`
+  is a copy of the bytes and a new `object_key` column, the rows and the routes stay. The size
+  limits keep the database small: 6 MB and 10 minutes a take, 500 takes a student.
+- **How it is served:** by the api on the app's own origin, after the same policy check
+  (`halaqa:review` for the ḥalaqa's teachers, `recitation:own` for the student), with byte
+  ranges (Safari plays media only from servers that answer them) and
+  `Cache-Control: private, no-store`; the service worker never caches `/api/`.
+- **Consent** is asked once per device before the first take and kept there; a guardian's
+  consent for a student under 16 is still to be recorded by the teacher (next with T4).
+- **Deleting:** the student deletes any take; leaving the ḥalaqa or deleting the account
+  deletes them (foreign keys to the membership). The export lists them without the sound.

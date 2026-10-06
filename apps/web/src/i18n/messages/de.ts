@@ -8,7 +8,15 @@ import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 
 export type RemarkId =
-  'ghunnaShort' | 'ghunnaLong' | 'nunTooClear' | 'qalqalaMissing' | 'maddShort' | 'good';
+  | 'ghunnaShort'
+  | 'ghunnaLong'
+  | 'nunTooClear'
+  | 'qalqalaMissing'
+  | 'maddShort'
+  | 'sinVoiced'
+  | 'zayVoiceless'
+  | 'raRolled'
+  | 'good';
 
 export const de = {
   nav: {
@@ -430,6 +438,56 @@ export const de = {
     offline: 'Keine Verbindung – versuch es gleich noch einmal.',
     failed: 'Das hat nicht geklappt. Versuch es noch einmal oder nimm Link oder Code.',
   } as Record<Exclude<PasskeyFailure, 'cancelled'>, string>,
+  recite: {
+    record: 'Aufnehmen',
+    title: (sura: number, from: number, to: number) =>
+      from === to
+        ? `Sūra ${sura} · Āya ${from} aufnehmen`
+        : `Sūra ${sura} · Āyāt ${from}–${to} aufnehmen`,
+    recordAssignment: 'Aufgabe aufnehmen',
+    recordSection: 'Diesen Abschnitt aufnehmen',
+    consentTitle: 'Bevor du aufnimmst',
+    consentText:
+      'Deine Aufnahme hören nur du und die Lehrer der Ḥalaqa, an die du sie schickst. Sie bleibt privat, bis du sie löschst, und wird für nichts anderes verwendet.',
+    consentAgree: 'Einverstanden',
+    start: 'Aufnahme starten',
+    stop: 'Stopp',
+    running: (time: string) => `Aufnahme läuft · ${time}`,
+    again: 'Nochmal aufnehmen',
+    send: 'An meinen Sheikh senden',
+    sendTo: 'Senden an',
+    sent: 'Gesendet. Dein Sheikh hört sie sich an.',
+    queued: 'Gespeichert. Sie wird gesendet, sobald du wieder online bist.',
+    noHalaqa:
+      'Tritt zuerst der Ḥalaqa deines Sheikhs bei, dann kannst du ihm Aufnahmen schicken.',
+    denied:
+      'Das Mikrofon ist nicht erlaubt. Erlaube es in den Einstellungen deines Browsers.',
+    unsupported: 'Dieser Browser kann nicht aufnehmen.',
+    close: 'Schließen',
+    pending: (count: number) =>
+      count === 1
+        ? '1 Aufnahme wartet auf eine Verbindung.'
+        : `${count} Aufnahmen warten auf eine Verbindung.`,
+    mine: 'Deine Rezitationen',
+    waiting: 'wartet auf deinen Sheikh',
+    verdicts: { good: 'gut', again: 'nochmal' },
+    from: (name: string | null) => (name ? `${name} schreibt:` : 'Dein Sheikh schreibt:'),
+    delete: 'Löschen',
+    queue: 'Zum Abhören',
+    queueEmpty: 'Gerade wartet keine Aufnahme.',
+    answered: 'Beantwortet',
+    good: 'Gut',
+    againVerdict: 'Nochmal',
+    remark: 'Kurze Bemerkung',
+    noRemark: '– keine –',
+    note: 'Eigene Worte (optional)',
+    answer: 'Antwort senden',
+    change: 'Ändern',
+    older: 'Ältere zeigen',
+    seconds: (ms: number) => `${Math.max(1, Math.round(ms / 1000))} s`,
+    range: (sura: number, from: number, to: number) =>
+      from === to ? `Sūra ${sura} · Āya ${from}` : `Sūra ${sura} · Āyāt ${from}–${to}`,
+  },
   errors: {
     offline: 'Keine Verbindung.',
     unauthorized: 'Bitte melde dich an.',
@@ -446,6 +504,9 @@ export const de = {
     halaqa_full: 'Diese Einzel-Ḥalaqa hat schon eine·n Schüler·in.',
     too_many_halaqat: 'Du hast die Höchstzahl an Ḥalaqāt erreicht.',
     too_many_assignments: 'Diese Ḥalaqa hat die Höchstzahl an Aufgaben erreicht.',
+    too_many_recordings: 'Du hast die Höchstzahl an Aufnahmen erreicht. Lösche ältere.',
+    too_large: 'Die Aufnahme ist zu lang.',
+    unsupported_media_type: 'Dieses Aufnahmeformat wird nicht unterstützt.',
     generic: (status: number) => `Serverfehler (${status}).`,
   },
   remarks: {
@@ -455,6 +516,10 @@ export const de = {
     qalqalaMissing: 'Qalqala fehlt – lass den Laut kurz zurückprallen.',
     maddShort: 'Madd zu kurz – dehne länger.',
     good: 'Gut so, behalte es.',
+    sinVoiced:
+      'Sīn summt – sprich es stimmlos und scharf, nicht wie das deutsche s in „Sonne“.',
+    zayVoiceless: 'Zāy ist stimmhaft – lass es summen, aber dünn.',
+    raRolled: 'Rāʾ mit der Zungenspitze, ein leichter Schlag – nicht rollen.',
   } as Record<RemarkId, string>,
   feedback: {
     eyebrow: 'Für den Sheikh',

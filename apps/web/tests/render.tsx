@@ -21,16 +21,29 @@ export function fakeApi(
     calls.push({
       path,
       method: init?.method ?? 'GET',
-      body: init?.body ? JSON.parse(String(init.body)) : undefined,
+      // A recording's body is its sound, not JSON.
+      body:
+        typeof init?.body === 'string'
+          ? JSON.parse(init.body)
+          : (init?.body ?? undefined),
     });
     if (path === '/api/v1/me') {
       return me
         ? Response.json(me)
         : Response.json({ error: 'unauthorized' }, { status: 401 });
     }
-    const answer = answers[`${init?.method ?? 'GET'} ${path}`] ?? answers[path];
+    const bare = path.split('?')[0]!;
+    const answer =
+      answers[`${init?.method ?? 'GET'} ${path}`] ??
+      answers[path] ??
+      answers[`${init?.method ?? 'GET'} ${bare}`];
     if (typeof answer === 'function') return answer();
-    return answer?.clone() ?? Response.json({ error: 'not_found' }, { status: 404 });
+    if (answer) return answer.clone();
+    // Recitations (S4.1) have their own tests; elsewhere nobody has sent any yet.
+    if ((init?.method ?? 'GET') === 'GET' && /\/recordings(\?.*)?$/.test(path)) {
+      return Response.json({ recordings: [], more: false });
+    }
+    return Response.json({ error: 'not_found' }, { status: 404 });
   }) as unknown as typeof fetch;
   return { client: new AuthClient(fetchImpl), calls };
 }

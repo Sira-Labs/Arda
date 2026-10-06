@@ -419,6 +419,58 @@ export const fr: Messages = {
     offline: 'Pas de connexion – réessaie dans un instant.',
     failed: 'Cela n’a pas marché. Réessaie, ou utilise un lien ou un code.',
   },
+  recite: {
+    record: 'Enregistrer',
+    title: (sura, from, to) =>
+      from === to
+        ? `Enregistrer sourate ${sura} · āya ${from}`
+        : `Enregistrer sourate ${sura} · āyāt ${from}–${to}`,
+    recordAssignment: 'Enregistrer le devoir',
+    recordSection: 'Enregistrer ce passage',
+    consentTitle: 'Avant d’enregistrer',
+    consentText:
+      'Seuls toi et les enseignants de la ḥalaqa à qui tu l’envoies peuvent écouter ton enregistrement. Il reste privé jusqu’à ce que tu le supprimes et ne sert à rien d’autre.',
+    consentAgree: 'J’accepte',
+    start: 'Commencer l’enregistrement',
+    stop: 'Arrêter',
+    running: (time) => `Enregistrement · ${time}`,
+    again: 'Enregistrer à nouveau',
+    send: 'Envoyer à mon cheikh',
+    sendTo: 'Envoyer à',
+    sent: 'Envoyé. Ton cheikh va l’écouter.',
+    queued: 'Enregistré. Il sera envoyé dès que tu seras de nouveau en ligne.',
+    noHalaqa:
+      'Rejoins d’abord la ḥalaqa de ton cheikh, ensuite tu pourras lui envoyer des enregistrements.',
+    denied:
+      'Le microphone n’est pas autorisé. Autorise-le dans les réglages de ton navigateur.',
+    unsupported: 'Ce navigateur ne peut pas enregistrer.',
+    close: 'Fermer',
+    pending: (count) =>
+      count === 1
+        ? '1 enregistrement attend une connexion.'
+        : `${count} enregistrements attendent une connexion.`,
+    mine: 'Tes récitations',
+    waiting: 'attend ton cheikh',
+    verdicts: { good: 'bien', again: 'à refaire' },
+    from: (name) => (name ? `${name} écrit\u202f:` : 'Ton cheikh écrit\u202f:'),
+    delete: 'Supprimer',
+    queue: 'À écouter',
+    queueEmpty: 'Aucun enregistrement n’attend pour le moment.',
+    answered: 'Répondu',
+    good: 'Bien',
+    againVerdict: 'À refaire',
+    remark: 'Remarque rapide',
+    noRemark: '– aucune –',
+    note: 'Tes propres mots (facultatif)',
+    answer: 'Envoyer la réponse',
+    change: 'Modifier',
+    older: 'Afficher les plus anciens',
+    seconds: (ms) => `${Math.max(1, Math.round(ms / 1000))}\u202fs`,
+    range: (sura, from, to) =>
+      from === to
+        ? `Sourate ${sura} · āya ${from}`
+        : `Sourate ${sura} · āyāt ${from}–${to}`,
+  },
   errors: {
     offline: 'Pas de connexion.',
     unauthorized: 'Connecte-toi, s’il te plaît.',
@@ -435,6 +487,10 @@ export const fr: Messages = {
     halaqa_full: 'Ce cours individuel a déjà un élève.',
     too_many_halaqat: 'Tu as atteint le nombre maximal de ḥalaqāt.',
     too_many_assignments: 'Cette ḥalaqa a atteint le nombre maximal de devoirs.',
+    too_many_recordings:
+      'Tu as atteint le nombre maximal d’enregistrements. Supprime les plus anciens.',
+    too_large: 'L’enregistrement est trop long.',
+    unsupported_media_type: 'Ce format d’enregistrement n’est pas pris en charge.',
     generic: (status) => `Erreur du serveur (${status}).`,
   },
   remarks: {
@@ -444,6 +500,10 @@ export const fr: Messages = {
     qalqalaMissing: 'Il manque la qalqala – fais rebondir brièvement le son.',
     maddShort: 'Madd trop court – allonge davantage.',
     good: 'C’est bien, garde-le ainsi.',
+    sinVoiced: 'Ton sīn vibre – garde-le sourd et net, jamais comme un z.',
+    zayVoiceless: 'Le zāy est sonore – laisse-le vibrer, mais fin.',
+    raRolled:
+      'Le rāʾ avec la pointe de la langue, une seule frappe légère – ne le roule pas.',
   },
   feedback: {
     eyebrow: 'Pour le cheikh',

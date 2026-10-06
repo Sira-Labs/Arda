@@ -42,14 +42,14 @@
 
 ## S4–S5 · Recite to him (Oct 19 – Nov 1)
 
-| Story                                         | Acceptance                                                         |
-| --------------------------------------------- | ------------------------------------------------------------------ |
-| S4.1 Recording and offline upload (F7)        | consent asked once; upload resumes after offline                   |
-| S4.2 Listening queue, marks, voice notes (T3) | only the ḥalaqa's teachers can play a recording (integration test) |
-| S4.3 ʿArḍ log (T4)                            | per student and sūra; included in the export                       |
-| S5.1 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |
-| S5.2 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      |
-| S5.3 Production server and pilot readiness    | own server, approval step; restore drill passed; gate G3 met       |
+| Story                                         | Acceptance                                                         | Status                                                                                                                                                            |
+| --------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| S4.1 Recording and offline upload (F7)        | consent asked once; upload resumes after offline                   | done early (owner, 2026-10-06): MediaRecorder, IndexedDB outbox sent on reconnect, idempotent upload; sound in Postgres until the bucket exists (ADR-0012 update) |
+| S4.2 Listening queue, marks, voice notes (T3) | only the ḥalaqa's teachers can play a recording (integration test) | queue, verdict, quick remark and note done; marks on words and voice notes next                                                                                   |
+| S4.3 ʿArḍ log (T4)                            | per student and sūra; included in the export                       |                                                                                                                                                                   |
+| S5.1 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |                                                                                                                                                                   |
+| S5.2 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      |                                                                                                                                                                   |
+| S5.3 Production server and pilot readiness    | own server, approval step; restore drill passed; gate G3 met       |                                                                                                                                                                   |
 
 ## S6–S9 · Pilot ḥalaqa (Nov 2 – Nov 29)
 

@@ -435,6 +435,54 @@ export const ar: Messages = {
     offline: 'لا يوجد اتصال – حاول بعد قليل.',
     failed: 'لم ينجح ذلك. حاول مجددًا أو استخدم رابطًا أو رمزًا.',
   },
+  recite: {
+    record: 'تسجيل',
+    title: (sura, from, to) =>
+      from === to
+        ? `تسجيل سورة ${num(sura)} · الآية ${num(from)}`
+        : `تسجيل سورة ${num(sura)} · الآيات ${num(from)}–${num(to)}`,
+    recordAssignment: 'سجّل المهمة',
+    recordSection: 'سجّل هذا المقطع',
+    consentTitle: 'قبل أن تسجّل',
+    consentText:
+      'لا يستمع إلى تسجيلك إلا أنت ومعلّمو الحلقة التي ترسله إليها. يبقى خاصًا حتى تحذفه، ولا يُستخدم لأي شيء آخر.',
+    consentAgree: 'أوافق',
+    start: 'ابدأ التسجيل',
+    stop: 'إيقاف',
+    running: (time) => `جارٍ التسجيل · ${time}`,
+    again: 'سجّل مرة أخرى',
+    send: 'أرسل إلى شيخي',
+    sendTo: 'أرسل إلى',
+    sent: 'تم الإرسال. سيستمع إليه شيخك.',
+    queued: 'تم الحفظ. سيُرسل حين تعود متصلًا.',
+    noHalaqa: 'انضم أولًا إلى حلقة شيخك، ثم يمكنك أن ترسل إليه تسجيلاتك.',
+    denied: 'الميكروفون غير مسموح به. اسمح به في إعدادات المتصفح.',
+    unsupported: 'هذا المتصفح لا يستطيع التسجيل.',
+    close: 'إغلاق',
+    pending: (count) =>
+      count === 1 ? 'تسجيل واحد ينتظر الاتصال.' : `${num(count)} تسجيلات تنتظر الاتصال.`,
+    mine: 'تلاواتك',
+    waiting: 'ينتظر شيخك',
+    verdicts: { good: 'جيد', again: 'أعد' },
+    from: (name) => (name ? `${name} يكتب:` : 'يكتب شيخك:'),
+    delete: 'حذف',
+    queue: 'للاستماع',
+    queueEmpty: 'لا يوجد تسجيل ينتظر الآن.',
+    answered: 'تمّ الرد',
+    good: 'جيد',
+    againVerdict: 'أعد',
+    remark: 'ملاحظة قصيرة',
+    noRemark: '– لا شيء –',
+    note: 'كلماتك (اختياري)',
+    answer: 'أرسل الرد',
+    change: 'تعديل',
+    older: 'أظهر الأقدم',
+    seconds: (ms) => `${num(Math.max(1, Math.round(ms / 1000)))} ث`,
+    range: (sura, from, to) =>
+      from === to
+        ? `سورة ${num(sura)} · الآية ${num(from)}`
+        : `سورة ${num(sura)} · الآيات ${num(from)}–${num(to)}`,
+  },
   errors: {
     offline: 'لا يوجد اتصال.',
     unauthorized: 'يرجى تسجيل الدخول.',
@@ -451,6 +499,9 @@ export const ar: Messages = {
     halaqa_full: 'هذا الدرس الفردي له طالب بالفعل.',
     too_many_halaqat: 'بلغت الحد الأقصى لعدد الحلقات.',
     too_many_assignments: 'بلغت هذه الحلقة الحد الأقصى لعدد المهام.',
+    too_many_recordings: 'بلغت الحد الأقصى لعدد التسجيلات. احذف الأقدم منها.',
+    too_large: 'التسجيل طويل جدًا.',
+    unsupported_media_type: 'صيغة التسجيل هذه غير مدعومة.',
     generic: (status) => `خطأ في الخادم (${status}).`,
   },
   remarks: {
@@ -460,6 +511,9 @@ export const ar: Messages = {
     qalqalaMissing: 'القلقلة غائبة – اجعل الصوت يرتدّ قليلًا.',
     maddShort: 'المد قصير – أطِل أكثر.',
     good: 'أحسنت، حافظ على ذلك.',
+    sinVoiced: 'السين عندك مجهورة – انطقها مهموسة صافية، لا كالزاي.',
+    zayVoiceless: 'الزاي مجهورة – أظهر صوتها مع الرقّة.',
+    raRolled: 'الراء بطرف اللسان، نقرة واحدة خفيفة – لا تكرّرها.',
   },
   feedback: {
     eyebrow: 'للشيخ',
