@@ -35,6 +35,11 @@ RUN --mount=type=cache,target=/root/.npm \
 
 FROM node:22-bookworm-slim AS runtime
 ENV NODE_ENV=production
+# Debian's security fixes land before the next node image does (perl-base, 2026-10-06): the
+# release scan refuses an image with a critical, fixable finding.
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app/apps/api
 COPY --from=deps /app/node_modules /app/node_modules
 COPY --from=deps /app/apps/api/node_modules ./node_modules
