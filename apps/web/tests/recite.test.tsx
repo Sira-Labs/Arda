@@ -169,6 +169,34 @@ describe('recording a recitation (S4.1)', () => {
     });
   });
 
+  it('addresses a take recorded offline to the ḥalaqāt it knew', async () => {
+    localStorage.setItem('arda.recordingConsent', 'given');
+    localStorage.setItem(
+      'arda.recitationTargets',
+      JSON.stringify({
+        userId: STUDENT.id,
+        targets: [{ id: HALAQA, name: 'Juzʾ ʿAmma', teacherName: null }],
+      })
+    );
+    const offline = () => {
+      throw new TypeError('offline');
+    };
+    const { outbox } = renderWith(
+      panel(),
+      {
+        '/api/v1/halaqat': offline,
+        [`POST /api/v1/halaqat/${HALAQA}/recordings`]: offline,
+      },
+      STUDENT
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufnahme starten' }));
+    await user.click(screen.getByRole('button', { name: 'Stopp' }));
+    await user.click(screen.getByRole('button', { name: 'An meinen Sheikh senden' }));
+    await screen.findByText(/^Gespeichert\./);
+    expect((await outbox.all())[0]?.halaqaId).toBe(HALAQA);
+  });
+
   it('lets the student choose the ḥalaqa, and sends an assignment only to its own', async () => {
     localStorage.setItem('arda.recordingConsent', 'given');
     const { calls } = renderWith(

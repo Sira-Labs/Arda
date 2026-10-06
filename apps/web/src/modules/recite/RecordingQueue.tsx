@@ -197,6 +197,7 @@ function QueueItem({
           <label className="stack" style={{ gap: 4 }}>
             <span>{m.recite.remark}</span>
             <select
+              className="input"
               value={remark ?? ''}
               onChange={(event) =>
                 setRemark((event.target.value || null) as RemarkId | null)
@@ -213,6 +214,7 @@ function QueueItem({
           <label className="stack" style={{ gap: 4 }}>
             <span>{m.recite.note}</span>
             <textarea
+              className="input"
               rows={2}
               maxLength={1000}
               value={note}

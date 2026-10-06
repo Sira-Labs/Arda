@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
-import type { RecitedRange } from '@/services/auth';
+import type { HalaqaSummary, RecitedRange } from '@/services/auth';
 import { logger } from '@/services/logger';
 import { useSession } from '@/state/session';
 import { giveConsent, useConsent } from './consent';
@@ -22,6 +22,50 @@ type Stage =
   | { name: 'sending'; take: Take; url: string }
   | { name: 'done'; message: string }
   | { name: 'failed'; message: string };
+
+/** A ḥalaqa a take can go to. */
+interface Target {
+  id: string;
+  name: string;
+  teacherName: string | null;
+}
+
+const TARGETS = 'arda.recitationTargets';
+
+/**
+ * Where the student may send a take: the ḥalaqāt they are an active student of, remembered on
+ * the device so a take recorded offline can still be addressed. `null` while unknown.
+ */
+function useSendTargets(
+  userId: string | null,
+  halaqat: HalaqaSummary[] | null,
+  failed: boolean
+): Target[] | null {
+  return useMemo(() => {
+    if (!userId) return null;
+    if (halaqat) {
+      const targets = halaqat
+        .filter((h) => h.role === 'student' && h.status === 'active')
+        .map(({ id, name, teacherName }) => ({ id, name, teacherName }));
+      try {
+        localStorage.setItem(TARGETS, JSON.stringify({ userId, targets }));
+      } catch {
+        // Blocked storage: offline takes then wait for the list.
+      }
+      return targets;
+    }
+    if (!failed) return null;
+    try {
+      const kept = JSON.parse(localStorage.getItem(TARGETS) ?? 'null') as {
+        userId: string;
+        targets: Target[];
+      } | null;
+      return kept?.userId === userId ? kept.targets : null;
+    } catch {
+      return null;
+    }
+  }, [userId, halaqat, failed]);
+}
 
 /** Minutes and seconds, `2:05`. */
 export const clock = (ms: number) => {
@@ -49,13 +93,10 @@ export function RecordPanel({
   const { me, client } = useSession();
   const { recorder: makeRecorder, outbox } = useRecite();
   const consent = useConsent();
-  const { halaqat } = useHalaqat();
-  const mine = useMemo(
-    () => (halaqat ?? []).filter((h) => h.role === 'student' && h.status === 'active'),
-    [halaqat]
-  );
+  const { halaqat, failure } = useHalaqat();
+  const mine = useSendTargets(me?.id ?? null, halaqat, failure !== null);
   const [to, setTo] = useState<string | null>(null);
-  const target = to ?? (mine.find((h) => h.id === halaqaId) ?? mine[0])?.id ?? null;
+  const target = to ?? (mine?.find((h) => h.id === halaqaId) ?? mine?.[0])?.id ?? null;
   const [stage, setStage] = useState<Stage>({ name: 'ready' });
   const [now, setNow] = useState(0);
   const recorder = useRef<Recorder | null>(null);
@@ -166,7 +207,7 @@ export function RecordPanel({
         {m.today.signIn}
       </Link>
     );
-  } else if (halaqat && mine.length === 0) {
+  } else if (mine && mine.length === 0) {
     body = (
       <>
         <p>{m.recite.noHalaqa}</p>
@@ -227,10 +268,11 @@ export function RecordPanel({
         body = (
           <>
             <audio controls src={stage.url} preload="metadata" />
-            {mine.length > 1 && (
+            {mine && mine.length > 1 && (
               <label className="stack" style={{ gap: 4 }}>
                 <span>{m.recite.sendTo}</span>
                 <select
+                  className="input"
                   value={target ?? ''}
                   onChange={(event) => setTo(event.target.value)}
                   disabled={stage.name === 'sending'}
