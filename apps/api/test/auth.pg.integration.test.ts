@@ -1449,6 +1449,14 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await repo.ownAudio(YUSUF, (first as { id: string }).id)).toBeNull();
     });
 
+    it('keeps the limit when takes arrive at the same moment', async () => {
+      const outcomes = await Promise.all(
+        Array.from({ length: 5 }, () => repo.save(take(AMINA), 2))
+      );
+      expect(outcomes.filter((o) => o.status === 'created')).toHaveLength(2);
+      expect(outcomes.filter((o) => o.status === 'limit')).toHaveLength(3);
+    });
+
     it('answers an assignment only of this student in this ḥalaqa', async () => {
       const assignments = new PgAssignmentRepository(pool);
       const give = (studentId: string | null) =>

@@ -75,7 +75,7 @@ async function setup() {
     actor: string,
     method: string,
     path: string,
-    init: { body?: Buffer | string; type?: string; range?: string } = {}
+    init: { body?: Buffer | string | ReadableStream; type?: string; range?: string } = {}
   ) =>
     app.request(`/api/v1${path}`, {
       method,
@@ -85,11 +85,12 @@ async function setup() {
         ...(init.range ? { range: init.range } : {}),
       },
       body: init.body,
-    });
+      ...(init.body instanceof ReadableStream ? { duplex: 'half' } : {}),
+    } as RequestInit);
   const send = (
     actor = 'member',
     query = QUERY(),
-    body: Buffer | string = SOUND,
+    body: Buffer | string | ReadableStream = SOUND,
     type = 'audio/webm;codecs=opus'
   ) => call(actor, 'POST', `/halaqat/${halaqaId}/recordings${query}`, { body, type });
   const sent = async (actor = 'member') => (await json(await send(actor))).id as string;
@@ -258,6 +259,23 @@ describe('sending a take (F7)', () => {
     expect((await send('member', QUERY(), SOUND, 'video/mp4')).status).toBe(415);
     expect((await send('member', QUERY(), Buffer.alloc(0))).status).toBe(400);
     expect((await send('member', QUERY(), Buffer.alloc(MAX_BYTES + 1))).status).toBe(413);
+  });
+
+  it('stops reading a streamed body without a length once it passes the limit', async () => {
+    const { send, repo } = await setup();
+    const chunk = new Uint8Array(1_000_000);
+    let sent = 0;
+    const stream = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent > MAX_BYTES) controller.close();
+        else {
+          sent += chunk.length;
+          controller.enqueue(chunk);
+        }
+      },
+    });
+    expect((await send('member', QUERY(), stream)).status).toBe(413);
+    expect(repo.rows).toHaveLength(0);
   });
 
   it('answers an assignment only of this student in this ḥalaqa', async () => {

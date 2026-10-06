@@ -15,6 +15,7 @@
  */
 import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
+import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import { isAyaRange } from '@arda/quran';
 import type { AuthResolver } from '../auth/resolver.js';
@@ -178,7 +179,13 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
     return Id.safeParse(before).success ? before : null;
   };
 
-  app.post('/halaqat/:id/recordings', study, async (c) => {
+  // Stops reading a body past the limit, whatever Content-Length claims (or when absent).
+  const sizeLimit = bodyLimit({
+    maxSize: MAX_BYTES,
+    onError: (c) => c.json({ error: 'too_large' }, 413),
+  });
+
+  app.post('/halaqat/:id/recordings', study, sizeLimit, async (c) => {
     const halaqaId = Id.safeParse(c.req.param('id'));
     if (!halaqaId.success) return notFound(c);
     const meta = Meta.safeParse(c.req.query());

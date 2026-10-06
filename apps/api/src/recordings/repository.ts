@@ -195,6 +195,10 @@ export class PgRecordingRepository implements RecordingRepository {
         await client.query('rollback');
         return { status: 'not_member' };
       }
+      // One save per student at a time, so two uploads cannot both pass the limit.
+      await client.query('select id from users where id = $1 for update', [
+        input.studentId,
+      ]);
       if (input.assignmentId) {
         const assignment = await client.query(
           `select 1 from assignments
