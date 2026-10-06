@@ -111,7 +111,8 @@ hairline `#c9b98f`), `btn`, `btn-primary` (saffron), `btn-teal`, `input`, `chip`
 `stack`, `row`, `muted`, `feedback-good`, `feedback-bad`, `arabic`, `quran`, `quran-lg`, `tj`
 with `data-rule`, `legend`. React: `AppShell`, `Icon` (line icons, 24 px grid, currentColor),
 `TajweedText` (segments → coloured spans with titles; segments come from `segmentsOf(text)`,
-which runs the engine), `LearningShell` (close and progress instead of the bar).
+which runs the engine), `LearningShell` (close and progress instead of the bar), `Logo`, `LogoLockup` and
+`BrandHeader` (§11).
 
 Phone mock-ups in the deck use a device frame with a 60 px radius and a 12 px ink border; the
 app itself never draws a frame.
@@ -153,3 +154,23 @@ Makhārij drawings are our own SVGs (no usable open drawings exist): a side view
 ink lines on paper, the five areas in the token colours (jawf teal, ḥalq blue, lisān saffron,
 shafatān red, khayshūm green), numbered points, animated tongue and lips. Licensed CC BY 4.0
 and reviewed by the sheikh before release (ADR-0018).
+
+## 11. Logo
+
+The mark is an eight-pointed star of two squares, the second turned by 45°, stroked in saffron
+(`--brand-saffron`, `#e8a93b`) on ink (`--ink`, `#10201b`). It comes in three forms, all in
+`components/Logo.tsx`:
+
+| Form    | Drawing                                                                      | Where                                        |
+| ------- | ---------------------------------------------------------------------------- | -------------------------------------------- |
+| `tile`  | star and a teal centre (`--brand-teal`, `#3fb5a3`) on a rounded ink square   | favicon, app icons, Today's header on phones |
+| `star`  | star and teal centre alone                                                   | ink surfaces: the sidebar, beside the name   |
+| `rings` | star inside two teal rings (r 226 and 160 of 560, the inner at 60 % opacity) | the sign-in header, the repository logo      |
+
+The wordmark is "ʿArḍa" in Fraunces 600 (Amiri draws the ʿayn, which Fraunces lacks) and
+"العَرْضة" in DigitalKhatt IndoPak, always `lang="ar" dir="rtl"`. The sign-in page opens with
+the brand header of the design: ink, rounded lower corners, the mark, the Arabic name, the name
+and the tagline ("Rezitieren, gehört werden, korrigiert werden."). Saffron and teal stay the
+same in both themes. `npm run icons -w @arda/web` draws the PWA icons
+(`public/icons/`: 192, 512, maskable 512 with the star inside the safe circle, Apple 180);
+`apps/web/scripts/logo-svg.py` writes `docs/assets/logo.svg` with the text outlined.
