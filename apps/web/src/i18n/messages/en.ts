@@ -608,7 +608,8 @@ export const en: Messages = {
       },
       istifal: {
         name: 'Istifāl',
-        meaning: 'Low: the back of the tongue stays down, the sound is light.',
+        meaning:
+          'Low: the back of the tongue does not rise to the palate. Such letters sound light by nature; only rāʾ (and the lām of “Allāh”) can turn heavy, depending on its position.',
       },
       istila: {
         name: 'Istiʿlāʾ',

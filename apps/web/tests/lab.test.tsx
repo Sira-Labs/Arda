@@ -212,6 +212,17 @@ describe('the letter lab (F5)', () => {
     expect(panel).toHaveTextContent(`Sūra ${sura} · Āya ${ayaNumber} aufnehmen`);
   });
 
+  it('labels the point in Arabic right to left', () => {
+    localStorage.setItem('arda.language', 'ar');
+    renderAt('/labor/sin');
+    const labels = [...document.querySelectorAll('.lab-tag-text')];
+    expect(labels.length).toBe(2);
+    for (const label of labels) {
+      expect(label).toHaveAttribute('lang', 'ar');
+      expect(label).toHaveAttribute('dir', 'rtl');
+    }
+  });
+
   it('says the rāʾ rules are a summary the sheikh still checks', () => {
     renderAt('/labor/ra');
     const rules = screen.getByRole('region', { name: 'Rāʾ: schwer oder leicht' });
@@ -300,6 +311,21 @@ describe('Welcher Buchstabe? (the listening quiz)', () => {
     // The next word plays at once.
     expect(audio.played).toHaveLength(2);
     expect(screen.queryByRole('status')).toBeNull();
+    // The focus stays in the quiz: on the next word's listen button.
+    expect(screen.getByRole('button', { name: /Anhören|Nochmal hören/ })).toHaveFocus();
+  });
+
+  it('keeps the focus in the quiz up to its end', async () => {
+    renderAt('/labor/ra/quiz');
+    const user = userEvent.setup();
+    for (let i = 0; i < 10; i++) {
+      const options = screen.getByRole('group', { name: 'Antworten' });
+      await user.click(within(options).getByRole('button', { name: 'schwer' }));
+      await user.click(
+        screen.getByRole('button', { name: i === 9 ? 'Auswerten' : 'Weiter' })
+      );
+    }
+    expect(screen.getByRole('button', { name: 'Nochmal' })).toHaveFocus();
   });
 
   it('asks heavy or light for rāʾ', async () => {

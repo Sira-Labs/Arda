@@ -39,6 +39,8 @@ export function areaNumber(area: Area, language: string): string {
  */
 export function HeadDiagram({ point }: { point?: Point }) {
   const { m, language } = useI18n();
+  // The face never mirrors, but an Arabic label reads right to left.
+  const arabic = language === 'ar' ? ({ lang: 'ar', dir: 'rtl' } as const) : {};
   const id = useId();
   const t = m.lab.diagram;
   const at = point ? POINTS[point] : undefined;
@@ -134,10 +136,20 @@ export function HeadDiagram({ point }: { point?: Point }) {
             <circle className="lab-pulse" cx={at.x} cy={at.y} r="12" />
             <circle className="lab-dot" cx={at.x} cy={at.y} r="9" />
             <rect className="lab-tag" {...TAG} rx="16" />
-            <text className="lab-tag-text" x={TAG.x + TAG.width / 2} y={TAG.y + 34}>
+            <text
+              className="lab-tag-text"
+              x={TAG.x + TAG.width / 2}
+              y={TAG.y + 34}
+              {...arabic}
+            >
               {label.line1}
             </text>
-            <text className="lab-tag-text" x={TAG.x + TAG.width / 2} y={TAG.y + 66}>
+            <text
+              className="lab-tag-text"
+              x={TAG.x + TAG.width / 2}
+              y={TAG.y + 66}
+              {...arabic}
+            >
               {label.line2}
             </text>
           </g>

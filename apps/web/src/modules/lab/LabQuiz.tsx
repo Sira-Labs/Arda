@@ -87,7 +87,8 @@ export function LabQuiz({
           <section className="card stack" style={{ gap: 12 }} role="status">
             <h2>{m.games.score(right, round.length)}</h2>
             <div className="row">
-              <button type="button" className="btn btn-primary" onClick={again}>
+              {/* The quiz's end takes the focus the last answer's button had. */}
+              <button type="button" className="btn btn-primary" onClick={again} autoFocus>
                 {m.games.again}
               </button>
               <Link className="btn" to={`/labor/${letter}`}>
@@ -106,6 +107,8 @@ export function LabQuiz({
             onChoose={choose}
             onNext={next}
             last={index + 1 >= round.length}
+            // After an answer the next word's listen button takes the focus.
+            focusListen={index > 0}
           />
         ) : null}
       </div>
@@ -122,6 +125,7 @@ function QuestionView({
   onChoose,
   onNext,
   last,
+  focusListen,
 }: {
   question: LabQuestion;
   options: readonly LabAnswer[];
@@ -131,6 +135,7 @@ function QuestionView({
   onChoose: (answer: LabAnswer) => void;
   onNext: () => void;
   last: boolean;
+  focusListen: boolean;
 }) {
   const { m } = useI18n();
   const answered = chosen !== null;
@@ -146,6 +151,7 @@ function QuestionView({
           type="button"
           className="btn btn-primary"
           disabled={!player.ready}
+          autoFocus={focusListen}
           onClick={() => player.play(question.word.key)}
         >
           <PlayIcon pause={false} />{' '}

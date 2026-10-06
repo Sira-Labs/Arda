@@ -631,7 +631,8 @@ export const fr: Messages = {
       },
       istifal: {
         name: 'Istifāl',
-        meaning: 'Bas\u202f: l’arrière de la langue reste en bas, le son est léger.',
+        meaning:
+          'Bas\u202f: l’arrière de la langue ne monte pas vers le palais. Ces lettres sont légères par nature\u202f; seuls le rāʾ (et le lām de «\u202fAllāh\u202f») peuvent devenir lourds selon leur position.',
       },
       istila: {
         name: 'Istiʿlāʾ',

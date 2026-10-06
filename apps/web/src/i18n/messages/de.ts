@@ -653,7 +653,8 @@ export const de = {
       },
       istifal: {
         name: 'Istifāl',
-        meaning: 'Tief: Der Zungenrücken bleibt unten, der Laut ist leicht.',
+        meaning:
+          'Tief: Der Zungenrücken hebt sich nicht zum Gaumen. Solche Buchstaben klingen grundsätzlich leicht; nur Rāʾ (und das Lām in „Allāh“) wird je nach Lage schwer.',
       },
       istila: {
         name: 'Istiʿlāʾ',
