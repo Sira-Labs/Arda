@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { formatMoment } from '@/modules/assignments/format';
@@ -12,6 +12,8 @@ type Failure = Extract<ApiResult<unknown>, { ok: false }>;
 
 const ROLES: readonly Role[] = ['student', 'teacher', 'admin'];
 
+type Change = { role?: Role; disabled?: boolean };
+
 /**
  * `/verwaltung` (ADR-0005): an admin finds people and changes their role (a sheikh becomes a
  * teacher) or blocks them. The api checks the role and the confirmed second factor and logs
@@ -24,14 +26,22 @@ export function Admin() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [next, setNext] = useState<string | null>(null);
   const [search, setSearch] = useState('');
+  // The search the list (and its next page) belongs to; the field may already say more.
+  const [query, setQuery] = useState('');
   const [needsCode, setNeedsCode] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // Only the latest list request may set the list: an older search or page is dropped.
+  const latest = useRef(0);
+  // A change the api refused for want of the second factor, made once it is confirmed.
+  const pending = useRef<{ user: AdminUser; update: Change } | null>(null);
 
   const load = useCallback(
-    async (query: string, cursor?: string) => {
-      const result = await client.adminUsers(query, cursor);
+    async (text: string, cursor?: string) => {
+      const request = ++latest.current;
+      const result = await client.adminUsers(text, cursor);
+      if (request !== latest.current) return;
       if (!result.ok) {
         if (result.code === 'second_factor_required') setNeedsCode(true);
         else setFailure(result);
@@ -59,17 +69,20 @@ export function Admin() {
 
   const find = (event: FormEvent) => {
     event.preventDefault();
+    setQuery(search);
     void load(search);
   };
 
-  const change = async (user: AdminUser, update: { role?: Role; disabled?: boolean }) => {
+  const change = async (user: AdminUser, update: Change) => {
     setBusy(user.id);
     setNotice(null);
     try {
       const result = await client.updateUser(user.id, update);
       if (!result.ok) {
-        if (result.code === 'second_factor_required') setNeedsCode(true);
-        else setFailure(result);
+        if (result.code === 'second_factor_required') {
+          pending.current = { user, update };
+          setNeedsCode(true);
+        } else setFailure(result);
         return;
       }
       setFailure(null);
@@ -89,7 +102,15 @@ export function Admin() {
       </header>
 
       {needsCode ? (
-        <SecondFactor onConfirmed={() => void load(search)} />
+        <SecondFactor
+          onConfirmed={() => {
+            const waiting = pending.current;
+            pending.current = null;
+            if (!waiting) return void load(query);
+            setNeedsCode(false);
+            void change(waiting.user, waiting.update);
+          }}
+        />
       ) : (
         <section className="card stack" aria-label={t.title}>
           <form
@@ -175,7 +196,7 @@ export function Admin() {
               className="btn"
               type="button"
               style={{ alignSelf: 'flex-start' }}
-              onClick={() => void load(search, next)}
+              onClick={() => void load(query, next)}
             >
               {t.more}
             </button>

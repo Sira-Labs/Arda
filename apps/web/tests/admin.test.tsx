@@ -132,6 +132,75 @@ describe('the admin area (ADR-0005)', () => {
     expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ code: '123456' });
   });
 
+  it('makes the change it was refused once the second factor is confirmed', async () => {
+    let confirmed = false;
+    const { calls } = renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SHEIKH], next: null }),
+        [`PATCH /api/v1/admin/users/${SHEIKH.id}`]: () =>
+          confirmed
+            ? Response.json({ ...SHEIKH, role: 'teacher' })
+            : Response.json({ error: 'second_factor_required' }, { status: 403 }),
+        'GET /api/v1/account/2fa': Response.json({ enabled: true, confirmed: false }),
+        'POST /api/v1/account/2fa/confirm': () => {
+          confirmed = true;
+          return new Response(null, { status: 204 });
+        },
+      },
+      ADMIN
+    );
+    const user = userEvent.setup();
+    const row = (await screen.findByText('Sheikh Ahmad')).closest('li')!;
+    await user.selectOptions(
+      within(row).getByRole('combobox', { name: 'Rolle' }),
+      'teacher'
+    );
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Sechsstelliger Code' }),
+      '123456'
+    );
+    await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
+    expect(await screen.findByText('Gespeichert: Sheikh Ahmad')).toBeInTheDocument();
+    expect(calls.filter((c) => c.method === 'PATCH')).toHaveLength(2);
+  });
+
+  it('keeps the latest search when an older answer arrives late, and pages that search', async () => {
+    let first: (value: Response) => void = () => {};
+    const { calls } = renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': () =>
+          new Promise<Response>((resolve) => {
+            first = resolve;
+          }),
+        'GET /api/v1/admin/users?q=sheikh': Response.json({
+          users: [SHEIKH],
+          next: 'c2',
+        }),
+        'GET /api/v1/admin/users?q=sheikh&cursor=c2': Response.json({
+          users: [{ ...SHEIKH, id: 'x', name: 'Sheikh Yusuf' }],
+          next: null,
+        }),
+      },
+      ADMIN
+    );
+    const user = userEvent.setup();
+    const field = await screen.findByRole('searchbox', { name: /Suchen/ });
+    await user.type(field, 'sheikh');
+    await user.click(screen.getByRole('button', { name: 'Suchen' }));
+    expect(await screen.findByText('Sheikh Ahmad')).toBeInTheDocument();
+    // The first, unsearched list answers only now: it must not replace the search.
+    first(Response.json({ users: [SELF], next: null }));
+    await new Promise((done) => setTimeout(done, 20));
+    expect(screen.queryByText('Markus')).toBeNull();
+    // Typing without searching again does not change which list the next page belongs to.
+    await user.type(field, 'x');
+    await user.click(screen.getByRole('button', { name: 'Weitere laden' }));
+    expect(await screen.findByText('Sheikh Yusuf')).toBeInTheDocument();
+    expect(calls.at(-1)?.path).toBe('/api/v1/admin/users?q=sheikh&cursor=c2');
+  });
+
   it('is not there for anyone but an admin', async () => {
     renderAt('/verwaltung', {}, { ...ADMIN, role: 'teacher' });
     expect(await screen.findByText('Nicht gefunden')).toBeInTheDocument();
@@ -166,6 +235,9 @@ describe('the second factor on the account page', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Der Code stimmt nicht.');
+    // A new code clears the refusal of the last one.
+    await user.type(screen.getByRole('textbox', { name: 'Sechsstelliger Code' }), '1');
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(screen.getByRole('link', { name: 'Zur Verwaltung' })).toHaveAttribute(
       'href',
       '/verwaltung'

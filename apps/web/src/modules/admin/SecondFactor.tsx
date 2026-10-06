@@ -75,7 +75,11 @@ export function SecondFactor({ onConfirmed }: { onConfirmed?: () => void }) {
           maxLength={7}
           required
           value={code}
-          onChange={(event) => setCode(event.target.value)}
+          onChange={(event) => {
+            setCode(event.target.value);
+            // A new code: the last one's refusal no longer applies.
+            setFailure(null);
+          }}
           dir="ltr"
         />
       </label>
