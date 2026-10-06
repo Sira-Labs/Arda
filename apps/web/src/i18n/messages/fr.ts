@@ -530,16 +530,214 @@ export const fr: Messages = {
       failed: 'Traduction impossible pour le moment. Ton élève reçoit l’original.',
     },
   },
+  lab: {
+    eyebrow: 'Labo',
+    title: 'Labo des lettres',
+    intro:
+      'D’où vient un son\u202f? La tête montre les cinq zones. Choisis une lettre\u202f: tu vois son point, tu entends de vrais mots et tu t’exerces à la différence.',
+    firstSet: 'Première série\u202f: Sīn, Zāy, Ṣād et Rāʾ',
+    firstSetHint:
+      'Les trois lettres sifflantes et le Rāʾ – souvent les plus difficiles pour les germanophones.',
+    more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
+    draft: 'Brouillon – le cheikh vérifie encore',
+    back: 'Au labo',
+    diagram: {
+      title: 'La tête de profil',
+      description:
+        'Vue de profil de la tête avec cinq zones\u202f: Jawf (cavité buccale), Ḥalq (gorge), Lisān (langue), Shafatān (lèvres) et Khayshūm (cavité nasale).',
+      legend: 'Les cinq zones',
+      licence:
+        'Dessin\u202f: ʿArḍa, CC BY 4.0 – un brouillon, ton cheikh le vérifie encore.',
+    },
+    areas: {
+      jawf: {
+        name: 'Jawf',
+        gloss: 'cavité de la bouche et de la gorge\u202f: les voyelles longues',
+      },
+      halq: { name: 'Ḥalq', gloss: 'gorge\u202f: six lettres' },
+      lisan: { name: 'Lisān', gloss: 'langue\u202f: dix-huit lettres' },
+      shafatan: { name: 'Shafatān', gloss: 'lèvres\u202f: quatre lettres' },
+      khayshum: { name: 'Khayshūm', gloss: 'cavité nasale\u202f: la ghunna' },
+    },
+    points: {
+      whistle: { line1: 'Pointe de la langue', line2: 'incisives' },
+      ra: { line1: 'Pointe de la langue', line2: 'gencives' },
+    },
+    letters: {
+      sin: {
+        name: 'Sīn',
+        short: 'léger, net, sourd',
+        makhraj:
+          'La pointe de la langue se place contre les incisives inférieures (certains enseignent\u202f: supérieures). Un passage étroit reste ouvert entre la langue et les dents du haut – l’air y siffle.',
+        mistakes: [
+          'En allemand, le s devant une voyelle devient sonore\u202f: «\u202fSonne\u202f» se dit [z]. Le Sīn devient alors vite un Zāy. Garde le Sīn sourd et net – sans bourdonnement.',
+          'Ne l’alourdis pas\u202f: le Sīn est léger. Si tu lèves l’arrière de la langue, on entend un Ṣād.',
+          'Ne zézaie pas\u202f: la langue reste derrière les dents. Si elle sort, on entend un Thāʾ.',
+        ],
+      },
+      zay: {
+        name: 'Zāy',
+        short: 'léger, bourdonnant',
+        makhraj:
+          'Comme Sīn et Ṣād\u202f: la pointe de la langue contre les incisives inférieures (certains enseignent\u202f: supérieures), un passage étroit reste ouvert, l’air y siffle.',
+        mistakes: [
+          'Le Zāy est sonore\u202f: pose la main sur ta gorge – tu sens la vibration.',
+          'Il reste fin et léger\u202f: jamais lourd comme le Ṣād, jamais comme le z allemand (ts).',
+          'Ne le rends pas sourd devant un sukūn ou en fin de mot, comme en allemand («\u202fHaus\u202f»). Sinon il devient un Sīn.',
+        ],
+      },
+      sad: {
+        name: 'Ṣād',
+        short: 'lourd, plein',
+        makhraj:
+          'Le même point que le Sīn\u202f: la pointe de la langue aux incisives, un passage étroit. En plus, l’arrière de la langue se lève et s’appuie largement contre le palais.',
+        mistakes: [
+          'Le Ṣād est lourd\u202f: l’arrière de la langue monte vers le palais (iṭbāq). Le son devient plein et sombre.',
+          'Le Sīn est léger\u202f: l’arrière de la langue reste bas. La différence s’entend aussi dans la voyelle qui suit.',
+          'Lourd ne veut pas dire sonore\u202f: le Ṣād reste sourd comme le Sīn, sans vibration.',
+        ],
+      },
+      ra: {
+        name: 'Rāʾ',
+        short: 'un seul battement léger de la pointe',
+        makhraj:
+          'La pointe de la langue, avec un peu de son dos, frappe les gencives derrière les incisives supérieures – un peu plus en arrière que pour le Nūn.',
+        mistakes: [
+          'Avec la pointe de la langue, pas dans la gorge\u202f: pas de r guttural.',
+          'Un seul battement léger, pas roulé. Tu apprends le takrīr pour l’éviter.',
+          'Ne l’avale pas en fin de mot comme dans l’allemand «\u202fVater\u202f»\u202f: le Rāʾ se prononce.',
+          'Lourd ou léger dépend de la voyelle\u202f: lourd avec fatḥa ou ḍamma, léger avec kasra.',
+        ],
+      },
+    },
+    makhraj: 'Makhraj · où il naît',
+    sifat: 'Ṣifāt · ses qualités',
+    sifa: {
+      hams: {
+        name: 'Hams',
+        meaning: 'Chuchotement\u202f: le souffle passe, la voix ne vibre pas.',
+      },
+      jahr: {
+        name: 'Jahr',
+        meaning: 'Sonore\u202f: le souffle est retenu, la voix vibre.',
+      },
+      rakhawa: {
+        name: 'Rakhāwa',
+        meaning: 'Doux\u202f: le son continue, il ne s’arrête pas net.',
+      },
+      tawassut: {
+        name: 'Tawassuṭ (Bayniyya)',
+        meaning: 'Entre les deux\u202f: le son ne coule qu’un peu, ni ferme ni doux.',
+      },
+      istifal: {
+        name: 'Istifāl',
+        meaning:
+          'Bas\u202f: l’arrière de la langue ne monte pas vers le palais. Ces lettres sont légères par nature\u202f; seuls le rāʾ (et le lām de «\u202fAllāh\u202f») peuvent devenir lourds selon leur position.',
+      },
+      istila: {
+        name: 'Istiʿlāʾ',
+        meaning:
+          'Haut\u202f: l’arrière de la langue monte vers le palais, le son devient lourd.',
+      },
+      infitah: {
+        name: 'Infitāḥ',
+        meaning: 'Ouvert\u202f: il reste de l’espace entre la langue et le palais.',
+      },
+      itbaq: {
+        name: 'Iṭbāq',
+        meaning:
+          'Couvert\u202f: la langue s’appuie largement contre le palais, le son devient plein.',
+      },
+      ismat: {
+        name: 'Iṣmāt',
+        meaning:
+          'Retenu\u202f: le son ne glisse pas facilement de la langue (le contraire de l’idhlāq).',
+      },
+      idhlaq: {
+        name: 'Idhlāq',
+        meaning: 'Fluide\u202f: le son glisse facilement de la pointe de la langue.',
+      },
+      safir: {
+        name: 'Ṣafīr',
+        meaning: 'Sifflement\u202f: un son fin quand l’air passe par le passage étroit.',
+      },
+      inhiraf: {
+        name: 'Inḥirāf',
+        meaning: 'Déviation\u202f: le son s’écarte un peu de son point.',
+      },
+      takrir: {
+        name: 'Takrīr',
+        meaning:
+          'Répétition\u202f: la langue a tendance à vibrer – tu le connais pour l’éviter.',
+      },
+    },
+    mistakesTitle: 'Erreurs fréquentes',
+    raRules: {
+      title: 'Rāʾ\u202f: lourd ou léger',
+      heavy:
+        'Avec fatḥa ou ḍamma, le Rāʾ est lourd (tafkhīm)\u202f: un son plein et sombre.',
+      light: 'Avec kasra, le Rāʾ est léger (tarqīq)\u202f: plat et clair.',
+      pending:
+        'Seulement les cas clairs, en résumé. Le Rāʾ avec sukūn et les autres règles suivront quand ton cheikh les aura vérifiés.',
+    },
+    listen: {
+      title: 'Écouter et répéter',
+      intro:
+        'al-Ḥuṣarī, récitation d’enseignement, mot par mot. Touche un mot, écoute et répète – lentement d’abord.',
+      play: (sura, aya, n) => `Écouter\u202f: sourate ${sura}, āya ${aya}, mot ${n}`,
+      where: (sura, aya) => `${sura}:${aya}`,
+      speed: 'Vitesse',
+      loading: 'Chargement des temps des mots…',
+      failed: 'La récitation ne se charge pas. Vérifie ta connexion.',
+      source:
+        'Récitation\u202f: al-Ḥuṣarī (muʿallim), EveryAyah.com · Temps des mots\u202f: quran-align (Collin Fair), CC BY 4.0',
+    },
+    quiz: {
+      whistling: {
+        title: 'Quelle lettre\u202f?',
+        intro: 'Dix mots, seulement à l’oreille\u202f: entends-tu Sīn, Zāy ou Ṣād\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      weight: {
+        title: 'Lourd ou léger\u202f?',
+        intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
+        question: 'Comment sonne le Rāʾ\u202f?',
+      },
+      start: 'Commencer le quiz',
+      listen: 'Écouter',
+      listenAgain: 'Réécouter',
+      options: 'Réponses',
+      weights: { heavy: 'lourd', light: 'léger' },
+      why: {
+        sin: 'Sīn\u202f: léger, net et sourd.',
+        zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
+        sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',
+        heavy: 'Rāʾ avec fatḥa ou ḍamma\u202f: lourd.',
+        light: 'Rāʾ avec kasra\u202f: léger.',
+      },
+      back: 'À la lettre',
+    },
+    pairs: {
+      title: 'Comparer des paires',
+      intro: 'Écoute les deux mots l’un après l’autre et ne fais attention qu’à ce son.',
+      playBoth: 'Écouter les deux',
+      exact: 'Seul ce son change.',
+      near: 'Proche\u202f: une voyelle ou un son voisin change aussi.',
+      rare: 'Les paires exactes sont rares dans Juzʾ ʿAmma, al-Fātiḥa et al-Baqara\u202f; la plupart des paires ici sont donc proches.',
+    },
+    self: {
+      title: 'T’exercer seul',
+      text: 'Répète chaque mot trois fois. Puis enregistre une āya avec cette lettre et envoie-la à ton cheikh\u202f: il écoute précisément ce son.',
+      pick: 'Āya',
+      record: 'Enregistrer cette āya',
+    },
+  },
   soon: {
     eyebrow: 'En préparation',
     notFound: { title: 'Introuvable', text: 'Cette page n’existe pas.' },
     mushaf: {
       title: 'Le muṣḥaf',
       text: 'Le muṣḥaf IndoPak avec les couleurs du tajwīd : touche une lettre, écoute le récitateur mot à mot, lentement et en boucle.',
-    },
-    lab: {
-      title: 'Le labo des lettres',
-      text: 'D’où vient le son : les makhārij, dessinés et animés, vérifiés par ton cheikh.',
     },
     sheikh: {
       title: 'Mon cheikh',

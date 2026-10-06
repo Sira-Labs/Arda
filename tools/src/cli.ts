@@ -6,6 +6,7 @@
  *   npm run counts -w @arda/tools  write the words per āya to packages/quran/src/words.ts
  *   npm run pages -w @arda/tools   write the Madīna pages to packages/quran/src/pages.ts
  *   npm run timings -w @arda/tools write the reciters' word timings to apps/web/public/audio
+ *   npm run lab -w @arda/tools     write the letter lab's words to apps/web/src/modules/lab
  *
  * Sources and their checksums are pinned in tools/sources.json; a source that changed fails
  * the build instead of changing the Qurʾān text the app shows.
@@ -15,8 +16,9 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { gunzipSync } from 'node:zlib';
 import { parseCpfair } from './cpfair';
-import type { PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
+import type { Pack, PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
+import { buildLab, labModule, type ShippedTimings } from './lab';
 import { madinaPageStarts, pagesModule } from './pages';
 import { buildSpec, pagesOf } from './build';
 import { serialise } from './pack';
@@ -43,6 +45,9 @@ const pagesFile = fileURLToPath(
 );
 const countsFile = fileURLToPath(
   new URL('../../packages/quran/src/words.ts', import.meta.url)
+);
+const labFile = fileURLToPath(
+  new URL('../../apps/web/src/modules/lab/words.ts', import.meta.url)
 );
 
 interface SourceEntry {
@@ -208,13 +213,39 @@ async function writeTimings(): Promise<void> {
   }
 }
 
+/** The letter lab's words, from the packs and timings the app ships (no sources needed). */
+async function writeLab(): Promise<void> {
+  const index = JSON.parse(await readFile(`${outDir}index.json`, 'utf8')) as PackIndex;
+  const packs = await Promise.all(
+    index.packs.map(
+      async (entry) =>
+        JSON.parse(await readFile(`${outDir}${entry.file}`, 'utf8')) as Pack
+    )
+  );
+  const timings = JSON.parse(
+    await readFile(`${timingsDir}husary-muallim.json`, 'utf8')
+  ) as ShippedTimings;
+  const lab = buildLab(
+    {
+      uthmani: packs.filter((p) => p.script === 'uthmani'),
+      indopak: packs.filter((p) => p.script === 'indopak'),
+    },
+    timings
+  );
+  await writeFile(labFile, labModule(lab));
+  process.stdout.write(
+    `${labFile}: ${lab.words.length} words, ${lab.pairs.length} pairs\n`
+  );
+}
+
 const command = process.argv[2];
 if (command === 'fetch') await fetchSources();
 else if (command === 'pack') await buildPacks();
 else if (command === 'counts') await writeCounts();
 else if (command === 'pages') await writePages();
 else if (command === 'timings') await writeTimings();
+else if (command === 'lab') await writeLab();
 else {
-  process.stderr.write('usage: cli.ts fetch | pack | counts | pages | timings\n');
+  process.stderr.write('usage: cli.ts fetch | pack | counts | pages | timings | lab\n');
   process.exitCode = 2;
 }

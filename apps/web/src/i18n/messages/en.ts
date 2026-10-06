@@ -511,16 +511,209 @@ export const en: Messages = {
       failed: 'Translation not possible right now. Your student gets the original.',
     },
   },
+  lab: {
+    eyebrow: 'Lab',
+    title: 'Letter lab',
+    intro:
+      'Where does a sound come from? The head shows the five areas. Pick a letter: you see its point, hear real words and practise the difference.',
+    firstSet: 'First set: Sīn, Zāy, Ṣād and Rāʾ',
+    firstSetHint:
+      'The three whistling letters and Rāʾ – often the hardest for German speakers.',
+    more: 'The other letters follow once your sheikh has checked the drawing.',
+    draft: 'Draft – the sheikh is still checking',
+    back: 'To the lab',
+    diagram: {
+      title: 'The head from the side',
+      description:
+        'Side view of the head with five areas: Jawf (mouth space), Ḥalq (throat), Lisān (tongue), Shafatān (lips) and Khayshūm (nasal cavity).',
+      legend: 'The five areas',
+      licence: 'Drawing: ʿArḍa, CC BY 4.0 – a draft, your sheikh is still checking it.',
+    },
+    areas: {
+      jawf: { name: 'Jawf', gloss: 'mouth and throat space: the long vowels' },
+      halq: { name: 'Ḥalq', gloss: 'throat: six letters' },
+      lisan: { name: 'Lisān', gloss: 'tongue: eighteen letters' },
+      shafatan: { name: 'Shafatān', gloss: 'lips: four letters' },
+      khayshum: { name: 'Khayshūm', gloss: 'nasal cavity: the ghunna' },
+    },
+    points: {
+      whistle: { line1: 'Tongue tip', line2: 'front teeth' },
+      ra: { line1: 'Tongue tip', line2: 'gum ridge' },
+    },
+    letters: {
+      sin: {
+        name: 'Sīn',
+        short: 'light, sharp, voiceless',
+        makhraj:
+          'The tip of the tongue rests at the lower front teeth (some teach: the upper). A narrow gap stays open between tongue and upper teeth – the air whistles through it.',
+        mistakes: [
+          'German voices an s before a vowel: “Sonne” sounds like [z]. So Sīn easily becomes Zāy. Keep Sīn voiceless and sharp – no buzz.',
+          'Do not make it heavy: Sīn is light. Raise the back of the tongue and it sounds like Ṣād.',
+          'Do not lisp: the tongue stays behind the teeth. If it shows, it becomes Thāʾ.',
+        ],
+      },
+      zay: {
+        name: 'Zāy',
+        short: 'light, buzzing',
+        makhraj:
+          'Like Sīn and Ṣād: the tip of the tongue rests at the lower front teeth (some teach: the upper), a narrow gap stays open, the air whistles through.',
+        mistakes: [
+          'Zāy is voiced: put your hand on your throat – you feel the buzz.',
+          'It stays thin and light: never heavy like Ṣād, never like the German z (ts).',
+          'Do not let it go voiceless before sukūn or at the end of a word, as German does (“Haus”). Otherwise it becomes Sīn.',
+        ],
+      },
+      sad: {
+        name: 'Ṣād',
+        short: 'heavy, full',
+        makhraj:
+          'The same point as Sīn: the tip of the tongue at the front teeth, a narrow gap. On top, the back of the tongue rises and lies broadly against the palate.',
+        mistakes: [
+          'Ṣād is heavy: the back of the tongue rises to the palate (iṭbāq). The sound becomes full and dark.',
+          'Sīn is light: the back of the tongue stays low. You also hear the difference in the vowel after it.',
+          'Heavy does not mean voiced: Ṣād stays voiceless like Sīn, without a buzz.',
+        ],
+      },
+      ra: {
+        name: 'Rāʾ',
+        short: 'one light tap of the tongue tip',
+        makhraj:
+          'The tip of the tongue, with a little of its back, taps the gum ridge behind the upper front teeth – slightly further back than for Nūn.',
+        mistakes: [
+          'With the tip of the tongue, not in the throat: no German throat r.',
+          'One single light tap, not rolled. You learn takrīr in order to avoid it.',
+          'Do not swallow it at the end of a word as in German “Vater”: the Rāʾ is pronounced.',
+          'Heavy or light depends on the vowel: heavy with fatḥa or ḍamma, light with kasra.',
+        ],
+      },
+    },
+    makhraj: 'Makhraj · where it is made',
+    sifat: 'Ṣifāt · its qualities',
+    sifa: {
+      hams: {
+        name: 'Hams',
+        meaning: 'Whisper: the breath flows on, the voice does not vibrate.',
+      },
+      jahr: {
+        name: 'Jahr',
+        meaning: 'Voiced: the breath is held back, the voice vibrates.',
+      },
+      rakhawa: {
+        name: 'Rakhāwa',
+        meaning: 'Soft: the sound flows on, it does not stop short.',
+      },
+      tawassut: {
+        name: 'Tawassuṭ (Bayniyya)',
+        meaning: 'In between: the sound flows only a little, neither firm nor soft.',
+      },
+      istifal: {
+        name: 'Istifāl',
+        meaning:
+          'Low: the back of the tongue does not rise to the palate. Such letters sound light by nature; only rāʾ (and the lām of “Allāh”) can turn heavy, depending on its position.',
+      },
+      istila: {
+        name: 'Istiʿlāʾ',
+        meaning:
+          'High: the back of the tongue rises to the palate, the sound becomes heavy.',
+      },
+      infitah: {
+        name: 'Infitāḥ',
+        meaning: 'Open: space stays between tongue and palate.',
+      },
+      itbaq: {
+        name: 'Iṭbāq',
+        meaning:
+          'Covered: the tongue lies broadly against the palate, the sound becomes full.',
+      },
+      ismat: {
+        name: 'Iṣmāt',
+        meaning:
+          'Restrained: the sound does not glide off the tongue easily (the opposite of idhlāq).',
+      },
+      idhlaq: {
+        name: 'Idhlāq',
+        meaning: 'Fluent: the sound glides easily off the tongue tip.',
+      },
+      safir: {
+        name: 'Ṣafīr',
+        meaning: 'Whistle: a fine tone as the air streams through the narrow gap.',
+      },
+      inhiraf: {
+        name: 'Inḥirāf',
+        meaning: 'Inclining: the sound leans a little away from its point.',
+      },
+      takrir: {
+        name: 'Takrīr',
+        meaning:
+          'Repetition: the tongue tends to trill – you know it in order to avoid it.',
+      },
+    },
+    mistakesTitle: 'Typical mistakes',
+    raRules: {
+      title: 'Rāʾ: heavy or light',
+      heavy: 'With fatḥa or ḍamma, Rāʾ is heavy (tafkhīm): a full, dark sound.',
+      light: 'With kasra, Rāʾ is light (tarqīq): flat and bright.',
+      pending:
+        'Only the clear cases, as a summary. Rāʾ with sukūn and the other rules follow once your sheikh has checked them.',
+    },
+    listen: {
+      title: 'Listen and repeat',
+      intro:
+        'al-Ḥuṣarī, teaching recitation, word by word. Tap a word, listen and repeat – slowly at first.',
+      play: (sura, aya, n) => `Listen: sūra ${sura}, āya ${aya}, word ${n}`,
+      where: (sura, aya) => `${sura}:${aya}`,
+      speed: 'Speed',
+      loading: 'Loading the word timings …',
+      failed: 'The recitation does not load. Check your connection.',
+      source:
+        'Recitation: al-Ḥuṣarī (muʿallim), EveryAyah.com · Word timings: quran-align (Collin Fair), CC BY 4.0',
+    },
+    quiz: {
+      whistling: {
+        title: 'Which letter?',
+        intro: 'Ten words, by ear only: do you hear Sīn, Zāy or Ṣād?',
+        question: 'Which letter do you hear?',
+      },
+      weight: {
+        title: 'Heavy or light?',
+        intro: 'Ten words with Rāʾ: does it sound heavy or light?',
+        question: 'How does the Rāʾ sound?',
+      },
+      start: 'Start the quiz',
+      listen: 'Listen',
+      listenAgain: 'Listen again',
+      options: 'Answers',
+      weights: { heavy: 'heavy', light: 'light' },
+      why: {
+        sin: 'Sīn: light, sharp and voiceless.',
+        zay: 'Zāy: voiced – it buzzes – but thin.',
+        sad: 'Ṣād: heavy, the back of the tongue rises.',
+        heavy: 'Rāʾ with fatḥa or ḍamma: heavy.',
+        light: 'Rāʾ with kasra: light.',
+      },
+      back: 'To the letter',
+    },
+    pairs: {
+      title: 'Compare pairs',
+      intro: 'Hear both words one after the other and listen only for the one sound.',
+      playBoth: 'Hear both',
+      exact: 'Only this sound differs.',
+      near: 'Similar: a vowel or a sound next to it differs too.',
+      rare: 'Exact pairs are rare in Juzʾ ʿAmma, al-Fātiḥa and al-Baqara, so most pairs here are near pairs.',
+    },
+    self: {
+      title: 'Practise yourself',
+      text: 'Repeat every word three times. Then record an āya with this letter and send it to your sheikh – he listens for exactly this sound.',
+      pick: 'Āya',
+      record: 'Record this āya',
+    },
+  },
   soon: {
     eyebrow: 'In progress',
     notFound: { title: 'Not found', text: 'This page does not exist.' },
     mushaf: {
       title: 'The muṣḥaf',
       text: 'The IndoPak muṣḥaf with tajwīd colours: tap a letter, hear the reciter word by word, slowly and on a loop.',
-    },
-    lab: {
-      title: 'The letter lab',
-      text: 'Where the sound comes from: the makhārij, drawn and animated, checked by your sheikh.',
     },
     sheikh: {
       title: 'My sheikh',

@@ -10,6 +10,7 @@
     "counts": "vite-node src/cli.ts counts",
     "pages": "vite-node src/cli.ts pages",
     "timings": "vite-node src/cli.ts timings",
+    "lab": "vite-node src/cli.ts lab",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run"
   },

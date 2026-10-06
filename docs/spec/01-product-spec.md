@@ -149,7 +149,13 @@ recording, F7.)_
 Side view of the head with the five areas (jawf, ḥalq, lisān, shafatān, khayshūm); tap a
 letter → its point lights up, slow audio, tongue or lips move. The sheet's rule becomes a
 picture: all six iẓhār letters come from the throat. **Acceptance:** 28 letters mapped; SVGs
-reviewed by the sheikh.
+reviewed by the sheikh. _(Built: the first set (owner, 2026-10-06), the three whistling letters
+س ز ص and ر, at `/labor` and `/labor/:letter`: our own head drawing with the five areas
+numbered and named, the letter's point pulsing with a label, makhraj in plain words, ṣifāt with
+a one-line meaning each, typical mistakes of German speakers, real words from the packs played
+word by word from al-Ḥuṣarī's teaching recitation (0.5×–1×), the listening quiz "Welcher
+Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the sheikh; an āya with
+the letter recorded and sent to him (F7). Not yet animated; the other 24 letters follow his review.)_
 
 ### F6 — Games _(Must)_
 

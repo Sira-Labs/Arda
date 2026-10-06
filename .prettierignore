@@ -8,6 +8,8 @@ package-lock.json
 apps/web/public/packs
 # Generated word timings (tools timings), one āya per line
 apps/web/public/audio
+# Generated letter-lab words (tools lab), one word per line
+apps/web/src/modules/lab/words.ts
 
 # Downloaded sources (tools fetch), never committed
 tools/.cache
