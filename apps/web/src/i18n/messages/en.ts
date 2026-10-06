@@ -397,6 +397,37 @@ export const en: Messages = {
     languageHint:
       'You see the app, receive emails and read your sheikh’s feedback in this language.',
   },
+  twoFactor: {
+    title: 'Two-factor sign-in',
+    intro:
+      'The admin area also needs a code from an authenticator app (for example Google Authenticator, Microsoft Authenticator or 1Password).',
+    setUp: 'Set up',
+    scan: 'Scan the QR code with your authenticator app, or type in the key.',
+    qr: 'QR code for the authenticator app',
+    secret: 'Key',
+    code: 'Six-digit code',
+    confirm: 'Confirm',
+    confirmNeeded: 'Confirm this session with a code from your authenticator app.',
+    confirmed: 'Confirmed for this session.',
+  },
+  admin: {
+    eyebrow: 'Admin',
+    title: 'People and roles',
+    open: 'Open the admin area',
+    intro:
+      'Make a sheikh a teacher here. He has to have signed in once before. Every change is logged.',
+    search: 'Search (e-mail or name)',
+    searchButton: 'Search',
+    none: 'Nobody found.',
+    role: 'Role',
+    you: 'you',
+    blocked: 'blocked',
+    block: 'Block',
+    unblock: 'Unblock',
+    saved: (name) => `Saved: ${name}`,
+    more: 'Load more',
+    unverified: 'e-mail not confirmed',
+  },
   passkey: {
     'already-added': 'This device already has a passkey for ʿArḍa.',
     'stale-session':
@@ -457,6 +488,13 @@ export const en: Messages = {
       from === to ? `Sūra ${sura} · āya ${from}` : `Sūra ${sura} · āyāt ${from}–${to}`,
   },
   errors: {
+    second_factor_required: 'Confirm the two-factor sign-in first.',
+    cannot_change_self: 'You cannot change your own role here.',
+    invalid_code: 'The code is not right.',
+    locked: 'Too many wrong codes. Wait 15 minutes.',
+    already_enabled: 'Two-factor sign-in is already set up.',
+    not_set_up: 'Set up two-factor sign-in first.',
+    invalid_query: 'The search is not valid.',
     offline: 'No connection.',
     unauthorized: 'Please sign in.',
     forbidden: 'You are not allowed to do this.',

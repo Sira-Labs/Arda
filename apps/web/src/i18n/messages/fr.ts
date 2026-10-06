@@ -410,6 +410,38 @@ export const fr: Messages = {
     languageHint:
       'Dans cette langue, tu vois l’application, reçois les e-mails et lis les retours de ton cheikh.',
   },
+  twoFactor: {
+    title: 'Connexion à deux facteurs',
+    intro:
+      'L’administration demande en plus un code d’une application d’authentification (par exemple Google Authenticator, Microsoft Authenticator ou 1Password).',
+    setUp: 'Configurer',
+    scan: 'Scanne le code QR avec ton application d’authentification, ou saisis la clé.',
+    qr: 'Code QR pour l’application d’authentification',
+    secret: 'Clé',
+    code: 'Code à six chiffres',
+    confirm: 'Confirmer',
+    confirmNeeded:
+      'Confirme cette session avec un code de ton application d’authentification.',
+    confirmed: 'Confirmé pour cette session.',
+  },
+  admin: {
+    eyebrow: 'Administration',
+    title: 'Personnes et rôles',
+    open: 'Ouvrir l’administration',
+    intro:
+      'Ici, tu fais d’un cheikh un enseignant. Il doit s’être connecté une fois auparavant. Chaque changement est journalisé.',
+    search: 'Rechercher (e-mail ou nom)',
+    searchButton: 'Rechercher',
+    none: 'Personne trouvée.',
+    role: 'Rôle',
+    you: 'toi',
+    blocked: 'bloqué',
+    block: 'Bloquer',
+    unblock: 'Débloquer',
+    saved: (name) => `Enregistré\u202f: ${name}`,
+    more: 'Charger plus',
+    unverified: 'e-mail non confirmé',
+  },
   passkey: {
     'already-added': 'Cet appareil a déjà une clé d’accès pour ʿArḍa.',
     'stale-session':
@@ -475,6 +507,13 @@ export const fr: Messages = {
         : `Sourate ${sura} · āyāt ${from}–${to}`,
   },
   errors: {
+    second_factor_required: 'Confirme d’abord la connexion à deux facteurs.',
+    cannot_change_self: 'Tu ne peux pas changer ton propre rôle ici.',
+    invalid_code: 'Le code n’est pas correct.',
+    locked: 'Trop de codes erronés. Attends 15 minutes.',
+    already_enabled: 'La connexion à deux facteurs est déjà configurée.',
+    not_set_up: 'Configure d’abord la connexion à deux facteurs.',
+    invalid_query: 'La recherche n’est pas valide.',
     offline: 'Pas de connexion.',
     unauthorized: 'Connecte-toi, s’il te plaît.',
     forbidden: 'Tu n’as pas l’autorisation pour cela.',

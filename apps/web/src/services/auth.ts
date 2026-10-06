@@ -21,6 +21,24 @@ export interface Me {
   language: Language | null;
 }
 
+/** The second factor (TOTP) of the signed-in person; admins need it (ADR-0005). */
+export interface SecondFactorStatus {
+  enabled: boolean;
+  /** This session confirmed a code recently. */
+  confirmed: boolean;
+}
+
+/** A person as the admin area lists them. */
+export interface AdminUser {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: Role;
+  emailVerified: boolean;
+  disabled: boolean;
+  createdAt: string;
+}
+
 /** A device (session) as the account page lists it. */
 export interface Device {
   id: string;
@@ -481,6 +499,49 @@ export class AuthClient {
     return apiRequest(this.fetchImpl, '/api/v1/account/sessions/revoke-others', {
       method: 'POST',
       body: '{}',
+    });
+  }
+
+  secondFactor(): Promise<ApiResult<SecondFactorStatus>> {
+    return apiRequest(this.fetchImpl, '/api/v1/account/2fa');
+  }
+
+  /** Starts setting up the second factor: the authenticator app's link and its secret. */
+  setUpSecondFactor(): Promise<ApiResult<{ uri: string; secret: string }>> {
+    return apiRequest(this.fetchImpl, '/api/v1/account/2fa/setup', {
+      method: 'POST',
+      body: '{}',
+    });
+  }
+
+  /** A code from the authenticator app: enables a new setup and confirms this session. */
+  confirmSecondFactor(code: string): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, '/api/v1/account/2fa/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ code }),
+    });
+  }
+
+  /** People, newest first, optionally searched by address or name (admins). */
+  adminUsers(
+    search: string,
+    cursor?: string
+  ): Promise<ApiResult<{ users: AdminUser[]; next: string | null }>> {
+    const query = new URLSearchParams();
+    if (search.trim()) query.set('q', search.trim());
+    if (cursor) query.set('cursor', cursor);
+    const suffix = query.size ? `?${query.toString()}` : '';
+    return apiRequest(this.fetchImpl, `/api/v1/admin/users${suffix}`);
+  }
+
+  /** Changes a person's role or blocks them (admins; audit-logged by the api). */
+  updateUser(
+    id: string,
+    change: { role?: Role; disabled?: boolean }
+  ): Promise<ApiResult<AdminUser>> {
+    return apiRequest(this.fetchImpl, `/api/v1/admin/users/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(change),
     });
   }
 }

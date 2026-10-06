@@ -1,12 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
+import { SecondFactor } from '@/modules/admin/SecondFactor';
 import type { Device } from '@/services/auth';
 import { PasskeyClient, passkeysSupported } from '@/services/passkeys';
 import { useSession } from '@/state/session';
 
-/** The account page: who you are, your language, your devices, a passkey, signing out. */
+/**
+ * The account page: who you are, your language, for an admin the second factor and the way to
+ * the admin area, your devices, a passkey, signing out.
+ */
 export function Account({
   passkeys = new PasskeyClient(),
 }: {
@@ -52,6 +56,19 @@ export function Account({
         <LanguagePicker />
         <p className="muted">{m.account.languageHint}</p>
       </section>
+      {me.role === 'admin' && (
+        // Admins only: the admin area needs the second factor (ADR-0005).
+        <>
+          <SecondFactor />
+          <Link
+            className="btn btn-primary"
+            to="/verwaltung"
+            style={{ alignSelf: 'flex-start' }}
+          >
+            {m.admin.open}
+          </Link>
+        </>
+      )}
       <section className="card stack" aria-labelledby="devices">
         <h3 id="devices">{m.account.devices}</h3>
         <ul className="stack" style={{ margin: 0, paddingInlineStart: 20 }}>

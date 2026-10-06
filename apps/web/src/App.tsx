@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { Account } from '@/modules/account/Account';
+import { Admin } from '@/modules/admin/Admin';
 import { SignIn } from '@/modules/account/SignIn';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
       { path: '/labor/:letter', element: <LetterPage /> },
       { path: '/sheikh', element: <Sheikh /> },
       { path: '/halaqa/:id', element: <Halaqa /> },
+      { path: '/verwaltung', element: <Admin /> },
       { path: '/beitreten', element: <Join /> },
       { path: '*', element: <Soon page="notFound" /> },
     ],
