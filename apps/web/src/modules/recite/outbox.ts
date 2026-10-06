@@ -10,6 +10,8 @@ const log = logger.child('outbox');
  * the api has it. Sending again is safe; the api stores a client id once.
  */
 export interface OutboxItem extends RecitationUpload {
+  /** Who recorded it: only their session sends it, never another account's on this device. */
+  ownerId: string;
   createdAt: string;
 }
 
@@ -98,17 +100,19 @@ export interface FlushOutcome {
 let flushing: Promise<FlushOutcome> | null = null;
 
 /**
- * Sends what waits, oldest first. Stops at the first take that cannot go now (offline, a
- * server error) and keeps it and the rest; drops a take the api refuses, with its reason.
+ * Sends what `ownerId` recorded, oldest first. Stops at the first take that cannot go now
+ * (offline, a server error) and keeps it and the rest; drops a take the api refuses, with its
+ * reason. Takes of another account (or with no owner) stay until that account signs in.
  */
 export function flushOutbox(
   client: AuthClient,
-  store: OutboxStore
+  store: OutboxStore,
+  ownerId: string
 ): Promise<FlushOutcome> {
   if (flushing) return flushing;
   flushing = (async () => {
     const outcome: FlushOutcome = { sent: [], refused: [], waiting: 0 };
-    const items = await store.all();
+    const items = (await store.all()).filter((item) => item.ownerId === ownerId);
     for (const [index, item] of items.entries()) {
       const result: ApiResult<{ id: string }> = await client.sendRecitation(item);
       if (result.ok) {
@@ -139,7 +143,9 @@ export async function enqueue(
 ): Promise<FlushOutcome> {
   await store.put(item);
   announce(waiting + 1);
-  return flushOutbox(client, store);
+  // A flush already running read the outbox before this take: send it in a fresh one.
+  while (flushing) await flushing.catch(() => undefined);
+  return flushOutbox(client, store, item.ownerId);
 }
 
 /** How many takes wait for a connection. */
@@ -154,19 +160,23 @@ export function useOutboxWaiting(): number {
   );
 }
 
-/** Sends what waits now and whenever the device comes back online. */
-export function useOutboxFlush(client: AuthClient, store: OutboxStore, enabled: boolean) {
+/** Sends what the signed-in account recorded, now and whenever the device is online again. */
+export function useOutboxFlush(
+  client: AuthClient,
+  store: OutboxStore,
+  ownerId: string | null
+) {
   useEffect(() => {
-    if (!enabled) return;
+    if (!ownerId) return;
     const flush = () => {
-      void flushOutbox(client, store).catch((error: unknown) =>
+      void flushOutbox(client, store, ownerId).catch((error: unknown) =>
         log.warn('outbox unavailable', { error: String(error) })
       );
     };
     flush();
     window.addEventListener('online', flush);
     return () => window.removeEventListener('online', flush);
-  }, [client, store, enabled]);
+  }, [client, store, ownerId]);
 }
 
 /** Forget the count (tests). */

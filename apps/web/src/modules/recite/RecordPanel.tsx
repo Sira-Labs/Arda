@@ -111,8 +111,15 @@ export function RecordPanel({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Closing the panel drops a take in progress and frees the microphone.
-  useEffect(() => () => recorder.current?.cancel(), []);
+  // Closing the panel drops a take in progress and frees the microphone, even one still
+  // waiting for the permission prompt (its start sees the ref cleared and cancels itself).
+  useEffect(
+    () => () => {
+      recorder.current?.cancel();
+      recorder.current = null;
+    },
+    []
+  );
 
   const url = stage.name === 'recorded' || stage.name === 'sending' ? stage.url : null;
   useEffect(() => (url ? () => URL.revokeObjectURL(url) : undefined), [url]);
@@ -134,11 +141,16 @@ export function RecordPanel({
 
   const start = async () => {
     const next = makeRecorder();
+    recorder.current = next;
     try {
       await next.start();
-      recorder.current = next;
+      if (recorder.current !== next) {
+        next.cancel();
+        return;
+      }
       setStage({ name: 'recording', since: performance.now() });
     } catch (error) {
+      if (recorder.current === next) recorder.current = null;
       const reason = error instanceof RecorderError ? error.reason : 'failed';
       log.warn('recording did not start', { reason });
       setStage({
@@ -162,12 +174,13 @@ export function RecordPanel({
   }
 
   const send = async (take: Take, takeUrl: string) => {
-    if (!target) return;
+    if (!target || !me) return;
     setStage({ name: 'sending', take, url: takeUrl });
     const clientId = crypto.randomUUID();
     try {
       const outcome = await enqueue(client, outbox, {
         clientId,
+        ownerId: me.id,
         halaqaId: target,
         // Only the ḥalaqa that gave the assignment knows it.
         assignmentId: target === halaqaId ? assignmentId : null,

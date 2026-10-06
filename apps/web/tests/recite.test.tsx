@@ -7,6 +7,7 @@ import { resetConsentForTests } from '@/modules/recite/consent';
 import { ReciteContext } from '@/modules/recite/context';
 import { MyRecitations } from '@/modules/recite/MyRecitations';
 import {
+  enqueue,
   flushOutbox,
   memoryOutbox,
   resetOutboxForTests,
@@ -291,9 +292,48 @@ describe('recording a recitation (S4.1)', () => {
   });
 });
 
+describe('closing the panel', () => {
+  it('frees a microphone that opens after the panel closed', async () => {
+    localStorage.setItem('arda.recordingConsent', 'given');
+    let grant: () => void = () => {};
+    const cancelled: string[] = [];
+    const factory: RecorderFactory = () => ({
+      start: () =>
+        new Promise<void>((resolve) => {
+          grant = resolve;
+        }),
+      stop: async () => ({ blob: new Blob(['x']), mime: 'audio/webm', durationMs: 1 }),
+      cancel: () => cancelled.push('cancel'),
+    });
+    function Owner() {
+      const [open, setOpen] = useState(true);
+      return open ? (
+        <RecordPanel
+          range={{ sura: 112, from: 1, to: 1 }}
+          onClose={() => setOpen(false)}
+        />
+      ) : null;
+    }
+    renderWith(
+      <Owner />,
+      { '/api/v1/halaqat': Response.json({ halaqat: [summary(HALAQA, 'H')] }) },
+      STUDENT,
+      { started: 0, cancelled: 0, factory }
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Aufnahme starten' }));
+    // The permission prompt is still open when the student closes the panel.
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await act(async () => grant());
+    expect(cancelled.length).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe('the outbox (S4.1, offline-first)', () => {
-  const item = (n: number): OutboxItem => ({
+  const item = (n: number, ownerId = STUDENT.id): OutboxItem => ({
     clientId: `0000000${n}-0000-4000-8000-000000000000`,
+    ownerId,
     halaqaId: HALAQA,
     assignmentId: null,
     range: { sura: 112, from: n, to: n },
@@ -313,7 +353,7 @@ describe('the outbox (S4.1, offline-first)', () => {
       [`POST /api/v1/halaqat/${HALAQA}/recordings`]: () =>
         Response.json({ id: REC }, { status: statuses.shift() ?? 201 }),
     });
-    const outcome = await flushOutbox(client, store);
+    const outcome = await flushOutbox(client, store, STUDENT.id);
     expect(outcome).toEqual({ sent: [item(1).clientId], refused: [], waiting: 2 });
     expect(
       calls.map((c) => new URL(c.path, 'https://a').searchParams.get('from'))
@@ -332,12 +372,69 @@ describe('the outbox (S4.1, offline-first)', () => {
     const { client } = fakeApi({
       [`POST /api/v1/halaqat/${HALAQA}/recordings`]: () => answers.shift()!,
     });
-    expect(await flushOutbox(client, store)).toEqual({
+    expect(await flushOutbox(client, store, STUDENT.id)).toEqual({
       sent: [],
       refused: [{ clientId: item(1).clientId, code: 'invalid_body' }],
       waiting: 1,
     });
     expect((await store.all()).map((i) => i.range.from)).toEqual([2]);
+  });
+});
+
+describe('the outbox and accounts', () => {
+  const item = (n: number, ownerId: string): OutboxItem => ({
+    clientId: `0000000${n}-0000-4000-8000-000000000000`,
+    ownerId,
+    halaqaId: HALAQA,
+    assignmentId: null,
+    range: { sura: 112, from: n, to: n },
+    mime: 'audio/webm',
+    durationMs: 1000,
+    blob: new Blob(['x']),
+    createdAt: `2026-10-06T10:00:0${n}Z`,
+  });
+
+  it('sends only what the signed-in account recorded', async () => {
+    const store = memoryOutbox();
+    await store.put(item(1, 'someone-else'));
+    await store.put(item(2, STUDENT.id));
+    const { client, calls } = fakeApi({
+      [`POST /api/v1/halaqat/${HALAQA}/recordings`]: () =>
+        Response.json({ id: REC }, { status: 201 }),
+    });
+    expect(await flushOutbox(client, store, STUDENT.id)).toEqual({
+      sent: [item(2, STUDENT.id).clientId],
+      refused: [],
+      waiting: 0,
+    });
+    expect(calls).toHaveLength(1);
+    expect((await store.all()).map((i) => i.ownerId)).toEqual(['someone-else']);
+  });
+
+  it('sends a take queued while another flush is running', async () => {
+    const store = memoryOutbox();
+    await store.put(item(1, STUDENT.id));
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let first = true;
+    const { client, calls } = fakeApi({
+      [`POST /api/v1/halaqat/${HALAQA}/recordings`]: async () => {
+        if (first) {
+          first = false;
+          await held;
+        }
+        return Response.json({ id: REC }, { status: 201 });
+      },
+    });
+    const running = flushOutbox(client, store, STUDENT.id);
+    await waitFor(() => expect(calls).toHaveLength(1));
+    const queued = enqueue(client, store, item(2, STUDENT.id));
+    release();
+    await running;
+    expect((await queued).sent).toEqual([item(2, STUDENT.id).clientId]);
+    expect(await store.all()).toEqual([]);
   });
 });
 
