@@ -7,6 +7,7 @@ app downloads. Nothing here runs in the app or the api.
 npm run fetch -w @arda/tools   # the pinned sources into tools/.cache (not committed)
 npm run pack -w @arda/tools    # build apps/web/public/packs/<id>.v<version>.json and index.json
 npm run counts -w @arda/tools  # words per āya of the whole muṣḥaf → packages/quran/src/words.ts
+npm run lab -w @arda/tools     # the letter lab's words from the packs → apps/web/src/modules/lab/words.ts
 npm test -w @arda/tools        # also rebuilds the pack byte for byte when the sources are there
 ```
 
