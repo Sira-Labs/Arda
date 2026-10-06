@@ -5,6 +5,7 @@ import type { ApiResult } from '@/services/api/request';
 import type { HalaqaMember, HalaqaView } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { HalaqaAssignments } from '@/modules/assignments/HalaqaAssignments';
+import { RecordingQueue } from '@/modules/recite/RecordingQueue';
 import { InviteBox } from './InviteBox';
 
 /**
@@ -85,6 +86,8 @@ export function Halaqa() {
 
       {view.role === 'teacher' ? (
         <>
+          {/* What the students recited comes first: it waits for the teacher's ear. */}
+          <RecordingQueue halaqaId={halaqa.id} />
           <HalaqaAssignments
             halaqaId={halaqa.id}
             students={view.members.filter(
