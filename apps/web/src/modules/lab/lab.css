@@ -1,0 +1,281 @@
+/* The letter lab (spec F5, design screen 3). Colours come from tokens.css (--lab-*). */
+
+/* The head */
+.lab-head {
+  margin: 0;
+}
+.lab-head-svg {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 420px;
+  block-size: auto;
+  margin-inline: auto;
+  /* The face looks left in every language: the drawing does not mirror. */
+  direction: ltr;
+}
+.lab-outline {
+  fill: var(--bg);
+  stroke: var(--text);
+  stroke-width: 4;
+}
+.lab-line {
+  fill: none;
+  stroke: var(--text);
+  stroke-width: 4;
+}
+.lab-thin {
+  stroke-width: 3;
+}
+.lab-round {
+  stroke-linecap: round;
+}
+.lab-tooth {
+  fill: var(--bg-elev);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.lab-area[data-area='khayshum'] {
+  fill: var(--lab-khayshum);
+  opacity: 0.55;
+}
+.lab-area[data-area='jawf'] {
+  fill: var(--lab-jawf);
+  opacity: 0.35;
+}
+.lab-area[data-area='lisan'] {
+  fill: var(--lab-lisan);
+  opacity: 0.85;
+}
+.lab-area[data-area='halq'] {
+  fill: var(--lab-halq);
+  opacity: 0.45;
+}
+.lab-area[data-area='shafatan'] {
+  fill: var(--lab-shafatan);
+}
+.lab-area-mark circle {
+  fill: var(--bg-elev);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.lab-area-mark text,
+.lab-tag-text {
+  fill: var(--text);
+  font-family: var(--font-ui);
+  font-weight: 800;
+  text-anchor: middle;
+}
+.lab-area-mark text {
+  font-size: 20px;
+}
+
+/* The point: a dot that pulses, a line to its label */
+.lab-dot {
+  fill: var(--lab-point);
+  stroke: var(--bg-elev);
+  stroke-width: 3;
+}
+.lab-pulse {
+  fill: none;
+  stroke: var(--lab-point);
+  stroke-width: 3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: lab-pulse 1.6s ease-out infinite;
+}
+.lab-leader {
+  stroke: var(--text);
+  stroke-width: 2;
+  stroke-dasharray: 6 5;
+}
+.lab-tag {
+  fill: var(--bg-elev);
+  stroke: var(--text);
+  stroke-width: 2;
+}
+.lab-tag-text {
+  font-size: 26px;
+}
+@keyframes lab-pulse {
+  from {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(2.8);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lab-pulse {
+    animation: none;
+    transform: scale(1.8);
+    opacity: 0.6;
+  }
+}
+
+/* The legend: number, colour and name together */
+.lab-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  font-size: 0.92rem;
+}
+.lab-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.lab-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--text);
+  background: var(--bg-elev);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.lab-swatch {
+  flex-shrink: 0;
+  inline-size: 18px;
+  block-size: 18px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+}
+.lab-swatch[data-area='jawf'] {
+  background: var(--lab-jawf);
+}
+.lab-swatch[data-area='halq'] {
+  background: var(--lab-halq);
+}
+.lab-swatch[data-area='lisan'] {
+  background: var(--lab-lisan);
+}
+.lab-swatch[data-area='shafatan'] {
+  background: var(--lab-shafatan);
+}
+.lab-swatch[data-area='khayshum'] {
+  background: var(--lab-khayshum);
+}
+.lab-licence {
+  font-size: 0.8rem;
+}
+
+/* The overview's letter cards */
+.lab-cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.lab-card {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  color: inherit;
+  text-decoration: none;
+  text-align: center;
+}
+.lab-card:hover {
+  border-color: var(--accent-2);
+}
+.lab-letter {
+  font-size: calc(3.2rem * var(--quran-scale));
+  line-height: 1.5;
+  text-align: center;
+}
+.lab-letter-hero {
+  font-size: calc(5rem * var(--quran-scale));
+  line-height: 1.4;
+}
+
+/* The ṣifāt: a chip with the term, its meaning beside it */
+.lab-sifat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.lab-sifat li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+.lab-sifat .chip {
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+
+/* Words to hear: one button per word */
+.lab-words {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.lab-word {
+  display: grid;
+  justify-items: center;
+  gap: 0;
+  min-height: 96px;
+  padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+.lab-word[data-playing='true'] {
+  background: var(--playing-bg);
+  border-color: var(--accent-2);
+}
+.lab-word .quran {
+  font-size: calc(2rem * var(--quran-scale));
+  line-height: 1.7;
+  text-align: center;
+}
+/* The letter a word is about: underlined in saffron, never a tajwīd colour. A background
+   would fill the muṣḥaf font's tall line box and cover the line below. */
+.lab-focus {
+  text-decoration: underline;
+  text-decoration-color: var(--accent-fill);
+  text-decoration-thickness: 4px;
+  text-underline-offset: 0.25em;
+  text-decoration-skip-ink: none;
+}
+.lab-word-where {
+  margin-block-start: 6px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Pairs */
+.lab-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+}
+.lab-pair-vs {
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* The quiz's answers: letters large */
+.lab-options .option {
+  min-height: 72px;
+}
+.lab-options .arabic {
+  font-size: 2rem;
+  line-height: 1;
+}

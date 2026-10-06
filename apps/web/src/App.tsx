@@ -8,6 +8,9 @@ import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
 import { Halaqa } from '@/modules/halaqa/Halaqa';
 import { Join } from '@/modules/halaqa/Join';
+import { Lab } from '@/modules/lab/Lab';
+import { LabQuizPage } from '@/modules/lab/LabQuiz';
+import { LetterPage } from '@/modules/lab/LetterPage';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
 import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
@@ -26,6 +29,7 @@ const router = createBrowserRouter([
   { path: '/pfad/2/spiel/welche-regel', element: <WhichRule /> },
   { path: '/pfad/2/spiel/sortieren', element: <SortLetters /> },
   { path: '/pfad/wiederholen', element: <ReviewSession /> },
+  { path: '/labor/:letter/quiz', element: <LabQuizPage /> },
   {
     element: <AppShell />,
     children: [
@@ -36,7 +40,8 @@ const router = createBrowserRouter([
       { path: '/mushaf', element: <Mushaf /> },
       { path: '/mushaf/seite/:page', element: <MushafPage /> },
       { path: '/mushaf/:sura', element: <SuraView /> },
-      { path: '/labor', element: <Soon page="lab" /> },
+      { path: '/labor', element: <Lab /> },
+      { path: '/labor/:letter', element: <LetterPage /> },
       { path: '/sheikh', element: <Sheikh /> },
       { path: '/halaqa/:id', element: <Halaqa /> },
       { path: '/beitreten', element: <Join /> },

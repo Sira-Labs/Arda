@@ -6,6 +6,16 @@ import type { PasskeyFailure } from '@/services/passkeys';
 import type { RuleCase, Unit2Card } from '@/content/unit2';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
+import type { Area, Point, Sifa } from '@/modules/lab/letters';
+import type { LabLetterId, Weight } from '@/modules/lab/types';
+
+/** A letter's texts in the lab (spec F5). */
+interface LetterTexts {
+  name: string;
+  short: string;
+  makhraj: string;
+  mistakes: string[];
+}
 
 export type RemarkId =
   | 'ghunnaShort'
@@ -546,16 +556,206 @@ export const de = {
       failed: 'Übersetzung gerade nicht möglich. Dein·e Schüler·in bekommt das Original.',
     },
   },
+  lab: {
+    eyebrow: 'Labor',
+    title: 'Buchstaben-Labor',
+    intro:
+      'Woher kommt ein Laut? Der Kopf zeigt die fünf Bereiche. Wähl einen Buchstaben: Du siehst seine Stelle, hörst echte Wörter und übst den Unterschied.',
+    firstSet: 'Erste Reihe: Sīn, Zāy, Ṣād und Rāʾ',
+    firstSetHint:
+      'Die drei Pfeiflaute und das Rāʾ – für Deutschsprachige oft die schwersten.',
+    more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
+    draft: 'Entwurf – der Sheikh prüft noch',
+    back: 'Zum Labor',
+    diagram: {
+      title: 'Der Kopf von der Seite',
+      description:
+        'Seitenansicht des Kopfes mit fünf Bereichen: Jawf (Mundraum), Ḥalq (Kehle), Lisān (Zunge), Shafatān (Lippen) und Khayshūm (Nasenraum).',
+      legend: 'Die fünf Bereiche',
+      licence: 'Zeichnung: ʿArḍa, CC BY 4.0 – ein Entwurf, dein Sheikh prüft sie noch.',
+    },
+    areas: {
+      jawf: { name: 'Jawf', gloss: 'Mund- und Rachenraum: die Dehnungslaute' },
+      halq: { name: 'Ḥalq', gloss: 'Kehle: sechs Buchstaben' },
+      lisan: { name: 'Lisān', gloss: 'Zunge: achtzehn Buchstaben' },
+      shafatan: { name: 'Shafatān', gloss: 'Lippen: vier Buchstaben' },
+      khayshum: { name: 'Khayshūm', gloss: 'Nasenraum: die Ghunna' },
+    } as Record<Area, { name: string; gloss: string }>,
+    points: {
+      whistle: { line1: 'Zungenspitze', line2: 'Schneidezähne' },
+      ra: { line1: 'Zungenspitze', line2: 'Zahndamm' },
+    } as Record<Point, { line1: string; line2: string }>,
+    letters: {
+      sin: {
+        name: 'Sīn',
+        short: 'leicht, scharf, stimmlos',
+        makhraj:
+          'Die Zungenspitze liegt an den unteren Schneidezähnen (manche lehren: an den oberen). Zwischen Zunge und oberen Zähnen bleibt ein enger Spalt – durch ihn pfeift die Luft.',
+        mistakes: [
+          'Im Deutschen wird s vor einem Vokal weich: „Sonne“ klingt wie [z]. So wird aus Sīn schnell Zāy. Halte das Sīn stimmlos und scharf – kein Summen.',
+          'Nicht schwer machen: Sīn ist leicht. Hebst du den Zungenrücken, klingt es wie Ṣād.',
+          'Nicht lispeln: Die Zunge bleibt hinter den Zähnen. Schaut sie heraus, wird es ein Thāʾ.',
+        ],
+      },
+      zay: {
+        name: 'Zāy',
+        short: 'leicht, summend',
+        makhraj:
+          'Wie Sīn und Ṣād: Die Zungenspitze liegt an den unteren Schneidezähnen (manche lehren: an den oberen), ein enger Spalt bleibt offen, die Luft pfeift hindurch.',
+        mistakes: [
+          'Zāy ist stimmhaft: Leg die Hand an den Hals – du spürst das Summen.',
+          'Es bleibt dünn und leicht: nie schwer wie Ṣād und nie wie das deutsche z (ts).',
+          'Vor Sukūn und am Wortende nicht stimmlos werden lassen, wie im Deutschen („Haus“). Sonst wird es ein Sīn.',
+        ],
+      },
+      sad: {
+        name: 'Ṣād',
+        short: 'schwer, voll',
+        makhraj:
+          'Dieselbe Stelle wie Sīn: die Zungenspitze an den Schneidezähnen, ein enger Spalt. Dazu hebt sich der Zungenrücken zum Gaumen und legt sich breit an ihn.',
+        mistakes: [
+          'Ṣād ist schwer: Der Zungenrücken hebt sich zum Gaumen (Iṭbāq). Der Klang wird voll und dunkel.',
+          'Sīn ist leicht: Der Zungenrücken bleibt unten. Den Unterschied hörst du auch am Vokal danach.',
+          'Schwer heißt nicht stimmhaft: Ṣād bleibt stimmlos wie Sīn, ohne Summen.',
+        ],
+      },
+      ra: {
+        name: 'Rāʾ',
+        short: 'ein leichter Schlag der Zungenspitze',
+        makhraj:
+          'Die Zungenspitze, mit etwas von ihrem Rücken, tippt an den Zahndamm hinter den oberen Schneidezähnen – ein wenig weiter hinten als beim Nūn.',
+        mistakes: [
+          'Mit der Zungenspitze, nicht im Rachen: kein deutsches Rachen-R.',
+          'Ein einziger leichter Schlag, nicht gerollt. Takrīr lernst du, um es zu vermeiden.',
+          'Am Wortende nicht verschlucken wie im deutschen „Vater“: Das Rāʾ wird gesprochen.',
+          'Schwer oder leicht hängt am Vokal: mit Fatḥa oder Ḍamma schwer, mit Kasra leicht.',
+        ],
+      },
+    } as Record<LabLetterId, LetterTexts>,
+    makhraj: 'Makhraj · wo er entsteht',
+    sifat: 'Ṣifāt · seine Eigenschaften',
+    sifa: {
+      hams: {
+        name: 'Hams',
+        meaning: 'Flüstern: Der Atem fließt mit, die Stimme schwingt nicht.',
+      },
+      jahr: {
+        name: 'Jahr',
+        meaning: 'Stimmhaft: Der Atem wird gehalten, die Stimme schwingt.',
+      },
+      rakhawa: {
+        name: 'Rakhāwa',
+        meaning: 'Weich: Der Laut fließt weiter, er bricht nicht ab.',
+      },
+      tawassut: {
+        name: 'Tawassuṭ (Bayniyya)',
+        meaning: 'Dazwischen: Der Laut fließt nur ein wenig, weder fest noch weich.',
+      },
+      istifal: {
+        name: 'Istifāl',
+        meaning: 'Tief: Der Zungenrücken bleibt unten, der Laut ist leicht.',
+      },
+      istila: {
+        name: 'Istiʿlāʾ',
+        meaning: 'Hoch: Der Zungenrücken hebt sich zum Gaumen, der Laut wird schwer.',
+      },
+      infitah: {
+        name: 'Infitāḥ',
+        meaning: 'Offen: Zwischen Zunge und Gaumen bleibt Raum.',
+      },
+      itbaq: {
+        name: 'Iṭbāq',
+        meaning: 'Bedeckt: Die Zunge legt sich breit an den Gaumen, der Klang wird voll.',
+      },
+      ismat: {
+        name: 'Iṣmāt',
+        meaning:
+          'Gehemmt: Der Laut kommt nicht so leicht über die Zunge (Gegenteil von Idhlāq).',
+      },
+      idhlaq: {
+        name: 'Idhlāq',
+        meaning: 'Leichtfüßig: Der Laut gleitet leicht von der Zungenspitze.',
+      },
+      safir: {
+        name: 'Ṣafīr',
+        meaning: 'Pfeifen: ein feiner Ton, wenn die Luft durch den engen Spalt strömt.',
+      },
+      inhiraf: {
+        name: 'Inḥirāf',
+        meaning: 'Abweichen: Der Laut weicht ein wenig von seiner Stelle ab.',
+      },
+      takrir: {
+        name: 'Takrīr',
+        meaning:
+          'Wiederholen: Die Zunge neigt zum Zittern – du kennst es, um es zu vermeiden.',
+      },
+    } as Record<Sifa, { name: string; meaning: string }>,
+    mistakesTitle: 'Typische Fehler',
+    raRules: {
+      title: 'Rāʾ: schwer oder leicht',
+      heavy: 'Mit Fatḥa oder Ḍamma ist Rāʾ schwer (Tafkhīm): voller, dunkler Klang.',
+      light: 'Mit Kasra ist Rāʾ leicht (Tarqīq): flach und hell.',
+      pending:
+        'Nur die klaren Fälle, als Kurzfassung. Rāʾ mit Sukūn und die übrigen Regeln folgen, wenn dein Sheikh sie geprüft hat.',
+    },
+    listen: {
+      title: 'Hören und nachsprechen',
+      intro:
+        'al-Ḥuṣarī, Lehrvortrag, Wort für Wort. Tippe auf ein Wort, hör zu und sprich nach – zuerst langsam.',
+      play: (sura: number, aya: number, n: number) =>
+        `Anhören: Sūra ${sura}, Āya ${aya}, Wort ${n}`,
+      where: (sura: number, aya: number) => `${sura}:${aya}`,
+      speed: 'Tempo',
+      loading: 'Die Wortzeiten werden geladen …',
+      failed: 'Der Vortrag lädt nicht. Prüfe deine Verbindung.',
+      source:
+        'Vortrag: al-Ḥuṣarī (muʿallim), EveryAyah.com · Wortzeiten: quran-align (Collin Fair), CC BY 4.0',
+    },
+    quiz: {
+      whistling: {
+        title: 'Welcher Buchstabe?',
+        intro: 'Zehn Wörter, nur zum Hören: Hörst du Sīn, Zāy oder Ṣād?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      weight: {
+        title: 'Schwer oder leicht?',
+        intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
+        question: 'Wie klingt das Rāʾ?',
+      },
+      start: 'Quiz starten',
+      listen: 'Anhören',
+      listenAgain: 'Nochmal hören',
+      options: 'Antworten',
+      weights: { heavy: 'schwer', light: 'leicht' } as Record<Weight, string>,
+      why: {
+        sin: 'Sīn: leicht, scharf und stimmlos.',
+        zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
+        sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',
+        heavy: 'Rāʾ mit Fatḥa oder Ḍamma: schwer.',
+        light: 'Rāʾ mit Kasra: leicht.',
+      } as Record<Exclude<LabLetterId, 'ra'> | Weight, string>,
+      back: 'Zum Buchstaben',
+    },
+    pairs: {
+      title: 'Paare vergleichen',
+      intro: 'Hör beide Wörter nacheinander und achte nur auf den einen Laut.',
+      playBoth: 'Beide hören',
+      exact: 'Nur dieser Laut ist anders.',
+      near: 'Ähnlich: Auch ein Vokal oder ein Laut daneben ist anders.',
+      rare: 'Ganz gleiche Paare sind in Juzʾ ʿAmma, al-Fātiḥa und al-Baqara selten. Darum sind die meisten hier ähnliche Paare.',
+    },
+    self: {
+      title: 'Selbst üben',
+      text: 'Bald nimmst du dich hier selbst auf und schickst es deinem Sheikh. Bis dahin: Sprich jedes Wort dreimal nach.',
+      record: 'Aufnehmen – kommt bald',
+    },
+  },
   soon: {
     eyebrow: 'In Arbeit',
     notFound: { title: 'Nicht gefunden', text: 'Diese Seite gibt es nicht.' },
     mushaf: {
       title: 'Der Muṣḥaf',
       text: 'Der IndoPak-Muṣḥaf mit Tajwīd-Farben: tippe auf einen Buchstaben, hör den Rezitator Wort für Wort, langsam und in Schleife.',
-    },
-    lab: {
-      title: 'Das Buchstaben-Labor',
-      text: 'Woher der Laut kommt: die Makhārij, gezeichnet und animiert, von deinem Sheikh geprüft.',
     },
     sheikh: {
       title: 'Mein Sheikh',

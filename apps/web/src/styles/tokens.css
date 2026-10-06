@@ -51,6 +51,13 @@
   --mushaf-frame: #3b6f8c;
   --mushaf-rule: rgb(59 111 140 / 0.35);
   --playing-bg: rgb(31 122 109 / 0.22); /* the word the reciter is reciting */
+  /* The letter lab's head (spec 04 §10): the five areas, always named in a legend too */
+  --lab-jawf: #3fb5a3; /* mouth and throat space, teal */
+  --lab-halq: #2464b0; /* throat, blue */
+  --lab-lisan: #e8a93b; /* tongue, saffron */
+  --lab-shafatan: #b8322a; /* lips, red */
+  --lab-khayshum: #2e8b3e; /* nasal cavity, green */
+  --lab-point: #10201b; /* the articulation point */
 
   /* Type */
   --font-ui: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
@@ -104,5 +111,11 @@
   --mushaf-frame: #6fa3c0;
   --mushaf-rule: rgb(111 163 192 / 0.3);
   --playing-bg: rgb(63 181 163 / 0.28);
+  --lab-jawf: #3fb5a3;
+  --lab-halq: #6aa6e6;
+  --lab-lisan: #e8a93b;
+  --lab-shafatan: #e0604e;
+  --lab-khayshum: #5fbf6e;
+  --lab-point: #f4eee2;
   --shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
 }
