@@ -198,8 +198,18 @@ describe('the letter lab (F5)', () => {
     expect(screen.getByRole('region', { name: 'Typische Fehler' })).toHaveTextContent(
       'So wird aus Sīn schnell Zāy.'
     );
-    // Recording comes from its own branch: here only the promise of it.
-    expect(screen.getByRole('button', { name: 'Aufnehmen – kommt bald' })).toBeDisabled();
+  });
+
+  it('records an āya with the letter for the sheikh', async () => {
+    renderAt('/labor/sin');
+    const user = userEvent.setup();
+    const self = screen.getByRole('region', { name: 'Selbst üben' });
+    const aya = within(self).getByRole('combobox', { name: 'Āya' });
+    const first = within(aya).getAllByRole('option')[0]!;
+    await user.click(within(self).getByRole('button', { name: 'Diese Āya aufnehmen' }));
+    const panel = screen.getByRole('dialog');
+    const [sura, ayaNumber] = (first.getAttribute('value') ?? '').split(':');
+    expect(panel).toHaveTextContent(`Sūra ${sura} · Āya ${ayaNumber} aufnehmen`);
   });
 
   it('says the rāʾ rules are a summary the sheikh still checks', () => {

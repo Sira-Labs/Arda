@@ -702,8 +702,9 @@ export const en: Messages = {
     },
     self: {
       title: 'Practise yourself',
-      text: 'Soon you will record yourself here and send it to your sheikh. Until then: repeat every word three times.',
-      record: 'Record – coming soon',
+      text: 'Repeat every word three times. Then record an āya with this letter and send it to your sheikh – he listens for exactly this sound.',
+      pick: 'Āya',
+      record: 'Record this āya',
     },
   },
   soon: {

@@ -154,8 +154,8 @@ reviewed by the sheikh. _(Built: the first set (owner, 2026-10-06), the three wh
 numbered and named, the letter's point pulsing with a label, makhraj in plain words, ṣifāt with
 a one-line meaning each, typical mistakes of German speakers, real words from the packs played
 word by word from al-Ḥuṣarī's teaching recitation (0.5×–1×), the listening quiz "Welcher
-Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the sheikh; recording
-oneself comes with F7. Not yet animated; the other 24 letters follow his review.)_
+Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the sheikh; an āya with
+the letter recorded and sent to him (F7). Not yet animated; the other 24 letters follow his review.)_
 
 ### F6 — Games _(Must)_
 

@@ -746,8 +746,9 @@ export const de = {
     },
     self: {
       title: 'Selbst üben',
-      text: 'Bald nimmst du dich hier selbst auf und schickst es deinem Sheikh. Bis dahin: Sprich jedes Wort dreimal nach.',
-      record: 'Aufnehmen – kommt bald',
+      text: 'Sprich jedes Wort dreimal nach. Dann nimm eine Āya mit diesem Buchstaben auf und schick sie deinem Sheikh – er hört genau auf diesen Laut.',
+      pick: 'Āya',
+      record: 'Diese Āya aufnehmen',
     },
   },
   soon: {

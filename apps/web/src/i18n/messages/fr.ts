@@ -726,8 +726,9 @@ export const fr: Messages = {
     },
     self: {
       title: 'T’exercer seul',
-      text: 'Bientôt, tu t’enregistreras ici et tu l’enverras à ton cheikh. D’ici là\u202f: répète chaque mot trois fois.',
-      record: 'Enregistrer – bientôt',
+      text: 'Répète chaque mot trois fois. Puis enregistre une āya avec cette lettre et envoie-la à ton cheikh\u202f: il écoute précisément ce son.',
+      pick: 'Āya',
+      record: 'Enregistrer cette āya',
     },
   },
   soon: {

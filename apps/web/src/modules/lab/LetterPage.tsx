@@ -1,5 +1,7 @@
+import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
+import { RecordPanel } from '@/modules/recite/RecordPanel';
 import { Soon } from '@/modules/Soon';
 import { PlayIcon } from '../mushaf/PlayerBar';
 import { SPEEDS, chooseSpeed, useSpeed } from '../mushaf/reciters';
@@ -21,7 +23,7 @@ export function LetterPage() {
 /**
  * A letter of the lab (spec F5): the letter, its point on the head, its makhraj in plain
  * words, its ṣifāt, the mistakes a German speaker makes, and the exercises – hear real words
- * and repeat them, the listening quiz, pairs to compare, and (soon) recording oneself.
+ * and repeat them, the listening quiz, pairs to compare, and recording an āya for the sheikh.
  */
 export function Letter({ id }: { id: LabLetterId }) {
   const { m } = useI18n();
@@ -153,21 +155,66 @@ export function Letter({ id }: { id: LabLetterId }) {
         </section>
       )}
 
-      <section className="card stack" style={{ gap: 8 }} aria-labelledby="lab-self">
-        <h2 id="lab-self" className="h-small">
-          {t.self.title}
-        </h2>
-        <p>{t.self.text}</p>
-        <button
-          type="button"
-          className="btn"
-          disabled
-          style={{ alignSelf: 'flex-start' }}
-        >
-          {t.self.record}
-        </button>
-      </section>
+      <SelfPractice words={words} />
     </article>
+  );
+}
+
+/**
+ * Practise alone, then be heard (F5 with F7): pick an āya the letter's words come from and
+ * record it for the sheikh, who listens for exactly this sound.
+ */
+function SelfPractice({ words }: { words: readonly LabWord[] }) {
+  const { m } = useI18n();
+  const t = m.lab.self;
+  // One choice per āya, in the order the words are taught.
+  const ayas = useMemo(() => {
+    const seen = new Map<string, { sura: number; aya: number }>();
+    for (const word of words) {
+      const { sura, aya } = whereOf(word.key);
+      seen.set(`${sura}:${aya}`, { sura, aya });
+    }
+    return [...seen.entries()];
+  }, [words]);
+  const [chosen, setChosen] = useState(ayas[0]?.[0] ?? '');
+  const [recording, setRecording] = useState(false);
+  const place = ayas.find(([key]) => key === chosen)?.[1];
+  return (
+    <section className="card stack" style={{ gap: 8 }} aria-labelledby="lab-self">
+      <h2 id="lab-self" className="h-small">
+        {t.title}
+      </h2>
+      <p>{t.text}</p>
+      <label className="stack" style={{ gap: 4 }}>
+        <span>{t.pick}</span>
+        <select
+          className="input"
+          value={chosen}
+          onChange={(event) => setChosen(event.target.value)}
+        >
+          {ayas.map(([key, { sura, aya }]) => (
+            <option key={key} value={key}>
+              {m.lab.listen.where(sura, aya)}
+            </option>
+          ))}
+        </select>
+      </label>
+      <button
+        type="button"
+        className="btn btn-primary"
+        style={{ alignSelf: 'flex-start' }}
+        disabled={!place}
+        onClick={() => setRecording(true)}
+      >
+        <span className="record-dot" aria-hidden="true" /> {t.record}
+      </button>
+      {recording && place && (
+        <RecordPanel
+          range={{ sura: place.sura, from: place.aya, to: place.aya }}
+          onClose={() => setRecording(false)}
+        />
+      )}
+    </section>
   );
 }
 
