@@ -174,7 +174,12 @@ numbered and named, the letter's point pulsing with a label, makhraj in plain wo
 a one-line meaning each, typical mistakes of German speakers, real words from the packs played
 word by word from al-Ḥuṣarī's teaching recitation (0.5×–1×), the listening quiz "Welcher
 Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the sheikh; an āya with
-the letter recorded and sent to him (F7). Not yet animated; the other 24 letters follow his review.)_
+the letter recorded and sent to him (F7). Not yet animated.)_
+_(Built (owner, 2026-10-07): the throat, ء ه ع ح غ خ, with its three points (deepest, middle,
+nearest the mouth), ten words each and the pairs that differ in that letter only (ʿalīm / alīm,
+ʿammā / ammā, ʿayna / ayna, uḥilla / uhilla, khayra / ghayra, yakhshā / yaghshā). Each letter is
+heard against the ones it is mixed up with: hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn. The
+other 18 letters follow, set by set.)_
 
 ### F6 — Games _(Must)_
 
