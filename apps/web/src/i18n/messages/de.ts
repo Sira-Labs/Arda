@@ -300,6 +300,8 @@ export const de = {
       passed: 'Bestanden',
       passedNext: (unit: number) => `Bestanden – weiter mit Einheit ${unit}.`,
       passedLast: 'Bestanden – alle Einheiten des Blatts geschafft.',
+      passedOpen: (unit: number) =>
+        `Bestanden – offen ist noch der Test von Einheit ${unit}.`,
       notYet: (need: number, total: number) =>
         `Noch nicht bestanden: Es braucht ${need} von ${total}. Wiederhole die Karten und versuch es noch einmal.`,
       recommended: (unit: number) => `Empfohlen nach dem Test von Einheit ${unit}.`,

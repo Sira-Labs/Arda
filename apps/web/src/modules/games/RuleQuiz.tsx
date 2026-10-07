@@ -1,4 +1,9 @@
-import { UNIT_TEST_PASS, passesUnitTest, type ActivityKind } from '@arda/engagement';
+import {
+  UNIT_TEST_PASS,
+  passedUnits,
+  passesUnitTest,
+  type ActivityKind,
+} from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -309,6 +314,9 @@ function Results({
   const review = useReview();
   const passed = unitTest !== undefined && passesUnitTest(result.right, result.total);
   const following = unitTest && CARD_UNITS.find((unit) => unit > unitTest);
+  // The last unit passed is not the whole sheet: a unit before it may still be open.
+  const passedBefore = passedUnits(Object.values(review.deck.activity ?? {}));
+  const open = CARD_UNITS.find((unit) => unit !== unitTest && !passedBefore.has(unit));
   return (
     <section className="card stack" style={{ gap: 12 }} role="status">
       <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -327,7 +335,9 @@ function Results({
             {passed
               ? following
                 ? m.games.test.passedNext(following)
-                : m.games.test.passedLast
+                : open !== undefined
+                  ? m.games.test.passedOpen(open)
+                  : m.games.test.passedLast
               : m.games.test.notYet(
                   Math.ceil(result.total * UNIT_TEST_PASS),
                   result.total

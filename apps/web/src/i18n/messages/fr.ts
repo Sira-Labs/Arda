@@ -268,6 +268,7 @@ export const fr: Messages = {
       passed: 'Réussi',
       passedNext: (unit) => `Réussi – passe à l'unité ${unit}.`,
       passedLast: 'Réussi – toutes les unités de la fiche sont faites.',
+      passedOpen: (unit) => `Réussi – le test de l'unité ${unit} reste à faire.`,
       notYet: (need, total) =>
         `Pas encore réussi : il faut ${need} sur ${total}. Révise les cartes et réessaie.`,
       recommended: (unit) => `Conseillé après le test de l'unité ${unit}.`,

@@ -308,6 +308,7 @@ export const ar: Messages = {
       passed: 'ناجح',
       passedNext: (unit) => `نجحت – انتقل إلى الوحدة ${num(unit)}.`,
       passedLast: 'نجحت – أتممت كل وحدات الورقة.',
+      passedOpen: (unit) => `نجحت – بقي اختبار الوحدة ${num(unit)}.`,
       notYet: (need, total) =>
         `لم تنجح بعد: تحتاج ${num(need)} من ${num(total)}. راجع البطاقات وحاول مرة أخرى.`,
       recommended: (unit) => `يُستحسن بعد اختبار الوحدة ${num(unit)}.`,

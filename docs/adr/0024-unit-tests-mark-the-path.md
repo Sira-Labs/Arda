@@ -39,7 +39,7 @@ The owner was offered a soft and a hard variant and did not object to the soft o
 
 ## Consequences
 
-- Spec 01's "unlocks" now means "marks as passed and recommends the next"; F1's acceptance is
-  read that way.
+- Spec 01 (§4 and F1's acceptance) now says "marks as passed and recommends the next" instead
+  of "unlocks".
 - Changing the pass mark changes who has passed, since it is computed from the scores; the
   scores themselves are kept.

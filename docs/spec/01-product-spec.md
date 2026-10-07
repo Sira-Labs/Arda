@@ -84,8 +84,9 @@ card, so the rule returns until it holds.
 | 7     | Waqf & ibtidāʾ: where to stop and start; the signs of your muṣḥaf           | classical order                |
 | 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
 
-Every unit has stations and a unit test that unlocks the next (Suffa's structure; since ADR-0024
-a passed test marks the unit and recommends the next, nothing is locked). Every text is
+Every unit has stations and ends with a unit test (Suffa's structure). A passed test marks the
+unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–4 have
+their test; unit 1 (the letter lab) gets one when the lab has all 28 letters. Every text is
 a draft until the sheikh has reviewed it.
 
 ## 5. Feature specification
@@ -118,7 +119,7 @@ Suffa's sign-in, ported (ADR-0004).
 
 Units with stations (rule card, muṣḥaf, hear, letter lab, games, recite) and a unit test.
 XP, daily quests, streak with shields from Suffa's engagement rules. **Acceptance:** unit 2 is
-playable end to end offline; finishing the test unlocks unit 3.
+playable end to end offline; passing its test marks it and recommends unit 3 (ADR-0024).
 
 Learning needs no account (ADR-0022): a guest practises the path, the games and the lab offline
 and is asked, in one quiet card on Today and the path, to sign in so the progress is kept.

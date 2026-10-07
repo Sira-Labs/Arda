@@ -351,8 +351,9 @@ describe('unit tests (ADR-0024)', () => {
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
     for (let i = 0; i < 10; i++) await answerLetter(i >= 2);
+    // Unit 4 passed, but units 2 and 3 are still open: not "every unit done".
     expect(
-      screen.getByText('Bestanden – alle Einheiten des Blatts geschafft.')
+      screen.getByText('Bestanden – offen ist noch der Test von Einheit 2.')
     ).toBeInTheDocument();
     expect(
       Object.values(store.load().activity ?? {}).map((e) => [e.kind, e.ref, e.right])
@@ -369,6 +370,38 @@ describe('unit tests (ADR-0024)', () => {
       screen.getByText('Empfohlen nach dem Test von Einheit 2.')
     ).toBeInTheDocument();
     expect(document.querySelector('a[href="/pfad/3/ghunna"]')).not.toBeNull();
+  });
+
+  it('says the sheet is done only when the other tests are passed too', async () => {
+    const passed = (unit: number, n: number) => ({
+      id: `00000000-0000-4000-8000-00000000000${n}`,
+      kind: 'unit-test' as const,
+      ref: `unit-${unit}`,
+      at: Date.now() - 1000,
+      right: 9,
+      total: 10,
+    });
+    const store = new MemoryReviewStore({
+      cards: {},
+      bestTimes: {},
+      activity: { [passed(2, 1).id]: passed(2, 1), [passed(3, 2).id]: passed(3, 2) },
+    });
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store}>
+          <MemoryRouter initialEntries={['/pfad/4/test']}>
+            <Routes>
+              <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    for (let i = 0; i < 10; i++) await answerLetter(true);
+    expect(
+      screen.getByText('Bestanden – alle Einheiten des Blatts geschafft.')
+    ).toBeInTheDocument();
   });
 
   it('sends an unknown unit back to the path', () => {

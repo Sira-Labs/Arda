@@ -264,6 +264,7 @@ export const en: Messages = {
       passed: 'Passed',
       passedNext: (unit) => `Passed – on to unit ${unit}.`,
       passedLast: 'Passed – every unit of the sheet done.',
+      passedOpen: (unit) => `Passed – the test of unit ${unit} is still open.`,
       notYet: (need, total) =>
         `Not passed yet: it takes ${need} of ${total}. Review the cards and try again.`,
       recommended: (unit) => `Recommended after the test of unit ${unit}.`,
