@@ -3,6 +3,7 @@
  * six-digit code from the same mail, or a passkey (services/passkeys.ts). The session is an
  * httpOnly cookie on the same origin; nothing about it is stored by scripts.
  */
+import type { PageRun } from '@arda/quran';
 import type { RuleId } from '@arda/tajweed';
 import type { Language } from '@/i18n/languages';
 import type { RemarkId } from '@/i18n/messages';
@@ -125,6 +126,8 @@ export interface AssignmentBase {
   /** The one student it is for, or `null` for the whole ḥalaqa. */
   studentId: string | null;
   range: AssignmentRange | null;
+  /** Pages of a printed muṣḥaf instead of a range ("read pages 8–9"); never both. */
+  pages: PageRun | null;
   focusRule: RuleId | null;
   repetitions: number | null;
   note: string | null;
@@ -156,6 +159,7 @@ export interface NewAssignment {
   kind: AssignmentKind;
   studentId: string | null;
   range: AssignmentRange | null;
+  pages: PageRun | null;
   focusRule: RuleId | null;
   repetitions: number | null;
   note: string | null;

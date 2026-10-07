@@ -1,9 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { JUZ_NAMES, sura as suraOf, type PackIndexEntry } from '@arda/quran';
+import {
+  JUZ_NAMES,
+  PAGE_LAYOUTS,
+  isPageRun,
+  pageAyat,
+  sura as suraOf,
+  type AyaRange,
+  type PageLayout,
+  type PageRun,
+} from '@arda/quran';
 import { RuleLegend } from '@/components/RuleLegend';
-import { builtIndex, type MushafPack } from '@/content/packs';
+import { entryForPage, scriptOfLayout, type MushafPack } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
+import { pagesText } from '@/modules/assignments/AssignmentDetails';
 import { RecordPanel } from '@/modules/recite/RecordPanel';
 import type { AssignmentRange, RecitedRange } from '@/services/auth';
 import { chooseColours, useMushafColours } from './colours';
@@ -55,6 +65,25 @@ export function rangeOf(search: URLSearchParams): AssignmentRange | null {
   return { sura: meta.number, from, to, ...(words ? { words } : {}) };
 }
 
+/**
+ * A page assignment from the query: `layout` and `seiten=8-9` (or one page), as the teacher
+ * named them (ADR-0014 update 2026-10-07). Ignored when the layout has no such pages.
+ */
+export function pageRunOf(search: URLSearchParams): PageRun | null {
+  const layout = search.get('layout');
+  const match = /^(\d{1,4})(?:-(\d{1,4}))?$/.exec(search.get('seiten') ?? '');
+  if (!match || !PAGE_LAYOUTS.includes(layout as PageLayout)) return null;
+  const run: PageRun = {
+    layout: layout as PageLayout,
+    from: Number(match[1]),
+    to: Number(match[2] ?? match[1]),
+  };
+  return isPageRun(run) ? run : null;
+}
+
+/** An Arabic name inside a sentence of another direction, kept from reordering its neighbours. */
+const isolated = (text: string) => `\u2068${text}\u2069`;
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** A uuid from the query, or `null`. */
 const uuidOf = (value: string | null) => (value && UUID.test(value) ? value : null);
@@ -80,12 +109,6 @@ const editing = (target: EventTarget | null) =>
 /** A number as the muṣḥaf prints it, in Arabic-Indic digits in every language. */
 const arabic = (n: number) => n.toLocaleString('ar-EG');
 
-/** The pack of a script that has the printed page. */
-const entryForPage = (page: number, script: MushafScript): PackIndexEntry | undefined =>
-  builtIndex.packs.find(
-    (p) => p.script === script && page >= p.pages[0] && page <= p.pages[1]
-  );
-
 /**
  * `/mushaf/seite/:page` (screen 2, spec F3): one page of the muṣḥaf as printed: the IndoPak
  * page line by line as in the sheikh's copy, framed and ruled, with the sūra, page and para in
@@ -99,7 +122,20 @@ export function MushafPage() {
   const [search] = useSearchParams();
   const navigate = useNavigate();
   const { m } = useI18n();
-  const script = useMushafScript();
+  const chosenScript = useMushafScript();
+  const query = search.toString();
+  const range = useMemo(() => rangeOf(new URLSearchParams(query)), [query]);
+  // A page assignment opens the layout whose pages it names, whatever this device shows.
+  const run = useMemo(
+    () => (range ? null : pageRunOf(new URLSearchParams(query))),
+    [range, query]
+  );
+  const script: MushafScript = run ? scriptOfLayout(run.layout) : chosenScript;
+  // What the assignment covers: its āyāt, or the āyāt on its pages, one range per sūra.
+  const parts: AyaRange[] = useMemo(
+    () => (range ? [range] : run ? pageAyat(run) : []),
+    [range, run]
+  );
   const colours = useMushafColours();
   const page = Number(param);
   const entry = Number.isInteger(page) ? entryForPage(page, script) : undefined;
@@ -110,10 +146,9 @@ export function MushafPage() {
   const [picked, setPicked] = useState<{ start: Place; end?: Place } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [recording, setRecording] = useState<RecitedRange | null>(null);
-  const range = rangeOf(search);
   // The assignment the marked range belongs to, so its recording answers it (S4.1).
-  const assignment = range ? uuidOf(search.get('aufgabe')) : null;
-  const assignmentHalaqa = range ? uuidOf(search.get('halaqa')) : null;
+  const assignment = parts.length > 0 ? uuidOf(search.get('aufgabe')) : null;
+  const assignmentHalaqa = parts.length > 0 ? uuidOf(search.get('halaqa')) : null;
   const pack = result?.ok ? result.pack : undefined;
   const blocks = useMemo(() => (pack ? pageBlocks(pack, page) : []), [pack, page]);
 
@@ -223,7 +258,7 @@ export function MushafPage() {
   const marked = (place: Place) =>
     span && notAfter(span.start, place) && notAfter(place, span.end)
       ? 'picked'
-      : range && covers(range, place)
+      : parts.some((part) => covers(part, place))
         ? 'in-range'
         : undefined;
   const recited = player.recited;
@@ -305,21 +340,37 @@ export function MushafPage() {
               : m.mushaf.range(range.from, range.to)}
           </p>
         )}
-        {range && !picking && (
-          <button
-            className="btn btn-primary"
-            type="button"
-            style={{ alignSelf: 'flex-start' }}
-            onClick={() => {
-              setSelected(null);
-              player.stop();
-              setRecording({ sura: range.sura, from: range.from, to: range.to });
-            }}
-          >
-            <span className="record-dot" aria-hidden="true" />{' '}
-            {assignment ? m.recite.recordAssignment : m.recite.recordSection}
-          </button>
+        {run && (
+          <p className="chip range-chip" style={{ alignSelf: 'flex-start' }}>
+            {pagesText(m, run)}
+          </p>
         )}
+        {!picking &&
+          // A take is of one sūra: pages across sūras are recorded part by part.
+          parts.map((part) => (
+            <button
+              key={part.sura}
+              className="btn btn-primary"
+              type="button"
+              style={{ alignSelf: 'flex-start' }}
+              onClick={() => {
+                setSelected(null);
+                player.stop();
+                setRecording({ sura: part.sura, from: part.from, to: part.to });
+              }}
+            >
+              <span className="record-dot" aria-hidden="true" />{' '}
+              {parts.length > 1
+                ? m.recite.recordPart(
+                    isolated(suraOf(part.sura)?.name ?? ''),
+                    part.from,
+                    part.to
+                  )
+                : assignment
+                  ? m.recite.recordAssignment
+                  : m.recite.recordSection}
+            </button>
+          ))}
         {picking && !given && (
           // Until both words are picked there is no panel yet to cancel from.
           <button
@@ -453,10 +504,12 @@ export function MushafPage() {
           range={recording}
           // An assignment's take answers it; a single āya from the page answers nothing.
           assignmentId={
-            range &&
-            recording.sura === range.sura &&
-            recording.from === range.from &&
-            recording.to === range.to
+            parts.some(
+              (part) =>
+                recording.sura === part.sura &&
+                recording.from === part.from &&
+                recording.to === part.to
+            )
               ? assignment
               : null
           }

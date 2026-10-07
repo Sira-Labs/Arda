@@ -367,6 +367,13 @@ export const en: Messages = {
     doneCount: (done, of) => `${done} of ${of} done`,
     doneBy: 'Done by',
     remove: 'Withdraw',
+    /** Pages of a printed muṣḥaf (ADR-0014 update 2026-10-07). */
+    pages: (from: number, to: number) =>
+      from === to ? `Page ${from}` : `Pages ${from}–${to}`,
+    layouts: {
+      'indopak-15': 'IndoPak, 15 lines',
+      madina: 'Madīna',
+    },
     form: {
       title: 'Give an assignment',
       who: 'For',
@@ -382,6 +389,13 @@ export const en: Messages = {
       note: 'Note (optional)',
       submit: 'Give assignment',
       given: 'Assignment given.',
+      by: 'What',
+      byAyat: 'Sūra and āyāt',
+      byPages: 'Pages',
+      layout: 'Muṣḥaf',
+      pageFrom: 'from page',
+      pageTo: 'to page',
+      onPages: 'On these pages:',
     },
   },
   mushaf: {
@@ -551,6 +565,9 @@ export const en: Messages = {
         : `Record sūra ${sura} · āyāt ${from}–${to}`,
     recordAssignment: 'Record the assignment',
     recordSection: 'Record this passage',
+    /** One sūra's part of a page assignment that runs across sūras. */
+    recordPart: (name: string, from: number, to: number) =>
+      `Record ${name} ${from}–${to}`,
     consentTitle: 'Before you record',
     consentText:
       'Only you and the teachers of the ḥalaqa you send it to can hear your recording. It stays private until you delete it and is used for nothing else.',

@@ -408,6 +408,13 @@ export const ar: Messages = {
     doneCount: (done, of) => `أنجزها ${num(done)} من ${num(of)}`,
     doneBy: 'أنجزها',
     remove: 'سحب',
+    /** Pages of a printed muṣḥaf (ADR-0014 update 2026-10-07). */
+    pages: (from: number, to: number) =>
+      from === to ? `صفحة ${num(from)}` : `الصفحات ${num(from)}–${num(to)}`,
+    layouts: {
+      'indopak-15': 'الهندي الباكستاني، ١٥ سطرًا',
+      madina: 'المدينة',
+    },
     form: {
       title: 'إعطاء مهمة',
       who: 'لمن',
@@ -423,6 +430,13 @@ export const ar: Messages = {
       note: 'ملاحظة (اختيارية)',
       submit: 'إعطاء المهمة',
       given: 'أُعطيت المهمة.',
+      by: 'ماذا',
+      byAyat: 'السورة والآيات',
+      byPages: 'الصفحات',
+      layout: 'المصحف',
+      pageFrom: 'من صفحة',
+      pageTo: 'إلى صفحة',
+      onPages: 'في هذه الصفحات:',
     },
   },
   mushaf: {
@@ -588,6 +602,9 @@ export const ar: Messages = {
         : `تسجيل سورة ${num(sura)} · الآيات ${num(from)}–${num(to)}`,
     recordAssignment: 'سجّل المهمة',
     recordSection: 'سجّل هذا المقطع',
+    /** One sūra's part of a page assignment that runs across sūras. */
+    recordPart: (name: string, from: number, to: number) =>
+      `سجّل ${name} ${num(from)}–${num(to)}`,
     consentTitle: 'قبل أن تسجّل',
     consentText:
       'لا يستمع إلى تسجيلك إلا أنت ومعلّمو الحلقة التي ترسله إليها. يبقى خاصًا حتى تحذفه، ولا يُستخدم لأي شيء آخر.',

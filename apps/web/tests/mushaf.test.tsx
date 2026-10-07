@@ -755,6 +755,58 @@ describe('the muṣḥaf screen (S2.4)', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent('Sūra 113 · Āyāt 2–3 aufnehmen');
   });
 
+  it('opens a page assignment in the layout it names, marking the āyāt on its pages', async () => {
+    // This device shows IndoPak; the assignment names Madīna pages.
+    const id = '44444444-4444-4444-8444-444444444444';
+    renderAt(
+      `/mushaf/seite/604?layout=madina&seiten=604&aufgabe=${id}&halaqa=${id}`,
+      loader().deps
+    );
+    expect(await screen.findByText('Seite 604 · Madīna')).toBeInTheDocument();
+    expect(screen.getByText('Seite 604 (Madīna)')).toBeInTheDocument();
+    const marked = new Set(
+      [...document.querySelectorAll('.in-range[data-word]')].map(
+        (e) => e.getAttribute('data-word')!.split(':')[1]
+      )
+    );
+    expect([...marked]).toEqual(['112', '113', '114']);
+    // A take is of one sūra: the page is recorded sūra by sūra, each answering the assignment.
+    const buttons = screen
+      .getAllByRole('button')
+      .filter((b) => b.textContent?.includes('aufnehmen'));
+    expect(buttons.map((b) => b.textContent?.trim())).toEqual([
+      '\u2068الإخلاص\u2069 1–4 aufnehmen',
+      '\u2068الفلق\u2069 1–5 aufnehmen',
+      '\u2068الناس\u2069 1–6 aufnehmen',
+    ]);
+    await userEvent.setup().click(buttons[1]!);
+    expect(screen.getByRole('dialog')).toHaveTextContent('Sūra 113 · Āyāt 1–5 aufnehmen');
+  });
+
+  it('opens the IndoPak pages of a page assignment as the sheikh’s copy numbers them', async () => {
+    renderAt('/mushaf/seite/8?layout=indopak-15&seiten=8-9', loader().deps);
+    expect(
+      await screen.findByText('Seiten 8–9 (IndoPak, 15 Zeilen)')
+    ).toBeInTheDocument();
+    const ayat = new Set(
+      [...document.querySelectorAll('.in-range[data-word]')].map((e) =>
+        Number(e.getAttribute('data-word')!.split(':')[2])
+      )
+    );
+    expect(Math.min(...ayat)).toBe(38);
+    expect(Math.max(...ayat)).toBe(48);
+    expect(
+      screen.getByRole('button', { name: /Diesen Abschnitt aufnehmen/ })
+    ).toBeInTheDocument();
+  });
+
+  it('ignores pages a layout does not have', async () => {
+    renderAt('/mushaf/seite/604?layout=madina&seiten=604-605', loader().deps);
+    // Without a valid run the page is this device's script, IndoPak, and nothing is marked.
+    expect(await screen.findByText('Seite 604 · IndoPak')).toBeInTheDocument();
+    expect(document.querySelectorAll('.in-range')).toHaveLength(0);
+  });
+
   it('ignores a range that is not in the sūra', async () => {
     renderAt('/mushaf/113?von=4&bis=9', loader().deps);
     await screen.findByText('الفلق', { selector: '.page-sura' });
@@ -799,6 +851,7 @@ describe('assignments in the muṣḥaf', () => {
             kind: 'recite',
             studentId: null,
             range: { sura: 112, from: 1, to: 4 },
+            pages: null,
             focusRule: null,
             repetitions: null,
             note: null,
@@ -979,6 +1032,7 @@ describe('assigning on the page (S3.2)', () => {
             kind: 'read',
             studentId: null,
             range: { sura: 113, from: 2, to: 3, words: { from: 2, to: 4 } },
+            pages: null,
             focusRule: null,
             repetitions: 2,
             note: null,

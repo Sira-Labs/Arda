@@ -374,6 +374,13 @@ export const fr: Messages = {
     doneCount: (done, of) => `${done} sur ${of} faits`,
     doneBy: 'Fait par',
     remove: 'Retirer',
+    /** Pages of a printed muṣḥaf (ADR-0014 update 2026-10-07). */
+    pages: (from: number, to: number) =>
+      from === to ? `Page ${from}` : `Pages ${from}–${to}`,
+    layouts: {
+      'indopak-15': 'IndoPak, 15 lignes',
+      madina: 'Médine',
+    },
     form: {
       title: 'Donner un devoir',
       who: 'Pour',
@@ -389,6 +396,13 @@ export const fr: Messages = {
       note: 'Note (facultatif)',
       submit: 'Donner le devoir',
       given: 'Devoir donné.',
+      by: 'Quoi',
+      byAyat: 'Sourate et versets',
+      byPages: 'Pages',
+      layout: 'Muṣḥaf',
+      pageFrom: 'de la page',
+      pageTo: 'à la page',
+      onPages: 'Sur ces pages :',
     },
   },
   mushaf: {
@@ -567,6 +581,9 @@ export const fr: Messages = {
         : `Enregistrer sourate ${sura} · āyāt ${from}–${to}`,
     recordAssignment: 'Enregistrer le devoir',
     recordSection: 'Enregistrer ce passage',
+    /** One sūra's part of a page assignment that runs across sūras. */
+    recordPart: (name: string, from: number, to: number) =>
+      `Enregistrer ${name} ${from}–${to}`,
     consentTitle: 'Avant d’enregistrer',
     consentText:
       'Seuls toi et les enseignants de la ḥalaqa à qui tu l’envoies peuvent écouter ton enregistrement. Il reste privé jusqu’à ce que tu le supprimes et ne sert à rien d’autre.',

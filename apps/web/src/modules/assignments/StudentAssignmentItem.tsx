@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
 import type { StudentAssignment } from '@/services/auth';
 import { AssignmentDetails, DueLabel } from './AssignmentDetails';
-import { entryFor } from '@/content/packs';
+import { entryFor, entryForPage, scriptOfLayout } from '@/content/packs';
 import { cardPath, gamePath, linkFor } from './format';
 
 /**
@@ -26,6 +26,10 @@ export function StudentAssignmentItem({
   const done = assignment.doneAt !== null;
   const range = assignment.range;
   const inMushaf = range && entryFor(range.sura) ? range : null;
+  // Pages open in the layout that numbers them, when the app has the first of them there.
+  const pages = assignment.pages;
+  const pagesInMushaf =
+    pages && entryForPage(pages.from, scriptOfLayout(pages.layout)) ? pages : null;
   return (
     <li className="assignment-row">
       <AssignmentDetails assignment={assignment} />
@@ -56,6 +60,16 @@ export function StudentAssignmentItem({
                 ? `&wvon=${inMushaf.words.from}&wbis=${inMushaf.words.to}`
                 : ''
             }&aufgabe=${assignment.id}&halaqa=${assignment.halaqaId}`}
+          >
+            {m.mushaf.open}
+          </Link>
+        )}
+        {!done && pagesInMushaf && (
+          <Link
+            className="btn"
+            to={`/mushaf/seite/${pagesInMushaf.from}?layout=${pagesInMushaf.layout}&seiten=${
+              pagesInMushaf.from
+            }-${pagesInMushaf.to}&aufgabe=${assignment.id}&halaqa=${assignment.halaqaId}`}
           >
             {m.mushaf.open}
           </Link>
