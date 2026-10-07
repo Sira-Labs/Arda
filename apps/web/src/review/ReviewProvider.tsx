@@ -164,11 +164,12 @@ export function ReviewProvider({
 
   const markPlace = useCallback(
     (script: ReadingScript, page: number) => {
-      update((current) =>
-        current.places?.[script]?.page === page
-          ? current
-          : { ...current, places: { ...current.places, [script]: { page, at: now() } } }
-      );
+      // Opening a page again dates it anew: a later page from another device must not win
+      // over this one, read after it.
+      update((current) => ({
+        ...current,
+        places: { ...current.places, [script]: { page, at: now() } },
+      }));
     },
     [update, now]
   );

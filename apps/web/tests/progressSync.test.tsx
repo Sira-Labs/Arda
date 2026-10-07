@@ -349,7 +349,7 @@ describe('the reading place (Weiterlesen)', () => {
     expect(store.load().places?.uthmani).toEqual({ page: 604, at: NOW - 5000 });
   });
 
-  it('is kept once per script, and the same page again changes nothing', () => {
+  it('is kept once per script, and dated anew when the same page is opened again', () => {
     const store = new MemoryReviewStore(deckOf());
     let review: Review | undefined;
     let time = NOW;
@@ -363,13 +363,39 @@ describe('the reading place (Weiterlesen)', () => {
     act(() => review!.markPlace('indopak', 8));
     time += 1000;
     act(() => review!.markPlace('indopak', 8));
-    expect(store.load().places).toEqual({ indopak: { page: 8, at: NOW } });
+    expect(store.load().places).toEqual({ indopak: { page: 8, at: NOW + 1000 } });
+    time += 1000;
     act(() => review!.markPlace('indopak', 9));
     act(() => review!.markPlace('uthmani', 604));
     expect(store.load().places).toEqual({
-      indopak: { page: 9, at: NOW + 1000 },
-      uthmani: { page: 604, at: NOW + 1000 },
+      indopak: { page: 9, at: NOW + 2000 },
+      uthmani: { page: 604, at: NOW + 2000 },
     });
+  });
+
+  it('wins over a later page from another device when this page is opened again', async () => {
+    // This device read page 9, then the phone read page 10; now page 9 is opened again here.
+    const time = NOW;
+    const store = new MemoryReviewStore(
+      { ...deckOf(), places: { indopak: { page: 9, at: NOW - 5000 } } },
+      ME.id
+    );
+    let review: Review | undefined;
+    render(
+      <Providers client={fakeApi({}).client}>
+        <ReviewProvider store={store} now={() => time}>
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    act(() => review!.markPlace('indopak', 9));
+    act(() =>
+      review!.receive(
+        { ...deckOf(), places: { indopak: { page: 10, at: NOW - 1000 } } },
+        ME.id
+      )
+    );
+    expect(review!.places.indopak).toEqual({ page: 9, at: time });
   });
 });
 
