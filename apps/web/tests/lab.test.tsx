@@ -8,6 +8,7 @@ import type { Pack, PackIndex } from '@arda/quran';
 import { Lab } from '@/modules/lab/Lab';
 import { LabQuizPage } from '@/modules/lab/LabQuiz';
 import { LetterPage } from '@/modules/lab/LetterPage';
+import { QUIZ_LETTERS } from '@/modules/lab/letters';
 import { labRound } from '@/modules/lab/quiz';
 import { LAB_LETTERS } from '@/modules/lab/types';
 import { LAB_PAIRS, LAB_WORDS } from '@/modules/lab/words';
@@ -144,6 +145,39 @@ describe('the lab’s words (generated from the packs)', () => {
     expect(ra.filter((q) => q.answer === 'heavy')).toHaveLength(5);
     expect(ra.filter((q) => q.answer === 'light')).toHaveLength(5);
   });
+
+  it('hear each letter of the throat against the ones it is mixed up with', () => {
+    const count = (id: string, round: ReturnType<typeof labRound>) =>
+      round.filter((q) => q.answer === id).length;
+    const ha = labRound('ha', () => 0.3);
+    expect([count('ha', ha), count('hha', ha), count('kha', ha)]).toEqual([4, 3, 3]);
+    const ayn = labRound('ayn', () => 0.3);
+    expect([count('ayn', ayn), count('hamza', ayn)]).toEqual([5, 5]);
+    const ghayn = labRound('ghayn', () => 0.3);
+    expect([count('ghayn', ghayn), count('kha', ghayn)]).toEqual([5, 5]);
+    // A word holds no other letter of its quiz, so every question has one answer.
+    const forms: Record<string, string> = { hamza: 'أإءؤئ' };
+    const signs: Record<string, string> = {
+      ha: 'ه',
+      ayn: 'ع',
+      hha: 'ح',
+      ghayn: 'غ',
+      kha: 'خ',
+    };
+    for (const letters of Object.values(QUIZ_LETTERS)) {
+      for (const word of LAB_WORDS.filter((w) => letters.includes(w.letter as never))) {
+        const others = letters.filter((id) => id !== word.letter);
+        for (const other of others) {
+          const chars = forms[other] ?? signs[other] ?? '';
+          if (!chars) continue;
+          expect(
+            [...word.uthmani].some((c) => chars.includes(c)),
+            word.key
+          ).toBe(false);
+        }
+      }
+    }
+  });
 });
 
 describe('the letter lab (F5)', () => {
@@ -179,6 +213,38 @@ describe('the letter lab (F5)', () => {
       );
     }
     expect(screen.getByText('Entwurf – der Sheikh prüft noch')).toBeInTheDocument();
+    // The throat, the second set, from the deepest letter up.
+    const throat = screen.getByRole('region', { name: /Die Kehle/ });
+    expect(
+      within(throat)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('href'))
+    ).toEqual([
+      '/labor/hamza',
+      '/labor/ha',
+      '/labor/ayn',
+      '/labor/hha',
+      '/labor/ghayn',
+      '/labor/kha',
+    ]);
+  });
+
+  it('shows a letter of the throat: its point, its ṣifāt and the pairs to hear', () => {
+    renderAt('/labor/ayn');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('ʿAyn');
+    expect(screen.getByRole('img', { name: /Mitte – der Kehle/ })).toBeVisible();
+    const sifat = screen.getByRole('region', { name: 'Ṣifāt · seine Eigenschaften' });
+    expect(
+      within(sifat)
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('.chip')?.textContent)
+    ).toEqual(['Jahr', 'Tawassuṭ (Bayniyya)', 'Istifāl', 'Infitāḥ', 'Iṣmāt']);
+    expect(screen.getByRole('region', { name: 'Typische Fehler' })).toHaveTextContent(
+      'Knacklaut'
+    );
+    // Its quiz is heard against hamza; its pairs differ in that one letter only.
+    expect(screen.getByRole('heading', { name: 'Hamza oder ʿAyn?' })).toBeInTheDocument();
+    expect(screen.getAllByText('Nur dieser Laut ist anders.').length).toBe(3);
   });
 
   it('shows a letter in Arabic, its point and its ṣifāt with their names', async () => {

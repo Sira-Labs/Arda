@@ -8,7 +8,7 @@ import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { PageLayout } from '@arda/quran';
 import type { Area, Point, Sifa } from '@/modules/lab/letters';
-import type { LabLetterId, Weight } from '@/modules/lab/types';
+import type { LabLetterId, LabSet, Weight } from '@/modules/lab/types';
 
 /** A letter's texts in the lab (spec F5). */
 interface LetterTexts {
@@ -738,9 +738,17 @@ export const de = {
     title: 'Buchstaben-Labor',
     intro:
       'Woher kommt ein Laut? Der Kopf zeigt die fünf Bereiche. Wähl einen Buchstaben: Du siehst seine Stelle, hörst echte Wörter und übst den Unterschied.',
-    firstSet: 'Erste Reihe: Sīn, Zāy, Ṣād und Rāʾ',
-    firstSetHint:
-      'Die drei Pfeiflaute und das Rāʾ – für Deutschsprachige oft die schwersten.',
+    /** The lab's sets of letters, in the order they are taught. */
+    sets: {
+      first: {
+        title: 'Erste Reihe: Sīn, Zāy, Ṣād und Rāʾ',
+        hint: 'Die drei Pfeiflaute und das Rāʾ – für Deutschsprachige oft die schwersten.',
+      },
+      throat: {
+        title: 'Die Kehle: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn und Khāʾ',
+        hint: 'Sechs Laute aus der Kehle, von tief nach oben. Im Deutschen gibt es nur das h und den Knacklaut – die anderen lernst du hier neu.',
+      },
+    } as Record<LabSet, { title: string; hint: string }>,
     more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
     draft: 'Entwurf – der Sheikh prüft noch',
     back: 'Zum Labor',
@@ -761,6 +769,9 @@ export const de = {
     points: {
       whistle: { line1: 'Zungenspitze', line2: 'Schneidezähne' },
       ra: { line1: 'Zungenspitze', line2: 'Zahndamm' },
+      halqDeep: { line1: 'Tiefster Teil', line2: 'der Kehle' },
+      halqMid: { line1: 'Mitte', line2: 'der Kehle' },
+      halqNear: { line1: 'Oberer Teil', line2: 'der Kehle' },
     } as Record<Point, { line1: string; line2: string }>,
     letters: {
       sin: {
@@ -808,10 +819,81 @@ export const de = {
           'Schwer oder leicht hängt am Vokal: mit Fatḥa oder Ḍamma schwer, mit Kasra leicht.',
         ],
       },
+      hamza: {
+        name: 'Hamza',
+        short: 'ein klarer Einsatz der Stimme',
+        makhraj:
+          'Der tiefste Teil der Kehle, beim Kehlkopf: Die Stimmritze schließt sich kurz und öffnet sich mit einem Ruck – derselbe Ort wie Hāʾ.',
+        mistakes: [
+          'Du kennst ihn aus dem Deutschen: der Knacklaut in „be-achten“ oder „Spiegel-ei“. Genau so beginnt Hamza – deutlich, nicht verschluckt.',
+          'Nicht pressen: Hamza ist ein kurzer, fester Einsatz (Shidda). Gepresst aus der Mitte der Kehle wird es ʿAyn – aus أَلِيمٌ („schmerzhaft“) wird عَلِيمٌ („wissend“).',
+          'Auch mitten im Wort und vor Sukūn hörbar machen, nicht übergehen.',
+        ],
+      },
+      ha: {
+        name: 'Hāʾ',
+        short: 'ein leiser Hauch',
+        makhraj:
+          'Der tiefste Teil der Kehle, wie bei Hamza: Die Luft strömt offen hindurch, ohne Reibung.',
+        mistakes: [
+          'Hāʾ ist das deutsche h – aber immer hörbar: auch vor Sukūn und am Wortende, wo das Deutsche es verschluckt („sehen“).',
+          'Nicht kratzen oder pressen: Eine enge Kehle macht aus Hāʾ ein Ḥāʾ – aus أُهِلَّ wird أُحِلَّ, ein anderes Wort.',
+          'Leise und flüsternd (Hams): kein Summen.',
+        ],
+      },
+      ayn: {
+        name: 'ʿAyn',
+        short: 'gepresst, aus der Mitte der Kehle, stimmhaft',
+        makhraj:
+          'Die Mitte der Kehle: Sie verengt sich, und die Stimme klingt weiter. Ein voller, gepresster Laut – im Deutschen gibt es ihn nicht.',
+        mistakes: [
+          'Nicht weglassen und nicht durch den Knacklaut ersetzen: Sonst wird عَلِيمٌ („wissend“) zu أَلِيمٌ („schmerzhaft“).',
+          'Die Stimme schwingt weiter (Tawassuṭ): kein harter Stopp wie bei Hamza.',
+          'Leicht bleiben (Istifāl): Der Vokal nach ʿAyn klingt nicht dunkel.',
+        ],
+      },
+      hha: {
+        name: 'Ḥāʾ',
+        short: 'ein kräftiger Hauch aus der engen Kehle',
+        makhraj:
+          'Die Mitte der Kehle, wie bei ʿAyn: Die Kehle wird eng, und die Luft reibt hörbar – ohne Stimme.',
+        mistakes: [
+          'Nicht wie das deutsche h: Ohne die Enge wird aus أُحِلَّ („erlaubt wurde“) أُهِلَّ („angerufen wurde“).',
+          'Nicht wie ch in „Bach“: Dort reibt der Zungenrücken am Gaumen – das ist Khāʾ. Bei Ḥāʾ bleibt der Mund frei, nur die Kehle ist eng.',
+          'Stimmlos (Hams): Summt es, wird es ʿAyn.',
+        ],
+      },
+      ghayn: {
+        name: 'Ghayn',
+        short: 'schwer, stimmhaft, ein weiches Reiben',
+        makhraj:
+          'Der obere Teil der Kehle, nah am Mund, wie bei Khāʾ: Hinten reibt die Luft, und die Stimme schwingt mit.',
+        mistakes: [
+          'Nah am deutschen Rachen-r in „rot“, aber es schnarrt nicht: Ghayn reibt weich und gleichmäßig.',
+          'Stimmhaft: Summt es nicht, wird es Khāʾ – aus غَيْرَ („außer“) wird خَيْرَ („gut“).',
+          'Schwer (Istiʿlāʾ): Der Zungenrücken hebt sich, der Vokal danach klingt voll.',
+        ],
+      },
+      kha: {
+        name: 'Khāʾ',
+        short: 'schwer, stimmlos, wie ch in „Bach“',
+        makhraj:
+          'Der obere Teil der Kehle, nah am Mund, wie bei Ghayn: Die Luft reibt hörbar, ohne Stimme.',
+        mistakes: [
+          'Wie ch in „Bach“, nie wie in „ich“: Das helle ch liegt zu weit vorn.',
+          'Schwer (Istiʿlāʾ): Der Vokal danach klingt dunkel und voll – خَلَقَ, nicht hell.',
+          'Nicht mit Ḥāʾ verwechseln: Bei Khāʾ reibt es oben, bei Ḥāʾ ist nur die Kehle eng.',
+        ],
+      },
     } as Record<LabLetterId, LetterTexts>,
     makhraj: 'Makhraj · wo er entsteht',
     sifat: 'Ṣifāt · seine Eigenschaften',
     sifa: {
+      shidda: {
+        name: 'Shidda',
+        meaning:
+          'Fest: Der Laut wird ganz angehalten und bricht ab – er fließt nicht weiter.',
+      },
       hams: {
         name: 'Hams',
         meaning: 'Flüstern: Der Atem fließt mit, die Stimme schwingt nicht.',
@@ -895,6 +977,24 @@ export const de = {
         intro: 'Zehn Wörter, nur zum Hören: Hörst du Sīn, Zāy oder Ṣād?',
         question: 'Welchen Buchstaben hörst du?',
       },
+      hamzaAyn: {
+        title: 'Hamza oder ʿAyn?',
+        intro:
+          'Zehn Wörter, nur zum Hören: ein klarer Einsatz (Hamza) oder ein gepresster Laut aus der Kehle (ʿAyn)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      hSounds: {
+        title: 'Hāʾ, Ḥāʾ oder Khāʾ?',
+        intro:
+          'Zehn Wörter, nur zum Hören: ein leiser Hauch, ein kräftiger aus der engen Kehle oder ein Reiben wie in „Bach“?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      khGh: {
+        title: 'Khāʾ oder Ghayn?',
+        intro:
+          'Zehn Wörter, nur zum Hören: Reibt es ohne Stimme (Khāʾ) oder mit Stimme (Ghayn)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
       weight: {
         title: 'Schwer oder leicht?',
         intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
@@ -906,6 +1006,12 @@ export const de = {
       options: 'Antworten',
       weights: { heavy: 'schwer', light: 'leicht' } as Record<Weight, string>,
       why: {
+        hamza: 'Hamza: ein kurzer, fester Einsatz – kein Pressen.',
+        ha: 'Hāʾ: ein leiser, offener Hauch.',
+        ayn: 'ʿAyn: gepresst aus der Mitte der Kehle, die Stimme klingt.',
+        hha: 'Ḥāʾ: ein kräftiger Hauch aus der engen Kehle, ohne Reiben oben.',
+        ghayn: 'Ghayn: ein weiches Reiben mit Stimme.',
+        kha: 'Khāʾ: ein Reiben ohne Stimme, wie in „Bach“.',
         sin: 'Sīn: leicht, scharf und stimmlos.',
         zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
         sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',

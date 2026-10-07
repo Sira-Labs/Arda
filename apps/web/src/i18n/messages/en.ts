@@ -689,9 +689,16 @@ export const en: Messages = {
     title: 'Letter lab',
     intro:
       'Where does a sound come from? The head shows the five areas. Pick a letter: you see its point, hear real words and practise the difference.',
-    firstSet: 'First set: Sīn, Zāy, Ṣād and Rāʾ',
-    firstSetHint:
-      'The three whistling letters and Rāʾ – often the hardest for German speakers.',
+    sets: {
+      first: {
+        title: 'First set: Sīn, Zāy, Ṣād and Rāʾ',
+        hint: 'The three whistling letters and Rāʾ – often the hardest for German speakers.',
+      },
+      throat: {
+        title: 'The throat: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn and Khāʾ',
+        hint: 'Six sounds from the throat, from the deepest up. German has only the h and the glottal stop – the others are new.',
+      },
+    },
     more: 'The other letters follow once your sheikh has checked the drawing.',
     draft: 'Draft – the sheikh is still checking',
     back: 'To the lab',
@@ -712,6 +719,9 @@ export const en: Messages = {
     points: {
       whistle: { line1: 'Tongue tip', line2: 'front teeth' },
       ra: { line1: 'Tongue tip', line2: 'gum ridge' },
+      halqDeep: { line1: 'Deepest part', line2: 'of the throat' },
+      halqMid: { line1: 'Middle', line2: 'of the throat' },
+      halqNear: { line1: 'Upper part', line2: 'of the throat' },
     },
     letters: {
       sin: {
@@ -759,10 +769,81 @@ export const en: Messages = {
           'Heavy or light depends on the vowel: heavy with fatḥa or ḍamma, light with kasra.',
         ],
       },
+      hamza: {
+        name: 'Hamza',
+        short: 'a clear onset of the voice',
+        makhraj:
+          'The deepest part of the throat, at the larynx: the glottis closes for a moment and opens with a jolt – the same place as Hāʾ.',
+        mistakes: [
+          'You know it from German: the glottal stop in “be-achten” or “Spiegel-ei”. That is how Hamza begins – clearly, not swallowed.',
+          'Do not press: Hamza is a short, firm onset (Shidda). Pressed from the middle of the throat it becomes ʿAyn – أَلِيمٌ (“painful”) turns into عَلِيمٌ (“knowing”).',
+          'Make it heard in the middle of a word and before sukūn too; do not skip it.',
+        ],
+      },
+      ha: {
+        name: 'Hāʾ',
+        short: 'a soft breath',
+        makhraj:
+          'The deepest part of the throat, like Hamza: the air flows out freely, without friction.',
+        mistakes: [
+          'Hāʾ is the German h – but always heard: before sukūn and at the end of a word too, where German swallows it (“sehen”).',
+          'Do not scrape or press: a narrow throat turns Hāʾ into Ḥāʾ – أُهِلَّ becomes أُحِلَّ, another word.',
+          'Soft and whispered (Hams): no humming.',
+        ],
+      },
+      ayn: {
+        name: 'ʿAyn',
+        short: 'pressed, from the middle of the throat, voiced',
+        makhraj:
+          'The middle of the throat: it narrows, and the voice goes on sounding. A full, pressed sound – German has nothing like it.',
+        mistakes: [
+          'Do not drop it or replace it with the glottal stop: عَلِيمٌ (“knowing”) would become أَلِيمٌ (“painful”).',
+          'The voice keeps sounding (Tawassuṭ): no hard stop as with Hamza.',
+          'Keep it light (Istifāl): the vowel after ʿAyn is not dark.',
+        ],
+      },
+      hha: {
+        name: 'Ḥāʾ',
+        short: 'a strong breath from the narrowed throat',
+        makhraj:
+          'The middle of the throat, like ʿAyn: the throat narrows and the air rubs audibly – without voice.',
+        mistakes: [
+          'Not like the German h: without the narrowing أُحِلَّ (“was made lawful”) becomes أُهِلَّ (“was invoked”).',
+          'Not like the ch in “Bach”: there the back of the tongue rubs the palate – that is Khāʾ. For Ḥāʾ the mouth stays free, only the throat narrows.',
+          'Voiceless (Hams): if it hums, it becomes ʿAyn.',
+        ],
+      },
+      ghayn: {
+        name: 'Ghayn',
+        short: 'heavy, voiced, a soft friction',
+        makhraj:
+          'The upper part of the throat, near the mouth, like Khāʾ: the air rubs at the back and the voice sounds with it.',
+        mistakes: [
+          'Close to the German uvular r in “rot”, but it does not rattle: Ghayn rubs softly and evenly.',
+          'Voiced: without the hum it becomes Khāʾ – غَيْرَ (“except”) turns into خَيْرَ (“good”).',
+          'Heavy (Istiʿlāʾ): the back of the tongue rises, the vowel after it sounds full.',
+        ],
+      },
+      kha: {
+        name: 'Khāʾ',
+        short: 'heavy, voiceless, like the ch in “Bach”',
+        makhraj:
+          'The upper part of the throat, near the mouth, like Ghayn: the air rubs audibly, without voice.',
+        mistakes: [
+          'Like the ch in “Bach”, never like in “ich”: the light ch is too far forward.',
+          'Heavy (Istiʿlāʾ): the vowel after it sounds dark and full – خَلَقَ, not light.',
+          'Do not confuse it with Ḥāʾ: Khāʾ rubs higher up; for Ḥāʾ only the throat narrows.',
+        ],
+      },
     },
     makhraj: 'Makhraj · where it is made',
     sifat: 'Ṣifāt · its qualities',
     sifa: {
+      shidda: {
+        name: 'Shidda',
+        meaning:
+          'Firm: the sound is held back completely and stops – it does not flow on.',
+      },
       hams: {
         name: 'Hams',
         meaning: 'Whisper: the breath flows on, the voice does not vibrate.',
@@ -847,6 +928,24 @@ export const en: Messages = {
         intro: 'Ten words, by ear only: do you hear Sīn, Zāy or Ṣād?',
         question: 'Which letter do you hear?',
       },
+      hamzaAyn: {
+        title: 'Hamza or ʿAyn?',
+        intro:
+          'Ten words, by ear only: a clear onset (Hamza) or a pressed sound from the throat (ʿAyn)?',
+        question: 'Which letter do you hear?',
+      },
+      hSounds: {
+        title: 'Hāʾ, Ḥāʾ or Khāʾ?',
+        intro:
+          'Ten words, by ear only: a soft breath, a strong one from the narrowed throat, or friction as in “Bach”?',
+        question: 'Which letter do you hear?',
+      },
+      khGh: {
+        title: 'Khāʾ or Ghayn?',
+        intro:
+          'Ten words, by ear only: does it rub without voice (Khāʾ) or with voice (Ghayn)?',
+        question: 'Which letter do you hear?',
+      },
       weight: {
         title: 'Heavy or light?',
         intro: 'Ten words with Rāʾ: does it sound heavy or light?',
@@ -858,6 +957,12 @@ export const en: Messages = {
       options: 'Answers',
       weights: { heavy: 'heavy', light: 'light' },
       why: {
+        hamza: 'Hamza: a short, firm onset – no pressing.',
+        ha: 'Hāʾ: a soft, open breath.',
+        ayn: 'ʿAyn: pressed from the middle of the throat, the voice sounds.',
+        hha: 'Ḥāʾ: a strong breath from the narrowed throat, no friction above.',
+        ghayn: 'Ghayn: a soft friction with voice.',
+        kha: 'Khāʾ: friction without voice, as in “Bach”.',
         sin: 'Sīn: light, sharp and voiceless.',
         zay: 'Zāy: voiced – it buzzes – but thin.',
         sad: 'Ṣād: heavy, the back of the tongue rises.',

@@ -7,11 +7,15 @@ import './lab.css';
  * Where each point sits on the drawing (viewBox 640 × 700, the face looking left). The
  * whistling letters: the tip of the tongue at the incisors, a narrow gap for the air; rāʾ:
  * the tip of the tongue against the gum ridge behind the upper incisors, a little behind the
- * point of nūn.
+ * point of nūn; the throat's three points down the throat.
  */
 const POINTS: Record<Point, { x: number; y: number }> = {
   whistle: { x: 180, y: 406 },
   ra: { x: 194, y: 368 },
+  // The throat from the mouth down: its upper part (غ خ), its middle (ع ح), its deepest (ء ه).
+  halqNear: { x: 429, y: 430 },
+  halqMid: { x: 430, y: 515 },
+  halqDeep: { x: 432, y: 610 },
 };
 
 /** Where each area's number stands on the drawing; the lips' stands just in front of them. */
@@ -55,7 +59,9 @@ export function HeadDiagram({ point }: { point?: Point }) {
       >
         <title id={`${id}-title`}>{t.title}</title>
         <desc id={`${id}-desc`}>
-          {label ? `${t.description} ${label.line1} – ${label.line2}.` : t.description}
+          {label
+            ? `${t.description} ${[label.line1, label.line2].filter(Boolean).join(' – ')}.`
+            : t.description}
         </desc>
         {/* Head outline */}
         <path
