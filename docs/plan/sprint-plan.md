@@ -43,14 +43,14 @@
 
 ## S4–S5 · Recite to him (Oct 19 – Nov 1)
 
-| Story                                         | Acceptance                                                         | Status                                                                                                                                                            |
-| --------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| S4.1 Recording and offline upload (F7)        | consent asked once; upload resumes after offline                   | done early (owner, 2026-10-06): MediaRecorder, IndexedDB outbox sent on reconnect, idempotent upload; sound in Postgres until the bucket exists (ADR-0012 update) |
-| S4.2 Listening queue, marks, voice notes (T3) | only the ḥalaqa's teachers can play a recording (integration test) | queue, verdict, quick remark and note done; marks on words and voice notes next                                                                                   |
-| S4.3 ʿArḍ log (T4)                            | per student and sūra; included in the export                       |                                                                                                                                                                   |
-| S5.1 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |                                                                                                                                                                   |
-| S5.2 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      | sync done early (owner, 2026-10-07, ADR-0022): deck and best times merged with the account, guest hint on Today and the path; XP and streaks next                 |
-| S5.3 Production server and pilot readiness    | own server, approval step; restore drill passed; gate G3 met       |                                                                                                                                                                   |
+| Story                                         | Acceptance                                                         | Status                                                                                                                                                                                     |
+| --------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| S4.1 Recording and offline upload (F7)        | consent asked once; upload resumes after offline                   | done early (owner, 2026-10-06): MediaRecorder, IndexedDB outbox sent on reconnect, idempotent upload; sound in Postgres until the bucket exists (ADR-0012 update)                          |
+| S4.2 Listening queue, marks, voice notes (T3) | only the ḥalaqa's teachers can play a recording (integration test) | queue, verdict, quick remark and note done; marks on words and voice notes next                                                                                                            |
+| S4.3 ʿArḍ log (T4)                            | per student and sūra; included in the export                       |                                                                                                                                                                                            |
+| S5.1 Letter lab (F5) and units 1, 3, 4        | SVGs reviewed by the sheikh                                        |                                                                                                                                                                                            |
+| S5.2 Port Suffa's sync and engagement         | progress syncs across devices; XP and streaks                      | done early (owner, 2026-10-07): sync (ADR-0022) and XP, levels, streak with shields from an activity log (ADR-0023, `packages/engagement` ported from Suffa); daily quests and badges next |
+| S5.3 Production server and pilot readiness    | own server, approval step; restore drill passed; gate G3 met       |                                                                                                                                                                                            |
 
 ## S6–S9 · Pilot ḥalaqa (Nov 2 – Nov 29)
 
@@ -62,8 +62,9 @@
 
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 
-| Date       | Change                                                                                        | From            | To                                                |
-| ---------- | --------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------- |
-| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                          | Suffa `3540971` | ʿArḍa S0.3                                        |
-| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)        | ʿArḍa           | Suffa (to check: its lockfile has one copy today) |
-| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language) | ʿArḍa           | Suffa (its ADR-0021 plans languages)              |
+| Date       | Change                                                                                        | From            | To                                                  |
+| ---------- | --------------------------------------------------------------------------------------------- | --------------- | --------------------------------------------------- |
+| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                          | Suffa `3540971` | ʿArḍa S0.3                                          |
+| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)        | ʿArḍa           | Suffa (to check: its lockfile has one copy today)   |
+| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language) | ʿArḍa           | Suffa (its ADR-0021 plans languages)                |
+| 2026-10-07 | Engagement rules: day keys, XP-level curve, streak with shields (`packages/engagement`)       | Suffa `3540971` | ʿArḍa S5.2 (ADR-0023; own XP weights, activity log) |
