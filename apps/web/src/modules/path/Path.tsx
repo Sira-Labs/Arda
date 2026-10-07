@@ -1,3 +1,4 @@
+import { passedUnits } from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { Link } from 'react-router-dom';
 import { CARDS, CARD_UNITS, UNIT_CARDS, cardName, type CardUnit } from '@/content/units';
@@ -26,6 +27,8 @@ const GAMES: Record<
 export function Path() {
   const { m } = useI18n();
   const review = useReview();
+  // Passed unit tests mark the path; the next unit is recommended, never locked (ADR-0024).
+  const passed = passedUnits(Object.values(review.deck.activity ?? {}));
   return (
     <div className="stack" style={{ gap: 32, maxWidth: 720 }}>
       <h1>{m.path.eyebrow}</h1>
@@ -38,18 +41,31 @@ export function Path() {
         </Link>
       </section>
 
-      {CARD_UNITS.map((unit) => (
-        <section
-          key={unit}
-          className="stack"
-          style={{ gap: 12 }}
-          aria-labelledby={`unit-${unit}`}
-        >
-          <h2 id={`unit-${unit}`}>{m.path.units[unit].title}</h2>
-          <p className="muted">{m.path.units[unit].intro}</p>
-          <Unit unit={unit} />
-        </section>
-      ))}
+      {CARD_UNITS.map((unit) => {
+        const before = CARD_UNITS.filter((u) => u < unit).at(-1);
+        return (
+          <section
+            key={unit}
+            className="stack"
+            style={{ gap: 12 }}
+            aria-labelledby={`unit-${unit}`}
+          >
+            <h2 id={`unit-${unit}`}>
+              {m.path.units[unit].title}
+              {passed.has(unit) && (
+                <span className="chip chip-done" style={{ marginInlineStart: 8 }}>
+                  ✓ {m.games.test.passed}
+                </span>
+              )}
+            </h2>
+            <p className="muted">{m.path.units[unit].intro}</p>
+            {before !== undefined && !passed.has(before) && !passed.has(unit) && (
+              <p className="muted">{m.games.test.recommended(before)}</p>
+            )}
+            <Unit unit={unit} passed={passed.has(unit)} />
+          </section>
+        );
+      })}
 
       <section className="card stack" style={{ gap: 8 }} aria-labelledby="review">
         <h2 id="review" className="h-small">
@@ -75,8 +91,8 @@ export function Path() {
   );
 }
 
-/** A unit's rule cards, then its games. */
-function Unit({ unit }: { unit: CardUnit }) {
+/** A unit's rule cards, then its games and its test. */
+function Unit({ unit, passed }: { unit: CardUnit; passed: boolean }) {
   const { m, language } = useI18n();
   return (
     <>
@@ -116,6 +132,19 @@ function Unit({ unit }: { unit: CardUnit }) {
             </Link>
           </li>
         ))}
+        <li>
+          <Link className="card path-card" to={`/pfad/${unit}/test`}>
+            <span className="stack" style={{ gap: 4 }}>
+              <strong>{m.games.test.title}</strong>
+              <span className="muted">{m.games.test.intro}</span>
+            </span>
+            {passed ? (
+              <span className="chip chip-done">✓ {m.games.test.passed}</span>
+            ) : (
+              <span className="chip">{m.games.test.open}</span>
+            )}
+          </Link>
+        </li>
       </ul>
     </>
   );

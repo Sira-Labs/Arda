@@ -1,10 +1,16 @@
-import type { ActivityKind } from '@arda/engagement';
+import { UNIT_TEST_PASS, passesUnitTest, type ActivityKind } from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
-import { NO_QALQALA, cardName, type AnswerId } from '@/content/units';
+import {
+  CARD_UNITS,
+  NO_QALQALA,
+  cardName,
+  type AnswerId,
+  type CardUnit,
+} from '@/content/units';
 import { optionsOf, type Question } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
 import type { Messages } from '@/i18n/messages';
@@ -38,11 +44,12 @@ export function RuleQuiz({
   onDone,
   again,
   offerReview = true,
+  unitTest,
 }: {
   /** The game, as the activity log names it (ADR-0023). */
   activity: Extract<
     ActivityKind,
-    'which-rule' | 'sort-28' | 'review' | 'which-rule-3' | 'qalqala-letters'
+    'which-rule' | 'sort-28' | 'review' | 'which-rule-3' | 'qalqala-letters' | 'unit-test'
   >;
   questions: readonly Question[];
   eyebrow: string;
@@ -54,6 +61,8 @@ export function RuleQuiz({
   again?: () => void;
   /** Whether the results link to the review session (not from inside it). */
   offerReview?: boolean;
+  /** The unit whose test this is (ADR-0024): logged with it, and the results say passed or not. */
+  unitTest?: CardUnit;
 }) {
   const { m } = useI18n();
   const review = useReview();
@@ -67,7 +76,7 @@ export function RuleQuiz({
   const finish = (rightCount: number) => {
     const xp = review.logActivity({
       kind: activity,
-      ref: '',
+      ref: unitTest ? `unit-${unitTest}` : '',
       right: rightCount,
       total: questions.length,
     });
@@ -114,7 +123,12 @@ export function RuleQuiz({
         <h1 className="rule-title">{title}</h1>
 
         {result ? (
-          <Results result={result} again={again} offerReview={offerReview} />
+          <Results
+            result={result}
+            again={again}
+            offerReview={offerReview}
+            unitTest={unitTest}
+          />
         ) : question ? (
           <QuestionView
             key={question.id}
@@ -284,13 +298,17 @@ function Results({
   result,
   again,
   offerReview,
+  unitTest,
 }: {
   result: QuizResult;
   again?: () => void;
   offerReview: boolean;
+  unitTest?: CardUnit;
 }) {
   const { m } = useI18n();
   const review = useReview();
+  const passed = unitTest !== undefined && passesUnitTest(result.right, result.total);
+  const following = unitTest && CARD_UNITS.find((unit) => unit > unitTest);
   return (
     <section className="card stack" style={{ gap: 12 }} role="status">
       <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -303,6 +321,20 @@ function Results({
         )}
       </div>
       {result.ms !== undefined && <TimeLine ms={result.ms} />}
+      {unitTest !== undefined && (
+        <p>
+          <strong>
+            {passed
+              ? following
+                ? m.games.test.passedNext(following)
+                : m.games.test.passedLast
+              : m.games.test.notYet(
+                  Math.ceil(result.total * UNIT_TEST_PASS),
+                  result.total
+                )}
+          </strong>
+        </p>
+      )}
       <p>{m.games.newCards(result.missed)}</p>
       {offerReview && review.due.length > 0 && (
         <Link className="btn" to="/pfad/wiederholen">

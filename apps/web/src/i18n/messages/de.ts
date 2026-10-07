@@ -292,6 +292,18 @@ export const de = {
           ? '1 Karte kommt in deine Wiederholung.'
           : `${count} Karten kommen in deine Wiederholung.`,
     again: 'Nochmal',
+    /** The unit test (ADR-0024). */
+    test: {
+      title: 'Einheitentest',
+      intro: 'Zehn Fragen aus der Einheit. Ab acht richtigen ist sie bestanden.',
+      open: 'Test machen',
+      passed: 'Bestanden',
+      passedNext: (unit: number) => `Bestanden – weiter mit Einheit ${unit}.`,
+      passedLast: 'Bestanden – alle Einheiten des Blatts geschafft.',
+      notYet: (need: number, total: number) =>
+        `Noch nicht bestanden: Es braucht ${need} von ${total}. Wiederhole die Karten und versuch es noch einmal.`,
+      recommended: (unit: number) => `Empfohlen nach dem Test von Einheit ${unit}.`,
+    },
     back: 'Zur Einheit',
     unit3: {
       title: 'Welche Regel? · Einheit 3',

@@ -261,6 +261,17 @@ export const fr: Messages = {
           ? '1 carte va dans ta révision.'
           : `${count} cartes vont dans ta révision.`,
     again: 'Encore',
+    test: {
+      title: "Test de l'unité",
+      intro: "Dix questions sur l'unité. Huit bonnes réponses suffisent pour la réussir.",
+      open: 'Passer le test',
+      passed: 'Réussi',
+      passedNext: (unit) => `Réussi – passe à l'unité ${unit}.`,
+      passedLast: 'Réussi – toutes les unités de la fiche sont faites.',
+      notYet: (need, total) =>
+        `Pas encore réussi : il faut ${need} sur ${total}. Révise les cartes et réessaie.`,
+      recommended: (unit) => `Conseillé après le test de l'unité ${unit}.`,
+    },
     back: 'Vers l’unité',
     unit3: {
       title: 'Quelle règle ? · Unité 3',

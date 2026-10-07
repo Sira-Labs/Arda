@@ -15,6 +15,7 @@ import {
   UNIT_CARDS,
   type AnswerId,
   type CardId,
+  type CardUnit,
   type Unit2Card,
 } from '@/content/units';
 import type { NewCard } from '@/review/leitner';
@@ -168,6 +169,37 @@ export function qalqalaQuestion(letter: Letter): QalqalaQuestion {
 /** All 28 letters in random order: five of them are quṭbu jadd. */
 export function qalqalaRound(random: Random): QalqalaQuestion[] {
   return shuffle(LETTERS, random).map(qalqalaQuestion);
+}
+
+/** Questions in a unit test (ADR-0024); 8 right of them pass it. */
+export const UNIT_TEST_SIZE = 10;
+
+/**
+ * A unit's test: ten questions from what the unit taught, in random order. Unit 2 mixes six
+ * words with four letters to sort; unit 3 asks ten words; unit 4 the five qalqala letters among
+ * five others, so guessing "qalqala" every time cannot pass it.
+ */
+export function unitTest(unit: CardUnit, random: Random): Question[] {
+  switch (unit) {
+    case 2:
+      return shuffle(
+        [
+          ...shuffle(WORD_POOL, random).slice(0, 6),
+          ...shuffle(LETTERS, random).slice(0, 4).map(letterQuestion),
+        ],
+        random
+      );
+    case 3:
+      return shuffle(UNIT3_POOL, random).slice(0, UNIT_TEST_SIZE);
+    case 4: {
+      const bouncing = LETTERS.filter(isQalqalaLetter);
+      const others = shuffle(
+        LETTERS.filter((letter) => !isQalqalaLetter(letter)),
+        random
+      ).slice(0, UNIT_TEST_SIZE - bouncing.length);
+      return shuffle([...bouncing, ...others], random).map(qalqalaQuestion);
+    }
+  }
 }
 
 const isLetter = (value: string): value is Letter =>

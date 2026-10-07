@@ -16,17 +16,19 @@ import {
   shuffle,
   sortRound,
   unit3Round,
+  unitTest,
   whichRuleRound,
 } from '@/games/questions';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { WhichRule3 } from '@/modules/games/WhichRule3';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
+import { UnitTest } from '@/modules/games/UnitTest';
 import { WhichRule } from '@/modules/games/WhichRule';
 import { Path } from '@/modules/path/Path';
 import { DUE_REFRESH_MS, ReviewProvider } from '@/review/ReviewProvider';
 import { LocalReviewStore, MemoryReviewStore, STORAGE_KEY } from '@/review/store';
-import type { Letter } from '@arda/tajweed';
+import { isQalqalaLetter, type Letter } from '@arda/tajweed';
 import { fakeApi, Providers } from './render';
 
 /** A small seeded generator, so rounds are the same in every run. */
@@ -292,6 +294,96 @@ describe('the qalqala letters', () => {
     expect(Object.values(store.load().activity ?? {})).toEqual([
       expect.objectContaining({ kind: 'qalqala-letters', right: 27, total: 28 }),
     ]);
+  });
+});
+
+describe('unit tests (ADR-0024)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('ask ten questions from what each unit taught', () => {
+    const two = unitTest(2, seeded());
+    expect(two).toHaveLength(10);
+    expect(two.filter((q) => q.kind === 'which-rule')).toHaveLength(6);
+    expect(two.filter((q) => q.kind === 'sort-letter')).toHaveLength(4);
+    expect(new Set(two.map((q) => q.id)).size).toBe(10);
+    const three = unitTest(3, seeded());
+    expect(three).toHaveLength(10);
+    expect(three.every((q) => q.kind === 'which-rule' && q.unit === 3)).toBe(true);
+    const four = unitTest(4, seeded());
+    expect(four).toHaveLength(10);
+    // All five quṭbu jadd letters, among five others: "qalqala" every time cannot pass.
+    expect(four.filter((q) => q.answer === 'qalqala')).toHaveLength(5);
+    expect(new Set(four.map((q) => q.prompt)).size).toBe(10);
+  });
+
+  /** Answers the current letter question, rightly or not. */
+  const answerLetter = async (right: boolean) => {
+    const letter = document.querySelector('.paper .quran')!.textContent as Letter;
+    const bounces = isQalqalaLetter(letter);
+    await userEvent.click(
+      screen.getByRole('button', {
+        name: bounces === right ? 'Qalqala' : 'keine Qalqala',
+      })
+    );
+    await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+  };
+
+  it('is passed with eight of ten, logged for its unit and marked on the path', async () => {
+    const store = new MemoryReviewStore();
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store}>
+          <MemoryRouter initialEntries={['/pfad/4/test']}>
+            <Routes>
+              <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
+              <Route path="/pfad" element={<Path />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    expect(screen.getByRole('heading', { name: 'Einheitentest' })).toBeInTheDocument();
+    // Seven of ten: not yet.
+    for (let i = 0; i < 10; i++) await answerLetter(i >= 3);
+    expect(
+      screen.getByText(/Noch nicht bestanden: Es braucht 8 von 10/)
+    ).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
+    for (let i = 0; i < 10; i++) await answerLetter(i >= 2);
+    expect(
+      screen.getByText('Bestanden – alle Einheiten des Blatts geschafft.')
+    ).toBeInTheDocument();
+    expect(
+      Object.values(store.load().activity ?? {}).map((e) => [e.kind, e.ref, e.right])
+    ).toEqual([
+      ['unit-test', 'unit-4', 7],
+      ['unit-test', 'unit-4', 8],
+    ]);
+    await userEvent.click(screen.getByRole('link', { name: 'Zur Einheit' }));
+    expect(
+      screen.getByRole('heading', { name: /Einheit 4 · Qalqala/ })
+    ).toHaveTextContent('✓ Bestanden');
+    // Unit 3 is still open and recommended after unit 2's test; nothing is locked.
+    expect(
+      screen.getByText('Empfohlen nach dem Test von Einheit 2.')
+    ).toBeInTheDocument();
+    expect(document.querySelector('a[href="/pfad/3/ghunna"]')).not.toBeNull();
+  });
+
+  it('sends an unknown unit back to the path', () => {
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <MemoryRouter initialEntries={['/pfad/9/test']}>
+          <Routes>
+            <Route path="/pfad/:unit/test" element={<UnitTest />} />
+            <Route path="/pfad" element={<p>Pfad</p>} />
+          </Routes>
+        </MemoryRouter>
+      </Providers>
+    );
+    expect(screen.getByText('Pfad')).toBeInTheDocument();
   });
 });
 

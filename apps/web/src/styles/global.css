@@ -464,6 +464,13 @@ a {
   background: var(--bg-elev-2);
   color: var(--text-muted);
 }
+/* A passed unit test (ADR-0024): the same green as a right answer. */
+.chip-done {
+  background: var(--good);
+  color: var(--on-accent-2);
+  font-size: 0.8rem;
+  vertical-align: middle;
+}
 .h-small {
   font-size: 1.05rem;
   font-weight: 800;
