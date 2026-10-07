@@ -59,20 +59,42 @@ export const en: Messages = {
   },
   path: {
     eyebrow: 'Path',
-    unitTitle: 'Unit 2 · Nūn sākina and tanwīn',
-    intro:
-      'The letter after nūn sākina or tanwīn decides how you say it: 28 letters, four rules – 6 + 6 + 1 + 15.',
+    units: {
+      1: {
+        title: 'Unit 1 · Makhārij and ṣifāt',
+        intro:
+          'Where each letter is made: five areas, seventeen points. In the lab you start with sīn, zāy, ṣād and rāʾ; the other letters follow.',
+      },
+      2: {
+        title: 'Unit 2 · Nūn sākina and tanwīn',
+        intro:
+          'The letter after nūn sākina or tanwīn decides how you say it: 28 letters, four rules – 6 + 6 + 1 + 15.',
+      },
+      3: {
+        title: 'Unit 3 · Ghunna and mīm sākina',
+        intro:
+          'Ghunna always lasts 2 counts. With mīm sākina the next letter decides: bāʾ, mīm or any other.',
+      },
+      4: {
+        title: 'Unit 4 · Qalqala',
+        intro: 'Five letters bounce back when they rest: ق ط ب ج د – quṭbu jadd.',
+      },
+    },
+    lab: 'Open the letter lab',
     letters: (count) => (count === 1 ? '1 letter' : `${count} letters`),
-    next: 'Unit 3 (Ghunna and mīm sākina) and unit 4 (Qalqala) follow, also from your sheikh’s sheet.',
+    next: 'Units 5 (madd) to 7 (waqf) follow after the pilot.',
   },
   ruleCard: {
-    eyebrow: 'Unit 2 · Understand',
+    eyebrow: (unit) => `Unit ${unit} · Understand`,
     close: 'Close',
     progress: (index, total) => `Card ${index} of ${total}`,
     draft: 'Draft',
     draftHint: 'Not yet reviewed by your sheikh.',
     letters: 'When one of these letters follows',
-    examples: 'Examples from your sheet',
+    examples: 'Examples',
+    lettersShadda: 'These letters with shadda',
+    lettersSukun: 'These letters with sukūn',
+    allOtherLetters: 'Every letter except bāʾ and mīm',
     decides: 'decides the rule',
     followerKey: 'underlined = the letter that decides',
     clear: 'no colour = said clearly',
@@ -144,9 +166,57 @@ export const en: Messages = {
       ],
       tip: 'Memory aid: the first letters of “ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā”.',
     },
+    ghunna: {
+      title: 'Nūn and mīm with shadda: always ghunna',
+      steps: [
+        'Spot a nūn or mīm with shadda (نّ مّ).',
+        'Ghunna is a nasal sound from the khayshūm: hold it for 2 counts.',
+        'Check yourself: if you hold your nose, the sound stops.',
+        'Strength of the ghunna: shadda → ikhfāʾ and iqlāb → idghām → plain nūn or mīm.',
+      ],
+      tip: 'Ghunna belongs to nūn and mīm themselves: even without a rule it sounds softly.',
+    },
+    'ikhfa-shafawi': {
+      title: 'Mīm sākina before bāʾ: hidden, with ghunna',
+      steps: [
+        'Spot a mīm sākina (مْ) at the end of a word.',
+        'If the next word starts with bāʾ, it is ikhfāʾ shafawī.',
+        'Close the lips lightly, without pressing, and hold the ghunna for 2 counts.',
+        'Then open into the bāʾ.',
+      ],
+      tip: '“Shafawī” means “of the lips”: mīm and bāʾ both come from the lips.',
+    },
+    'idgham-shafawi': {
+      title: 'Mīm sākina before mīm: merged, with ghunna',
+      steps: [
+        'Spot a mīm sākina before a mīm.',
+        'The two mīms merge into one mīm with shadda.',
+        'Hold the ghunna for 2 counts.',
+      ],
+      tip: 'It is also called idghām mithlayn ṣaghīr: two identical letters, the first resting.',
+    },
+    'izhar-shafawi': {
+      title: 'Mīm sākina before all other letters: clear',
+      steps: [
+        'Spot a mīm sākina before any letter but bāʾ and mīm.',
+        'Say the mīm clearly, without ghunna and without merging.',
+        'Especially before wāw and fāʾ: do not close the lips too early and hide nothing.',
+      ],
+      tip: 'Iẓhār shafawī applies before 26 letters: all but bāʾ and mīm.',
+    },
+    qalqala: {
+      title: 'The bounce of ق ط ب ج د with sukūn',
+      steps: [
+        'Spot one of the five letters ق ط ب ج د (quṭbu jadd) with sukūn.',
+        'Touch the point of articulation and release it quickly: a short bounce.',
+        'The bounce is not a vowel: add no “a”, “i” or “u”.',
+        'When stopping at the end of a word (e.g. أَحَدْ), the bounce is strongest.',
+      ],
+      tip: 'Mnemonic: quṭbu jadd (قُطْبُ جَدٍّ) – its letters are the five.',
+    },
   },
   games: {
-    eyebrow: 'Unit 2 · Practise',
+    eyebrow: (unit) => `Unit ${unit} · Practise`,
     practise: 'Practise',
     progress: (index, total) => `${index} / ${total}`,
     seconds: (seconds) => `${seconds.toLocaleString('en')} s`,
@@ -188,6 +258,21 @@ export const en: Messages = {
           : `${count} cards go into your review.`,
     again: 'Again',
     back: 'To the unit',
+    unit3: {
+      title: 'Which rule? · Unit 3',
+      intro: 'Mīm sākina or shadda: ten words, four rules.',
+      question: 'Which rule applies to the marked mīm or nūn?',
+    },
+    qalqala: {
+      title: 'Qalqala letters',
+      intro: 'Is the letter one of quṭbu jadd? All 28, one after another.',
+      question: 'With a sukūn, does this letter bounce back?',
+      yes: 'Qalqala',
+      no: 'no qalqala',
+      isOne: 'is one of quṭbu jadd',
+      isNot: 'is not one of quṭbu jadd',
+    },
+    shadda: 'nūn or mīm with shadda',
   },
   halaqa: {
     mine: 'My ḥalaqāt',

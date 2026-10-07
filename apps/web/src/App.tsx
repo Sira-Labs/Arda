@@ -6,7 +6,9 @@ import { Admin } from '@/modules/admin/Admin';
 import { SignIn } from '@/modules/account/SignIn';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
+import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
+import { WhichRule3 } from '@/modules/games/WhichRule3';
 import { Halaqa } from '@/modules/halaqa/Halaqa';
 import { Join } from '@/modules/halaqa/Join';
 import { Lab } from '@/modules/lab/Lab';
@@ -27,9 +29,11 @@ import { SessionProvider } from '@/state/session';
 
 const router = createBrowserRouter([
   // Learning screens bring their own shell: no navigation bar, a close button and progress.
-  { path: '/pfad/2/:rule', element: <RuleCardPage /> },
+  { path: '/pfad/:unit/:rule', element: <RuleCardPage /> },
   { path: '/pfad/2/spiel/welche-regel', element: <WhichRule /> },
   { path: '/pfad/2/spiel/sortieren', element: <SortLetters /> },
+  { path: '/pfad/3/spiel/welche-regel', element: <WhichRule3 /> },
+  { path: '/pfad/4/spiel/buchstaben', element: <QalqalaLetters /> },
   { path: '/pfad/wiederholen', element: <ReviewSession /> },
   { path: '/labor/:letter/quiz', element: <LabQuizPage /> },
   {

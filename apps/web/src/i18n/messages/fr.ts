@@ -60,20 +60,43 @@ export const fr: Messages = {
   },
   path: {
     eyebrow: 'Parcours',
-    unitTitle: 'Unité 2 · Nūn sākina et tanwīn',
-    intro:
-      'La lettre qui suit le nūn sākina ou le tanwīn décide de la prononciation : 28 lettres, quatre règles – 6 + 6 + 1 + 15.',
+    units: {
+      1: {
+        title: 'Unité 1 · Makhārij et ṣifāt',
+        intro:
+          'D’où vient chaque lettre : cinq zones, dix-sept points. Au labo, tu commences par sīn, zāy, ṣād et rāʾ ; les autres lettres suivent.',
+      },
+      2: {
+        title: 'Unité 2 · Nūn sākina et tanwīn',
+        intro:
+          'La lettre qui suit le nūn sākina ou le tanwīn décide de la prononciation : 28 lettres, quatre règles – 6 + 6 + 1 + 15.',
+      },
+      3: {
+        title: 'Unité 3 · Ghunna et mīm sākina',
+        intro:
+          'La ghunna dure toujours 2 temps. Pour le mīm sākina, la lettre suivante décide : bāʾ, mīm ou toutes les autres.',
+      },
+      4: {
+        title: 'Unité 4 · Qalqala',
+        intro:
+          'Cinq lettres rebondissent quand elles portent un sukūn : ق ط ب ج د – quṭbu jadd.',
+      },
+    },
+    lab: 'Ouvrir le labo des lettres',
     letters: (count) => (count === 1 ? '1 lettre' : `${count} lettres`),
-    next: 'Les unités 3 (ghunna et mīm sākina) et 4 (qalqala) suivent, elles aussi tirées de la feuille de ton cheikh.',
+    next: 'Les unités 5 (madd) à 7 (waqf) suivent après le pilote.',
   },
   ruleCard: {
-    eyebrow: 'Unité 2 · Comprendre',
+    eyebrow: (unit) => `Unité ${unit} · Comprendre`,
     close: 'Fermer',
     progress: (index, total) => `Carte ${index} sur ${total}`,
     draft: 'Brouillon',
     draftHint: 'Pas encore relu par ton cheikh.',
     letters: 'Si l’une de ces lettres suit',
-    examples: 'Exemples de ta feuille',
+    examples: 'Exemples',
+    lettersShadda: 'Ces lettres avec shadda',
+    lettersSukun: 'Ces lettres avec sukūn',
+    allOtherLetters: 'Toutes les lettres sauf bāʾ et mīm',
     decides: 'décide de la règle',
     followerKey: 'souligné = la lettre qui décide',
     clear: 'sans couleur = prononcé clairement',
@@ -145,9 +168,57 @@ export const fr: Messages = {
       ],
       tip: 'Moyen mnémotechnique : les initiales de « ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā ».',
     },
+    ghunna: {
+      title: 'Nūn et mīm avec shadda : toujours la ghunna',
+      steps: [
+        'Repère un nūn ou un mīm avec shadda (نّ مّ).',
+        'La ghunna est un son nasal qui vient du khayshūm : tiens-la 2 temps.',
+        'Vérifie : si tu te bouches le nez, le son s’arrête.',
+        'Force de la ghunna : shadda → ikhfāʾ et iqlāb → idghām → nūn ou mīm simple.',
+      ],
+      tip: 'La ghunna appartient au nūn et au mīm eux-mêmes : même sans règle, elle résonne doucement.',
+    },
+    'ikhfa-shafawi': {
+      title: 'Mīm sākina devant bāʾ : caché, avec ghunna',
+      steps: [
+        'Repère un mīm sākina (مْ) en fin de mot.',
+        'Si le mot suivant commence par bāʾ, c’est l’ikhfāʾ shafawī.',
+        'Ferme légèrement les lèvres, sans presser, et tiens la ghunna 2 temps.',
+        'Puis ouvre sur le bāʾ.',
+      ],
+      tip: '« Shafawī » veut dire « des lèvres » : le mīm et le bāʾ viennent tous deux des lèvres.',
+    },
+    'idgham-shafawi': {
+      title: 'Mīm sākina devant mīm : fusion, avec ghunna',
+      steps: [
+        'Repère un mīm sākina devant un mīm.',
+        'Les deux mīm fusionnent en un mīm avec shadda.',
+        'Tiens la ghunna 2 temps.',
+      ],
+      tip: 'On l’appelle aussi idghām mithlayn ṣaghīr : deux lettres identiques, la première au repos.',
+    },
+    'izhar-shafawi': {
+      title: 'Mīm sākina devant toutes les autres lettres : clair',
+      steps: [
+        'Repère un mīm sākina devant une lettre autre que bāʾ et mīm.',
+        'Prononce le mīm clairement, sans ghunna et sans fusion.',
+        'Surtout devant wāw et fāʾ : ne ferme pas les lèvres trop tôt et ne cache rien.',
+      ],
+      tip: 'L’iẓhār shafawī vaut devant 26 lettres : toutes sauf bāʾ et mīm.',
+    },
+    qalqala: {
+      title: 'Le rebond de ق ط ب ج د avec sukūn',
+      steps: [
+        'Repère l’une des cinq lettres ق ط ب ج د (quṭbu jadd) avec sukūn.',
+        'Touche le point d’articulation et relâche-le vite : un bref rebond.',
+        'Le rebond n’est pas une voyelle : n’ajoute ni « a », ni « i », ni « u ».',
+        'En s’arrêtant en fin de mot (par ex. أَحَدْ), le rebond est le plus fort.',
+      ],
+      tip: 'Mot-repère : quṭbu jadd (قُطْبُ جَدٍّ) – ses lettres sont les cinq.',
+    },
   },
   games: {
-    eyebrow: 'Unité 2 · S’entraîner',
+    eyebrow: (unit) => `Unité ${unit} · S’entraîner`,
     practise: 'S’entraîner',
     progress: (index, total) => `${index} / ${total}`,
     seconds: (seconds) => `${seconds.toLocaleString('fr-FR')}\u202fs`,
@@ -191,6 +262,21 @@ export const fr: Messages = {
           : `${count} cartes vont dans ta révision.`,
     again: 'Encore',
     back: 'Vers l’unité',
+    unit3: {
+      title: 'Quelle règle ? · Unité 3',
+      intro: 'Mīm sākina ou shadda : dix mots, quatre règles.',
+      question: 'Quelle règle pour le mīm ou le nūn marqué ?',
+    },
+    qalqala: {
+      title: 'Les lettres de la qalqala',
+      intro: 'La lettre fait-elle partie de quṭbu jadd ? Les 28, l’une après l’autre.',
+      question: 'Avec un sukūn, cette lettre rebondit-elle ?',
+      yes: 'Qalqala',
+      no: 'pas de qalqala',
+      isOne: 'fait partie de quṭbu jadd',
+      isNot: 'ne fait pas partie de quṭbu jadd',
+    },
+    shadda: 'nūn ou mīm avec shadda',
   },
   halaqa: {
     mine: 'Mes ḥalaqāt',

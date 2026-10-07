@@ -20,6 +20,7 @@ export {
 } from './rules';
 export { detect, type Occurrence } from './detect';
 export { SHEET_EXAMPLES, IZHAR_EXCEPTIONS, type SheetExample } from './sheet';
+export { UNIT_EXAMPLES } from './examples';
 export {
   PACK_RULE_IDS,
   type PackRuleId,

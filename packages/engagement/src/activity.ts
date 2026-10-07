@@ -9,6 +9,8 @@ export const ACTIVITY_KINDS = [
   'review',
   'lab-quiz',
   'rule-card',
+  'which-rule-3',
+  'qalqala-letters',
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -18,6 +20,8 @@ export const ROUND_KINDS: ReadonlySet<ActivityKind> = new Set([
   'sort-28',
   'review',
   'lab-quiz',
+  'which-rule-3',
+  'qalqala-letters',
 ]);
 
 /** The most questions one round has (Sort the 28 asks 28). */

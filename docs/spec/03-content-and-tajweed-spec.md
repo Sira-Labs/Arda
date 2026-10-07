@@ -5,15 +5,15 @@
 
 ## 1. Content packs
 
-| Pack                           | Contents                                                                                   | Source                                                      | Status                                |
-| ------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | ------------------------------------- |
-| `uthmani-hafs-juz30@2`         | ʿUthmānī text of Juzʾ ʿAmma per word (Tanzil 1.1), basmala per sūra, rule spans            | Tanzil (text), cpfair (rules), built by `tools/`            | built                                 |
-| `uthmani-hafs-fatiha-baqara@1` | the same for al-Fātiḥa and al-Baqara (293 āyāt, 300 KB)                                    | Tanzil (text), cpfair (rules), built by `tools/`            | built                                 |
-| `indopak-hafs-juz30@1`         | IndoPak text of Juzʾ ʿAmma per word, 15-line page and line, rule spans carried from cpfair | DigitalKhatt (text, MIT), cpfair (rules), built by `tools/` | built                                 |
-| `indopak-hafs-fatiha-baqara@1` | the same for al-Fātiḥa and al-Baqara                                                       | DigitalKhatt (text, MIT), cpfair (rules), built by `tools/` | built                                 |
-| `units-2-4@1`                  | Rule cards, examples, games for units 2–4                                                  | the sheikh's sheet, reviewed by him                         | first                                 |
-| `makharij@1`                   | 28 letters → point, area, ṣifāt; SVGs                                                      | own work, CC BY 4.0                                         | first set (س ز ص ر) in the app, draft |
-| `madina-hafs-juz30@1`          | Madīna script layer                                                                        | Tanzil / DigitalKhatt Madīna                                | second                                |
+| Pack                           | Contents                                                                                   | Source                                                      | Status                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------- | -------------------------------------- |
+| `uthmani-hafs-juz30@2`         | ʿUthmānī text of Juzʾ ʿAmma per word (Tanzil 1.1), basmala per sūra, rule spans            | Tanzil (text), cpfair (rules), built by `tools/`            | built                                  |
+| `uthmani-hafs-fatiha-baqara@1` | the same for al-Fātiḥa and al-Baqara (293 āyāt, 300 KB)                                    | Tanzil (text), cpfair (rules), built by `tools/`            | built                                  |
+| `indopak-hafs-juz30@1`         | IndoPak text of Juzʾ ʿAmma per word, 15-line page and line, rule spans carried from cpfair | DigitalKhatt (text, MIT), cpfair (rules), built by `tools/` | built                                  |
+| `indopak-hafs-fatiha-baqara@1` | the same for al-Fātiḥa and al-Baqara                                                       | DigitalKhatt (text, MIT), cpfair (rules), built by `tools/` | built                                  |
+| `units-2-4@1`                  | Rule cards, examples, games for units 2–4                                                  | the sheikh's sheet, reviewed by him                         | in the app (`content/units.ts`), draft |
+| `makharij@1`                   | 28 letters → point, area, ṣifāt; SVGs                                                      | own work, CC BY 4.0                                         | first set (س ز ص ر) in the app, draft  |
+| `madina-hafs-juz30@1`          | Madīna script layer                                                                        | Tanzil / DigitalKhatt Madīna                                | second                                 |
 
 Every pack has a manifest (id, version, sources with licence and attribution, checksum) and is
 built reproducibly by `tools/` (see `tools/README.md`). The built packs and their index live in
@@ -94,6 +94,21 @@ rule in the example, in reading order) or, when it is absent, only `expectedRule
 | مِنْ بَعْدِ, سَمِيعٌ بَصِيرٌ, زَوْجٍ بَهِيجٍ                                           | iqlāb                           |
 | مِنْ تَابَ, مِنْ ثَمَرَةٍ, مَنْ جَاءَ, مِنْ دِيَارِهِمْ, نَفْسٍ ذَائِقَةٍ, مِنْكُمْ    | ikhfāʾ                          |
 | تَرْمِيهِمْ بِحِجَارَةٍ / لَكُمْ مَا / عَلَيْهِمْ سَلَامٌ                              | ikhfāʾ / idghām / iẓhār shafawī |
+
+## 4a. Examples beyond the sheet (units 3 and 4, draft)
+
+The sheet gives one example per mīm sākina rule and none for the ghunna of a shadda or for
+qalqala. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet (every
+sukūn written); `tools/test/examples.test.ts` checks every word key against the Tanzil text in
+the packs, and the engine test checks the rule. Drafts until the sheikh has reviewed them.
+
+| Rule                | Examples (word key of the first word)                                                                               |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Ghunna (shadda)     | إِنَّ (103:2:1), النَّاسِ (114:1:4), ثُمَّ (102:4:1), عَمَّ (78:1:1)                                                |
+| Ikhfāʾ shafawī      | وَمَا هُمْ بِمُؤْمِنِينَ (2:8:9)                                                                                    |
+| Idghām shafawī      | كَمْ مِنْ فِئَةٍ (2:249:49)                                                                                         |
+| Iẓhār shafawī       | أَلَمْ تَرَ (105:1:1)                                                                                               |
+| Qalqala (ق ط ب ج د) | قَدْ أَفْلَحَ (87:14:1), أَطْعَمَهُمْ (106:4:2), الْأَبْتَرُ (108:3:4), النَّجْدَيْنِ (90:10:2), خَلَقْنَا (90:4:2) |
 
 ## 5. Rendering checks (IndoPak font)
 

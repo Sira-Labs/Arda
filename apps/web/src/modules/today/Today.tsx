@@ -5,7 +5,7 @@ import { RuleLegend } from '@/components/RuleLegend';
 import { TajweedText } from '@/components/TajweedText';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
-import { cardName } from '@/content/unit2';
+import { cardName } from '@/content/units';
 import { SaveProgressHint } from '@/modules/account/SaveProgressHint';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';

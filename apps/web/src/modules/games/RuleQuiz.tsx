@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
-import { UNIT2_CARDS, cardName, type Unit2Card } from '@/content/unit2';
-import type { Question } from '@/games/questions';
+import { NO_QALQALA, cardName, type AnswerId } from '@/content/units';
+import { optionsOf, type Question } from '@/games/questions';
+import type { Language } from '@/i18n/languages';
+import type { Messages } from '@/i18n/messages';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useReview } from '@/review/ReviewProvider';
 import { focusSegments, segmentsOf } from '@/tajweed/segments';
@@ -38,7 +40,10 @@ export function RuleQuiz({
   offerReview = true,
 }: {
   /** The game, as the activity log names it (ADR-0023). */
-  activity: Extract<ActivityKind, 'which-rule' | 'sort-28' | 'review'>;
+  activity: Extract<
+    ActivityKind,
+    'which-rule' | 'sort-28' | 'review' | 'which-rule-3' | 'qalqala-letters'
+  >;
   questions: readonly Question[];
   eyebrow: string;
   title: string;
@@ -53,7 +58,7 @@ export function RuleQuiz({
   const { m } = useI18n();
   const review = useReview();
   const [index, setIndex] = useState(0);
-  const [chosen, setChosen] = useState<Unit2Card | null>(null);
+  const [chosen, setChosen] = useState<AnswerId | null>(null);
   const [right, setRight] = useState(0);
   const [result, setResult] = useState<QuizResult | null>(null);
   const started = useRef(clock());
@@ -83,7 +88,7 @@ export function RuleQuiz({
     else setIndex(index + 1);
   };
 
-  const choose = (card: Unit2Card) => {
+  const choose = (card: AnswerId) => {
     if (!question || chosen) return;
     const correct = card === question.answer;
     const rightCount = right + (correct ? 1 : 0);
@@ -151,8 +156,8 @@ function QuestionView({
   last,
 }: {
   question: Question;
-  chosen: Unit2Card | null;
-  onChoose: (card: Unit2Card) => void;
+  chosen: AnswerId | null;
+  onChoose: (card: AnswerId) => void;
   onNext: () => void;
   last: boolean;
 }) {
@@ -178,14 +183,18 @@ function QuestionView({
           </p>
         )}
         <p className="muted" style={{ textAlign: 'center' }}>
-          {question.kind === 'which-rule'
-            ? m.games.whichRule.question
-            : m.games.sort.question}
+          {question.kind === 'qalqala-letter'
+            ? m.games.qalqala.question
+            : question.kind === 'sort-letter'
+              ? m.games.sort.question
+              : question.unit === 3
+                ? m.games.unit3.question
+                : m.games.whichRule.question}
         </p>
       </div>
 
       <div className="options" role="group" aria-label={m.games.options}>
-        {UNIT2_CARDS.map((card) => (
+        {optionsOf(question).map((card) => (
           <button
             key={card}
             type="button"
@@ -194,7 +203,7 @@ function QuestionView({
             disabled={answered}
             onClick={() => onChoose(card)}
           >
-            {cardName(card, language)}
+            {answerName(card, language, m)}
           </button>
         ))}
       </div>
@@ -206,7 +215,7 @@ function QuestionView({
         >
           <strong>{correct ? m.games.good : m.games.check}</strong>
           <p>
-            {m.games.rightAnswer}: <b>{cardName(question.answer, language)}</b> ·{' '}
+            {m.games.rightAnswer}: <b>{answerName(question.answer, language, m)}</b> ·{' '}
             <Reason question={question} />
           </p>
           {!correct && <p className="muted">{m.games.toReview}</p>}
@@ -219,9 +228,30 @@ function QuestionView({
   );
 }
 
-/** Why: the letter that follows, and for the four exceptions that it is inside one word. */
+/** An answer's name: the rule card's, or "no qalqala". */
+function answerName(id: AnswerId, language: Language, m: Messages): string {
+  return id === NO_QALQALA ? m.games.qalqala.no : cardName(id, language);
+}
+
+/**
+ * Why: the letter that follows, and for the four exceptions that it is inside one word; the
+ * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters.
+ */
 function Reason({ question }: { question: Question }) {
   const { m } = useI18n();
+  if (question.kind === 'qalqala-letter') {
+    return (
+      <>
+        <span className="arabic" lang="ar" dir="rtl">
+          {question.prompt}
+        </span>{' '}
+        {question.answer === NO_QALQALA ? m.games.qalqala.isNot : m.games.qalqala.isOne}
+      </>
+    );
+  }
+  if (question.kind === 'which-rule' && question.focus.rule === 'ghunna-mushaddad') {
+    return <>{m.games.shadda}</>;
+  }
   const letter =
     question.kind === 'which-rule' ? question.focus.follower : question.prompt;
   const exception =
@@ -242,11 +272,7 @@ function Reason({ question }: { question: Question }) {
 }
 
 /** After an answer the right card turns green and a wrong choice is marked to check. */
-function optionClass(
-  card: Unit2Card,
-  chosen: Unit2Card | null,
-  answer: Unit2Card
-): string {
+function optionClass(card: AnswerId, chosen: AnswerId | null, answer: AnswerId): string {
   if (chosen === null) return 'btn option';
   if (card === answer) return 'btn option option-right';
   if (card === chosen) return 'btn option option-chosen';

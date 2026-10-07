@@ -23,7 +23,7 @@ export function SortLetters({
       timed
       clock={clock}
       questions={questions}
-      eyebrow={m.games.eyebrow}
+      eyebrow={m.games.eyebrow(2)}
       title={m.games.sort.title}
       onDone={(result) => {
         if (result.ms !== undefined) review.offerTime(SORT_GAME, result.ms);

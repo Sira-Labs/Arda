@@ -4,24 +4,28 @@ import { Link, useParams } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
 import {
-  UNIT2,
-  UNIT2_CARDS,
+  CARDS,
+  UNIT_CARDS,
   cardArabicName,
   cardName,
-  isUnit2Card,
+  isCardOf,
+  isCardUnit,
+  unitOf,
+  type CardId,
   type ExampleGroup,
-  type Unit2Card,
-} from '@/content/unit2';
+} from '@/content/units';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Soon } from '@/modules/Soon';
 import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
-/** `/pfad/2/:rule`: a rule card of unit 2, or "not found" for anything else. */
+/** `/pfad/:unit/:rule`: a rule card of units 2–4, or "not found" for anything else. */
 export function RuleCardPage() {
-  const { rule } = useParams();
-  if (!isUnit2Card(rule)) return <Soon page="notFound" />;
+  const { unit, rule } = useParams();
+  if (!isCardUnit(unit) || !isCardOf(Number(unit) as 2 | 3 | 4, rule)) {
+    return <Soon page="notFound" />;
+  }
   return <RuleCard id={rule} />;
 }
 
@@ -30,26 +34,30 @@ export function RuleCardPage() {
  * for it, every example of the sheet coloured by the engine with its case, the steps, and
  * where sources differ. Every colour on the card is named next to it.
  */
-export function RuleCard({ id }: { id: Unit2Card }) {
+export function RuleCard({ id }: { id: CardId }) {
   const { m } = useI18n();
   const review = useReview();
-  const card = UNIT2[id];
-  const index = UNIT2_CARDS.indexOf(id);
-  const previous = UNIT2_CARDS[index - 1];
-  const next = UNIT2_CARDS[index + 1];
+  const card = CARDS[id];
+  const unit = unitOf(id);
+  const cards: readonly CardId[] = UNIT_CARDS[unit];
+  const index = cards.indexOf(id);
+  const previous = cards[index - 1];
+  const next = cards[index + 1];
+  // Nūn and mīm sākina are decided by the next letter; a shadda or a sukūn is not.
+  const decided = card.groups.some((group) =>
+    ['nun-sakina-tanwin', 'mim-sakina'].includes(RULES[group.rule].subject)
+  );
   const families = [
     ...new Set(card.groups.map((group) => RULES[group.rule].family)),
   ].filter((family): family is RuleFamily => family !== null);
   const hasClear = card.groups.some((group) => RULES[group.rule].family === null);
 
   return (
-    <LearningShell closeTo="/pfad" progress={(index + 1) / UNIT2_CARDS.length}>
+    <LearningShell closeTo="/pfad" progress={(index + 1) / cards.length}>
       <article className="stack" style={{ gap: 20 }} aria-labelledby="rule-card-title">
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <p className="eyebrow">{m.ruleCard.eyebrow}</p>
-          <span className="muted">
-            {m.ruleCard.progress(index + 1, UNIT2_CARDS.length)}
-          </span>
+          <p className="eyebrow">{m.ruleCard.eyebrow(unit)}</p>
+          <span className="muted">{m.ruleCard.progress(index + 1, cards.length)}</span>
         </div>
 
         <header
@@ -88,12 +96,14 @@ export function RuleCard({ id }: { id: Unit2Card }) {
             </span>
           ))}
           {hasClear && <span>{m.ruleCard.clear}</span>}
-          <span>
-            <span className="arabic tj-follower" lang="ar" aria-hidden="true">
-              ب
-            </span>{' '}
-            {m.ruleCard.followerKey}
-          </span>
+          {decided && (
+            <span>
+              <span className="arabic tj-follower" lang="ar" aria-hidden="true">
+                ب
+              </span>{' '}
+              {m.ruleCard.followerKey}
+            </span>
+          )}
         </div>
 
         <ol className="steps">
@@ -128,7 +138,7 @@ export function RuleCard({ id }: { id: Unit2Card }) {
 
         <nav className="row card-nav">
           {previous ? (
-            <Link className="btn" to={`/pfad/2/${previous}`}>
+            <Link className="btn" to={`/pfad/${unit}/${previous}`}>
               {m.ruleCard.previous}
             </Link>
           ) : (
@@ -136,7 +146,7 @@ export function RuleCard({ id }: { id: Unit2Card }) {
           )}
           <Link
             className="btn btn-primary"
-            to={next ? `/pfad/2/${next}` : '/pfad'}
+            to={next ? `/pfad/${unit}/${next}` : '/pfad'}
             // Read to its end (ADR-0023): XP the first time, the streak every time.
             onClick={() =>
               review.logActivity({ kind: 'rule-card', ref: id, right: 0, total: 0 })
@@ -157,7 +167,7 @@ export function RuleCard({ id }: { id: Unit2Card }) {
 }
 
 /** The card's name in the reader's interface language. */
-function CardName({ id }: { id: Unit2Card }) {
+function CardName({ id }: { id: CardId }) {
   const { language } = useI18n();
   return <>{cardName(id, language)}</>;
 }
@@ -167,31 +177,60 @@ function Group({ group, titled }: { group: ExampleGroup; titled: boolean }) {
   const { m, language } = useI18n();
   const rule = RULES[group.rule];
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
-  const ghunna = rule.ghunna ? m.ruleCard.withGhunna : m.ruleCard.withoutGhunna;
+  // Qalqala is no question of ghunna; every other rule says whether it holds one.
+  const ghunna =
+    rule.subject === 'qalqala'
+      ? null
+      : rule.ghunna
+        ? m.ruleCard.withGhunna
+        : m.ruleCard.withoutGhunna;
+  const decided = rule.subject === 'nun-sakina-tanwin' || rule.subject === 'mim-sakina';
+  const lettersLabel =
+    rule.subject === 'ghunna'
+      ? m.ruleCard.lettersShadda
+      : rule.subject === 'qalqala'
+        ? m.ruleCard.lettersSukun
+        : m.ruleCard.letters;
   return (
     // Both idghām groups share the term, so the label names the ghunna too.
     <section
       className="stack"
-      aria-label={`${ruleName(group.rule, language)} · ${ghunna}`}
+      aria-label={
+        ghunna
+          ? `${ruleName(group.rule, language)} · ${ghunna}`
+          : ruleName(group.rule, language)
+      }
     >
-      <div className="row" style={{ gap: 8 }}>
-        {titled && <h2 className="h-small">{ruleName(group.rule, language)}</h2>}
-        <span className="chip chip-quiet">{ghunna}</span>
-      </div>
+      {(titled || ghunna) && (
+        <div className="row" style={{ gap: 8 }}>
+          {titled && <h2 className="h-small">{ruleName(group.rule, language)}</h2>}
+          {ghunna && <span className="chip chip-quiet">{ghunna}</span>}
+        </div>
+      )}
       <div className="stack" style={{ gap: 6 }}>
-        <p className="muted">{m.ruleCard.letters}</p>
-        <p className="letters arabic" lang="ar" dir="rtl">
-          {rule.letters.join(' ')}
-        </p>
+        {rule.letters.length > 0 ? (
+          <>
+            <p className="muted">{lettersLabel}</p>
+            <p className="letters arabic" lang="ar" dir="rtl">
+              {rule.letters.join(' ')}
+            </p>
+          </>
+        ) : (
+          // Iẓhār shafawī: every letter but bāʾ and mīm.
+          <p className="muted">{m.ruleCard.allOtherLetters}</p>
+        )}
       </div>
       {/* Right to left, so the examples read in the order of the sheet. */}
       <div className="paper examples" dir="rtl" aria-label={m.ruleCard.examples}>
         {group.examples.map((example) => (
           <figure key={example.text} className="example">
             <TajweedText segments={segmentsOf(example.text, only)} />
-            <figcaption className="muted" dir="auto">
-              {m.ruleCard.cases[example.case]}
-            </figcaption>
+            {/* Where it happens matters for nūn and mīm sākina, not for a shadda or a sukūn. */}
+            {decided && (
+              <figcaption className="muted" dir="auto">
+                {m.ruleCard.cases[example.case]}
+              </figcaption>
+            )}
           </figure>
         ))}
       </div>
