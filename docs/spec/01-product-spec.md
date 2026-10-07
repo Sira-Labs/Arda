@@ -194,7 +194,8 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
 - **T1 Ḥalaqāt.** One-to-one or a circle; invite by link or QR code; the teacher approves.
 - **T2 Assignments on the page** (ADR-0014): select āyāt or a word, pick _Lernen, Lesen,
   Nochmal rezitieren, Üben_ or a voice note, due date, reminder; "Von meinem Sheikh" comes
-  first on Today; done goes back to him.
+  first on Today; done goes back to him. _(Also by page of his printed muṣḥaf: "Seiten 8–9"
+  of the 15-line IndoPak copy or the Madīna print, owner 2026-10-07.)_
 - **T3 Listening queue.** Recordings waiting for him, the pre-check beside each; tap a word to
   mark it; reply by voice. _(Built: "Zum Abhören" on the ḥalaqa page, play, `good`/`again`, a
   quick remark (sīn, zāy and rāʾ among them) and his own words. Next: marks on words, voice

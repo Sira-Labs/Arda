@@ -1,4 +1,4 @@
-import type { Pack, PackIndex, PackIndexEntry } from '@arda/quran';
+import type { Pack, PackIndex, PackIndexEntry, PageLayout } from '@arda/quran';
 import { isPackRuleId, type PackRuleId } from '@arda/tajweed';
 // The index is part of the app build: the checksum a downloaded pack must match ships with
 // the app itself, so a pack changed on the way or on the server is refused (threat T6).
@@ -70,6 +70,21 @@ export function entryFor(
   const holding = index.packs.filter((p) => sura >= p.suras[0] && sura <= p.suras[1]);
   return holding.find((p) => p.script === script) ?? holding[0];
 }
+
+/** The pack of a script that has the printed page (numbered as that script prints it). */
+export function entryForPage(
+  page: number,
+  script: PackIndexEntry['script'],
+  index: PackIndex = builtIndex
+): PackIndexEntry | undefined {
+  return index.packs.find(
+    (p) => p.script === script && page >= p.pages[0] && page <= p.pages[1]
+  );
+}
+
+/** The script whose printed pages a layout numbers (ADR-0014 update 2026-10-07). */
+export const scriptOfLayout = (layout: PageLayout): PackIndexEntry['script'] =>
+  layout === 'madina' ? 'uthmani' : 'indopak';
 
 /** Whether a parsed file has the pack's shape and only known rules. */
 function isPack(value: unknown): value is MushafPack {

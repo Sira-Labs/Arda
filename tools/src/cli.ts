@@ -4,7 +4,7 @@
  *   npm run fetch -w @arda/tools   download the pinned sources into tools/.cache, checked
  *   npm run pack -w @arda/tools    build the packs from them into apps/web/public/packs
  *   npm run counts -w @arda/tools  write the words per āya to packages/quran/src/words.ts
- *   npm run pages -w @arda/tools   write the Madīna pages to packages/quran/src/pages.ts
+ *   npm run pages -w @arda/tools   write the Madīna and IndoPak pages to packages/quran/src
  *   npm run timings -w @arda/tools write the reciters' word timings to apps/web/public/audio
  *   npm run lab-clips -w @arda/tools  measure where each lab word sounds (needs ffmpeg and
  *                                     the network) into tools/lab-clips.json
@@ -23,11 +23,17 @@ import type { Pack, PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
 import { LAB_KEYS, buildLab, labModule, timedWord, type ShippedTimings } from './lab';
 import { envelope, serialiseClips, wordBounds, type LabClips } from './labClips';
-import { madinaPageStarts, pagesModule } from './pages';
+import {
+  indopakPageStarts,
+  indopakPagesModule,
+  madinaPageStarts,
+  pagesModule,
+} from './pages';
 import { buildSpec, pagesOf } from './build';
 import { serialise } from './pack';
 import { parseIndopak } from './indopak';
 import { PACKS } from './packs';
+import { SHEIKH_PAGE_OFFSET } from './indopakPack';
 import { parseTanzil } from './tanzil';
 import {
   TIMED_RECITERS,
@@ -46,6 +52,9 @@ const timingsDir = fileURLToPath(
 );
 const pagesFile = fileURLToPath(
   new URL('../../packages/quran/src/pages.ts', import.meta.url)
+);
+const indopakPagesFile = fileURLToPath(
+  new URL('../../packages/quran/src/indopakPages.ts', import.meta.url)
 );
 const countsFile = fileURLToPath(
   new URL('../../packages/quran/src/words.ts', import.meta.url)
@@ -181,7 +190,7 @@ async function writeCounts(): Promise<void> {
   process.stdout.write(`${countsFile}: ${counts.flat().length} āyāt\n`);
 }
 
-/** The Madīna page table, from the pinned Tanzil metadata. */
+/** The Madīna page table from the pinned Tanzil metadata; the IndoPak one from DigitalKhatt. */
 async function writePages(): Promise<void> {
   const sources = await loadSources();
   const raw = await readFile(`${cacheDir}${sources['tanzil-metadata'].file}`, 'utf8');
@@ -191,6 +200,17 @@ async function writePages(): Promise<void> {
   const starts = madinaPageStarts(raw);
   await writeFile(pagesFile, pagesModule(starts));
   process.stdout.write(`${pagesFile}: ${starts.length} pages\n`);
+
+  const indopakRaw = await readFile(
+    `${cacheDir}${sources['digitalkhatt-indopak'].file}`,
+    'utf8'
+  );
+  if (sha256(indopakRaw) !== sources['digitalkhatt-indopak'].sha256) {
+    throw new Error('digitalkhatt-indopak: checksum differs from the pinned one');
+  }
+  const indopak = indopakPageStarts(parseIndopak(indopakRaw));
+  await writeFile(indopakPagesFile, indopakPagesModule(indopak, 1 + SHEIKH_PAGE_OFFSET));
+  process.stdout.write(`${indopakPagesFile}: ${indopak.length} pages\n`);
 }
 
 /** Word timings of the reciters the player marks, for the sūras the app ships. */

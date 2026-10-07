@@ -640,6 +640,18 @@ a {
 .assignment-form textarea.input {
   padding: 10px 14px;
 }
+.assignment-form fieldset.choice {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.assignment-form fieldset.choice legend {
+  margin-bottom: 6px;
+  padding: 0;
+}
+.assignment-form p.wide {
+  margin: 0;
+}
 
 /* Muṣḥaf (spec F3): the sūra list, the text with tappable words, the word sheet */
 .sura-list {

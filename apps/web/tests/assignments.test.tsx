@@ -41,6 +41,7 @@ const task = (over: Partial<StudentAssignment> = {}): StudentAssignment => ({
   kind: 'read',
   studentId: null,
   range: { sura: 2, from: 1, to: 5 },
+  pages: null,
   focusRule: 'ikhfa',
   repetitions: 3,
   note: 'Achte auf die Ghunna.',
@@ -104,6 +105,7 @@ describe('"Von meinem Sheikh" on Today (T2)', () => {
               id: 'late',
               kind: 'recite',
               range: { sura: 112, from: 1, to: 4 },
+              pages: null,
               focusRule: null,
               repetitions: null,
               note: null,
@@ -114,6 +116,7 @@ describe('"Von meinem Sheikh" on Today (T2)', () => {
               id: 'learn',
               kind: 'learn',
               range: null,
+              pages: null,
               focusRule: 'idgham-no-ghunna',
               repetitions: null,
               note: null,
@@ -269,6 +272,7 @@ const given = (over: Partial<TeacherAssignment> = {}): TeacherAssignment => ({
   kind: 'recite',
   studentId: null,
   range: { sura: 112, from: 1, to: 4 },
+  pages: null,
   focusRule: null,
   repetitions: null,
   note: null,
@@ -351,6 +355,7 @@ describe('giving assignments on the ḥalaqa page (T2)', () => {
       kind: 'read',
       studentId: 's',
       range: { sura: 2, from: 1, to: 5 },
+      pages: null,
       focusRule: 'ikhfa',
       repetitions: 3,
       note: 'Langsam.',
@@ -361,6 +366,74 @@ describe('giving assignments on the ḥalaqa page (T2)', () => {
     expect(
       calls.filter((c) => c.path === `/api/v1/halaqat/${HALAQA}/assignments`).length
     ).toBe(3);
+  });
+
+  it('gives pages of the sheikh’s IndoPak muṣḥaf, showing the āyāt on them', async () => {
+    const { calls } = renderAt(
+      `/halaqa/${HALAQA}`,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}`]: () => view('teacher'),
+        [`GET /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+          Response.json({ role: 'teacher', assignments: [], more: false }),
+        [`POST /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+          Response.json({ id: 'new' }, { status: 201 }),
+      },
+      TEACHER
+    );
+    const user = userEvent.setup();
+    const form = (await screen.findByRole('heading', { name: 'Aufgabe geben' })).closest(
+      'form'
+    )!;
+    const f = within(form);
+    await user.selectOptions(f.getByLabelText('Art'), 'read');
+    await user.click(f.getByRole('radio', { name: 'Seiten' }));
+    expect(f.queryByLabelText('Sūra')).not.toBeInTheDocument();
+    expect(f.getByLabelText('Muṣḥaf')).toHaveValue('indopak-15');
+    // The copy's first page is 2 (al-Fātiḥa); a later first page moves the last one along.
+    expect(f.getByLabelText('von Seite')).toHaveValue(2);
+    await user.clear(f.getByLabelText('von Seite'));
+    await user.type(f.getByLabelText('von Seite'), '8');
+    expect(f.getByLabelText('bis Seite')).toHaveValue(8);
+    await user.clear(f.getByLabelText('bis Seite'));
+    await user.type(f.getByLabelText('bis Seite'), '9');
+    expect(f.getByText(/Auf diesen Seiten:/)).toHaveTextContent('البقرة 38–57');
+    await user.click(f.getByRole('button', { name: 'Aufgabe geben' }));
+
+    expect(await screen.findByText('Aufgabe gegeben.')).toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'POST')?.body).toMatchObject({
+      kind: 'read',
+      range: null,
+      pages: { layout: 'indopak-15', from: 8, to: 9 },
+    });
+  });
+
+  it('shows the āyāt of each sūra on Madīna pages that cross sūras', async () => {
+    renderAt(
+      `/halaqa/${HALAQA}`,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}`]: () => view('teacher'),
+        [`GET /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+          Response.json({ role: 'teacher', assignments: [], more: false }),
+      },
+      TEACHER
+    );
+    const user = userEvent.setup();
+    const form = (await screen.findByRole('heading', { name: 'Aufgabe geben' })).closest(
+      'form'
+    )!;
+    const f = within(form);
+    await user.click(f.getByRole('radio', { name: 'Seiten' }));
+    await user.selectOptions(f.getByLabelText('Muṣḥaf'), 'madina');
+    expect(f.getByLabelText('von Seite')).toHaveValue(1);
+    await user.clear(f.getByLabelText('von Seite'));
+    await user.type(f.getByLabelText('von Seite'), '604');
+    expect(f.getByText(/Auf diesen Seiten:/)).toHaveTextContent(
+      'الإخلاص 1–4 · الفلق 1–5 · الناس 1–6'
+    );
+    // Past the last page there is nothing to give.
+    await user.clear(f.getByLabelText('bis Seite'));
+    await user.type(f.getByLabelText('bis Seite'), '605');
+    expect(f.getByRole('button', { name: 'Aufgabe geben' })).toBeDisabled();
   });
 
   it('asks for a rule, not āyāt, when the student is to learn or practise', async () => {
@@ -499,6 +572,36 @@ describe('the language on Today', () => {
       expect(api.calls.filter((c) => c.path === '/api/v1/account/settings')).toEqual([
         { path: '/api/v1/account/settings', method: 'PATCH', body: { language: 'en' } },
       ])
+    );
+  });
+});
+
+describe('an assignment of pages', () => {
+  it('names the pages and their āyāt, and opens them in that muṣḥaf', async () => {
+    renderAt(
+      '/',
+      {
+        'GET /api/v1/halaqat': Response.json({ halaqat: [] }),
+        'GET /api/v1/assignments': Response.json({
+          assignments: [
+            task({
+              id: '00000000-0000-4000-8000-0000000000a1',
+              range: null,
+              pages: { layout: 'indopak-15', from: 8, to: 9 },
+              focusRule: null,
+            }),
+          ],
+        }),
+      },
+      STUDENT
+    );
+    const row = (await screen.findByText(/Seiten 8–9/)).closest('li')!;
+    expect(row).toHaveTextContent('Seiten 8–9 (IndoPak, 15 Zeilen) · البقرة 38–57');
+    expect(within(row).getByRole('link', { name: 'Im Muṣḥaf öffnen' })).toHaveAttribute(
+      'href',
+      `/mushaf/seite/8?layout=indopak-15&seiten=8-9&aufgabe=00000000-0000-4000-8000-0000000000a1&halaqa=${
+        task().halaqaId
+      }`
     );
   });
 });

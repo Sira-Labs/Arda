@@ -1120,6 +1120,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         studentId: null,
         kind: 'read',
         range: { sura: 1, from: 1, to: 7 },
+        pages: null,
         focusRule: 'ikhfa',
         repetitions: 3,
         note: 'Achte auf die Ghunna.',
@@ -1159,6 +1160,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         studentId: AMINA,
         kind: 'recite',
         range: { sura: 112, from: 1, to: 4 },
+        pages: null,
         focusRule: null,
         repetitions: null,
         note: null,
@@ -1172,6 +1174,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         kind: 'read',
         studentId: null,
         range: { sura: 1, from: 1, to: 7 },
+        pages: null,
         focusRule: 'ikhfa',
         repetitions: 3,
         note: 'Achte auf die Ghunna.',
@@ -1262,6 +1265,38 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       ).rejects.toThrow();
     });
 
+    it('keeps the pages of the printed muṣḥaf an assignment names (0009)', async () => {
+      const pages = { layout: 'indopak-15', from: 8, to: 9 } as const;
+      const id = await give({ kind: 'read', range: null, pages });
+      expect((await repo.open(AMINA, 50)).find((a) => a.id === id)).toMatchObject({
+        range: null,
+        pages,
+      });
+      const plain = await give({ range: { sura: 1, from: 1, to: 7 } });
+      expect((await repo.open(AMINA, 50)).find((a) => a.id === plain)?.pages).toBeNull();
+      // Reading without āyāt or pages, part of the pages, backwards, an unknown layout, and
+      // pages together with āyāt are refused by the database.
+      for (const [columns, values] of [
+        ['', ''],
+        [', page_layout, page_from', ", 'madina', 1"],
+        [', page_layout, page_from, page_to', ", 'madina', 9, 8"],
+        [', page_layout, page_from, page_to', ", 'warsh', 1, 1"],
+        [
+          ', sura, aya_from, aya_to, page_layout, page_from, page_to',
+          ", 1, 1, 7, 'madina', 1, 1",
+        ],
+      ]) {
+        await expect(
+          pool.query(
+            `insert into assignments (halaqa_id, kind, due_on${columns})
+             values ($1, 'read', '2026-10-09'${values})`,
+            [halaqaId]
+          ),
+          columns
+        ).rejects.toThrow();
+      }
+    });
+
     it('gives only to active students of that ḥalaqa', async () => {
       for (const studentId of [ZAID, TEACHER, '40000000-0000-4000-8000-000000000009']) {
         expect(
@@ -1270,6 +1305,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
             studentId,
             kind: 'practise',
             range: null,
+            pages: null,
             focusRule: 'iqlab',
             repetitions: null,
             note: null,
@@ -1466,6 +1502,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           studentId,
           kind: 'recite',
           range: { sura: 112, from: 1, to: 4 },
+          pages: null,
           focusRule: null,
           repetitions: null,
           note: null,

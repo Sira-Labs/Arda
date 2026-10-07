@@ -6,6 +6,7 @@ import type { PasskeyFailure } from '@/services/passkeys';
 import type { CardId, RuleCase } from '@/content/units';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
+import type { PageLayout } from '@arda/quran';
 import type { Area, Point, Sifa } from '@/modules/lab/letters';
 import type { LabLetterId, Weight } from '@/modules/lab/types';
 
@@ -411,6 +412,13 @@ export const de = {
     doneCount: (done: number, of: number) => `${done} von ${of} erledigt`,
     doneBy: 'Erledigt von',
     remove: 'Zurückziehen',
+    /** Pages of a printed muṣḥaf (ADR-0014 update 2026-10-07). */
+    pages: (from: number, to: number) =>
+      from === to ? `Seite ${from}` : `Seiten ${from}–${to}`,
+    layouts: {
+      'indopak-15': 'IndoPak, 15 Zeilen',
+      madina: 'Madīna',
+    } as Record<PageLayout, string>,
     form: {
       title: 'Aufgabe geben',
       who: 'Für',
@@ -426,6 +434,13 @@ export const de = {
       note: 'Notiz (optional)',
       submit: 'Aufgabe geben',
       given: 'Aufgabe gegeben.',
+      by: 'Was',
+      byAyat: 'Sūra und Āyāt',
+      byPages: 'Seiten',
+      layout: 'Muṣḥaf',
+      pageFrom: 'von Seite',
+      pageTo: 'bis Seite',
+      onPages: 'Auf diesen Seiten:',
     },
   },
   mushaf: {
@@ -595,6 +610,9 @@ export const de = {
         : `Sūra ${sura} · Āyāt ${from}–${to} aufnehmen`,
     recordAssignment: 'Aufgabe aufnehmen',
     recordSection: 'Diesen Abschnitt aufnehmen',
+    /** One sūra's part of a page assignment that runs across sūras. */
+    recordPart: (name: string, from: number, to: number) =>
+      `${name} ${from}–${to} aufnehmen`,
     consentTitle: 'Bevor du aufnimmst',
     consentText:
       'Deine Aufnahme hören nur du und die Lehrer der Ḥalaqa, an die du sie schickst. Sie bleibt privat, bis du sie löschst, und wird für nichts anderes verwendet.',
