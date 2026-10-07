@@ -4,6 +4,7 @@ import { sura } from '@arda/quran';
 import { builtIndex } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
 import { chooseScript, useMushafScript, type MushafScript } from './script';
+import { ContinueReading } from './ContinueReading';
 import { MushafSources } from './Sources';
 import { usePack } from './usePack';
 
@@ -64,6 +65,7 @@ export function Mushaf() {
         </div>
         <p className="muted">{m.mushaf.scripts[script].note}</p>
       </header>
+      <ContinueReading />
       {builtIndex.packs
         .filter((entry) => entry.script === script)
         .map((entry) => (

@@ -239,6 +239,40 @@ describe('account sync helpers (ADR-0022)', () => {
     expect(sameState(state, { cards: {}, bestTimes: copy.bestTimes })).toBe(false);
   });
 
+  it('keeps the later reading place per script, and drops a damaged one', () => {
+    const a: ReviewState = {
+      ...state,
+      places: { indopak: { page: 9, at: NOW }, uthmani: { page: 1, at: NOW } },
+    };
+    const b: ReviewState = {
+      ...state,
+      places: { indopak: { page: 8, at: NOW - 1 }, uthmani: { page: 604, at: NOW + 1 } },
+    };
+    expect(mergeStates(a, b).places).toEqual({
+      indopak: { page: 9, at: NOW },
+      uthmani: { page: 604, at: NOW + 1 },
+    });
+    expect(mergeStates(state, a).places).toEqual(a.places);
+    expect(sameState(a, structuredClone(a))).toBe(true);
+    expect(sameState(a, b)).toBe(false);
+    expect(sameState(state, a)).toBe(false);
+    const storage = fakeStorage();
+    storage.data.set(
+      STORAGE_KEY,
+      JSON.stringify({
+        ...state,
+        places: {
+          indopak: { page: 0, at: NOW },
+          uthmani: { page: 604, at: NOW },
+          warsh: {},
+        },
+      })
+    );
+    expect(new LocalReviewStore(storage).load().places).toEqual({
+      uthmani: { page: 604, at: NOW },
+    });
+  });
+
   it('joins a guest deck with the first account and drops another account deck', () => {
     const storage = fakeStorage();
     const store = new LocalReviewStore(storage);

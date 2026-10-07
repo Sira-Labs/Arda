@@ -800,6 +800,19 @@ describe('the muṣḥaf screen (S2.4)', () => {
     ).toBeInTheDocument();
   });
 
+  it('remembers the page last read and offers to go on there (Weiterlesen)', async () => {
+    renderAt('/mushaf/seite/9', loader().deps);
+    const user = userEvent.setup();
+    expect(await screen.findByText('Seite 9 · IndoPak')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Alle Sūren' }));
+    const go = await screen.findByRole('link', { name: /Weiterlesen/ });
+    expect(go).toHaveTextContent('Weiterlesen' + 'Seite 9 · IndoPak · البقرة');
+    expect(go).toHaveAttribute('href', '/mushaf/seite/9');
+    // Each script keeps its own place: Madīna has none yet.
+    await user.click(screen.getByRole('radio', { name: 'Madīna' }));
+    expect(screen.queryByRole('link', { name: /Weiterlesen/ })).not.toBeInTheDocument();
+  });
+
   it('ignores pages a layout does not have', async () => {
     renderAt('/mushaf/seite/604?layout=madina&seiten=604-605', loader().deps);
     // Without a valid run the page is this device's script, IndoPak, and nothing is marked.

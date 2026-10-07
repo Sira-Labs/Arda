@@ -460,6 +460,8 @@ export const en: Messages = {
     previousPage: 'Previous page',
     nextPage: 'Next page',
     page: (n: number) => `Page ${n}`,
+    /** The page last read in this script, on Today and in the muṣḥaf list. */
+    continue: 'Continue reading',
     range: (from, to) =>
       from === to
         ? `Your assignment: āya ${from}`

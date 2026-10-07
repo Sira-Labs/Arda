@@ -10,6 +10,7 @@ import { SaveProgressHint } from '@/modules/account/SaveProgressHint';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
+import { ContinueReading } from '@/modules/mushaf/ContinueReading';
 import { MyRecitations } from '@/modules/recite/MyRecitations';
 import { ProgressCard } from './ProgressCard';
 import { segmentsOf } from '@/tajweed/segments';
@@ -121,6 +122,8 @@ export function Today() {
         )}
         {open.failure && <p role="alert">{errorMessage(m, open.failure)}</p>}
       </section>
+
+      <ContinueReading />
 
       <ProgressCard />
 

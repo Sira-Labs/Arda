@@ -86,6 +86,10 @@ export function entryForPage(
 export const scriptOfLayout = (layout: PageLayout): PackIndexEntry['script'] =>
   layout === 'madina' ? 'uthmani' : 'indopak';
 
+/** The printed layout whose pages a script shows. */
+export const layoutOfScript = (script: PackIndexEntry['script']): PageLayout =>
+  script === 'uthmani' ? 'madina' : 'indopak-15';
+
 /** Whether a parsed file has the pack's shape and only known rules. */
 function isPack(value: unknown): value is MushafPack {
   const pack = value as MushafPack;

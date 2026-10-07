@@ -7,6 +7,17 @@ const log = logger.child('review');
 /** An activity event on the device; `seq` once the account has stored it (ADR-0023). */
 export type LoggedEvent = ActivityEvent & { seq?: number };
 
+/** The muṣḥaf scripts a reading place is kept for (ADR-0017). */
+export const READING_SCRIPTS = ['indopak', 'uthmani'] as const;
+export type ReadingScript = (typeof READING_SCRIPTS)[number];
+
+/** Where someone last read in a script: the page as it prints them, and when. */
+export interface ReadingPlace {
+  page: number;
+  /** Epoch milliseconds; the later one wins. */
+  at: number;
+}
+
 /**
  * The review deck and the best times of the timed games (ADR-0021), and the activity log that
  * XP and the streak come from (ADR-0023). A deck saved before the log existed has neither
@@ -20,6 +31,8 @@ export interface ReviewState {
   activity?: Record<string, LoggedEvent>;
   /** The highest sequence number the account has sent this device. */
   cursor?: number;
+  /** The page last read per muṣḥaf script ("Weiterlesen", ADR-0022 update 2026-10-07). */
+  places?: Partial<Record<ReadingScript, ReadingPlace>>;
 }
 
 /** Where the deck lives on the device; `useProgressSync` keeps it in step with the account. */
@@ -74,6 +87,15 @@ export function mergeStates(a: ReviewState, b: ReviewState): ReviewState {
   if (a.cursor !== undefined || b.cursor !== undefined) {
     merged.cursor = Math.max(a.cursor ?? 0, b.cursor ?? 0);
   }
+  if (a.places || b.places) {
+    const places = { ...a.places };
+    for (const script of READING_SCRIPTS) {
+      const place = b.places?.[script];
+      const other = places[script];
+      if (place && (!other || place.at >= other.at)) places[script] = place;
+    }
+    merged.places = places;
+  }
   return merged;
 }
 
@@ -119,7 +141,13 @@ export function sameDeck(a: ReviewState, b: ReviewState): boolean {
         x.due === y.due &&
         x.lapses === y.lapses
       );
-    }) && games.every((game) => a.bestTimes[game] === b.bestTimes[game])
+    }) &&
+    games.every((game) => a.bestTimes[game] === b.bestTimes[game]) &&
+    READING_SCRIPTS.every(
+      (script) =>
+        a.places?.[script]?.page === b.places?.[script]?.page &&
+        a.places?.[script]?.at === b.places?.[script]?.at
+    )
   );
 }
 
@@ -214,12 +242,32 @@ export function parseState(value: unknown): ReviewState | undefined {
     activityDropped = entries.length - Object.keys(state.activity).length;
     dropped += activityDropped;
   }
+  if (isRecord(value.places)) {
+    const places: Partial<Record<ReadingScript, ReadingPlace>> = {};
+    for (const script of READING_SCRIPTS) {
+      const place = value.places[script];
+      if (isPlace(place)) places[script] = { page: place.page, at: place.at };
+      else if (place !== undefined) dropped += 1;
+    }
+    state.places = places;
+  }
   if (Number.isSafeInteger(value.cursor) && (value.cursor as number) >= 0) {
     // A dropped event may lie behind the cursor: start over, the account sends it again.
     state.cursor = activityDropped > 0 ? 0 : (value.cursor as number);
   }
   if (dropped > 0) log.warn('review deck: damaged entries dropped', { dropped });
   return state;
+}
+
+function isPlace(value: unknown): value is ReadingPlace {
+  return (
+    isRecord(value) &&
+    Number.isInteger(value.page) &&
+    (value.page as number) >= 1 &&
+    (value.page as number) <= 1000 &&
+    Number.isSafeInteger(value.at) &&
+    (value.at as number) >= 0
+  );
 }
 
 function isLogged(id: string, value: unknown): value is LoggedEvent {
