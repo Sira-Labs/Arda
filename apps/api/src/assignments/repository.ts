@@ -4,6 +4,7 @@
  * ḥalaqa and, for students, to the assignments meant for them.
  */
 import type pg from 'pg';
+import type { PageRun } from '@arda/quran';
 
 export const ASSIGNMENT_KINDS = ['learn', 'read', 'recite', 'practise'] as const;
 export type AssignmentKind = (typeof ASSIGNMENT_KINDS)[number];
@@ -26,6 +27,8 @@ export interface NewAssignment {
   studentId: string | null;
   kind: AssignmentKind;
   range: AssignmentRange | null;
+  /** Pages of a printed muṣḥaf instead of a range ("read pages 8–9"); never both. */
+  pages: PageRun | null;
   focusRule: string | null;
   repetitions: number | null;
   note: string | null;
@@ -39,6 +42,7 @@ interface AssignmentBase {
   kind: AssignmentKind;
   studentId: string | null;
   range: AssignmentRange | null;
+  pages: PageRun | null;
   focusRule: string | null;
   repetitions: number | null;
   note: string | null;
@@ -107,7 +111,8 @@ export interface AssignmentRepository {
 const iso = (value: Date | string): string => new Date(value).toISOString();
 
 /** Columns every list selects; `due_on` as text, so no time zone can shift the day. */
-const COLUMNS = `a.id, a.kind, a.student_id, a.sura, a.aya_from, a.aya_to, a.word_from, a.word_to, a.focus_rule,
+const COLUMNS = `a.id, a.kind, a.student_id, a.sura, a.aya_from, a.aya_to, a.word_from, a.word_to,
+  a.page_layout, a.page_from, a.page_to, a.focus_rule,
   a.repetitions, a.note, to_char(a.due_on, 'YYYY-MM-DD') as due_on, a.created_at`;
 
 /** Older than the cursor, in the order `due_on desc, created_at desc, id desc`. */
@@ -123,6 +128,9 @@ interface Row {
   aya_to: number | null;
   word_from: number | null;
   word_to: number | null;
+  page_layout: PageRun['layout'] | null;
+  page_from: number | null;
+  page_to: number | null;
   focus_rule: string | null;
   repetitions: number | null;
   note: string | null;
@@ -145,6 +153,10 @@ const base = (row: Row): AssignmentBase => ({
             ? { words: { from: row.word_from, to: row.word_to } }
             : {}),
         },
+  pages:
+    row.page_layout === null || row.page_from === null || row.page_to === null
+      ? null
+      : { layout: row.page_layout, from: row.page_from, to: row.page_to },
   focusRule: row.focus_rule,
   repetitions: row.repetitions,
   note: row.note,
@@ -203,9 +215,9 @@ export class PgAssignmentRepository implements AssignmentRepository {
   async create(input: NewAssignment): Promise<string | null> {
     const { rows } = await this.pool.query<{ id: string }>(
       `insert into assignments (halaqa_id, student_id, kind, sura, aya_from, aya_to,
-                                word_from, word_to, focus_rule, repetitions, note, due_on,
-                                created_by)
-       select $1, $2, $3, $4, $5, $6, $12, $13, $7, $8, $9, $10, $11
+                                word_from, word_to, page_layout, page_from, page_to,
+                                focus_rule, repetitions, note, due_on, created_by)
+       select $1, $2, $3, $4, $5, $6, $12, $13, $14, $15, $16, $7, $8, $9, $10, $11
         where $2::uuid is null or exists (
           select 1 from halaqa_members
            where halaqa_id = $1 and user_id = $2 and halaqa_role = 'student'
@@ -225,6 +237,9 @@ export class PgAssignmentRepository implements AssignmentRepository {
         input.createdBy,
         input.range?.words?.from ?? null,
         input.range?.words?.to ?? null,
+        input.pages?.layout ?? null,
+        input.pages?.from ?? null,
+        input.pages?.to ?? null,
       ]
     );
     return rows[0]?.id ?? null;

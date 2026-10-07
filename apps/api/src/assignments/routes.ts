@@ -15,7 +15,7 @@
 import type { Context, MiddlewareHandler } from 'hono';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { hasWords, isAyaRange } from '@arda/quran';
+import { PAGE_LAYOUTS, hasWords, isAyaRange, isPageRun } from '@arda/quran';
 import { RULE_IDS } from '@arda/tajweed';
 import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
@@ -79,6 +79,17 @@ const NewAssignmentBody = z
       .refine((r) => !r.words || hasWords(r, r.words), { message: 'range' })
       .nullable()
       .default(null),
+    // Pages of a printed muṣḥaf instead of āyāt: "read pages 8–9" (ADR-0014 update).
+    pages: z
+      .object({
+        layout: z.enum(PAGE_LAYOUTS),
+        from: z.number().int(),
+        to: z.number().int(),
+      })
+      .strict()
+      .refine(isPageRun, { message: 'pages' })
+      .nullable()
+      .default(null),
     focusRule: z.enum(RULE_IDS).nullable().default(null),
     repetitions: z.number().int().min(1).max(20).nullable().default(null),
     note: z
@@ -93,7 +104,10 @@ const NewAssignmentBody = z
   .strict()
   .superRefine((body, ctx) => {
     const needsRange = body.kind === 'read' || body.kind === 'recite';
-    if (needsRange && !body.range) ctx.addIssue({ code: 'custom', message: 'range' });
+    if (body.range && body.pages) ctx.addIssue({ code: 'custom', message: 'pages' });
+    if (needsRange && !body.range && !body.pages) {
+      ctx.addIssue({ code: 'custom', message: 'range' });
+    }
     if (!needsRange && !body.focusRule) {
       ctx.addIssue({ code: 'custom', message: 'focusRule' });
     }

@@ -64,6 +64,7 @@ async function setup() {
       studentId: null,
       kind: 'recite',
       range: { sura: 112, from: 1, to: 4 },
+      pages: null,
       focusRule: null,
       repetitions: null,
       note: null,
@@ -341,6 +342,36 @@ describe('giving and doing assignments (T2)', () => {
         range,
       });
       expect(response.status, JSON.stringify(range)).toBe(400);
+    }
+  });
+
+  it('can name pages of the printed muṣḥaf instead of āyāt', async () => {
+    const { halaqaId, call } = await setup();
+    const pages = { layout: 'indopak-15', from: 8, to: 9 };
+    const created = await call('owner', 'POST', `/halaqat/${halaqaId}/assignments`, {
+      ...READ_FATIHA,
+      range: null,
+      pages,
+    });
+    expect(created.status).toBe(201);
+    const open = await json(await call('member', 'GET', '/assignments'));
+    const given = open.assignments.find((a: Json) => a.pages);
+    expect(given).toMatchObject({ kind: 'read', range: null, pages });
+    for (const body of [
+      // Before the IndoPak copy's first page, past the last, backwards, an unknown layout,
+      // a fraction, and pages together with āyāt.
+      { range: null, pages: { layout: 'indopak-15', from: 1, to: 2 } },
+      { range: null, pages: { layout: 'indopak-15', from: 611, to: 612 } },
+      { range: null, pages: { layout: 'madina', from: 9, to: 8 } },
+      { range: null, pages: { layout: 'warsh', from: 1, to: 1 } },
+      { range: null, pages: { layout: 'madina', from: 1.5, to: 2 } },
+      { pages: { layout: 'madina', from: 1, to: 1 } },
+    ]) {
+      const response = await call('owner', 'POST', `/halaqat/${halaqaId}/assignments`, {
+        ...READ_FATIHA,
+        ...body,
+      });
+      expect(response.status, JSON.stringify(body)).toBe(400);
     }
   });
 

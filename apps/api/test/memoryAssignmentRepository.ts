@@ -71,6 +71,7 @@ export class MemoryAssignmentRepository implements AssignmentRepository {
       kind: r.kind,
       studentId: r.studentId,
       range: r.range,
+      pages: r.pages,
       focusRule: r.focusRule,
       repetitions: r.repetitions,
       note: r.note,
