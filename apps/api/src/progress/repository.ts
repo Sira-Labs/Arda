@@ -23,10 +23,23 @@ export interface ProgressCard {
   updatedAt: number;
 }
 
+/** The muṣḥaf scripts a reading place is kept for (ADR-0017). */
+export const READING_SCRIPTS = ['indopak', 'uthmani'] as const;
+
+/** Where someone last read in one script: a page as it prints them (ADR-0022 update). */
+export interface ReadingPlace {
+  script: (typeof READING_SCRIPTS)[number];
+  page: number;
+  /** Epoch milliseconds; the later one wins. */
+  at: number;
+}
+
 export interface Progress {
   cards: ProgressCard[];
   /** Best time per game in milliseconds. */
   bestTimes: Record<string, number>;
+  /** At most one per script. Absent from a device that predates it. */
+  places?: ReadingPlace[];
 }
 
 /** An event as the server keeps it: with its place in the person's log. */
@@ -81,7 +94,12 @@ export function mergeProgress(a: Progress, b: Progress): Progress {
     const other = bestTimes[game];
     if (other === undefined || ms < other) bestTimes[game] = ms;
   }
-  return { cards: [...cards.values()], bestTimes };
+  const places = new Map((a.places ?? []).map((place) => [place.script, place]));
+  for (const place of b.places ?? []) {
+    const other = places.get(place.script);
+    if (!other || place.at >= other.at) places.set(place.script, place);
+  }
+  return { cards: [...cards.values()], bestTimes, places: [...places.values()] };
 }
 
 /**
@@ -94,6 +112,11 @@ export function clampToNow<P extends Progress>(progress: P, now: number): P {
     cards: progress.cards.map((card) =>
       card.updatedAt > now ? { ...card, updatedAt: now } : card
     ),
+    ...(progress.places && {
+      places: progress.places.map((place) =>
+        place.at > now ? { ...place, at: now } : place
+      ),
+    }),
   };
 }
 
@@ -128,7 +151,7 @@ export class PgProgressRepository implements ProgressRepository {
     const now = this.now();
     // One version per card id: a repeated id would make the upsert touch a row twice.
     const once = mergeProgress({ cards: [], bestTimes: {} }, incoming);
-    const { cards, bestTimes } = clampToNow(once, now);
+    const { cards, bestTimes, places = [] } = clampToNow(once, now);
     const games = Object.entries(bestTimes);
     const events = eventsUpToNow(incoming.events ?? [], now);
     const client = await this.pool.connect();
@@ -167,6 +190,20 @@ export class PgProgressRepository implements ProgressRepository {
            on conflict (user_id, game) do update set ms = excluded.ms
             where excluded.ms < best_times.ms`,
           [userId, games.map(([game]) => game), games.map(([, ms]) => ms)]
+        );
+      }
+      if (places.length > 0) {
+        await client.query(
+          `insert into reading_places (user_id, script, page, at)
+           select $1, * from unnest($2::text[], $3::smallint[], $4::bigint[])
+           on conflict (user_id, script) do update set page = excluded.page, at = excluded.at
+            where excluded.at >= reading_places.at`,
+          [
+            userId,
+            places.map((p) => p.script),
+            places.map((p) => p.page),
+            places.map((p) => p.at),
+          ]
         );
       }
       if (events.length > 0) {
@@ -235,12 +272,15 @@ export async function readActivity(
   return rows.rows;
 }
 
-/** The person's deck and best times, cards in id order; also the GDPR export's `progress`. */
+/**
+ * The person's deck, best times and reading places, cards in id order; also the GDPR export's
+ * `progress`.
+ */
 export async function readProgress(
   db: Pick<pg.Pool, 'query'>,
   userId: string
 ): Promise<Progress> {
-  const [cards, times] = await Promise.all([
+  const [cards, times, places] = await Promise.all([
     db.query<ProgressCard>(
       `select card_id as id, kind, prompt, answer, box, due::float8 as due, lapses,
               updated_at::float8 as "updatedAt"
@@ -251,9 +291,15 @@ export async function readProgress(
       'select game, ms from best_times where user_id = $1 order by game',
       [userId]
     ),
+    db.query<ReadingPlace>(
+      `select script, page, at::float8 as at from reading_places where user_id = $1
+        order by script`,
+      [userId]
+    ),
   ]);
   return {
     cards: cards.rows,
     bestTimes: Object.fromEntries(times.rows.map((row) => [row.game, row.ms])),
+    places: places.rows,
   };
 }

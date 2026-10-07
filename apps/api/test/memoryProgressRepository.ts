@@ -42,6 +42,7 @@ export class MemoryProgressRepository implements ProgressRepository {
     }
     this.seq = seq;
     merged.cards.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    merged.places?.sort((a, b) => a.script.localeCompare(b.script));
     this.stored.set(userId, merged);
     this.logs.set(userId, log);
     const ids = new Set(sent.map((e) => e.id));

@@ -1672,8 +1672,44 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // Yusuf's deck is his own.
       expect(await repo.sync(YUSUF, { cards: [], bestTimes: {} })).toEqual({
         ok: true,
-        progress: { cards: [], bestTimes: {}, events: [], more: false },
+        progress: { cards: [], bestTimes: {}, places: [], events: [], more: false },
       });
+    });
+
+    it('keeps the later reading place per script (ADR-0022 update)', async () => {
+      const none = { cards: [], bestTimes: {} };
+      await repo.sync(AMINA, {
+        ...none,
+        places: [
+          { script: 'indopak', page: 9, at: NOW - 5000 },
+          { script: 'uthmani', page: 604, at: NOW - 5000 },
+        ],
+      });
+      const outcome = await repo.sync(AMINA, {
+        ...none,
+        // An older page loses; a repeated script keeps its later page; a future date is now.
+        places: [
+          { script: 'uthmani', page: 1, at: NOW - 9000 },
+          { script: 'indopak', page: 10, at: NOW - 2000 },
+          { script: 'indopak', page: 12, at: NOW + 60_000 },
+        ],
+      });
+      expect(outcome.ok && outcome.progress.places).toEqual([
+        { script: 'indopak', page: 12, at: NOW },
+        { script: 'uthmani', page: 604, at: NOW - 5000 },
+      ]);
+      // A device that predates places changes nothing; Yusuf's places are his own.
+      const old = await repo.sync(AMINA, none);
+      expect(old.ok && old.progress.places).toHaveLength(2);
+      const yusuf = await repo.sync(YUSUF, none);
+      expect(yusuf.ok && yusuf.progress.places).toEqual([]);
+      // The database keeps the shape.
+      await expect(
+        pool.query(
+          `insert into reading_places (user_id, script, page, at) values ($1, 'warsh', 1, 1)`,
+          [AMINA]
+        )
+      ).rejects.toThrow();
     });
 
     it('refuses a deck past the limit and stores none of it', async () => {
@@ -1726,15 +1762,21 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
     });
 
     it('is in the export and goes with the account', async () => {
-      await repo.sync(AMINA, { cards: [card('a', NOW)], bestTimes: { 'sort-28': 1234 } });
+      await repo.sync(AMINA, {
+        cards: [card('a', NOW)],
+        bestTimes: { 'sort-28': 1234 },
+        places: [{ script: 'indopak', page: 9, at: NOW }],
+      });
       const exported = await new PgPrivacyRepository(pool).export(AMINA);
       expect(exported.progress).toEqual({
         cards: [card('a', NOW)],
         bestTimes: { 'sort-28': 1234 },
+        places: [{ script: 'indopak', page: 9, at: NOW }],
       });
       await new PgPrivacyRepository(pool).delete(AMINA, null);
       const left = await pool.query(
-        'select (select count(*) from review_cards) + (select count(*) from best_times) as n'
+        `select (select count(*) from review_cards) + (select count(*) from best_times)
+                + (select count(*) from reading_places) as n`
       );
       expect(Number(left.rows[0].n)).toBe(0);
     });
