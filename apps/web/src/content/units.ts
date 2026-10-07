@@ -144,8 +144,3 @@ export function isCardUnit(value: string | undefined): value is `${CardUnit}` {
 export function isCardOf(unit: CardUnit, value: string | undefined): value is CardId {
   return (UNIT_CARDS[unit] as readonly string[]).includes(value ?? '');
 }
-
-/** Whether a value names any card (stored review cards, assignments). */
-export function isCardId(value: unknown): value is CardId {
-  return typeof value === 'string' && value in CARD_NAMES;
-}
