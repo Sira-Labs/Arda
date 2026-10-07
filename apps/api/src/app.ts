@@ -20,6 +20,7 @@ import {
   type AssignmentRouteDeps,
 } from './assignments/routes.js';
 import { createHalaqaRoutes, type HalaqaRouteDeps } from './halaqat/routes.js';
+import { createProgressRoutes, type ProgressRouteDeps } from './progress/routes.js';
 import { createRecordingRoutes, type RecordingRouteDeps } from './recordings/routes.js';
 import { authorize, type AuthorizeLog } from './authz/middleware.js';
 import { appCors } from './http/appCors.js';
@@ -67,6 +68,8 @@ export interface AppDeps {
   assignments?: AssignmentRouteDeps;
   /** Recitations sent to a ḥalaqa and the teacher's answers (spec F7, T3, ADR-0012). */
   recordings?: RecordingRouteDeps;
+  /** The review deck and best times on the account (ADR-0022). */
+  progress?: ProgressRouteDeps;
   /**
    * Origins of the web app (ARDA_PUBLIC_URL, ARDA_TRUSTED_ORIGINS). When set, state-changing
    * API requests that a browser marks as coming from another site are refused (403).
@@ -162,6 +165,7 @@ export function createApp(deps: AppDeps): Hono {
   if (deps.halaqat) app.route('/api/v1/halaqat', createHalaqaRoutes(deps.halaqat));
   if (deps.assignments) app.route('/api/v1', createAssignmentRoutes(deps.assignments));
   if (deps.recordings) app.route('/api/v1', createRecordingRoutes(deps.recordings));
+  if (deps.progress) app.route('/api/v1', createProgressRoutes(deps.progress));
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((error, c) => {
