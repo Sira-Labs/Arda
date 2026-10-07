@@ -3,9 +3,11 @@ import { answer, fromMistake, isDue, type ReviewCard } from '@/review/leitner';
 import {
   LocalReviewStore,
   MemoryReviewStore,
+  OWNER_KEY,
   STORAGE_KEY,
   mergeStates,
   sameState,
+  type ReviewState,
 } from '@/review/store';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -235,5 +237,70 @@ describe('account sync helpers (ADR-0022)', () => {
     expect(sameState(state, { ...copy, bestTimes: { 'sort-28': 40_000 } })).toBe(false);
     expect(sameState(state, { ...copy, bestTimes: {} })).toBe(false);
     expect(sameState(state, { cards: {}, bestTimes: copy.bestTimes })).toBe(false);
+  });
+
+  it('joins a guest deck with the first account and drops another account deck', () => {
+    const storage = fakeStorage();
+    const store = new LocalReviewStore(storage);
+    store.save(state);
+    expect(store.claim('u-amina')).toEqual({ state, replaced: false });
+    expect(storage.data.get(OWNER_KEY)).toBe('u-amina');
+    expect(store.claim('u-amina').replaced).toBe(false);
+    expect(store.claim('u-yusuf')).toEqual({
+      state: { cards: {}, bestTimes: {} },
+      replaced: true,
+    });
+    const memory = new MemoryReviewStore(state, 'u-amina');
+    expect(memory.claim('u-yusuf').replaced).toBe(true);
+    expect(memory.load()).toEqual({ cards: {}, bestTimes: {} });
+  });
+
+  describe('two tabs, one of them signs another account in', () => {
+    function tabs(firstOwner: string | null) {
+      const storage = fakeStorage();
+      const stale = new LocalReviewStore(storage);
+      if (firstOwner) stale.claim(firstOwner);
+      stale.save(state);
+      stale.load();
+      const other = new LocalReviewStore(storage);
+      return { storage, stale, other };
+    }
+
+    it("never saves the previous account's deck back", () => {
+      const { storage, stale, other } = tabs('u-amina');
+      other.claim('u-yusuf');
+      const answered = answer(state.cards[CARD.id]!, true, NOW + 1);
+      const kept = stale.save({ ...state, cards: { [CARD.id]: answered } });
+      expect(kept).toEqual({ cards: {}, bestTimes: {} });
+      expect(JSON.parse(storage.data.get(STORAGE_KEY)!)).toEqual({
+        cards: {},
+        bestTimes: {},
+      });
+      // From then on the tab holds Yusuf's deck and saves normally.
+      expect(stale.save(state)).toEqual(state);
+    });
+
+    it('tells the stale tab to drop its copy instead of merging it', () => {
+      const { stale, other } = tabs('u-amina');
+      const heard: [ReviewState, boolean][] = [];
+      const stop = stale.subscribe((deck, replaced) => heard.push([deck, replaced]));
+      other.claim('u-yusuf');
+      window.dispatchEvent(new StorageEvent('storage', { key: OWNER_KEY }));
+      window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+      stop();
+      expect(heard).toEqual([
+        [{ cards: {}, bestTimes: {} }, true],
+        [{ cards: {}, bestTimes: {} }, false],
+      ]);
+    });
+
+    it("keeps a guest tab's answers when the guest signs in elsewhere", () => {
+      const { stale, other } = tabs(null);
+      other.claim('u-amina');
+      const answered = answer(state.cards[CARD.id]!, true, NOW + 1);
+      expect(
+        stale.save({ ...state, cards: { [CARD.id]: answered } }).cards[CARD.id]
+      ).toEqual(answered);
+    });
   });
 });

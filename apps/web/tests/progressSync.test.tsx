@@ -7,7 +7,7 @@ import type { ReviewCard } from '@/review/leitner';
 import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider, useReview, type Review } from '@/review/ReviewProvider';
 import { MemoryReviewStore, type ReviewState } from '@/review/store';
-import { OWNER_KEY, SYNC_DELAY_MS, useProgressSync } from '@/review/useProgressSync';
+import { SYNC_DELAY_MS, useProgressSync } from '@/review/useProgressSync';
 import { AuthClient, type Me } from '@/services/auth';
 import { fakeApi, Providers } from './render';
 
@@ -63,26 +63,37 @@ function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = 
   };
 }
 
-/** The hook over a deck held in the test, merged and replaced like the provider does. */
-function mountHook(initial: ReviewState, client: AuthClient, userId: string | null) {
+/** The hook over a deck and owner held in the test, merged and claimed like the provider. */
+function mountHook(
+  initial: ReviewState,
+  client: AuthClient,
+  userId: string | null,
+  initialOwner: string | null = null
+) {
   let deck = initial;
+  let owner = initialOwner;
   const replaced: ReviewState[] = [];
-  // Unset while the first render runs: a receive during it shows at the next render.
+  // Unset while the first render runs: a change during it shows at the next render.
   const mounted: { hook?: { rerender(props: { userId: string | null }): void } } = {};
-  const review = (): Pick<Review, 'deck' | 'receive'> => ({
+  const review = (): Pick<Review, 'deck' | 'receive' | 'claim' | 'owns'> => ({
     deck,
-    receive: (incoming, replace) => {
-      if (replace) {
-        replaced.push(incoming);
-        deck = incoming;
-      } else {
-        const cards = { ...deck.cards };
-        for (const [id, c] of Object.entries(incoming.cards))
-          if (!cards[id] || c.updatedAt >= cards[id]!.updatedAt) cards[id] = c;
-        deck = { cards, bestTimes: { ...deck.bestTimes, ...incoming.bestTimes } };
-      }
+    receive: (incoming) => {
+      const cards = { ...deck.cards };
+      for (const [id, c] of Object.entries(incoming.cards))
+        if (!cards[id] || c.updatedAt >= cards[id]!.updatedAt) cards[id] = c;
+      deck = { cards, bestTimes: { ...deck.bestTimes, ...incoming.bestTimes } };
       mounted.hook?.rerender({ userId });
     },
+    claim: (id) => {
+      const drop = owner !== null && owner !== id;
+      owner = id;
+      if (drop) {
+        deck = { cards: {}, bestTimes: {} };
+        replaced.push(deck);
+      }
+      return drop;
+    },
+    owns: (id) => owner === id,
   });
   const hook = renderHook(({ userId }) => useProgressSync(client, review(), userId), {
     initialProps: { userId },
@@ -90,6 +101,7 @@ function mountHook(initial: ReviewState, client: AuthClient, userId: string | nu
   mounted.hook = hook;
   return {
     deck: () => deck,
+    owner: () => owner,
     replaced,
     change: (next: ReviewState) => {
       deck = next;
@@ -99,6 +111,8 @@ function mountHook(initial: ReviewState, client: AuthClient, userId: string | nu
       userId = id;
       hook.rerender({ userId: id });
     },
+    /** Another tab signs a different account in. */
+    handOver: (id: string) => (owner = id),
   };
 }
 
@@ -108,9 +122,9 @@ afterEach(() => vi.useRealTimers());
 describe('progress sync (ADR-0022)', () => {
   it('sends nothing for a guest', () => {
     const server = fakeAccount();
-    mountHook(deckOf(card('a', NOW)), server.client, null);
+    const view = mountHook(deckOf(card('a', NOW)), server.client, null);
     expect(server.sent).toHaveLength(0);
-    expect(localStorage.getItem(OWNER_KEY)).toBeNull();
+    expect(view.owner()).toBeNull();
   });
 
   it("joins a guest's deck with the account at sign-in, and takes the account's cards in", async () => {
@@ -120,21 +134,33 @@ describe('progress sync (ADR-0022)', () => {
     await waitFor(() => expect(Object.keys(view.deck().cards)).toHaveLength(2));
     expect(server.sent[0]!.cards.map((c) => c.prompt)).toEqual(['from-laptop']);
     expect(view.deck().bestTimes).toEqual({ 'sort-28': 30_000 });
-    expect(localStorage.getItem(OWNER_KEY)).toBe(ME.id);
+    expect(view.owner()).toBe(ME.id);
     expect(server.account.cards.size).toBe(2);
   });
 
   it("drops another account's deck instead of sending it", async () => {
-    localStorage.setItem(OWNER_KEY, 'u-yusuf');
     const server = fakeAccount([card('aminas', NOW - 1000)]);
-    const view = mountHook(deckOf(card('yusufs', NOW)), server.client, ME.id);
+    const view = mountHook(deckOf(card('yusufs', NOW)), server.client, ME.id, 'u-yusuf');
     await waitFor(() =>
       expect(Object.keys(view.deck().cards)).toEqual(['which-rule:aminas'])
     );
     expect(view.replaced).toHaveLength(1);
     expect(server.sent[0]!.cards).toEqual([]);
     expect(server.account.cards.has('which-rule:yusufs')).toBe(false);
-    expect(localStorage.getItem(OWNER_KEY)).toBe(ME.id);
+    expect(view.owner()).toBe(ME.id);
+  });
+
+  it('sends nothing once another tab has signed a different account in', async () => {
+    vi.useFakeTimers({ now: NOW });
+    const server = fakeAccount();
+    const view = mountHook(deckOf(), server.client, ME.id);
+    await act(() => vi.advanceTimersByTimeAsync(0));
+    expect(server.sent).toHaveLength(1);
+    view.handOver('u-yusuf');
+    view.change(deckOf(card('aminas', NOW)));
+    window.dispatchEvent(new Event('online'));
+    await act(() => vi.advanceTimersByTimeAsync(SYNC_DELAY_MS * 2));
+    expect(server.sent).toHaveLength(1);
   });
 
   it('sends a change after a short pause, once for several answers', async () => {

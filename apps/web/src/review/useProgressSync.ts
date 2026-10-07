@@ -5,8 +5,9 @@
  * device comes back online and when the app is shown again. Both sides merge per card by time,
  * so a lost answer or a retry never loses progress, and no outbox is needed.
  *
- * The device remembers whose deck it holds. A guest's deck joins the first account that signs
- * in; another account's deck is dropped, not merged, so progress never moves between people.
+ * The store remembers whose deck it holds (`claim`). A guest's deck joins the first account that
+ * signs in; another account's deck is dropped, not merged, so progress never moves between
+ * people, also not through a second tab still showing the previous account (`owns`).
  */
 import { useEffect, useRef } from 'react';
 import type { AuthClient, ProgressPayload } from '@/services/auth';
@@ -16,29 +17,8 @@ import { emptyState, parseState, sameState, type ReviewState } from './store';
 
 const log = logger.child('progress-sync');
 
-export const OWNER_KEY = 'arda.review.owner';
 /** How long after a change the deck is sent: the rest of a game's answers go along. */
 export const SYNC_DELAY_MS = 3000;
-
-type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
-
-/** Whose deck this device holds; `null` for a guest's (or when storage is blocked). */
-export function readOwner(storage?: KeyValueStorage): string | null {
-  try {
-    return (storage ?? window.localStorage).getItem(OWNER_KEY);
-  } catch (error) {
-    log.debug('owner unavailable', { name: (error as Error).name });
-    return null;
-  }
-}
-
-function writeOwner(id: string, storage?: KeyValueStorage): void {
-  try {
-    (storage ?? window.localStorage).setItem(OWNER_KEY, id);
-  } catch (error) {
-    log.debug('owner unavailable', { name: (error as Error).name });
-  }
-}
 
 const toPayload = (deck: ReviewState): ProgressPayload => ({
   cards: Object.values(deck.cards),
@@ -56,9 +36,8 @@ function fromPayload(payload: ProgressPayload): ReviewState | undefined {
 
 export function useProgressSync(
   client: AuthClient,
-  review: Pick<Review, 'deck' | 'receive'>,
-  userId: string | null,
-  storage?: KeyValueStorage
+  review: Pick<Review, 'deck' | 'receive' | 'claim' | 'owns'>,
+  userId: string | null
 ) {
   // The latest deck and receiver, read by the timers without restarting them.
   const latest = useRef(review);
@@ -72,13 +51,9 @@ export function useProgressSync(
     synced.current = null;
     if (!userId) return;
     // Whose deck: another account's is dropped before anything is sent.
-    const owner = readOwner(storage);
-    let dropped = owner !== null && owner !== userId;
-    if (dropped) {
-      log.info('another account signed in: its deck replaces the one on this device');
-      latest.current.receive(emptyState(), true);
-    }
-    writeOwner(userId, storage);
+    let dropped = latest.current.claim(userId);
+    if (dropped)
+      log.info("another account signed in: the previous account's deck was dropped");
 
     let stopped = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -86,6 +61,11 @@ export function useProgressSync(
     let again = false;
 
     const syncOnce = async () => {
+      // Another tab signed a different account in: this tab's deck and session are stale.
+      if (!latest.current.owns(userId)) {
+        log.info('progress sync skipped: the deck belongs to another account now');
+        return;
+      }
       // Until the replaced deck has rendered, the deck at hand is still the other account's.
       const deck = dropped ? emptyState() : latest.current.deck;
       dropped = false;
@@ -142,7 +122,7 @@ export function useProgressSync(
       window.removeEventListener('online', sync);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [client, userId, storage]);
+  }, [client, userId]);
 
   // A change to the deck (an answer, a best time) is sent after a short pause.
   const deck = review.deck;

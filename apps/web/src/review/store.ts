@@ -17,8 +17,18 @@ export interface ReviewStore {
   save(state: ReviewState): ReviewState;
   /** Stores exactly `state`, dropping what was there (another account's deck, ADR-0022). */
   replace(state: ReviewState): ReviewState;
-  /** Calls `listener` when the deck changes elsewhere (another tab); returns the unsubscribe. */
-  subscribe?(listener: (state: ReviewState) => void): () => void;
+  /** Whose deck the device holds now; `null` for a guest's (ADR-0022). */
+  owner(): string | null;
+  /**
+   * Binds the deck to the account signing in. A guest's deck joins it; another account's deck
+   * is replaced by an empty one (`replaced`), never merged.
+   */
+  claim(userId: string): { state: ReviewState; replaced: boolean };
+  /**
+   * Calls `listener` when the deck changes elsewhere (another tab); `replaced` when it changed
+   * hands there, so this tab drops its copy instead of merging it. Returns the unsubscribe.
+   */
+  subscribe?(listener: (state: ReviewState, replaced: boolean) => void): () => void;
 }
 
 export const emptyState = (): ReviewState => ({ cards: {}, bestTimes: {} });
@@ -65,7 +75,10 @@ export function sameState(a: ReviewState, b: ReviewState): boolean {
 /** In memory: for tests, and the fallback when the browser blocks storage. */
 export class MemoryReviewStore implements ReviewStore {
   private state: ReviewState;
-  constructor(initial: ReviewState = emptyState()) {
+  constructor(
+    initial: ReviewState = emptyState(),
+    private ownerId: string | null = null
+  ) {
     this.state = structuredClone(initial);
   }
   load(): ReviewState {
@@ -78,11 +91,21 @@ export class MemoryReviewStore implements ReviewStore {
   replace(state: ReviewState): ReviewState {
     return this.save(state);
   }
+  owner(): string | null {
+    return this.ownerId;
+  }
+  claim(userId: string): { state: ReviewState; replaced: boolean } {
+    const replaced = this.ownerId !== null && this.ownerId !== userId;
+    this.ownerId = userId;
+    return { state: replaced ? this.replace(emptyState()) : this.load(), replaced };
+  }
 }
 
 export const STORAGE_KEY = 'arda.review.v1';
+/** Whose deck `STORAGE_KEY` holds (ADR-0022); missing for a guest's. */
+export const OWNER_KEY = 'arda.review.owner';
 
-type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
+export type KeyValueStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 const CARD_KINDS: ReadonlySet<unknown> = new Set(['which-rule', 'sort-letter']);
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -139,6 +162,13 @@ export class LocalReviewStore implements ReviewStore {
   private readonly memory = new MemoryReviewStore();
   /** Set while the last write failed: the memory copy is newer than what storage holds. */
   private memoryIsNewer = false;
+  /** The owner when storage is blocked. */
+  private memoryOwner: string | null = null;
+  /**
+   * The owner of the deck this tab holds. When another tab hands the deck to a different
+   * account, this tab's copy is stale and must never be merged back (ADR-0022).
+   */
+  private known: string | null | undefined;
 
   /** `storage` is injected in tests; the browser's is looked up on use (see `backend`). */
   constructor(private readonly storage?: KeyValueStorage) {}
@@ -149,8 +179,39 @@ export class LocalReviewStore implements ReviewStore {
   }
 
   load(): ReviewState {
+    this.known = this.owner();
     if (this.memoryIsNewer) return this.memory.load();
     return this.readStored() ?? this.memory.load();
+  }
+
+  owner(): string | null {
+    try {
+      return this.backend().getItem(OWNER_KEY) ?? null;
+    } catch (error) {
+      log.debug('review storage unavailable', { name: (error as Error).name });
+      return this.memoryOwner;
+    }
+  }
+
+  claim(userId: string): { state: ReviewState; replaced: boolean } {
+    const previous = this.owner();
+    this.memoryOwner = userId;
+    try {
+      this.backend().setItem(OWNER_KEY, userId);
+    } catch (error) {
+      log.debug('review storage unavailable', { name: (error as Error).name });
+    }
+    this.known = userId;
+    const replaced = previous !== null && previous !== userId;
+    return { state: replaced ? this.replace(emptyState()) : this.load(), replaced };
+  }
+
+  /** Another tab gave the deck to a different account since this tab last read it. */
+  private changedHands(): boolean {
+    const current = this.owner();
+    const changed = this.known != null && current !== this.known;
+    this.known = current;
+    return changed;
   }
 
   /** The stored deck; empty for a missing or foreign document, `undefined` if unreadable. */
@@ -173,6 +234,11 @@ export class LocalReviewStore implements ReviewStore {
   }
 
   save(state: ReviewState): ReviewState {
+    if (this.changedHands()) {
+      // This tab's deck is the previous account's: keep the stored one, drop this copy.
+      log.info('review deck changed hands in another tab; this copy is dropped');
+      return this.load();
+    }
     // Another tab may have saved since this one loaded: merge instead of overwriting it.
     const stored = this.memoryIsNewer ? undefined : this.readStored();
     return this.write(mergeStates(stored ?? this.memory.load(), state));
@@ -195,10 +261,13 @@ export class LocalReviewStore implements ReviewStore {
     return this.memory.load();
   }
 
-  subscribe(listener: (state: ReviewState) => void): () => void {
+  subscribe(listener: (state: ReviewState, replaced: boolean) => void): () => void {
     // `storage` events fire in the other tabs of this origin, never in the writing one.
     const onStorage = (event: StorageEvent) => {
-      if (event.key === STORAGE_KEY || event.key === null) listener(this.load());
+      if (event.key !== STORAGE_KEY && event.key !== OWNER_KEY && event.key !== null)
+        return;
+      const replaced = this.changedHands();
+      listener(this.load(), replaced);
     };
     window.addEventListener('storage', onStorage);
     return () => window.removeEventListener('storage', onStorage);

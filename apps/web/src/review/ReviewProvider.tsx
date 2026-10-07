@@ -26,11 +26,12 @@ export interface Review {
   offerTime(game: string, ms: number): boolean;
   /** The whole deck, as the account sync sends it (ADR-0022). */
   deck: ReviewState;
-  /**
-   * Takes in a deck from the account: merged into this one, or in its place when `replace`
-   * (another account's deck was on the device).
-   */
-  receive(incoming: ReviewState, replace?: boolean): void;
+  /** Takes in the account's deck, merged into this one. */
+  receive(incoming: ReviewState): void;
+  /** Binds the deck to the account signing in; true when another account's deck was dropped. */
+  claim(userId: string): boolean;
+  /** Is the deck on this device `userId`'s now (another tab may have handed it on)? */
+  owns(userId: string): boolean;
 }
 
 const ReviewContext = createContext<Review | null>(null);
@@ -71,25 +72,32 @@ export function ReviewProvider({
   // Another tab practised: take its cards and times into this one.
   useEffect(
     () =>
-      store.subscribe?.((incoming) =>
-        setState((current) => mergeStates(current, incoming))
+      store.subscribe?.((incoming, replaced) =>
+        // Handed to another account there: this tab's copy is dropped, not merged.
+        setState((current) => (replaced ? incoming : mergeStates(current, incoming)))
       ),
     [store]
   );
 
+  const claim = useCallback(
+    (userId: string) => {
+      const { state: held, replaced } = store.claim(userId);
+      if (replaced) setState(held);
+      return replaced;
+    },
+    [store]
+  );
+  const owns = useCallback((userId: string) => store.owner() === userId, [store]);
+
   const receive = useCallback(
-    (incoming: ReviewState, replace = false) => {
-      if (replace) {
-        setState(store.replace(incoming));
-        return;
-      }
+    (incoming: ReviewState) => {
       // Unchanged by the merge: no save, no new deck, so no new sync is triggered.
       update((current) => {
         const merged = mergeStates(current, incoming);
         return sameState(merged, current) ? current : merged;
       });
     },
-    [store, update]
+    [update]
   );
 
   const record = useCallback(
@@ -130,8 +138,10 @@ export function ReviewProvider({
       offerTime,
       deck: state,
       receive,
+      claim,
+      owns,
     };
-  }, [state, record, offerTime, receive, now, clockAt]);
+  }, [state, record, offerTime, receive, claim, owns, now, clockAt]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

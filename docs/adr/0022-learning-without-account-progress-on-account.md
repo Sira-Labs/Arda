@@ -40,7 +40,8 @@ The owner chose to keep learning open and tie progress to the account.
   before signing in is not lost. When a different account signs in on the same device, its
   deck replaces the one on the device instead of merging, so one person's progress never ends
   up on another's account. Signing out keeps the deck on the device until someone else signs
-  in.
+  in. A second tab still showing the previous account learns of the change through the
+  `storage` event: it drops its copy, never saves it back and sends nothing.
 - **Limits.** At most 5,000 cards and 100 games per person; card ids and texts are bounded.
   The request is refused (413) rather than silently cut.
 - **Action `progress:own`** for every role: one's own progress, nobody else's. A teacher
