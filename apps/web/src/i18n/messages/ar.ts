@@ -301,6 +301,18 @@ export const ar: Messages = {
     newCards: (count) =>
       count === 0 ? 'لا بطاقات مراجعة جديدة.' : `تُضاف ${cards(count)} إلى مراجعتك.`,
     again: 'مرة أخرى',
+    test: {
+      title: 'اختبار الوحدة',
+      intro: 'عشرة أسئلة من الوحدة، وتنجح فيها بثماني إجابات صحيحة.',
+      open: 'ابدأ الاختبار',
+      passed: 'ناجح',
+      passedNext: (unit) => `نجحت – انتقل إلى الوحدة ${num(unit)}.`,
+      passedLast: 'نجحت – أتممت كل وحدات الورقة.',
+      passedOpen: (unit) => `نجحت – بقي اختبار الوحدة ${num(unit)}.`,
+      notYet: (need, total) =>
+        `لم تنجح بعد: تحتاج ${num(need)} من ${num(total)}. راجع البطاقات وحاول مرة أخرى.`,
+      recommended: (unit) => `يُستحسن بعد اختبار الوحدة ${num(unit)}.`,
+    },
     back: 'إلى الوحدة',
     unit3: {
       title: 'أي حكم؟ · الوحدة ٣',

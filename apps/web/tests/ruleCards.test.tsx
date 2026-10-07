@@ -229,13 +229,16 @@ describe('the path', () => {
       '/pfad/2/ikhfa',
       '/pfad/2/spiel/welche-regel',
       '/pfad/2/spiel/sortieren',
+      '/pfad/2/test',
       '/pfad/3/ghunna',
       '/pfad/3/ikhfa-shafawi',
       '/pfad/3/idgham-shafawi',
       '/pfad/3/izhar-shafawi',
       '/pfad/3/spiel/welche-regel',
+      '/pfad/3/test',
       '/pfad/4/qalqala',
       '/pfad/4/spiel/buchstaben',
+      '/pfad/4/test',
     ]);
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
