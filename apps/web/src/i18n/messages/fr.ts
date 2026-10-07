@@ -710,9 +710,16 @@ export const fr: Messages = {
     title: 'Labo des lettres',
     intro:
       'D’où vient un son\u202f? La tête montre les cinq zones. Choisis une lettre\u202f: tu vois son point, tu entends de vrais mots et tu t’exerces à la différence.',
-    firstSet: 'Première série\u202f: Sīn, Zāy, Ṣād et Rāʾ',
-    firstSetHint:
-      'Les trois lettres sifflantes et le Rāʾ – souvent les plus difficiles pour les germanophones.',
+    sets: {
+      first: {
+        title: 'Première série\u202f: Sīn, Zāy, Ṣād et Rāʾ',
+        hint: 'Les trois lettres sifflantes et le Rāʾ – souvent les plus difficiles pour les germanophones.',
+      },
+      throat: {
+        title: 'La gorge\u202f: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn et Khāʾ',
+        hint: 'Six sons de la gorge, du plus profond vers le haut. L’allemand n’a que le h et le coup de glotte – les autres sont nouveaux.',
+      },
+    },
     more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
     draft: 'Brouillon – le cheikh vérifie encore',
     back: 'Au labo',
@@ -737,6 +744,9 @@ export const fr: Messages = {
     points: {
       whistle: { line1: 'Pointe de la langue', line2: 'incisives' },
       ra: { line1: 'Pointe de la langue', line2: 'gencives' },
+      halqDeep: { line1: 'Fond', line2: 'de la gorge' },
+      halqMid: { line1: 'Milieu', line2: 'de la gorge' },
+      halqNear: { line1: 'Haut', line2: 'de la gorge' },
     },
     letters: {
       sin: {
@@ -784,10 +794,81 @@ export const fr: Messages = {
           'Lourd ou léger dépend de la voyelle\u202f: lourd avec fatḥa ou ḍamma, léger avec kasra.',
         ],
       },
+      hamza: {
+        name: 'Hamza',
+        short: 'une attaque nette de la voix',
+        makhraj:
+          'Le fond de la gorge, au larynx\u202f: la glotte se ferme un instant et s’ouvre d’un coup – le même endroit que Hāʾ.',
+        mistakes: [
+          'Tu le connais en allemand\u202f: le coup de glotte de «\u202fbe-achten\u202f» ou «\u202fSpiegel-ei\u202f». C’est ainsi que commence le Hamza – net, pas avalé.',
+          'Ne pas presser\u202f: le Hamza est une attaque courte et ferme (Shidda). Pressé depuis le milieu de la gorge, il devient ʿAyn – أَلِيمٌ («\u202fdouloureux\u202f») devient عَلِيمٌ («\u202fqui sait\u202f»).',
+          'Le faire entendre aussi au milieu du mot et devant un sukūn, sans le sauter.',
+        ],
+      },
+      ha: {
+        name: 'Hāʾ',
+        short: 'un souffle léger',
+        makhraj:
+          'Le fond de la gorge, comme le Hamza\u202f: l’air passe librement, sans frottement.',
+        mistakes: [
+          'Le Hāʾ est le h allemand – mais toujours audible\u202f: devant un sukūn et en fin de mot aussi, là où l’allemand l’avale («\u202fsehen\u202f»).',
+          'Ne pas racler ni presser\u202f: une gorge serrée fait du Hāʾ un Ḥāʾ – أُهِلَّ devient أُحِلَّ, un autre mot.',
+          'Doux et chuchoté (Hams)\u202f: pas de bourdonnement.',
+        ],
+      },
+      ayn: {
+        name: 'ʿAyn',
+        short: 'pressé, du milieu de la gorge, sonore',
+        makhraj:
+          'Le milieu de la gorge\u202f: elle se resserre et la voix continue de sonner. Un son plein et pressé – l’allemand n’a rien de tel.',
+        mistakes: [
+          'Ne pas l’omettre ni le remplacer par le coup de glotte\u202f: عَلِيمٌ («\u202fqui sait\u202f») deviendrait أَلِيمٌ («\u202fdouloureux\u202f»).',
+          'La voix continue (Tawassuṭ)\u202f: pas d’arrêt net comme pour le Hamza.',
+          'Rester léger (Istifāl)\u202f: la voyelle après le ʿAyn n’est pas sombre.',
+        ],
+      },
+      hha: {
+        name: 'Ḥāʾ',
+        short: 'un souffle fort de la gorge resserrée',
+        makhraj:
+          'Le milieu de la gorge, comme le ʿAyn\u202f: la gorge se resserre et l’air frotte de façon audible – sans voix.',
+        mistakes: [
+          'Pas comme le h allemand\u202f: sans le resserrement, أُحِلَّ («\u202fa été permis\u202f») devient أُهِلَّ («\u202fa été invoqué\u202f»).',
+          'Pas comme le ch de «\u202fBach\u202f»\u202f: là, le dos de la langue frotte le palais – c’est le Khāʾ. Pour le Ḥāʾ, la bouche reste libre, seule la gorge se resserre.',
+          'Sourd (Hams)\u202f: s’il bourdonne, il devient ʿAyn.',
+        ],
+      },
+      ghayn: {
+        name: 'Ghayn',
+        short: 'emphatique, sonore, un frottement doux',
+        makhraj:
+          'Le haut de la gorge, près de la bouche, comme le Khāʾ\u202f: l’air frotte au fond et la voix sonne avec.',
+        mistakes: [
+          'Proche du r uvulaire de «\u202frot\u202f», mais sans rouler\u202f: le Ghayn frotte doucement et régulièrement.',
+          'Sonore\u202f: sans bourdonnement il devient Khāʾ – غَيْرَ («\u202fsauf\u202f») devient خَيْرَ («\u202fbien\u202f»).',
+          'Emphatique (Istiʿlāʾ)\u202f: le dos de la langue s’élève, la voyelle suivante sonne pleine.',
+        ],
+      },
+      kha: {
+        name: 'Khāʾ',
+        short: 'emphatique, sourd, comme le ch de «\u202fBach\u202f»',
+        makhraj:
+          'Le haut de la gorge, près de la bouche, comme le Ghayn\u202f: l’air frotte de façon audible, sans voix.',
+        mistakes: [
+          'Comme le ch de «\u202fBach\u202f», jamais comme dans «\u202fich\u202f»\u202f: le ch clair est trop en avant.',
+          'Emphatique (Istiʿlāʾ)\u202f: la voyelle suivante sonne sombre et pleine – خَلَقَ, pas clair.',
+          'Ne pas le confondre avec le Ḥāʾ\u202f: le Khāʾ frotte plus haut\u202f; pour le Ḥāʾ, seule la gorge se resserre.',
+        ],
+      },
     },
     makhraj: 'Makhraj · où il naît',
     sifat: 'Ṣifāt · ses qualités',
     sifa: {
+      shidda: {
+        name: 'Shidda',
+        meaning:
+          'Ferme\u202f: le son est entièrement retenu et s’arrête – il ne coule pas.',
+      },
       hams: {
         name: 'Hams',
         meaning: 'Chuchotement\u202f: le souffle passe, la voix ne vibre pas.',
@@ -873,6 +954,24 @@ export const fr: Messages = {
         intro: 'Dix mots, seulement à l’oreille\u202f: entends-tu Sīn, Zāy ou Ṣād\u202f?',
         question: 'Quelle lettre entends-tu\u202f?',
       },
+      hamzaAyn: {
+        title: 'Hamza ou ʿAyn\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: une attaque nette (Hamza) ou un son pressé de la gorge (ʿAyn)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      hSounds: {
+        title: 'Hāʾ, Ḥāʾ ou Khāʾ\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: un souffle léger, un souffle fort de la gorge resserrée ou un frottement comme dans «\u202fBach\u202f»\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      khGh: {
+        title: 'Khāʾ ou Ghayn\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: le frottement est-il sans voix (Khāʾ) ou avec voix (Ghayn)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
       weight: {
         title: 'Lourd ou léger\u202f?',
         intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
@@ -884,6 +983,12 @@ export const fr: Messages = {
       options: 'Réponses',
       weights: { heavy: 'lourd', light: 'léger' },
       why: {
+        hamza: 'Hamza\u202f: une attaque courte et ferme – sans presser.',
+        ha: 'Hāʾ\u202f: un souffle doux et ouvert.',
+        ayn: 'ʿAyn\u202f: pressé depuis le milieu de la gorge, la voix sonne.',
+        hha: 'Ḥāʾ\u202f: un souffle fort de la gorge resserrée, sans frottement en haut.',
+        ghayn: 'Ghayn\u202f: un frottement doux avec voix.',
+        kha: 'Khāʾ\u202f: un frottement sans voix, comme dans «\u202fBach\u202f».',
         sin: 'Sīn\u202f: léger, net et sourd.',
         zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
         sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',

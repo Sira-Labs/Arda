@@ -58,15 +58,55 @@ describe('the letter lab’s words', () => {
   });
 
   it('mark the letter in both scripts', () => {
-    const sign = { sin: 'س', zay: 'ز', sad: 'ص', ra: 'ر' };
+    // Hamza on its seat (أ إ ؤ ئ) or alone; IndoPak writes one that opens a word as alif.
+    const signs = {
+      sin: ['س'],
+      zay: ['ز'],
+      sad: ['ص'],
+      ra: ['ر'],
+      hamza: [...'أإءؤئ'],
+      ha: ['ه'],
+      ayn: ['ع'],
+      hha: ['ح'],
+      ghayn: ['غ'],
+      kha: ['خ'],
+    };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
-      expect(word.uthmani.slice(...word.focus.uthmani)[0], word.key).toBe(
-        sign[word.letter]
+      expect(signs[word.letter], word.key).toContain(
+        word.uthmani.slice(...word.focus.uthmani)[0]
       );
-      expect(word.indopak.slice(...word.focus.indopak)[0], word.key).toBe(
-        sign[word.letter]
-      );
+      expect(
+        [...signs[word.letter], ...(word.letter === 'hamza' ? ['ا'] : [])],
+        word.key
+      ).toContain(word.indopak.slice(...word.focus.indopak)[0]);
     }
+  });
+
+  it('give each letter of the throat ten words, none holding a letter it is heard against', () => {
+    const rivals = {
+      hamza: 'أإءؤئع',
+      ayn: 'أإءؤئع',
+      ha: 'هحخ',
+      hha: 'هحخ',
+      kha: 'هحخغ',
+      ghayn: 'غخ',
+    };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set(
+          [...word.uthmani]
+            .filter((c) => chars.includes(c))
+            .map((c) => ('أإءؤئ'.includes(c) ? 'ء' : c))
+        );
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // The throat's pairs differ in that one letter only: ʿalīm / alīm, khayr / ghayr …
+    const throat = lab.pairs.filter((p) => !['sin', 'zay', 'sad'].includes(p.letters[0]));
+    expect(throat).toHaveLength(6);
+    expect(throat.every((p) => p.exact)).toBe(true);
   });
 
   it('read heavy and light from the vowel on the rāʾ', () => {
