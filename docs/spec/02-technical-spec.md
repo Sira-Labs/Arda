@@ -132,6 +132,15 @@ Built (migration `0007_progress`, S5.2, ADR-0022):
 
 Both cascade with the account and are in the export (`progress`).
 
+Built (migration `0008_activity`, S5.2, ADR-0023):
+
+| Table             | Purpose                                                                                                                           |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `activity_events` | per person: the device's event id, the server's sequence number, kind (round or rule card), ref, time (epoch ms), right and total |
+
+XP, levels and the streak are computed from it by `packages/engagement` (pure, shared by the
+app and the API); it cascades with the account and is in the export (`activity`).
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table                  | Story    | Key fields                                                                                  |
@@ -204,9 +213,9 @@ in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari ne
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
-| Method and path                                             | Action         | Purpose                                                                                                                                                                    |
-| ----------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes }` | `progress:own` | merge this device's deck into the account's and answer with the result; 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 2 MB (413) |
+| Method and path                                                              | Action         | Purpose                                                                                                                                                                                                                                                                                                                                            |
+| ---------------------------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes, events?, since? }` | `progress:own` | merge this device's deck into the account's and answer with the result; store the activity events it sends (once per id) and answer with the events after `since`, 1,000 at a time (`more`); 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 500 events per request, 100,000 events per person, 2 MB (413) |
 
 Next: `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.

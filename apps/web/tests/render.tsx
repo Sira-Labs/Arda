@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { vi } from 'vitest';
 import { I18nProvider } from '@/i18n/I18nProvider';
+import { ReviewProvider } from '@/review/ReviewProvider';
+import { MemoryReviewStore } from '@/review/store';
 import { AuthClient, type Me } from '@/services/auth';
 import { SessionProvider } from '@/state/session';
 
@@ -57,7 +59,11 @@ export function Providers({
 }) {
   return (
     <SessionProvider client={client}>
-      <I18nProvider>{children}</I18nProvider>
+      <I18nProvider>
+        {/* As in the app: every screen may log practice (ADR-0023); a test that looks at the
+            deck passes its own provider inside. */}
+        <ReviewProvider store={new MemoryReviewStore()}>{children}</ReviewProvider>
+      </I18nProvider>
     </SessionProvider>
   );
 }

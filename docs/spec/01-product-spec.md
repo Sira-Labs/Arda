@@ -124,6 +124,9 @@ and is asked, in one quiet card on Today and the path, to sign in so the progres
 _(Built (owner, 2026-10-07): signed in, the review deck and the best times sync with the
 account across devices; a guest's deck joins the account at the first sign-in, another
 account's deck on the same device is replaced, never merged.)_
+_(Built (owner, 2026-10-07, ADR-0023): every finished round and every rule card read to its
+end goes into an activity log synced with the account; Today shows level, XP, the streak and
+its shields, the end of a round its XP. Daily quests and badges are next.)_
 
 ### F2 — Rule cards _(Must)_
 

@@ -331,6 +331,8 @@ describe('Welcher Buchstabe? (the listening quiz)', () => {
       );
     }
     expect(screen.getByRole('button', { name: 'Nochmal' })).toHaveFocus();
+    // A finished round earns XP (ADR-0023): at least the 5 for finishing it.
+    expect(screen.getByText(/^\+\d+ XP$/)).toBeInTheDocument();
   });
 
   it('asks heavy or light for rāʾ', async () => {

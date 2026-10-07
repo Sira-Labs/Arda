@@ -36,6 +36,20 @@ export const fr: Messages = {
       'Tu peux t’entraîner sans compte. Connecte-toi pour que ta progression soit enregistrée et la même sur tous tes appareils.',
     saveProgressAction: 'Se connecter et garder',
   },
+  engagement: {
+    title: 'Ta progression',
+    level: (level) => `Niveau ${level}`,
+    xp: (points) => `${points}\u202fXP`,
+    toNext: (left) => `encore ${left}\u202fXP jusqu’au niveau suivant`,
+    today: (points) => `aujourd’hui +${points}\u202fXP`,
+    streak: (days) => (days === 1 ? '1 jour d’affilée' : `${days} jours d’affilée`),
+    streakStart: 'Entraîne-toi aujourd’hui pour commencer une série.',
+    streakToday: 'Déjà entraîné aujourd’hui.',
+    streakOpen: 'Entraîne-toi aujourd’hui pour garder ta série.',
+    shields: (count) => (count === 1 ? '1 bouclier' : `${count} boucliers`),
+    shieldHint:
+      'Tous les 7 jours d’entraînement, tu gagnes un bouclier (2 au plus). Il couvre un jour manqué.',
+  },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'son nasal, 2 temps (ikhfāʾ, idghām, iqlāb)' },
     qalqala: { name: 'Qalqala', hint: 'rebond de ق ط ب ج د avec sukūn' },
@@ -137,6 +151,7 @@ export const fr: Messages = {
     practise: 'S’entraîner',
     progress: (index, total) => `${index} / ${total}`,
     seconds: (seconds) => `${seconds.toLocaleString('fr-FR')}\u202fs`,
+    xp: (points) => `+${points}\u202fXP`,
     options: 'Règles',
     whichRule: {
       title: 'Quelle règle ?',

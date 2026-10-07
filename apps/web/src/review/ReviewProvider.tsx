@@ -4,9 +4,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
+import { xpAwards, type ActivityEvent } from '@arda/engagement';
 import { answer, fromMistake, isDue, type NewCard, type ReviewCard } from './leitner';
 import {
   LocalReviewStore,
@@ -35,7 +37,19 @@ export interface Review {
   claim(userId: string): boolean;
   /** Is the deck on this device `userId`'s now (another tab may have handed it on)? */
   owns(userId: string): boolean;
+  /**
+   * Adds a finished round or a rule card read to its end to the activity log (ADR-0023);
+   * returns the XP it earned.
+   */
+  logActivity(entry: ActivityEntry): number;
 }
+
+/** What a screen reports; the provider adds the id and the time. */
+export type ActivityEntry = Pick<ActivityEvent, 'kind' | 'ref' | 'right' | 'total'>;
+
+/** The device's time zone: days and the streak follow local midnight. */
+export const deviceTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const ReviewContext = createContext<Review | null>(null);
 
@@ -105,6 +119,30 @@ export function ReviewProvider({
     [store, update]
   );
 
+  // The log including events logged since the last render, so two events before it are
+  // each awarded against the other (the daily cap, a rule card's XP once).
+  const pendingActivity = useRef(state.activity);
+  useEffect(() => {
+    pendingActivity.current = state.activity;
+  }, [state.activity]);
+
+  const logActivity = useCallback(
+    (entry: ActivityEntry) => {
+      const event: ActivityEvent = { id: crypto.randomUUID(), at: now(), ...entry };
+      const activity = { ...pendingActivity.current, [event.id]: event };
+      pendingActivity.current = activity;
+      const earned = xpAwards(Object.values(activity), deviceTimeZone()).find(
+        (a) => a.event.id === event.id
+      );
+      update((current) => ({
+        ...current,
+        activity: { ...current.activity, [event.id]: event },
+      }));
+      return earned?.points ?? 0;
+    },
+    [update, now]
+  );
+
   const record = useCallback(
     (card: NewCard, correct: boolean) => {
       update((current) => {
@@ -145,8 +183,9 @@ export function ReviewProvider({
       receive,
       claim,
       owns,
+      logActivity,
     };
-  }, [state, record, offerTime, receive, claim, owns, now, clockAt]);
+  }, [state, record, offerTime, receive, claim, owns, logActivity, now, clockAt]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

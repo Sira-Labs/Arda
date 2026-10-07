@@ -8,6 +8,7 @@ import {
   mergeProgress,
   type ProgressCard,
 } from '../src/progress/repository.js';
+import { EVENT_PAGE, MAX_EVENTS_PER_REQUEST } from '../src/progress/repository.js';
 import { MAX_BODY_BYTES } from '../src/progress/routes.js';
 import { MemoryProgressRepository } from './memoryProgressRepository.js';
 
@@ -22,6 +23,16 @@ const NOW = Date.UTC(2026, 9, 7, 12);
 // Response bodies are checked field by field below.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Json = any;
+
+/** A finished round of Which rule? (ADR-0023). */
+const ev = (n: number, at = NOW - 60_000) => ({
+  id: `40000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
+  kind: 'which-rule',
+  ref: '',
+  at,
+  right: 8,
+  total: 10,
+});
 
 const card = (id: string, updatedAt: number, box = 1): ProgressCard => ({
   id: `which-rule:${id}`,
@@ -101,7 +112,7 @@ describe('progress sync (ADR-0022)', () => {
     const { sync } = setup();
     await sync('student', { cards: [card('a', NOW)], bestTimes: { 'sort-28': 1 } });
     const body: Json = await (await sync('other', { cards: [], bestTimes: {} })).json();
-    expect(body).toEqual({ cards: [], bestTimes: {} });
+    expect(body).toEqual({ cards: [], bestTimes: {}, events: [], more: false });
   });
 
   it("refuses a deck sent as another account's, and stores nothing (409)", async () => {
@@ -137,6 +148,19 @@ describe('progress sync (ADR-0022)', () => {
     ],
     ['a game time of zero', { cards: [], bestTimes: { 'sort-28': 0 } }],
     ['an odd game name', { cards: [], bestTimes: { 'Sort 28': 5 } }],
+    [
+      'an event of an unknown kind',
+      { cards: [], bestTimes: {}, events: [{ ...ev(1), kind: 'cheat' }] },
+    ],
+    [
+      'more right than asked',
+      { cards: [], bestTimes: {}, events: [{ ...ev(1), right: 11 }] },
+    ],
+    [
+      'an event without an id',
+      { cards: [], bestTimes: {}, events: [{ ...ev(1), id: 'x' }] },
+    ],
+    ['a negative sequence number', { cards: [], bestTimes: {}, since: -1 }],
   ])('refuses %s (400)', async (_name, body) => {
     const { sync, repo } = setup();
     const response = await sync('student', body);
@@ -190,6 +214,80 @@ describe('progress sync (ADR-0022)', () => {
     const { sync } = setup();
     const response = await sync('student', 'x'.repeat(MAX_BODY_BYTES + 1));
     expect(response.status).toBe(413);
+  });
+});
+
+describe('activity log sync (ADR-0023)', () => {
+  const none = { cards: [], bestTimes: {} };
+
+  it('stores events once, numbers them and sends each device what it has not seen', async () => {
+    const { sync } = setup();
+    const phone: Json = await (
+      await sync('student', { ...none, events: [ev(1), ev(2)] })
+    ).json();
+    expect(phone.events.map((e: Json) => [e.id, e.seq])).toEqual([
+      [ev(1).id, 1],
+      [ev(2).id, 2],
+    ]);
+    expect(phone.more).toBe(false);
+    // The laptop has seen nothing: it gets the phone's events and its own.
+    const laptop: Json = await (
+      await sync('student', { ...none, events: [ev(3)] })
+    ).json();
+    expect(laptop.events.map((e: Json) => e.seq)).toEqual([1, 2, 3]);
+    // The phone again: only what came after its last number.
+    const again: Json = await (await sync('student', { ...none, since: 2 })).json();
+    expect(again.events.map((e: Json) => e.id)).toEqual([ev(3).id]);
+    // A resent event keeps its number and comes back, so a lost answer costs nothing.
+    const resent: Json = await (
+      await sync('student', { ...none, since: 3, events: [ev(1)] })
+    ).json();
+    expect(resent.events.map((e: Json) => [e.id, e.seq])).toEqual([[ev(1).id, 1]]);
+  });
+
+  it('keeps each log to its own person', async () => {
+    const { sync } = setup();
+    await sync('student', { ...none, events: [ev(1)] });
+    const other: Json = await (await sync('other', none)).json();
+    expect(other.events).toEqual([]);
+  });
+
+  it('dates an event from the future as done now', async () => {
+    const { sync } = setup();
+    const body: Json = await (
+      await sync('student', { ...none, events: [ev(1, NOW + 86_400_000)] })
+    ).json();
+    expect(body.events[0].at).toBe(NOW);
+  });
+
+  it('pages a long log', async () => {
+    const { sync } = setup();
+    for (let from = 0; from <= EVENT_PAGE; from += MAX_EVENTS_PER_REQUEST) {
+      const events = Array.from({ length: MAX_EVENTS_PER_REQUEST }, (_, i) =>
+        ev(from + i + 1)
+      );
+      expect((await sync('student', { ...none, since: 1e9, events })).status).toBe(200);
+    }
+    const first: Json = await (await sync('other', none)).json();
+    expect(first.events).toEqual([]);
+    const page: Json = await (await sync('student', none)).json();
+    expect(page.events).toHaveLength(EVENT_PAGE);
+    expect(page.more).toBe(true);
+    const rest: Json = await (
+      await sync('student', { ...none, since: page.events.at(-1).seq })
+    ).json();
+    expect(rest.more).toBe(false);
+    expect(rest.events.length).toBe(3 * MAX_EVENTS_PER_REQUEST - EVENT_PAGE);
+  });
+
+  it('refuses more events in one request than it takes (413)', async () => {
+    const { sync, repo } = setup();
+    const events = Array.from({ length: MAX_EVENTS_PER_REQUEST + 1 }, (_, i) =>
+      ev(i + 1)
+    );
+    const response = await sync('student', { ...none, events });
+    expect(response.status).toBe(413);
+    expect(repo.logs.size).toBe(0);
   });
 });
 

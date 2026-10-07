@@ -9,7 +9,12 @@
  */
 import type pg from 'pg';
 import { writeAudit } from '../audit/log.js';
-import { readProgress, type Progress } from '../progress/repository.js';
+import {
+  readActivity,
+  readProgress,
+  type Progress,
+  type StoredEvent,
+} from '../progress/repository.js';
 
 export interface AccountExport {
   exportedAt: string;
@@ -32,6 +37,8 @@ export interface AccountExport {
   recordings: Record<string, unknown>[];
   /** The review deck and the best times of the timed games (ADR-0021, ADR-0022). */
   progress: Progress;
+  /** Rounds finished and rule cards read, from which XP and the streak come (ADR-0023). */
+  activity: StoredEvent[];
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -56,6 +63,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       assignments,
       recordings,
       progress,
+      activity,
       audit,
     ] = await Promise.all([
       this.pool.query(
@@ -113,6 +121,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
         [userId]
       ),
       readProgress(this.pool, userId),
+      readActivity(this.pool, userId),
       this.pool.query(
         `select id, actor_id, action, target_type, target_id, details, created_at
            from audit_log
@@ -135,6 +144,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       assignments: assignments.rows,
       recordings: recordings.rows,
       progress,
+      activity,
       auditLog: audit.rows,
     };
   }

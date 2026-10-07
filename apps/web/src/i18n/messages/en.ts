@@ -35,6 +35,20 @@ export const en: Messages = {
       'You can practise without an account. Sign in so your progress is saved and the same on all your devices.',
     saveProgressAction: 'Sign in to keep it',
   },
+  engagement: {
+    title: 'Your progress',
+    level: (level) => `Level ${level}`,
+    xp: (points) => `${points} XP`,
+    toNext: (left) => `${left} XP to the next level`,
+    today: (points) => `+${points} XP today`,
+    streak: (days) => (days === 1 ? '1 day in a row' : `${days} days in a row`),
+    streakStart: 'Practise today to start a streak.',
+    streakToday: 'Practised today.',
+    streakOpen: 'Practise today to keep your streak.',
+    shields: (count) => (count === 1 ? '1 streak shield' : `${count} streak shields`),
+    shieldHint:
+      'Every 7 days of practice earn a streak shield (at most 2). It covers a missed day.',
+  },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'nasal sound, 2 counts (ikhfāʾ, idghām, iqlāb)' },
     qalqala: { name: 'Qalqala', hint: 'echo of ق ط ب ج د with sukūn' },
@@ -136,6 +150,7 @@ export const en: Messages = {
     practise: 'Practise',
     progress: (index, total) => `${index} / ${total}`,
     seconds: (seconds) => `${seconds.toLocaleString('en')} s`,
+    xp: (points) => `+${points} XP`,
     options: 'Rules',
     whichRule: {
       title: 'Which rule?',

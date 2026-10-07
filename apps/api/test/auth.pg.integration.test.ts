@@ -1635,7 +1635,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // Yusuf's deck is his own.
       expect(await repo.sync(YUSUF, { cards: [], bestTimes: {} })).toEqual({
         ok: true,
-        progress: { cards: [], bestTimes: {} },
+        progress: { cards: [], bestTimes: {}, events: [], more: false },
       });
     });
 
@@ -1647,6 +1647,45 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       });
       const count = await pool.query('select count(*) from review_cards');
       expect(Number(count.rows[0].count)).toBe(0);
+    });
+
+    it('keeps the activity log: once per id, numbered, after a sequence number', async () => {
+      const ev = (n: number, at = NOW - 1000) => ({
+        id: `80000000-0000-4000-8000-${String(n).padStart(12, '0')}`,
+        kind: 'lab-quiz' as const,
+        ref: 'sin',
+        at,
+        right: 4,
+        total: 6,
+      });
+      const none = { cards: [], bestTimes: {} };
+      const first = await repo.sync(AMINA, { ...none, events: [ev(1), ev(2)] });
+      expect(first.ok && first.progress.events.map((e) => e.id)).toEqual([
+        ev(1).id,
+        ev(2).id,
+      ]);
+      const seqs = first.ok ? first.progress.events.map((e) => e.seq) : [];
+      expect(seqs[1]!).toBeGreaterThan(seqs[0]!);
+      expect(first.ok && first.progress.events[0]).toEqual({ ...ev(1), seq: seqs[0] });
+      // From another device: its own new event, a repeat, and one from tomorrow.
+      const second = await repo.sync(AMINA, {
+        ...none,
+        since: seqs[1]!,
+        events: [ev(2), ev(3, NOW + 86_400_000), { ...ev(3), at: NOW }],
+      });
+      expect(second.ok && second.progress.events.map((e) => [e.id, e.at])).toEqual([
+        [ev(2).id, ev(2).at],
+        [ev(3).id, NOW],
+      ]);
+      expect(second.ok && second.progress.more).toBe(false);
+      // Yusuf's log is his own.
+      const yusuf = await repo.sync(YUSUF, none);
+      expect(yusuf.ok && yusuf.progress.events).toEqual([]);
+      const exported = await new PgPrivacyRepository(pool).export(AMINA);
+      expect(exported.activity.map((e) => e.id)).toEqual([ev(1).id, ev(2).id, ev(3).id]);
+      await new PgPrivacyRepository(pool).delete(AMINA, null);
+      const left = await pool.query('select count(*)::int as n from activity_events');
+      expect(left.rows[0].n).toBe(0);
     });
 
     it('is in the export and goes with the account', async () => {

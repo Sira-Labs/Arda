@@ -4,6 +4,7 @@ import { LearningShell } from '@/components/LearningShell';
 import type { Random } from '@/games/questions';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Soon } from '@/modules/Soon';
+import { useReview } from '@/review/ReviewProvider';
 import { PlayIcon } from '../mushaf/PlayerBar';
 import { LETTERS, isLabLetter } from './letters';
 import { SpeedChoice, Status } from './LetterPage';
@@ -40,6 +41,9 @@ export function LabQuiz({
   const [chosen, setChosen] = useState<LabAnswer | null>(null);
   const [right, setRight] = useState(0);
   const [done, setDone] = useState(false);
+  // XP the finished round earned (ADR-0023).
+  const [xp, setXp] = useState(0);
+  const review = useReview();
   const question = round[index];
 
   const choose = (answer: LabAnswer) => {
@@ -51,6 +55,9 @@ export function LabQuiz({
     setChosen(null);
     if (index + 1 >= round.length) {
       player.stop();
+      setXp(
+        review.logActivity({ kind: 'lab-quiz', ref: letter, right, total: round.length })
+      );
       setDone(true);
       return;
     }
@@ -85,7 +92,14 @@ export function LabQuiz({
 
         {done ? (
           <section className="card stack" style={{ gap: 12 }} role="status">
-            <h2>{m.games.score(right, round.length)}</h2>
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <h2>{m.games.score(right, round.length)}</h2>
+              {xp > 0 && (
+                <span className="chip" dir="ltr">
+                  {m.games.xp(xp)}
+                </span>
+              )}
+            </div>
             <div className="row">
               {/* The quiz's end takes the focus the last answer's button had. */}
               <button type="button" className="btn btn-primary" onClick={again} autoFocus>

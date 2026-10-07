@@ -10,6 +10,7 @@ export function WhichRule({ random = Math.random }: { random?: Random }) {
   const [questions, setQuestions] = useState(() => whichRuleRound(random));
   return (
     <RuleQuiz
+      activity="which-rule"
       key={round}
       questions={questions}
       eyebrow={m.games.eyebrow}

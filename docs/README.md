@@ -37,6 +37,7 @@
 | [0020](adr/0020-languages-and-teacher-translation.md)            | Languages; the teacher's words in the student's language  | accepted                 |
 | [0021](adr/0021-review-cards-leitner-local-first.md)             | Review cards: Leitner boxes, kept on the device first     | accepted                 |
 | [0022](adr/0022-learning-without-account-progress-on-account.md) | Learning without an account; progress follows the account | accepted                 |
+| [0023](adr/0023-xp-levels-and-streaks.md)                        | XP, levels and streaks from an activity log               | accepted                 |
 
 New ADRs use the template of ADR-0002: title, status, date, Context, Decision, Alternatives,
 Consequences; later changes are added as dated "Update" sections.

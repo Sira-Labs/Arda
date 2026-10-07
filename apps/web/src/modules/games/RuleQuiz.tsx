@@ -1,3 +1,4 @@
+import type { ActivityKind } from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -16,6 +17,8 @@ export interface QuizResult {
   missed: number;
   /** Milliseconds from the first question to the last answer (timed quizzes). */
   ms?: number;
+  /** XP the round earned (ADR-0023). */
+  xp: number;
 }
 
 /**
@@ -24,6 +27,7 @@ export interface QuizResult {
  * card (ADR-0021). Timed quizzes (Sort the 28) show the clock and move on after a right answer.
  */
 export function RuleQuiz({
+  activity,
   questions,
   eyebrow,
   title,
@@ -33,6 +37,8 @@ export function RuleQuiz({
   again,
   offerReview = true,
 }: {
+  /** The game, as the activity log names it (ADR-0023). */
+  activity: Extract<ActivityKind, 'which-rule' | 'sort-28' | 'review'>;
   questions: readonly Question[];
   eyebrow: string;
   title: string;
@@ -54,10 +60,17 @@ export function RuleQuiz({
   const question = questions[index];
 
   const finish = (rightCount: number) => {
+    const xp = review.logActivity({
+      kind: activity,
+      ref: '',
+      right: rightCount,
+      total: questions.length,
+    });
     const done: QuizResult = {
       right: rightCount,
       total: questions.length,
       missed: questions.length - rightCount,
+      xp,
       ...(timed ? { ms: clock() - started.current } : {}),
     };
     setResult(done);
@@ -254,7 +267,15 @@ function Results({
   const review = useReview();
   return (
     <section className="card stack" style={{ gap: 12 }} role="status">
-      <h2>{m.games.score(result.right, result.total)}</h2>
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h2>{m.games.score(result.right, result.total)}</h2>
+        {result.xp > 0 && (
+          // Numbers with signs stay left to right inside Arabic text.
+          <span className="chip" dir="ltr">
+            {m.games.xp(result.xp)}
+          </span>
+        )}
+      </div>
       {result.ms !== undefined && <TimeLine ms={result.ms} />}
       <p>{m.games.newCards(result.missed)}</p>
       {offerReview && review.due.length > 0 && (

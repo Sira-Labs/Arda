@@ -30,6 +30,7 @@ export function ReviewSession() {
   }, [questions.length, review.due]);
   return (
     <RuleQuiz
+      activity="review"
       key={round}
       questions={questions}
       eyebrow={m.games.eyebrow}
