@@ -4,15 +4,22 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UNIT2_CARDS, cardName } from '@/content/unit2';
+import { UNIT2_CARDS, cardName } from '@/content/units';
 import {
+  UNIT3_POOL,
   WORD_POOL,
   letterQuestion,
+  optionsOf,
+  qalqalaQuestion,
+  qalqalaRound,
   questionOf,
   shuffle,
   sortRound,
+  unit3Round,
   whichRuleRound,
 } from '@/games/questions';
+import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
+import { WhichRule3 } from '@/modules/games/WhichRule3';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
 import { WhichRule } from '@/modules/games/WhichRule';
@@ -74,6 +81,44 @@ describe('question pools', () => {
         answer: 'izhar',
       })
     ).toBeUndefined();
+  });
+});
+
+describe('the games of units 3 and 4 (S5.1)', () => {
+  it('ask ten words of unit 3, every one with the four cards of unit 3 to choose from', () => {
+    expect(UNIT3_POOL).toHaveLength(10);
+    expect(new Set(UNIT3_POOL.map((q) => q.answer))).toEqual(
+      new Set(['ghunna', 'ikhfa-shafawi', 'idgham-shafawi', 'izhar-shafawi'])
+    );
+    expect(unit3Round(seeded())).toHaveLength(10);
+    for (const question of UNIT3_POOL) {
+      expect(optionsOf(question)).toEqual([
+        'ghunna',
+        'ikhfa-shafawi',
+        'idgham-shafawi',
+        'izhar-shafawi',
+      ]);
+    }
+    // Unit 2 keeps its own words.
+    expect(WORD_POOL.some((q) => q.unit !== 2)).toBe(false);
+  });
+
+  it('sort all 28 letters into quṭbu jadd and the rest', () => {
+    const round = qalqalaRound(seeded());
+    expect(round).toHaveLength(28);
+    expect(
+      round
+        .filter((q) => q.answer === 'qalqala')
+        .map((q) => q.prompt)
+        .sort()
+    ).toEqual(['ب', 'ج', 'د', 'ط', 'ق'].sort());
+    expect(optionsOf(round[0]!)).toEqual(['qalqala', 'no-qalqala']);
+  });
+
+  it('turn their stored cards back into questions', () => {
+    expect(questionOf(qalqalaQuestion('ق'))?.answer).toBe('qalqala');
+    expect(questionOf(qalqalaQuestion('س'))?.answer).toBe('no-qalqala');
+    expect(questionOf(UNIT3_POOL[0]!)).toMatchObject({ kind: 'which-rule', unit: 3 });
   });
 });
 
@@ -172,6 +217,80 @@ describe('Sort the 28', () => {
     expect(screen.getByText('+66 XP')).toBeInTheDocument();
     expect(Object.values(store.load().activity ?? {})).toEqual([
       expect.objectContaining({ kind: 'sort-28', right: 28, total: 28 }),
+    ]);
+  });
+});
+
+describe('Which rule? of unit 3', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('offers the four cards of unit 3 and logs the round', async () => {
+    const store = new MemoryReviewStore();
+    renderGame('/pfad/3/spiel/welche-regel', store, <WhichRule3 random={seeded(2)} />);
+    expect(screen.getByText('Einheit 3 · Üben')).toBeInTheDocument();
+    expect(
+      screen.getByText('Welche Regel gilt für das markierte Mīm oder Nūn?')
+    ).toBeInTheDocument();
+    const options = screen.getByRole('group', { name: 'Regeln' });
+    expect(
+      Array.from(options.querySelectorAll('button')).map((b) => b.textContent)
+    ).toEqual(['Ghunna', 'Ikhfāʾ shafawī', 'Idghām shafawī', 'Iẓhār shafawī']);
+    for (const question of unit3Round(seeded(2))) {
+      await userEvent.click(
+        screen.getByRole('button', { name: cardName(question.answer, 'de') })
+      );
+      // A shadda says why, the mīm says which letter follows.
+      expect(
+        screen.getByText(
+          question.answer === 'ghunna' ? /Nūn oder Mīm mit Shadda/ : /es folgt/
+        )
+      ).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+    }
+    expect(
+      screen.getByRole('heading', { name: '10 von 10 richtig' })
+    ).toBeInTheDocument();
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'which-rule-3', right: 10, total: 10 }),
+    ]);
+  });
+});
+
+describe('the qalqala letters', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('asks every letter and turns a mistake into a review card', async () => {
+    const store = new MemoryReviewStore();
+    renderGame('/pfad/4/spiel/buchstaben', store, <QalqalaLetters random={seeded(4)} />);
+    const round = qalqalaRound(seeded(4));
+    for (const [i, question] of round.entries()) {
+      // The first letter is answered wrongly on purpose.
+      const right = question.answer === 'qalqala' ? 'Qalqala' : 'keine Qalqala';
+      const wrong = right === 'Qalqala' ? 'keine Qalqala' : 'Qalqala';
+      await userEvent.click(
+        screen.getByRole('button', { name: i === 0 ? wrong : right })
+      );
+      if (i === 0) {
+        expect(
+          screen.getByText(
+            question.answer === 'qalqala'
+              ? /gehört zu quṭbu jadd/
+              : /gehört nicht zu quṭbu jadd/
+          )
+        ).toBeInTheDocument();
+      }
+      await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+    }
+    expect(
+      screen.getByRole('heading', { name: '27 von 28 richtig' })
+    ).toBeInTheDocument();
+    expect(store.load().cards[`qalqala:${round[0]!.prompt}`]).toMatchObject({
+      kind: 'qalqala-letter',
+      answer: round[0]!.answer,
+      box: 1,
+    });
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'qalqala-letters', right: 27, total: 28 }),
     ]);
   });
 });

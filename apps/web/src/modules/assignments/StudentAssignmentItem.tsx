@@ -3,7 +3,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import type { StudentAssignment } from '@/services/auth';
 import { AssignmentDetails, DueLabel } from './AssignmentDetails';
 import { entryFor } from '@/content/packs';
-import { GAME_PATH, cardPath, linkFor } from './format';
+import { cardPath, gamePath, linkFor } from './format';
 
 /**
  * One assignment as its student sees it, with the way into the app (rule card or game) and
@@ -39,7 +39,11 @@ export function StudentAssignmentItem({
         {!done && link && assignment.focusRule && (
           <Link
             className="btn"
-            to={link === 'card' ? cardPath(assignment.focusRule) : GAME_PATH}
+            to={
+              link === 'card'
+                ? cardPath(assignment.focusRule)
+                : gamePath(assignment.focusRule)
+            }
           >
             {link === 'card' ? m.assignments.openCard : m.assignments.play}
           </Link>

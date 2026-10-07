@@ -13,7 +13,7 @@ export function WhichRule({ random = Math.random }: { random?: Random }) {
       activity="which-rule"
       key={round}
       questions={questions}
-      eyebrow={m.games.eyebrow}
+      eyebrow={m.games.eyebrow(2)}
       title={m.games.whichRule.title}
       again={() => {
         setQuestions(whichRuleRound(random));

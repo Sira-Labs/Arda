@@ -1,5 +1,6 @@
 import type { RuleId } from '@arda/tajweed';
-import type { Unit2Card } from '@/content/unit2';
+import { unitOf } from '@/content/units';
+import { cardOfRule } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -44,24 +45,26 @@ export function dueState(dueOn: string, today: string = localDay()): DueState {
   return dueOn === today ? 'today' : 'later';
 }
 
-/** The rule card that teaches a rule, where one exists yet (unit 2). */
-const CARDS: Partial<Record<RuleId, Unit2Card>> = {
-  izhar: 'izhar',
-  'idgham-ghunna': 'idgham',
-  'idgham-no-ghunna': 'idgham',
-  iqlab: 'iqlab',
-  ikhfa: 'ikhfa',
-};
-
 /** Where an assignment leads in the app: its rule card or game; reading needs the muṣḥaf (S2). */
 export function linkFor(kind: string, rule: RuleId | null): 'card' | 'game' | null {
-  if (!rule || !CARDS[rule]) return null;
+  if (!rule || !hasCard(rule)) return null;
   if (kind === 'learn') return 'card';
   return kind === 'practise' ? 'game' : null;
 }
 
-/** Whether a rule card teaches the rule yet. */
-export const hasCard = (rule: RuleId): boolean => CARDS[rule] !== undefined;
+/** Whether a rule card teaches the rule yet (units 2–4). */
+export const hasCard = (rule: RuleId): boolean => cardOfRule(rule) !== undefined;
 
-export const cardPath = (rule: RuleId): string => `/pfad/2/${CARDS[rule] ?? ''}`;
-export const GAME_PATH = '/pfad/2/spiel/welche-regel';
+/** The rule card that teaches the rule. */
+export function cardPath(rule: RuleId): string {
+  const card = cardOfRule(rule);
+  return card ? `/pfad/${unitOf(card)}/${card}` : '/pfad';
+}
+
+/** The game that practises the rule: its unit's. */
+export function gamePath(rule: RuleId): string {
+  const card = cardOfRule(rule);
+  const unit = card ? unitOf(card) : 2;
+  if (unit === 4) return '/pfad/4/spiel/buchstaben';
+  return `/pfad/${unit}/spiel/welche-regel`;
+}

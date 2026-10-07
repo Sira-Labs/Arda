@@ -1,4 +1,4 @@
-import type { Unit2Card } from '@/content/unit2';
+import type { AnswerId } from '@/content/units';
 
 /**
  * Leitner scheduling for review cards (ADR-0021): five boxes, a mistake goes back to box 1,
@@ -11,7 +11,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const INTERVAL_DAYS = [0, 1, 3, 7, 16] as const;
 const MASTERED_DAYS = 30;
 
-export type CardKind = 'which-rule' | 'sort-letter';
+export type CardKind = 'which-rule' | 'sort-letter' | 'qalqala-letter';
 
 export interface ReviewCard {
   /** Content-derived and stable (`which-rule:<text>`, `sort:<letter>`), so sync can merge. */
@@ -19,7 +19,7 @@ export interface ReviewCard {
   kind: CardKind;
   /** The word or the letter that was asked. */
   prompt: string;
-  answer: Unit2Card;
+  answer: AnswerId;
   box: number;
   /** Epoch milliseconds. */
   due: number;

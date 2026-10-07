@@ -33,7 +33,7 @@ export function ReviewSession() {
       activity="review"
       key={round}
       questions={questions}
-      eyebrow={m.games.eyebrow}
+      eyebrow={m.games.practise}
       title={m.games.review.title}
       offerReview={false}
       // "Again" asks what is due now: the cards just missed, not the ones just learnt.

@@ -1,4 +1,4 @@
-import type { Review } from '@/content/unit2';
+import type { Review } from '@/content/units';
 import { LAB_LETTERS, type LabLetterId, type WhistlingId } from './types';
 
 /**

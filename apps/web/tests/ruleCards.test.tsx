@@ -3,7 +3,7 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { UNIT2, UNIT2_CARDS } from '@/content/unit2';
+import { UNIT2, UNIT2_CARDS } from '@/content/units';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { ReviewProvider } from '@/review/ReviewProvider';
@@ -27,7 +27,7 @@ function renderAt(path: string, store = new MemoryReviewStore()) {
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/pfad" element={<Path />} />
-            <Route path="/pfad/2/:rule" element={<RuleCardPage />} />
+            <Route path="/pfad/:unit/:rule" element={<RuleCardPage />} />
           </Routes>
         </MemoryRouter>
       </ReviewProvider>
@@ -106,7 +106,7 @@ describe('the rule card', () => {
       screen.getByRole('heading', { level: 1, name: 'Iqlāb – Nūn wird zu Mīm vor Bāʾ' })
     ).toBeInTheDocument();
     expect(screen.getAllByText('Entwurf').length).toBeGreaterThan(0);
-    const examples = screen.getByLabelText('Beispiele aus deinem Blatt');
+    const examples = screen.getByLabelText('Beispiele');
     const quran = examples.querySelectorAll('p.quran');
     expect(quran).toHaveLength(4);
     for (const p of quran) {
@@ -161,18 +161,90 @@ describe('the rule card', () => {
   });
 });
 
+describe('units 3 and 4 (S5.1)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it("teaches ikhfāʾ shafawī with the sheet's example and one more, coloured and labelled", () => {
+    renderAt('/pfad/3/ikhfa-shafawi');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Ikhfāʾ shafawī – Mīm sākina vor Bāʾ: verborgen, mit Ghunna'
+    );
+    expect(screen.getByText('Einheit 3 · Verstehen')).toBeInTheDocument();
+    expect(screen.getByText('Karte 2 von 4')).toBeInTheDocument();
+    const examples = screen.getByLabelText('Beispiele');
+    expect(within(examples).getAllByTitle('Ikhfāʾ shafawī · Ghunna')).toHaveLength(2);
+    expect(screen.getByRole('link', { name: 'Weiter: Idghām shafawī' })).toHaveAttribute(
+      'href',
+      '/pfad/3/idgham-shafawi'
+    );
+  });
+
+  it('says iẓhār shafawī holds before every letter but bāʾ and mīm', () => {
+    renderAt('/pfad/3/izhar-shafawi');
+    expect(screen.getByText('Alle Buchstaben außer Bāʾ und Mīm')).toBeInTheDocument();
+    expect(screen.getByText('ohne Ghunna')).toBeInTheDocument();
+  });
+
+  it('shows the ghunna of a shadda on nūn and mīm, without a deciding letter', () => {
+    renderAt('/pfad/3/ghunna');
+    expect(screen.getByText('Diese Buchstaben mit Shadda')).toBeInTheDocument();
+    expect(screen.queryByText(/der Buchstabe, der entscheidet/)).toBeNull();
+    expect(
+      within(screen.getByLabelText('Beispiele')).getAllByTitle(/Ghunna/)
+    ).toHaveLength(4);
+  });
+
+  it('teaches qalqala on ق ط ب ج د with sukūn, one example for each', () => {
+    renderAt('/pfad/4/qalqala');
+    expect(screen.getByText('Diese Buchstaben mit Sukūn')).toBeInTheDocument();
+    expect(screen.queryByText('mit Ghunna')).toBeNull();
+    // Where in the word does not decide qalqala: no case under the examples.
+    expect(screen.queryByText('in einem Wort')).toBeNull();
+    expect(
+      within(screen.getByLabelText('Beispiele')).getAllByTitle(/Qalqala/)
+    ).toHaveLength(5);
+    // The only card of unit 4 leads back to the path.
+    expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
+      'href',
+      '/pfad'
+    );
+  });
+
+  it('does not open a card under another unit', () => {
+    renderAt('/pfad/2/qalqala');
+    expect(screen.queryByRole('heading', { name: /Qalqala/ })).toBeNull();
+  });
+});
+
 describe('the path', () => {
-  it('lists the four cards of unit 2 in the order of the sheet', () => {
+  it('lists units 1–4: the lab, then the cards of each unit in the order of the sheet and its games', () => {
     localStorage.setItem('arda.language', 'en');
     renderAt('/pfad');
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
     expect(links).toEqual([
+      '/labor',
       '/pfad/2/izhar',
       '/pfad/2/idgham',
       '/pfad/2/iqlab',
       '/pfad/2/ikhfa',
       '/pfad/2/spiel/welche-regel',
       '/pfad/2/spiel/sortieren',
+      '/pfad/3/ghunna',
+      '/pfad/3/ikhfa-shafawi',
+      '/pfad/3/idgham-shafawi',
+      '/pfad/3/izhar-shafawi',
+      '/pfad/3/spiel/welche-regel',
+      '/pfad/4/qalqala',
+      '/pfad/4/spiel/buchstaben',
+    ]);
+    expect(
+      screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
+    ).toEqual([
+      'Unit 1 · Makhārij and ṣifāt',
+      'Unit 2 · Nūn sākina and tanwīn',
+      'Unit 3 · Ghunna and mīm sākina',
+      'Unit 4 · Qalqala',
+      'Review',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();
     expect(screen.getByText('Nothing is due right now. Well done!')).toBeInTheDocument();

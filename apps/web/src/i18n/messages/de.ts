@@ -3,7 +3,7 @@
  * this one, so a missing message fails the typecheck. Learners are addressed with "du".
  */
 import type { PasskeyFailure } from '@/services/passkeys';
-import type { RuleCase, Unit2Card } from '@/content/unit2';
+import type { CardId, RuleCase } from '@/content/units';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { Area, Point, Sifa } from '@/modules/lab/letters';
@@ -90,20 +90,42 @@ export const de = {
   } as Record<RuleFamily, { name: string; hint: string }>,
   path: {
     eyebrow: 'Pfad',
-    unitTitle: 'Einheit 2 · Nūn sākina und Tanwīn',
-    intro:
-      'Der Buchstabe nach Nūn sākina oder Tanwīn entscheidet, wie du es sprichst: 28 Buchstaben, vier Regeln – 6 + 6 + 1 + 15.',
+    units: {
+      1: {
+        title: 'Einheit 1 · Makhārij und Ṣifāt',
+        intro:
+          'Wo jeder Buchstabe entsteht: fünf Bereiche, siebzehn Stellen. Im Labor beginnst du mit Sīn, Zāy, Ṣād und Rāʾ – die übrigen Buchstaben folgen.',
+      },
+      2: {
+        title: 'Einheit 2 · Nūn sākina und Tanwīn',
+        intro:
+          'Der Buchstabe nach Nūn sākina oder Tanwīn entscheidet, wie du es sprichst: 28 Buchstaben, vier Regeln – 6 + 6 + 1 + 15.',
+      },
+      3: {
+        title: 'Einheit 3 · Ghunna und Mīm sākina',
+        intro:
+          'Die Ghunna dauert immer 2 Zählzeiten. Beim Mīm sākina entscheidet der nächste Buchstabe: Bāʾ, Mīm oder alle anderen.',
+      },
+      4: {
+        title: 'Einheit 4 · Qalqala',
+        intro: 'Fünf Buchstaben prallen zurück, wenn sie ruhen: ق ط ب ج د – quṭbu jadd.',
+      },
+    } as Record<1 | 2 | 3 | 4, { title: string; intro: string }>,
+    lab: 'Zum Buchstaben-Labor',
     letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
-    next: 'Einheit 3 (Ghunna und Mīm sākina) und Einheit 4 (Qalqala) folgen, ebenfalls aus dem Blatt deines Sheikhs.',
+    next: 'Einheit 5 (Madd) bis 7 (Waqf) folgen nach dem Pilot.',
   },
   ruleCard: {
-    eyebrow: 'Einheit 2 · Verstehen',
+    eyebrow: (unit: number) => `Einheit ${unit} · Verstehen`,
     close: 'Schließen',
     progress: (index: number, total: number) => `Karte ${index} von ${total}`,
     draft: 'Entwurf',
     draftHint: 'Noch nicht von deinem Sheikh geprüft.',
     letters: 'Wenn einer dieser Buchstaben folgt',
-    examples: 'Beispiele aus deinem Blatt',
+    examples: 'Beispiele',
+    lettersShadda: 'Diese Buchstaben mit Shadda',
+    lettersSukun: 'Diese Buchstaben mit Sukūn',
+    allOtherLetters: 'Alle Buchstaben außer Bāʾ und Mīm',
     decides: 'entscheidet die Regel',
     followerKey: 'unterstrichen = der Buchstabe, der entscheidet',
     clear: 'ohne Farbe = klar gesprochen',
@@ -176,9 +198,57 @@ export const de = {
       ],
       tip: 'Merkhilfe: die Anfangsbuchstaben von „ṣif dhā thanā kam jāda shakhṣun qad samā / dum ṭayyiban zid fī tuqan ḍaʿ ẓālimā“.',
     },
-  } as Record<Unit2Card, { title: string; steps: string[]; tip: string }>,
+    ghunna: {
+      title: 'Nūn und Mīm mit Shadda: immer Ghunna',
+      steps: [
+        'Erkenne ein Nūn oder Mīm mit Shadda (نّ مّ).',
+        'Die Ghunna ist ein Nasenklang aus dem Khayshūm: halte sie 2 Zählzeiten.',
+        'Prüfe dich: Hältst du die Nase zu, bricht der Klang ab.',
+        'Stärke der Ghunna: Shadda → Ikhfāʾ und Iqlāb → Idghām → einfaches Nūn oder Mīm.',
+      ],
+      tip: 'Die Ghunna gehört zum Nūn und zum Mīm selbst – auch ohne Regel klingt sie leise mit.',
+    },
+    'ikhfa-shafawi': {
+      title: 'Mīm sākina vor Bāʾ: verborgen, mit Ghunna',
+      steps: [
+        'Erkenne Mīm sākina (مْ) am Wortende.',
+        'Beginnt das nächste Wort mit Bāʾ, ist es Ikhfāʾ shafawī.',
+        'Schließe die Lippen leicht, ohne zu pressen, und halte die Ghunna 2 Zählzeiten.',
+        'Dann öffne in das Bāʾ.',
+      ],
+      tip: '„Shafawī“ heißt „mit den Lippen“: Mīm und Bāʾ kommen beide von den Lippen.',
+    },
+    'idgham-shafawi': {
+      title: 'Mīm sākina vor Mīm: verschmelzen, mit Ghunna',
+      steps: [
+        'Erkenne Mīm sākina vor einem Mīm.',
+        'Die beiden Mīm verschmelzen zu einem Mīm mit Shadda.',
+        'Halte die Ghunna 2 Zählzeiten.',
+      ],
+      tip: 'Man nennt es auch Idghām mithlayn ṣaghīr: zwei gleiche Buchstaben, der erste ruhend.',
+    },
+    'izhar-shafawi': {
+      title: 'Mīm sākina vor allen anderen Buchstaben: klar',
+      steps: [
+        'Erkenne Mīm sākina vor einem Buchstaben außer Bāʾ und Mīm.',
+        'Sprich das Mīm klar, ohne Ghunna und ohne zu verschmelzen.',
+        'Besonders vor Wāw und Fāʾ: schließe die Lippen nicht zu früh und verberge nichts.',
+      ],
+      tip: 'Iẓhār shafawī gilt vor 26 Buchstaben – allen außer Bāʾ und Mīm.',
+    },
+    qalqala: {
+      title: 'Der Rückprall bei ق ط ب ج د mit Sukūn',
+      steps: [
+        'Erkenne einen der fünf Buchstaben ق ط ب ج د (quṭbu jadd) mit Sukūn.',
+        'Berühre die Artikulationsstelle und löse sie schnell: ein kurzer Rückprall.',
+        'Der Rückprall ist kein Vokal: häng kein „a“, „i“ oder „u“ an.',
+        'Beim Anhalten am Wortende (z. B. أَحَدْ) ist der Rückprall am stärksten.',
+      ],
+      tip: 'Merkwort: quṭbu jadd (قُطْبُ جَدٍّ) – seine Buchstaben sind die fünf.',
+    },
+  } as Record<CardId, { title: string; steps: string[]; tip: string }>,
   games: {
-    eyebrow: 'Einheit 2 · Üben',
+    eyebrow: (unit: number) => `Einheit ${unit} · Üben`,
     practise: 'Üben',
     progress: (index: number, total: number) => `${index} / ${total}`,
     seconds: (seconds: number) => `${seconds.toLocaleString('de-DE')} s`,
@@ -222,6 +292,21 @@ export const de = {
           : `${count} Karten kommen in deine Wiederholung.`,
     again: 'Nochmal',
     back: 'Zur Einheit',
+    unit3: {
+      title: 'Welche Regel? · Einheit 3',
+      intro: 'Mīm sākina oder Shadda: zehn Wörter, vier Regeln.',
+      question: 'Welche Regel gilt für das markierte Mīm oder Nūn?',
+    },
+    qalqala: {
+      title: 'Qalqala-Buchstaben',
+      intro: 'Gehört der Buchstabe zu quṭbu jadd? Alle 28, einer nach dem anderen.',
+      question: 'Prallt dieser Buchstabe mit Sukūn zurück?',
+      yes: 'Qalqala',
+      no: 'keine Qalqala',
+      isOne: 'gehört zu quṭbu jadd',
+      isNot: 'gehört nicht zu quṭbu jadd',
+    },
+    shadda: 'Nūn oder Mīm mit Shadda',
   },
   halaqa: {
     mine: 'Meine Ḥalaqāt',

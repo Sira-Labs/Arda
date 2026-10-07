@@ -2,7 +2,15 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addDays, dueState, localDay } from '@/modules/assignments/format';
+import {
+  addDays,
+  cardPath,
+  dueState,
+  gamePath,
+  hasCard,
+  linkFor,
+  localDay,
+} from '@/modules/assignments/format';
 import { Halaqa } from '@/modules/halaqa/Halaqa';
 import { Today } from '@/modules/today/Today';
 import type { Me, StudentAssignment, TeacherAssignment } from '@/services/auth';
@@ -492,5 +500,21 @@ describe('the language on Today', () => {
         { path: '/api/v1/account/settings', method: 'PATCH', body: { language: 'en' } },
       ])
     );
+  });
+});
+
+describe('where an assignment leads (units 2–4)', () => {
+  it('opens the rule card or the game of the rule’s unit', () => {
+    expect(cardPath('idgham-no-ghunna')).toBe('/pfad/2/idgham');
+    expect(cardPath('ikhfa-shafawi')).toBe('/pfad/3/ikhfa-shafawi');
+    expect(cardPath('ghunna-mushaddad')).toBe('/pfad/3/ghunna');
+    expect(cardPath('qalqala')).toBe('/pfad/4/qalqala');
+    expect(gamePath('iqlab')).toBe('/pfad/2/spiel/welche-regel');
+    expect(gamePath('izhar-shafawi')).toBe('/pfad/3/spiel/welche-regel');
+    expect(gamePath('qalqala')).toBe('/pfad/4/spiel/buchstaben');
+    expect(hasCard('qalqala')).toBe(true);
+    expect(linkFor('learn', 'qalqala')).toBe('card');
+    expect(linkFor('practise', 'idgham-shafawi')).toBe('game');
+    expect(linkFor('read', 'qalqala')).toBeNull();
   });
 });
