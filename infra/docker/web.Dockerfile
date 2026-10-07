@@ -8,6 +8,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/web/package.json apps/web/
 COPY apps/api/package.json apps/api/
+COPY packages/engagement/package.json packages/engagement/
 COPY packages/tajweed/package.json packages/tajweed/
 COPY packages/quran/package.json packages/quran/
 COPY tools/package.json tools/

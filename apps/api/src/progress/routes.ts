@@ -1,10 +1,14 @@
 /**
  * Progress on the account (ADR-0022, S5.2), mounted at /api/v1:
  *
- *   POST /progress/sync  { userId, cards, bestTimes } → { cards, bestTimes }   progress:own
+ *   POST /progress/sync  { userId, cards, bestTimes, events?, since? }
+ *                        → { cards, bestTimes, events, more }                progress:own
  *
  * The device sends its whole deck; the answer is the merged deck, which the device merges into
- * its own. 413 `too_many` when the deck would pass the limits; nothing is stored then.
+ * its own. With it go the activity events the server has not confirmed (ADR-0023) and the last
+ * sequence number the device has seen; the answer carries the events after it, a page at a
+ * time (`more`). 413 `too_many` when the deck or the log would pass the limits; nothing is
+ * stored then.
  * `userId` names the account the deck belongs to: when the session cookie has meanwhile been
  * replaced by another account's (a sign-in in another tab), 409 `other_account` keeps one
  * person's deck out of another's account.
@@ -15,7 +19,13 @@ import { bodyLimit } from 'hono/body-limit';
 import { z } from 'zod';
 import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
-import { MAX_CARDS, MAX_GAMES, type ProgressRepository } from './repository.js';
+import { ACTIVITY_KINDS, MAX_ROUND_TOTAL } from '@arda/engagement';
+import {
+  MAX_CARDS,
+  MAX_EVENTS_PER_REQUEST,
+  MAX_GAMES,
+  type ProgressRepository,
+} from './repository.js';
 
 export interface ProgressRouteDeps {
   repo: ProgressRepository;
@@ -42,6 +52,18 @@ const Card = z
   })
   .strict();
 
+const Event = z
+  .object({
+    id: z.string().uuid(),
+    kind: z.enum(ACTIVITY_KINDS),
+    ref: z.string().regex(/^[a-z0-9-]{0,40}$/),
+    at: Millis,
+    right: z.number().int().min(0),
+    total: z.number().int().min(0).max(MAX_ROUND_TOTAL),
+  })
+  .strict()
+  .refine((event) => event.right <= event.total, { message: 'right' });
+
 const Body = z
   .object({
     userId: z.string().min(1).max(200),
@@ -52,6 +74,9 @@ const Body = z
       // A day: longer is no time, it is a game left open.
       z.number().int().min(1).max(86_400_000)
     ),
+    events: z.array(Event).default([]),
+    /** The last sequence number the device has seen. */
+    since: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),
   })
   .strict();
 
@@ -81,7 +106,8 @@ export function createProgressRoutes(deps: ProgressRouteDeps): Hono<ActorEnv> {
     }
     if (
       parsed.data.cards.length > MAX_CARDS ||
-      Object.keys(parsed.data.bestTimes).length > MAX_GAMES
+      Object.keys(parsed.data.bestTimes).length > MAX_GAMES ||
+      parsed.data.events.length > MAX_EVENTS_PER_REQUEST
     ) {
       return c.json({ error: 'too_many' }, 413);
     }
@@ -95,6 +121,7 @@ export function createProgressRoutes(deps: ProgressRouteDeps): Hono<ActorEnv> {
         userId: actor.id,
         sent: parsed.data.cards.length,
         stored: outcome.progress.cards.length,
+        events: parsed.data.events.length,
       },
       'progress.synced'
     );
