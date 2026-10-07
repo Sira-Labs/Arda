@@ -49,3 +49,10 @@ something he can read at a glance.
 - A student who switches devices before L3 starts a new deck there.
 - Teacher marks (T3) and recitation checks (F7) add cards through the same store and ids
   (`mark:<wordKey>:<rule>`), so the review session needs no change.
+
+## Update 2026-10-07
+
+Progress now follows the account (ADR-0022): signed in, the deck and the best times are merged
+with the account by the same rule (per card the later answer, per game the better time) and
+are part of the GDPR export. The `localStorage` store stays as the device's copy; a whole-deck
+merge replaces the planned IndexedDB outbox.

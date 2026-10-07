@@ -12,6 +12,7 @@ import { loadMigrations, migrate } from '../src/migrate.js';
 import { PgAdminRepository } from '../src/admin/repository.js';
 import { PgAccountRepository } from '../src/account/repository.js';
 import { PgPrivacyRepository } from '../src/privacy/repository.js';
+import { PgProgressRepository, type ProgressCard } from '../src/progress/repository.js';
 import {
   PgRecordingRepository,
   type NewRecording,
@@ -1572,6 +1573,94 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await repo.halaqaAudio(halaqaId, yusufs.id)).toBeNull();
       expect(await count('recordings')).toBe(0);
       expect(await count('recording_audio')).toBe(0);
+    });
+  });
+
+  describe('progress (S5.2, ADR-0022)', () => {
+    const AMINA = '70000000-0000-4000-8000-000000000001';
+    const YUSUF = '70000000-0000-4000-8000-000000000002';
+    const NOW = Date.UTC(2026, 9, 7, 12);
+    const card = (prompt: string, updatedAt: number, box = 1): ProgressCard => ({
+      id: `which-rule:${prompt}`,
+      kind: 'which-rule',
+      prompt,
+      answer: 'ikhfa',
+      box,
+      due: updatedAt + 86_400_000,
+      lapses: 1,
+      updatedAt,
+    });
+    let repo: PgProgressRepository;
+
+    beforeEach(async () => {
+      repo = new PgProgressRepository(pool, () => NOW);
+      await pool.query(
+        `insert into users (id, email, name, role) values
+           ($1, 'amina@example.org', 'Amina', 'student'),
+           ($2, 'yusuf@example.org', 'Yusuf', 'student')`,
+        [AMINA, YUSUF]
+      );
+    });
+
+    it('merges per card by time and per game by the better time', async () => {
+      await repo.sync(AMINA, {
+        cards: [card('مِنْ بَعْدِ', NOW - 5000, 3), card('b', NOW - 5000)],
+        bestTimes: { 'sort-28': 40_000 },
+      });
+      const outcome = await repo.sync(AMINA, {
+        // A repeated id keeps its later version; a future date is stored as now.
+        cards: [
+          card('مِنْ بَعْدِ', NOW - 9000, 1),
+          card('b', NOW - 2000, 2),
+          card('b', NOW - 1000, 4),
+          card('c', NOW + 60_000),
+        ],
+        bestTimes: { 'sort-28': 50_000, 'other-game': 9000 },
+      });
+      expect(outcome.ok).toBe(true);
+      if (!outcome.ok) return;
+      expect(outcome.progress.cards.map((c) => [c.prompt, c.box, c.updatedAt])).toEqual([
+        ['b', 4, NOW - 1000],
+        ['c', 1, NOW],
+        ['مِنْ بَعْدِ', 3, NOW - 5000],
+      ]);
+      expect(outcome.progress.cards[0]).toEqual(card('b', NOW - 1000, 4));
+      expect(outcome.progress.bestTimes).toEqual({
+        'other-game': 9000,
+        'sort-28': 40_000,
+      });
+      // Syncing the answer again changes nothing.
+      const again = await repo.sync(AMINA, outcome.progress);
+      expect(again).toEqual(outcome);
+      // Yusuf's deck is his own.
+      expect(await repo.sync(YUSUF, { cards: [], bestTimes: {} })).toEqual({
+        ok: true,
+        progress: { cards: [], bestTimes: {} },
+      });
+    });
+
+    it('refuses a deck past the limit and stores none of it', async () => {
+      const many = Array.from({ length: 5001 }, (_, i) => card(String(i), NOW));
+      expect(await repo.sync(AMINA, { cards: many, bestTimes: {} })).toEqual({
+        ok: false,
+        error: 'too_many',
+      });
+      const count = await pool.query('select count(*) from review_cards');
+      expect(Number(count.rows[0].count)).toBe(0);
+    });
+
+    it('is in the export and goes with the account', async () => {
+      await repo.sync(AMINA, { cards: [card('a', NOW)], bestTimes: { 'sort-28': 1234 } });
+      const exported = await new PgPrivacyRepository(pool).export(AMINA);
+      expect(exported.progress).toEqual({
+        cards: [card('a', NOW)],
+        bestTimes: { 'sort-28': 1234 },
+      });
+      await new PgPrivacyRepository(pool).delete(AMINA, null);
+      const left = await pool.query(
+        'select (select count(*) from review_cards) + (select count(*) from best_times) as n'
+      );
+      expect(Number(left.rows[0].n)).toBe(0);
     });
   });
 });

@@ -11,6 +11,7 @@ import { answer, fromMistake, isDue, type NewCard, type ReviewCard } from './lei
 import {
   LocalReviewStore,
   mergeStates,
+  sameState,
   type ReviewState,
   type ReviewStore,
 } from './store';
@@ -23,6 +24,17 @@ export interface Review {
   bestTime(game: string): number | undefined;
   /** Saves the time if it is the best so far; returns whether it was. */
   offerTime(game: string, ms: number): boolean;
+  /** The whole deck, as the account sync sends it (ADR-0022). */
+  deck: ReviewState;
+  /**
+   * Takes in `userId`'s deck from the account, merged into this one; dropped when the deck on
+   * the device has meanwhile been handed to another account (in another tab).
+   */
+  receive(incoming: ReviewState, userId: string): void;
+  /** Binds the deck to the account signing in; true when another account's deck was dropped. */
+  claim(userId: string): boolean;
+  /** Is the deck on this device `userId`'s now (another tab may have handed it on)? */
+  owns(userId: string): boolean;
 }
 
 const ReviewContext = createContext<Review | null>(null);
@@ -63,10 +75,34 @@ export function ReviewProvider({
   // Another tab practised: take its cards and times into this one.
   useEffect(
     () =>
-      store.subscribe?.((incoming) =>
-        setState((current) => mergeStates(current, incoming))
+      store.subscribe?.((incoming, replaced) =>
+        // Handed to another account there: this tab's copy is dropped, not merged.
+        setState((current) => (replaced ? incoming : mergeStates(current, incoming)))
       ),
     [store]
+  );
+
+  const claim = useCallback(
+    (userId: string) => {
+      const { state: held, replaced } = store.claim(userId);
+      if (replaced) setState(held);
+      return replaced;
+    },
+    [store]
+  );
+  const owns = useCallback((userId: string) => store.owner() === userId, [store]);
+
+  const receive = useCallback(
+    (incoming: ReviewState, userId: string) => {
+      // Unchanged by the merge: no save, no new deck, so no new sync is triggered.
+      update((current) => {
+        // An answer that was on its way while another tab signed someone else in.
+        if (store.owner() !== userId) return current;
+        const merged = mergeStates(current, incoming);
+        return sameState(merged, current) ? current : merged;
+      });
+    },
+    [store, update]
   );
 
   const record = useCallback(
@@ -105,8 +141,12 @@ export function ReviewProvider({
       record,
       bestTime: (game) => state.bestTimes[game],
       offerTime,
+      deck: state,
+      receive,
+      claim,
+      owns,
     };
-  }, [state, record, offerTime, now, clockAt]);
+  }, [state, record, offerTime, receive, claim, owns, now, clockAt]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

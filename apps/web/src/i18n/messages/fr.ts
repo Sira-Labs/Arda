@@ -31,6 +31,10 @@ export const fr: Messages = {
     nextUnit: 'Suite du parcours · Unité 2',
     openCard: 'Ouvrir la fiche',
     legend: 'Couleurs du muṣḥaf',
+    saveProgress: 'Garder ta progression',
+    saveProgressHint:
+      'Tu peux t’entraîner sans compte. Connecte-toi pour que ta progression soit enregistrée et la même sur tous tes appareils.',
+    saveProgressAction: 'Se connecter et garder',
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'son nasal, 2 temps (ikhfāʾ, idghām, iqlāb)' },

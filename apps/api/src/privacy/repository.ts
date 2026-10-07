@@ -4,11 +4,12 @@
  *
  * Deletion relies on the foreign keys (on delete cascade: sessions, accounts, passkeys, second
  * factor). The audit log keeps its rows with the actor set to null: a record of who changed
- * what, without the person. Each later feature (ḥalaqāt, recitations, progress) adds its
+ * what, without the person. Each feature (ḥalaqāt, recitations, progress) adds its
  * tables to the export here and to the cascade in its migration.
  */
 import type pg from 'pg';
 import { writeAudit } from '../audit/log.js';
+import { readProgress, type Progress } from '../progress/repository.js';
 
 export interface AccountExport {
   exportedAt: string;
@@ -29,6 +30,8 @@ export interface AccountExport {
    * file), and those they answered as a teacher, with the answer (F7, T3, ADR-0012).
    */
   recordings: Record<string, unknown>[];
+  /** The review deck and the best times of the timed games (ADR-0021, ADR-0022). */
+  progress: Progress;
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -52,6 +55,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       halaqat,
       assignments,
       recordings,
+      progress,
       audit,
     ] = await Promise.all([
       this.pool.query(
@@ -108,6 +112,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
           order by created_at, id`,
         [userId]
       ),
+      readProgress(this.pool, userId),
       this.pool.query(
         `select id, actor_id, action, target_type, target_id, details, created_at
            from audit_log
@@ -129,6 +134,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       halaqat: halaqat.rows,
       assignments: assignments.rows,
       recordings: recordings.rows,
+      progress,
       auditLog: audit.rows,
     };
   }

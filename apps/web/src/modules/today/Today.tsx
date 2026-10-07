@@ -6,6 +6,7 @@ import { TajweedText } from '@/components/TajweedText';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import { LanguagePicker } from '@/i18n/LanguagePicker';
 import { cardName } from '@/content/unit2';
+import { SaveProgressHint } from '@/modules/account/SaveProgressHint';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
@@ -70,6 +71,7 @@ export function Today() {
           {m.today.offline}
         </p>
       )}
+      <SaveProgressHint />
 
       <section className="card card-ink stack" aria-labelledby="from-sheikh">
         <p className="eyebrow" style={{ color: 'var(--accent-fill)' }}>

@@ -21,6 +21,7 @@ import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
 import { Soon } from '@/modules/Soon';
 import { Today } from '@/modules/today/Today';
+import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider } from '@/review/ReviewProvider';
 import { SessionProvider } from '@/state/session';
 
@@ -58,6 +59,7 @@ export function App() {
       <I18nProvider>
         <ReviewProvider>
           <OutboxSender />
+          <ProgressSync />
           <RouterProvider router={router} />
         </ReviewProvider>
       </I18nProvider>

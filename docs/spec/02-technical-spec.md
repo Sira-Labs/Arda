@@ -123,6 +123,15 @@ Built (migration `0006_recordings`, spec F7 and T3, ADR-0012):
 Both cascade with the student's membership, so leaving, being removed or deleting the account
 deletes the student's recordings; the export lists them without the sound.
 
+Built (migration `0007_progress`, S5.2, ADR-0022):
+
+| Table          | Purpose                                                                                                                            |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `review_cards` | per person and card id (from the content): kind, prompt, expected rule card, box, due, lapses, `updated_at` (epoch ms; later wins) |
+| `best_times`   | per person and timed game: the best time in milliseconds (better wins)                                                             |
+
+Both cascade with the account and are in the export (`progress`).
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table                  | Story    | Key fields                                                                                  |
@@ -192,6 +201,12 @@ in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari ne
 | `PUT /halaqat/:id/recordings/:rid/review`               | `halaqa:review`           | answer `{ verdict, remark?, note? }`; again replaces it                                                         |
 | `GET /recordings?before=`                               | `recitation:own`          | my recordings and their answers, newest first                                                                   |
 | `GET /recordings/:rid/audio`, `DELETE /recordings/:rid` | `recitation:own`          | hear or delete my own                                                                                           |
+
+Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
+
+| Method and path                                             | Action         | Purpose                                                                                                                                                                    |
+| ----------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes }` | `progress:own` | merge this device's deck into the account's and answer with the result; 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 2 MB (413) |
 
 Next: `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.

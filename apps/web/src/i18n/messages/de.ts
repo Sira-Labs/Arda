@@ -60,6 +60,10 @@ export const de = {
     nextUnit: 'Weiter auf dem Pfad · Einheit 2',
     openCard: 'Zur Regelkarte',
     legend: 'Farben im Muṣḥaf',
+    saveProgress: 'Fortschritt sichern',
+    saveProgressHint:
+      'Du kannst ohne Konto üben. Melde dich an, damit dein Fortschritt gespeichert wird und auf all deinen Geräten gleich ist.',
+    saveProgressAction: 'Anmelden und sichern',
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'Nasenklang, 2 Zählzeiten (Ikhfāʾ, Idghām, Iqlāb)' },

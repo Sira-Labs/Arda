@@ -2,6 +2,7 @@ import { RULES } from '@arda/tajweed';
 import { Link } from 'react-router-dom';
 import { UNIT2, UNIT2_CARDS, cardName } from '@/content/unit2';
 import { useI18n } from '@/i18n/I18nProvider';
+import { SaveProgressHint } from '@/modules/account/SaveProgressHint';
 import { useReview } from '@/review/ReviewProvider';
 
 /** The path (spec F1): unit 2 first, its four rule cards in the order of the sheet. */
@@ -77,6 +78,7 @@ export function Path() {
         </div>
       </section>
 
+      <SaveProgressHint />
       <p className="muted">{m.path.next}</p>
     </div>
   );

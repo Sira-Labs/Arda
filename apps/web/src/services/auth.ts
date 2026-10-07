@@ -222,6 +222,12 @@ export interface RecitationUpload {
   blob: Blob;
 }
 
+/** The review deck as the account stores it (ADR-0022): cards as a list. */
+export interface ProgressPayload {
+  cards: unknown[];
+  bestTimes: Record<string, number>;
+}
+
 export class AuthClient {
   constructor(private readonly fetchImpl: Fetch = (...args) => fetch(...args)) {}
 
@@ -286,6 +292,20 @@ export class AuthClient {
     return apiRequest(this.fetchImpl, '/api/v1/auth/sign-out', {
       method: 'POST',
       body: '{}',
+    });
+  }
+
+  /**
+   * Sends this device's deck as `userId`'s; the answer is the account's deck merged with it
+   * (ADR-0022). Refused (409 `other_account`) when the session now belongs to someone else.
+   */
+  syncProgress(
+    deck: ProgressPayload,
+    userId: string
+  ): Promise<ApiResult<ProgressPayload>> {
+    return apiRequest(this.fetchImpl, '/api/v1/progress/sync', {
+      method: 'POST',
+      body: JSON.stringify({ ...deck, userId }),
     });
   }
 

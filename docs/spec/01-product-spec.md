@@ -119,6 +119,12 @@ Units with stations (rule card, muṣḥaf, hear, letter lab, games, recite) and
 XP, daily quests, streak with shields from Suffa's engagement rules. **Acceptance:** unit 2 is
 playable end to end offline; finishing the test unlocks unit 3.
 
+Learning needs no account (ADR-0022): a guest practises the path, the games and the lab offline
+and is asked, in one quiet card on Today and the path, to sign in so the progress is kept.
+_(Built (owner, 2026-10-07): signed in, the review deck and the best times sync with the
+account across devices; a guest's deck joins the account at the first sign-in, another
+account's deck on the same device is replaced, never merged.)_
+
 ### F2 — Rule cards _(Must)_
 
 "The sheet, made audible": each rule as the sheikh wrote it, each example playable, three
