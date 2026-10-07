@@ -65,3 +65,18 @@ The owner chose to keep learning open and tie progress to the account.
   later answer wins, as on one device with two tabs.
 - The export lists the deck; the server learns which rules a person struggles with, which is
   also what the sheikh will see in T5.
+
+## Update 2026-10-07: where reading goes on (Weiterlesen)
+
+The owner asked the app to remember where someone last read.
+
+- The page shown in the muṣḥaf is remembered per script (IndoPak as the sheikh's copy numbers
+  its pages, Madīna 1–604), with the time it was shown. Today and the muṣḥaf list offer
+  "Weiterlesen" on that page, with the sūra it opens with.
+- It is part of the progress: on the device with the deck, and once signed in on the account
+  (`reading_places`, migration `0010_reading_places`), so the phone opens where the laptop
+  stopped. Per script the later page wins, as a card does; a time from a clock ahead is
+  stored as now. A guest's place joins the account at sign-in; another account's is dropped
+  with its deck.
+- The page, not the āya: the page is what a reader of a printed muṣḥaf comes back to. An āya
+  or word can be added later without changing how places merge.
