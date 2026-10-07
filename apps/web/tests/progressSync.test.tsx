@@ -237,6 +237,22 @@ describe('with the providers', () => {
     return null;
   }
 
+  it("drops an account's answer once the deck belongs to someone else", async () => {
+    const store = new MemoryReviewStore(deckOf(card('yusufs', NOW)), 'u-yusuf');
+    let review: Review | undefined;
+    render(
+      <Providers client={fakeApi({}).client}>
+        <ReviewProvider store={store}>
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    act(() => review!.receive(deckOf(card('aminas', NOW)), ME.id));
+    expect(review!.cards.map((c) => c.prompt)).toEqual(['yusufs']);
+    act(() => review!.receive(deckOf(card('more', NOW)), 'u-yusuf'));
+    expect(review!.cards.map((c) => c.prompt).sort()).toEqual(['more', 'yusufs']);
+  });
+
   it('keeps the signed-in deck in the store and on the account', async () => {
     const store = new MemoryReviewStore(deckOf(card('local', NOW)));
     const server = fakeAccount([card('remote', NOW - 1)]);

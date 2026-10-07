@@ -26,8 +26,11 @@ export interface Review {
   offerTime(game: string, ms: number): boolean;
   /** The whole deck, as the account sync sends it (ADR-0022). */
   deck: ReviewState;
-  /** Takes in the account's deck, merged into this one. */
-  receive(incoming: ReviewState): void;
+  /**
+   * Takes in `userId`'s deck from the account, merged into this one; dropped when the deck on
+   * the device has meanwhile been handed to another account (in another tab).
+   */
+  receive(incoming: ReviewState, userId: string): void;
   /** Binds the deck to the account signing in; true when another account's deck was dropped. */
   claim(userId: string): boolean;
   /** Is the deck on this device `userId`'s now (another tab may have handed it on)? */
@@ -90,14 +93,16 @@ export function ReviewProvider({
   const owns = useCallback((userId: string) => store.owner() === userId, [store]);
 
   const receive = useCallback(
-    (incoming: ReviewState) => {
+    (incoming: ReviewState, userId: string) => {
       // Unchanged by the merge: no save, no new deck, so no new sync is triggered.
       update((current) => {
+        // An answer that was on its way while another tab signed someone else in.
+        if (store.owner() !== userId) return current;
         const merged = mergeStates(current, incoming);
         return sameState(merged, current) ? current : merged;
       });
     },
-    [update]
+    [store, update]
   );
 
   const record = useCallback(

@@ -4,6 +4,7 @@ import type { Actor } from '../src/authz/policies.js';
 import {
   clampToNow,
   MAX_CARDS,
+  MAX_GAMES,
   mergeProgress,
   type ProgressCard,
 } from '../src/progress/repository.js';
@@ -135,6 +136,34 @@ describe('progress sync (ADR-0022)', () => {
     expect(((await response.json()) as Json).error).toBe('too_many');
     expect(repo.stored.get(ACTORS.student!.id)!.cards).toHaveLength(MAX_CARDS);
   });
+
+  it.each([
+    [
+      'cards',
+      {
+        cards: Array.from({ length: MAX_CARDS + 1 }, (_, i) => card(String(i), NOW)),
+        bestTimes: {},
+      },
+    ],
+    [
+      'games',
+      {
+        cards: [],
+        bestTimes: Object.fromEntries(
+          Array.from({ length: MAX_GAMES + 1 }, (_, i) => [`game-${i}`, 1000])
+        ),
+      },
+    ],
+  ])(
+    'refuses more %s in one request than a person may keep (413)',
+    async (_name, body) => {
+      const { sync, repo } = setup();
+      const response = await sync('student', body);
+      expect(response.status).toBe(413);
+      expect(((await response.json()) as Json).error).toBe('too_many');
+      expect(repo.stored.size).toBe(0);
+    }
+  );
 
   it('refuses a body past the size limit (413)', async () => {
     const { sync } = setup();

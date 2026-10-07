@@ -84,7 +84,7 @@ export function useProgressSync(
         return;
       }
       synced.current = incoming;
-      latest.current.receive(incoming);
+      latest.current.receive(incoming, userId);
     };
 
     const sync = () => {

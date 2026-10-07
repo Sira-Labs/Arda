@@ -41,14 +41,13 @@ const Card = z
 
 const Body = z
   .object({
-    cards: z.array(Card).max(MAX_CARDS),
-    bestTimes: z
-      .record(
-        z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/),
-        // A day: longer is no time, it is a game left open.
-        z.number().int().min(1).max(86_400_000)
-      )
-      .refine((times) => Object.keys(times).length <= MAX_GAMES, 'too many games'),
+    // Counts are checked after parsing: past the limits is 413, not a malformed body.
+    cards: z.array(Card),
+    bestTimes: z.record(
+      z.string().regex(/^[a-z0-9][a-z0-9-]{0,39}$/),
+      // A day: longer is no time, it is a game left open.
+      z.number().int().min(1).max(86_400_000)
+    ),
   })
   .strict();
 
@@ -75,6 +74,12 @@ export function createProgressRoutes(deps: ProgressRouteDeps): Hono<ActorEnv> {
     if (!parsed.success) {
       const issues = parsed.error.issues.map((i) => String(i.path[0] ?? 'body'));
       return c.json({ error: 'invalid_body', issues: [...new Set(issues)] }, 400);
+    }
+    if (
+      parsed.data.cards.length > MAX_CARDS ||
+      Object.keys(parsed.data.bestTimes).length > MAX_GAMES
+    ) {
+      return c.json({ error: 'too_many' }, 413);
     }
     const actor = c.get('actor');
     const outcome = await deps.repo.sync(actor.id, parsed.data);
