@@ -84,7 +84,8 @@ card, so the rule returns until it holds.
 | 7     | Waqf & ibtidāʾ: where to stop and start; the signs of your muṣḥaf           | classical order                |
 | 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
 
-Every unit has stations and a unit test that unlocks the next (Suffa's structure). Every text is
+Every unit has stations and a unit test that unlocks the next (Suffa's structure; since ADR-0024
+a passed test marks the unit and recommends the next, nothing is locked). Every text is
 a draft until the sheikh has reviewed it.
 
 ## 5. Feature specification
@@ -129,8 +130,9 @@ end goes into an activity log synced with the account; Today shows level, XP, th
 its shields, the end of a round its XP. Daily quests and badges are next.)_
 _(Built (owner, 2026-10-07, S5.1): the path shows units 1–4. Unit 1 leads to the letter lab
 (sīn, zāy, ṣād, rāʾ so far); unit 3 has four cards (ghunna of a shadda and the three mīm
-sākina rules) and its "Which rule?", unit 4 the qalqala card and the qalqala letters. The unit
-test that unlocks the next unit is still open.)_
+sākina rules) and its "Which rule?", unit 4 the qalqala card and the qalqala letters.)_
+_(Built (owner, 2026-10-07, ADR-0024): units 2–4 end with a test of ten questions; eight right
+pass it, which marks the unit on the path and recommends the next one, without locking it.)_
 
 ### F2 — Rule cards _(Must)_
 
