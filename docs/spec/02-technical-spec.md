@@ -204,9 +204,9 @@ in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari ne
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
-| Method and path                                     | Action         | Purpose                                                                                                      |
-| --------------------------------------------------- | -------------- | ------------------------------------------------------------------------------------------------------------ |
-| `POST /api/v1/progress/sync` `{ cards, bestTimes }` | `progress:own` | merge this device's deck into the account's and answer with the result; ≤ 5,000 cards, 100 games, 2 MB (413) |
+| Method and path                                             | Action         | Purpose                                                                                                                                                                    |
+| ----------------------------------------------------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes }` | `progress:own` | merge this device's deck into the account's and answer with the result; 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 2 MB (413) |
 
 Next: `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.

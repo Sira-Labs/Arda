@@ -46,11 +46,18 @@ function setup() {
       log: quiet,
     },
   });
+  /** A deck sent by `actor` as their own (the `userId` the web app adds), unless it names one. */
   const sync = (actor: string, body: unknown) =>
     app.request('/api/v1/progress/sync', {
       method: 'POST',
       headers: { 'x-test-actor': actor, 'content-type': 'application/json' },
-      body: typeof body === 'string' ? body : JSON.stringify(body),
+      body:
+        typeof body === 'string'
+          ? body
+          : JSON.stringify({
+              userId: ACTORS[actor]?.id ?? 'nobody',
+              ...(body as object),
+            }),
     });
   return { repo, sync };
 }
@@ -97,6 +104,19 @@ describe('progress sync (ADR-0022)', () => {
     expect(body).toEqual({ cards: [], bestTimes: {} });
   });
 
+  it("refuses a deck sent as another account's, and stores nothing (409)", async () => {
+    // The session cookie changed (a sign-in in another tab) while the deck was on its way.
+    const { sync, repo } = setup();
+    const response = await sync('student', {
+      userId: ACTORS.other!.id,
+      cards: [card('a', NOW)],
+      bestTimes: {},
+    });
+    expect(response.status).toBe(409);
+    expect(((await response.json()) as Json).error).toBe('other_account');
+    expect(repo.stored.size).toBe(0);
+  });
+
   it('stores a card dated in the future as answered now', async () => {
     const { sync } = setup();
     const body: Json = await (
@@ -107,6 +127,7 @@ describe('progress sync (ADR-0022)', () => {
 
   it.each([
     ['not JSON', '{'],
+    ['no account named', '{"cards":[],"bestTimes":{}}'],
     ['an unknown field', { cards: [], bestTimes: {}, xp: 5 }],
     ['a box outside 1–5', { cards: [{ ...card('a', NOW), box: 6 }], bestTimes: {} }],
     ['a negative time', { cards: [{ ...card('a', NOW), due: -1 }], bestTimes: {} }],

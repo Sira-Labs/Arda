@@ -36,12 +36,21 @@ const deckOf = (...cards: ReviewCard[]): ReviewState => ({
 /** The account on the server: merges like the API does and records what was sent. */
 function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = {}) {
   const account = { cards: new Map(stored.map((c) => [c.id, c])), times: { ...times } };
-  const sent: { cards: ReviewCard[]; bestTimes: Record<string, number> }[] = [];
+  const sent: {
+    userId: string;
+    cards: ReviewCard[];
+    bestTimes: Record<string, number>;
+  }[] = [];
   let offline = false;
+  // Whose session cookie the browser holds; the API refuses another account's deck.
+  let session = ME.id;
   const fetchImpl = vi.fn(async (_path: RequestInfo | URL, init?: RequestInit) => {
     if (offline) throw new TypeError('Failed to fetch');
     const body = JSON.parse(String(init?.body)) as (typeof sent)[number];
     sent.push(body);
+    if (body.userId !== session) {
+      return Response.json({ error: 'other_account' }, { status: 409 });
+    }
     for (const c of body.cards) {
       const other = account.cards.get(c.id);
       if (!other || c.updatedAt >= other.updatedAt) account.cards.set(c.id, c);
@@ -60,6 +69,7 @@ function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = 
     sent,
     account,
     goOffline: (value: boolean) => (offline = value),
+    signInElsewhere: (id: string) => (session = id),
   };
 }
 
@@ -204,6 +214,17 @@ describe('progress sync (ADR-0022)', () => {
     visibility.mockRestore();
   });
 
+  it('keeps the deck out of an account that signed in elsewhere meanwhile', async () => {
+    const server = fakeAccount([card('yusufs', NOW - 1)]);
+    // The cookie is Yusuf's already; this tab has not heard of it yet.
+    server.signInElsewhere('u-yusuf');
+    const view = mountHook(deckOf(card('aminas', NOW)), server.client, ME.id);
+    await waitFor(() => expect(server.sent).toHaveLength(1));
+    expect(server.sent[0]!.userId).toBe(ME.id);
+    expect(server.account.cards.has('which-rule:aminas')).toBe(false);
+    expect(Object.keys(view.deck().cards)).toEqual(['which-rule:aminas']);
+  });
+
   it('waits offline and sends when the device is online again', async () => {
     const server = fakeAccount();
     server.goOffline(true);
@@ -258,8 +279,8 @@ describe('with the providers', () => {
     const server = fakeAccount([card('remote', NOW - 1)]);
     const { client } = fakeApi({}, ME);
     // The session from fakeApi, the sync over the fake account.
-    vi.spyOn(client, 'syncProgress').mockImplementation((deck) =>
-      server.client.syncProgress(deck)
+    vi.spyOn(client, 'syncProgress').mockImplementation((deck, userId) =>
+      server.client.syncProgress(deck, userId)
     );
     let review: Review | undefined;
     render(

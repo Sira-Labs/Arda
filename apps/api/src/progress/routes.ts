@@ -1,10 +1,13 @@
 /**
  * Progress on the account (ADR-0022, S5.2), mounted at /api/v1:
  *
- *   POST /progress/sync  { cards, bestTimes } → { cards, bestTimes }   progress:own
+ *   POST /progress/sync  { userId, cards, bestTimes } → { cards, bestTimes }   progress:own
  *
  * The device sends its whole deck; the answer is the merged deck, which the device merges into
  * its own. 413 `too_many` when the deck would pass the limits; nothing is stored then.
+ * `userId` names the account the deck belongs to: when the session cookie has meanwhile been
+ * replaced by another account's (a sign-in in another tab), 409 `other_account` keeps one
+ * person's deck out of another's account.
  */
 import type { Context } from 'hono';
 import { Hono } from 'hono';
@@ -41,6 +44,7 @@ const Card = z
 
 const Body = z
   .object({
+    userId: z.string().min(1).max(200),
     // Counts are checked after parsing: past the limits is 413, not a malformed body.
     cards: z.array(Card),
     bestTimes: z.record(
@@ -82,7 +86,9 @@ export function createProgressRoutes(deps: ProgressRouteDeps): Hono<ActorEnv> {
       return c.json({ error: 'too_many' }, 413);
     }
     const actor = c.get('actor');
-    const outcome = await deps.repo.sync(actor.id, parsed.data);
+    const { userId, ...deck } = parsed.data;
+    if (userId !== actor.id) return c.json({ error: 'other_account' }, 409);
+    const outcome = await deps.repo.sync(actor.id, deck);
     if (!outcome.ok) return c.json({ error: outcome.error }, 413);
     deps.log.info(
       {

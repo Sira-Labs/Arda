@@ -69,11 +69,14 @@ export function useProgressSync(
       // Until the replaced deck has rendered, the deck at hand is still the other account's.
       const deck = dropped ? emptyState() : latest.current.deck;
       dropped = false;
-      const result = await client.syncProgress(toPayload(deck));
+      const result = await client.syncProgress(toPayload(deck), userId);
       if (stopped) return;
       if (!result.ok) {
         // Offline waits for the `online` event; anything else is tried at the next change.
-        if (result.code !== 'offline') {
+        if (result.code === 'other_account') {
+          // Another tab signed someone else in; that tab's account gets its own deck.
+          log.info('progress sync refused: the session belongs to another account now');
+        } else if (result.code !== 'offline') {
           log.warn('progress sync failed', { status: result.status, code: result.code });
         }
         return;

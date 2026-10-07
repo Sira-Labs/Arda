@@ -295,11 +295,17 @@ export class AuthClient {
     });
   }
 
-  /** Sends this device's deck; the answer is the account's deck merged with it (ADR-0022). */
-  syncProgress(deck: ProgressPayload): Promise<ApiResult<ProgressPayload>> {
+  /**
+   * Sends this device's deck as `userId`'s; the answer is the account's deck merged with it
+   * (ADR-0022). Refused (409 `other_account`) when the session now belongs to someone else.
+   */
+  syncProgress(
+    deck: ProgressPayload,
+    userId: string
+  ): Promise<ApiResult<ProgressPayload>> {
     return apiRequest(this.fetchImpl, '/api/v1/progress/sync', {
       method: 'POST',
-      body: JSON.stringify(deck),
+      body: JSON.stringify({ ...deck, userId }),
     });
   }
 
