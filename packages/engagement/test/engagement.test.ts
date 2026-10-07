@@ -6,6 +6,8 @@ import {
   isActivityEvent,
   levelFor,
   MAX_SHIELDS,
+  passedUnits,
+  passesUnitTest,
   roundXp,
   summarise,
   xpAwards,
@@ -180,5 +182,33 @@ describe('event shape', () => {
     ['an odd ref', { ...ok, ref: 'DROP TABLE' }, false],
   ])('accepts %s: %s', (_name, value, expected) => {
     expect(isActivityEvent(value)).toBe(expected);
+  });
+});
+
+describe('unit tests', () => {
+  it('are passed with 8 of 10, and counted per unit', () => {
+    expect(passesUnitTest(8, 10)).toBe(true);
+    expect(passesUnitTest(7, 10)).toBe(false);
+    expect(passesUnitTest(0, 0)).toBe(false);
+    const t = at('2026-10-07T10:00Z');
+    expect([
+      ...passedUnits([
+        event({ at: t, kind: 'unit-test', ref: 'unit-2', right: 7 }),
+        event({ at: t, kind: 'unit-test', ref: 'unit-3', right: 9 }),
+        event({ at: t, kind: 'unit-test', ref: 'unit-3', right: 4 }),
+        // Another game with a good score, or an odd ref, passes nothing.
+        event({ at: t, kind: 'which-rule-3', ref: 'unit-4', right: 10 }),
+        event({ at: t, kind: 'unit-test', ref: 'unit-x', right: 10 }),
+      ]),
+    ]).toEqual([3]);
+  });
+
+  it('earn round XP like any game', () => {
+    const t = at('2026-10-07T10:00Z');
+    const [award] = xpAwards(
+      [event({ at: t, kind: 'unit-test', ref: 'unit-2', right: 10 })],
+      TZ
+    );
+    expect(award?.points).toBe(roundXp(10, 10));
   });
 });
