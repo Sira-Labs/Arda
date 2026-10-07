@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -118,18 +119,28 @@ export function ReviewProvider({
     [store, update]
   );
 
+  // The log including events logged since the last render, so two events before it are
+  // each awarded against the other (the daily cap, a rule card's XP once).
+  const pendingActivity = useRef(state.activity);
+  useEffect(() => {
+    pendingActivity.current = state.activity;
+  }, [state.activity]);
+
   const logActivity = useCallback(
     (entry: ActivityEntry) => {
       const event: ActivityEvent = { id: crypto.randomUUID(), at: now(), ...entry };
-      const log = [...Object.values(state.activity ?? {}), event];
-      const earned = xpAwards(log, deviceTimeZone()).find((a) => a.event.id === event.id);
+      const activity = { ...pendingActivity.current, [event.id]: event };
+      pendingActivity.current = activity;
+      const earned = xpAwards(Object.values(activity), deviceTimeZone()).find(
+        (a) => a.event.id === event.id
+      );
       update((current) => ({
         ...current,
         activity: { ...current.activity, [event.id]: event },
       }));
       return earned?.points ?? 0;
     },
-    [state.activity, update, now]
+    [update, now]
   );
 
   const record = useCallback(

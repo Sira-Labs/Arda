@@ -76,7 +76,12 @@ describe('the activity log in the store (ADR-0023)', () => {
       },
       cursor: 4,
     });
-    expect(parsed).toEqual({ ...withLog(ok), cursor: 4 });
+    // A dropped event may lie behind the cursor: the device asks for the whole log again.
+    expect(parsed).toEqual({ ...withLog(ok), cursor: 0 });
+    expect(parseState({ ...withLog(ok), cursor: 4 })).toEqual({
+      ...withLog(ok),
+      cursor: 4,
+    });
     expect(parseState({ cards: {}, bestTimes: {} })).toEqual({
       cards: {},
       bestTimes: {},
@@ -92,8 +97,8 @@ describe('the activity log in the store (ADR-0023)', () => {
 });
 
 /** The API's log: numbers events once, answers what came after `since`, `page` at a time. */
-function fakeServer(page = 1000) {
-  const log: (ActivityEvent & { seq: number })[] = [];
+function fakeServer(page = 1000, stuck = false) {
+  const log: (Omit<ActivityEvent, 'kind'> & { kind: string; seq: number })[] = [];
   const requests: ProgressPayload[] = [];
   let offline = false;
   const sync = vi.fn(async (deck: ProgressPayload) => {
@@ -105,6 +110,12 @@ function fakeServer(page = 1000) {
     }
     const ids = new Set(sent.map((e) => e.id));
     const after = log.filter((e) => e.seq > (deck.since ?? 0) || ids.has(e.id));
+    if (stuck) {
+      return {
+        ok: true as const,
+        value: { cards: [], bestTimes: {}, events: [], more: true },
+      };
+    }
     return {
       ok: true as const,
       value: {
@@ -124,13 +135,17 @@ function Probe({ onReview }: { onReview: (review: Review) => void }) {
 }
 
 /** The app's providers, signed in as Amina, the sync going to `server`. */
-function mount(server: ReturnType<typeof fakeServer>, store = new MemoryReviewStore()) {
+function mount(
+  server: ReturnType<typeof fakeServer>,
+  store = new MemoryReviewStore(),
+  now: () => number = () => NOW
+) {
   const { client } = fakeApi({}, ME);
   vi.spyOn(client, 'syncProgress').mockImplementation((deck) => server.sync(deck));
   const seen: { review?: Review } = {};
   render(
     <Providers client={client}>
-      <ReviewProvider store={store} now={() => NOW}>
+      <ReviewProvider store={store} now={now}>
         <ProgressSync />
         <Probe onReview={(r) => (seen.review = r)} />
       </ReviewProvider>
@@ -182,6 +197,25 @@ describe('syncing the log (ADR-0023)', () => {
     expect(Object.keys(store.load().activity!)).toHaveLength(5);
   });
 
+  it('skips an event of a kind this version does not know, and moves on', async () => {
+    const server = fakeServer(1);
+    server.log.push({ ...event(), kind: 'hold-ghunna', seq: 1 }, { ...event(), seq: 2 });
+    const { store } = mount(server);
+    await waitFor(() => expect(store.load().cursor).toBe(2));
+    expect(server.requests.map((r) => r.since)).toEqual([0, 1]);
+    expect(Object.values(store.load().activity!).map((e) => e.seq)).toEqual([2]);
+  });
+
+  it('stops when a page does not move on, instead of asking forever', async () => {
+    const server = fakeServer(1000, true);
+    mount(server);
+    await waitFor(() => expect(server.requests).toHaveLength(1));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+    });
+    expect(server.requests).toHaveLength(1);
+  });
+
   it('sends a long backlog in turns', async () => {
     const server = fakeServer();
     const backlog = Array.from({ length: EVENTS_PER_REQUEST + 1 }, (_, i) =>
@@ -191,6 +225,24 @@ describe('syncing the log (ADR-0023)', () => {
     await waitFor(() => expect(server.log).toHaveLength(EVENTS_PER_REQUEST + 1));
     expect(server.requests.map((r) => r.events!.length)).toEqual([EVENTS_PER_REQUEST, 1]);
     await waitFor(() => expect(unsentEvents(store.load())).toEqual([]));
+  });
+});
+
+describe('logging practice (ADR-0023)', () => {
+  it('awards two events logged before the next render against each other', () => {
+    const server = fakeServer();
+    let clock = NOW;
+    const { review } = mount(server, new MemoryReviewStore(), () => ++clock);
+    const points: number[] = [];
+    act(() => {
+      points.push(
+        review().logActivity({ kind: 'rule-card', ref: 'iqlab', right: 0, total: 0 })
+      );
+      points.push(
+        review().logActivity({ kind: 'rule-card', ref: 'iqlab', right: 0, total: 0 })
+      );
+    });
+    expect(points).toEqual([20, 0]);
   });
 });
 

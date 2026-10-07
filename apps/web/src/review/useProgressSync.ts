@@ -49,7 +49,11 @@ function fromPayload(payload: ProgressPayload): ReviewState | undefined {
     activity: byId(payload.events),
   });
   if (!state) return undefined;
-  const seqs = Object.values(state.activity ?? {}).map((event) => event.seq ?? 0);
+  // The cursor follows every event received, also one this version cannot read (a newer kind):
+  // it is skipped, not asked for again and again.
+  const seqs = (payload.events ?? [])
+    .map((event) => (event as { seq?: unknown })?.seq)
+    .filter((seq): seq is number => Number.isSafeInteger(seq) && (seq as number) > 0);
   if (seqs.length > 0) state.cursor = Math.max(...seqs);
   return state;
 }
@@ -121,6 +125,11 @@ export function useProgressSync(
       seen = Math.max(seen, incoming.cursor ?? 0);
       for (const id of Object.keys(incoming.activity ?? {})) confirmed.add(id);
       latest.current.receive(incoming, userId);
+      if (result.value.more && (incoming.cursor ?? 0) <= (payload.since ?? 0)) {
+        // A page that does not move on would be asked for forever.
+        log.warn('progress sync: the log did not advance', { since: payload.since });
+        return;
+      }
       // Another page of the log, or events left over for the next request: go on at once.
       if (result.value.more || waiting.length > EVENTS_PER_REQUEST) again = true;
     };

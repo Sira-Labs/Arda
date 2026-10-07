@@ -201,15 +201,18 @@ export function parseState(value: unknown): ReviewState | undefined {
     Object.keys(cards).length +
     Object.keys(value.bestTimes).length -
     Object.keys(bestTimes).length;
+  let activityDropped = 0;
   if (isRecord(value.activity)) {
     const entries = Object.entries(value.activity);
     state.activity = Object.fromEntries(
       entries.filter(([id, event]) => isLogged(id, event))
     ) as Record<string, LoggedEvent>;
-    dropped += entries.length - Object.keys(state.activity).length;
+    activityDropped = entries.length - Object.keys(state.activity).length;
+    dropped += activityDropped;
   }
   if (Number.isSafeInteger(value.cursor) && (value.cursor as number) >= 0) {
-    state.cursor = value.cursor as number;
+    // A dropped event may lie behind the cursor: start over, the account sends it again.
+    state.cursor = activityDropped > 0 ? 0 : (value.cursor as number);
   }
   if (dropped > 0) log.warn('review deck: damaged entries dropped', { dropped });
   return state;
