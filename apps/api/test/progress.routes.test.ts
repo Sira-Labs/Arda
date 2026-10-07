@@ -112,7 +112,13 @@ describe('progress sync (ADR-0022)', () => {
     const { sync } = setup();
     await sync('student', { cards: [card('a', NOW)], bestTimes: { 'sort-28': 1 } });
     const body: Json = await (await sync('other', { cards: [], bestTimes: {} })).json();
-    expect(body).toEqual({ cards: [], bestTimes: {}, events: [], more: false });
+    expect(body).toEqual({
+      cards: [],
+      bestTimes: {},
+      places: [],
+      events: [],
+      more: false,
+    });
   });
 
   it("refuses a deck sent as another account's, and stores nothing (409)", async () => {
@@ -126,6 +132,29 @@ describe('progress sync (ADR-0022)', () => {
     expect(response.status).toBe(409);
     expect(((await response.json()) as Json).error).toBe('other_account');
     expect(repo.stored.size).toBe(0);
+  });
+
+  it('keeps the later reading place per script', async () => {
+    const { sync } = setup();
+    await sync('student', {
+      cards: [],
+      bestTimes: {},
+      places: [{ script: 'indopak', page: 9, at: NOW - 5000 }],
+    });
+    const body: Json = await (
+      await sync('student', {
+        cards: [],
+        bestTimes: {},
+        places: [
+          { script: 'indopak', page: 8, at: NOW - 9000 },
+          { script: 'uthmani', page: 604, at: NOW + 60_000 },
+        ],
+      })
+    ).json();
+    expect(body.places).toEqual([
+      { script: 'indopak', page: 9, at: NOW - 5000 },
+      { script: 'uthmani', page: 604, at: NOW },
+    ]);
   });
 
   it('stores a card dated in the future as answered now', async () => {
@@ -161,6 +190,22 @@ describe('progress sync (ADR-0022)', () => {
       { cards: [], bestTimes: {}, events: [{ ...ev(1), id: 'x' }] },
     ],
     ['a negative sequence number', { cards: [], bestTimes: {}, since: -1 }],
+    [
+      'a reading place in an unknown script',
+      { cards: [], bestTimes: {}, places: [{ script: 'warsh', page: 1, at: NOW }] },
+    ],
+    [
+      'a reading place on page 0',
+      { cards: [], bestTimes: {}, places: [{ script: 'indopak', page: 0, at: NOW }] },
+    ],
+    [
+      'more reading places than scripts',
+      {
+        cards: [],
+        bestTimes: {},
+        places: [1, 2, 3].map((page) => ({ script: 'indopak', page, at: NOW })),
+      },
+    ],
   ])('refuses %s (400)', async (_name, body) => {
     const { sync, repo } = setup();
     const response = await sync('student', body);

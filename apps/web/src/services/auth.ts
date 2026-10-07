@@ -230,6 +230,8 @@ export interface RecitationUpload {
 export interface ProgressPayload {
   cards: unknown[];
   bestTimes: Record<string, number>;
+  /** The page last read per muṣḥaf script: `{ script, page, at }`. */
+  places?: unknown[];
   /** Sent: events the account has not confirmed; answered: events after `since` (ADR-0023). */
   events?: unknown[];
   /** The last sequence number this device has seen. */

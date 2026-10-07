@@ -503,6 +503,8 @@ export const ar: Messages = {
     previousPage: 'الصفحة السابقة',
     nextPage: 'الصفحة التالية',
     page: (n: number) => `صفحة ${n.toLocaleString('ar-EG')}`,
+    /** The page last read in this script, on Today and in the muṣḥaf list. */
+    continue: 'تابع القراءة',
     range: (from, to) =>
       from === to ? `مهمتك: الآية ${num(from)}` : `مهمتك: الآيات ${num(from)}–${num(to)}`,
     word: (sura, aya, n) => `سورة ${num(sura)}، الآية ${num(aya)}، الكلمة ${num(n)}`,

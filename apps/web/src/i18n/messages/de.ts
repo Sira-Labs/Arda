@@ -505,6 +505,8 @@ export const de = {
     previousPage: 'Vorige Seite',
     nextPage: 'Nächste Seite',
     page: (n: number) => `Seite ${n}`,
+    /** The page last read in this script, on Today and in the muṣḥaf list. */
+    continue: 'Weiterlesen',
     range: (from: number, to: number) =>
       from === to ? `Deine Aufgabe: Āya ${from}` : `Deine Aufgabe: Āyāt ${from}–${to}`,
     word: (sura: number, aya: number, n: number) => `Sūra ${sura}, Āya ${aya}, Wort ${n}`,

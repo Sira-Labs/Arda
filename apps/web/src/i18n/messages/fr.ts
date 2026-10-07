@@ -471,6 +471,8 @@ export const fr: Messages = {
     previousPage: 'Page précédente',
     nextPage: 'Page suivante',
     page: (n: number) => `Page ${n}`,
+    /** The page last read in this script, on Today and in the muṣḥaf list. */
+    continue: 'Reprendre la lecture',
     range: (from, to) =>
       from === to
         ? `Ton devoir\u202f: āya ${from}`

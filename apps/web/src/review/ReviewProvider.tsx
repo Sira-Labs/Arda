@@ -14,6 +14,7 @@ import {
   LocalReviewStore,
   mergeStates,
   sameState,
+  type ReadingScript,
   type ReviewState,
   type ReviewStore,
 } from './store';
@@ -42,6 +43,10 @@ export interface Review {
    * returns the XP it earned.
    */
   logActivity(entry: ActivityEntry): number;
+  /** The page last read per muṣḥaf script, on this device or (synced) another. */
+  places: NonNullable<ReviewState['places']>;
+  /** Remembers the page being read in a script ("Weiterlesen"). */
+  markPlace(script: ReadingScript, page: number): void;
 }
 
 /** What a screen reports; the provider adds the id and the time. */
@@ -157,6 +162,18 @@ export function ReviewProvider({
     [update, now]
   );
 
+  const markPlace = useCallback(
+    (script: ReadingScript, page: number) => {
+      // Opening a page again dates it anew: a later page from another device must not win
+      // over this one, read after it.
+      update((current) => ({
+        ...current,
+        places: { ...current.places, [script]: { page, at: now() } },
+      }));
+    },
+    [update, now]
+  );
+
   const offerTime = useCallback(
     (game: string, ms: number) => {
       const best = state.bestTimes[game];
@@ -184,8 +201,21 @@ export function ReviewProvider({
       claim,
       owns,
       logActivity,
+      places: state.places ?? {},
+      markPlace,
     };
-  }, [state, record, offerTime, receive, claim, owns, logActivity, now, clockAt]);
+  }, [
+    state,
+    record,
+    offerTime,
+    receive,
+    claim,
+    owns,
+    logActivity,
+    markPlace,
+    now,
+    clockAt,
+  ]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

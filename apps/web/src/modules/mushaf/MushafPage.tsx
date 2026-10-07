@@ -15,6 +15,7 @@ import { entryForPage, scriptOfLayout, type MushafPack } from '@/content/packs';
 import { useI18n } from '@/i18n/I18nProvider';
 import { pagesText } from '@/modules/assignments/AssignmentDetails';
 import { RecordPanel } from '@/modules/recite/RecordPanel';
+import { useReview } from '@/review/ReviewProvider';
 import type { AssignmentRange, RecitedRange } from '@/services/auth';
 import { chooseColours, useMushafColours } from './colours';
 import { useLineFit } from './fit';
@@ -151,6 +152,12 @@ export function MushafPage() {
   const assignmentHalaqa = parts.length > 0 ? uuidOf(search.get('halaqa')) : null;
   const pack = result?.ok ? result.pack : undefined;
   const blocks = useMemo(() => (pack ? pageBlocks(pack, page) : []), [pack, page]);
+  // The page shown is where reading goes on next time, on every device ("Weiterlesen").
+  const { markPlace } = useReview();
+  const shown = pack?.script;
+  useEffect(() => {
+    if (shown) markPlace(shown, page);
+  }, [shown, page, markPlace]);
 
   const go = useCallback(
     (to: number) =>

@@ -35,11 +35,16 @@ const deckOf = (...cards: ReviewCard[]): ReviewState => ({
 
 /** The account on the server: merges like the API does and records what was sent. */
 function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = {}) {
-  const account = { cards: new Map(stored.map((c) => [c.id, c])), times: { ...times } };
+  const account = {
+    cards: new Map(stored.map((c) => [c.id, c])),
+    times: { ...times },
+    places: new Map<string, { script: string; page: number; at: number }>(),
+  };
   const sent: {
     userId: string;
     cards: ReviewCard[];
     bestTimes: Record<string, number>;
+    places?: { script: string; page: number; at: number }[];
   }[] = [];
   let offline = false;
   // Whose session cookie the browser holds; the API refuses another account's deck.
@@ -59,9 +64,14 @@ function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = 
       if (account.times[game] === undefined || ms < account.times[game]!)
         account.times[game] = ms;
     }
+    for (const place of body.places ?? []) {
+      const other = account.places.get(place.script);
+      if (!other || place.at >= other.at) account.places.set(place.script, place);
+    }
     return Response.json({
       cards: [...account.cards.values()],
       bestTimes: account.times,
+      places: [...account.places.values()],
     });
   }) as unknown as typeof fetch;
   return {
@@ -296,6 +306,96 @@ describe('with the providers', () => {
       'which-rule:local',
       'which-rule:remote',
     ]);
+  });
+});
+
+function Probe({ onReview }: { onReview: (review: Review) => void }) {
+  onReview(useReview());
+  return null;
+}
+
+describe('the reading place (Weiterlesen)', () => {
+  it('goes to the account and comes back from it, the later page per script', async () => {
+    const store = new MemoryReviewStore({
+      ...deckOf(),
+      places: { indopak: { page: 9, at: NOW - 1000 } },
+    });
+    const server = fakeAccount();
+    server.account.places.set('indopak', { script: 'indopak', page: 3, at: NOW - 9000 });
+    server.account.places.set('uthmani', {
+      script: 'uthmani',
+      page: 604,
+      at: NOW - 5000,
+    });
+    const { client } = fakeApi({}, ME);
+    vi.spyOn(client, 'syncProgress').mockImplementation((deck, userId) =>
+      server.client.syncProgress(deck, userId)
+    );
+    let review: Review | undefined;
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store}>
+          <ProgressSync />
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    await waitFor(() => expect(review?.places.uthmani?.page).toBe(604));
+    expect(review!.places.indopak).toEqual({ page: 9, at: NOW - 1000 });
+    expect(server.sent[0]!.places).toEqual([
+      { script: 'indopak', page: 9, at: NOW - 1000 },
+    ]);
+    expect(server.account.places.get('indopak')?.page).toBe(9);
+    expect(store.load().places?.uthmani).toEqual({ page: 604, at: NOW - 5000 });
+  });
+
+  it('is kept once per script, and dated anew when the same page is opened again', () => {
+    const store = new MemoryReviewStore(deckOf());
+    let review: Review | undefined;
+    let time = NOW;
+    render(
+      <Providers client={fakeApi({}).client}>
+        <ReviewProvider store={store} now={() => time}>
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    act(() => review!.markPlace('indopak', 8));
+    time += 1000;
+    act(() => review!.markPlace('indopak', 8));
+    expect(store.load().places).toEqual({ indopak: { page: 8, at: NOW + 1000 } });
+    time += 1000;
+    act(() => review!.markPlace('indopak', 9));
+    act(() => review!.markPlace('uthmani', 604));
+    expect(store.load().places).toEqual({
+      indopak: { page: 9, at: NOW + 2000 },
+      uthmani: { page: 604, at: NOW + 2000 },
+    });
+  });
+
+  it('wins over a later page from another device when this page is opened again', async () => {
+    // This device read page 9, then the phone read page 10; now page 9 is opened again here.
+    const time = NOW;
+    const store = new MemoryReviewStore(
+      { ...deckOf(), places: { indopak: { page: 9, at: NOW - 5000 } } },
+      ME.id
+    );
+    let review: Review | undefined;
+    render(
+      <Providers client={fakeApi({}).client}>
+        <ReviewProvider store={store} now={() => time}>
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    act(() => review!.markPlace('indopak', 9));
+    act(() =>
+      review!.receive(
+        { ...deckOf(), places: { indopak: { page: 10, at: NOW - 1000 } } },
+        ME.id
+      )
+    );
+    expect(review!.places.indopak).toEqual({ page: 9, at: time });
   });
 });
 

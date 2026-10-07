@@ -47,6 +47,12 @@ function fromPayload(payload: ProgressPayload): ReviewState | undefined {
     cards: byId(payload.cards),
     bestTimes: payload.bestTimes,
     activity: byId(payload.events),
+    places: Object.fromEntries(
+      (Array.isArray(payload.places) ? payload.places : []).map((place) => [
+        (place as { script?: unknown })?.script,
+        place,
+      ])
+    ),
   });
   if (!state) return undefined;
   // The cursor follows every event received, also one this version cannot read (a newer kind):
@@ -101,6 +107,10 @@ export function useProgressSync(
       const payload: ProgressPayload = {
         cards: Object.values(deck.cards),
         bestTimes: deck.bestTimes,
+        places: Object.entries(deck.places ?? {}).map(([script, place]) => ({
+          script,
+          ...place,
+        })),
         events: waiting.slice(0, EVENTS_PER_REQUEST),
         since: Math.max(deck.cursor ?? 0, seen),
       };

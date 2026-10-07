@@ -1,13 +1,13 @@
 /**
  * Progress on the account (ADR-0022, S5.2), mounted at /api/v1:
  *
- *   POST /progress/sync  { userId, cards, bestTimes, events?, since? }
- *                        → { cards, bestTimes, events, more }                progress:own
+ *   POST /progress/sync  { userId, cards, bestTimes, places?, events?, since? }
+ *                        → { cards, bestTimes, places, events, more }        progress:own
  *
  * The device sends its whole deck; the answer is the merged deck, which the device merges into
  * its own. With it go the activity events the server has not confirmed (ADR-0023) and the last
  * sequence number the device has seen; the answer carries the events after it, a page at a
- * time (`more`). 413 `too_many` when the deck or the log would pass the limits; nothing is
+ * time (`more`). Reading places (one muṣḥaf page per script) merge by time like the cards. 413 `too_many` when the deck or the log would pass the limits; nothing is
  * stored then.
  * `userId` names the account the deck belongs to: when the session cookie has meanwhile been
  * replaced by another account's (a sign-in in another tab), 409 `other_account` keeps one
@@ -24,6 +24,7 @@ import {
   MAX_CARDS,
   MAX_EVENTS_PER_REQUEST,
   MAX_GAMES,
+  READING_SCRIPTS,
   type ProgressRepository,
 } from './repository.js';
 
@@ -64,6 +65,14 @@ const Event = z
   .strict()
   .refine((event) => event.right <= event.total, { message: 'right' });
 
+const Place = z
+  .object({
+    script: z.enum(READING_SCRIPTS),
+    page: z.number().int().min(1).max(1000),
+    at: Millis,
+  })
+  .strict();
+
 const Body = z
   .object({
     userId: z.string().min(1).max(200),
@@ -74,6 +83,8 @@ const Body = z
       // A day: longer is no time, it is a game left open.
       z.number().int().min(1).max(86_400_000)
     ),
+    // One per script; a repeated script is merged by time like a repeated card.
+    places: z.array(Place).max(READING_SCRIPTS.length).default([]),
     events: z.array(Event).default([]),
     /** The last sequence number the device has seen. */
     since: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),
