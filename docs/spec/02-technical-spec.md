@@ -106,6 +106,9 @@ Built (migration `0004_assignments`, spec T2, ADR-0014):
 
 Migration `0005_assignment_words` adds `word_from` and `word_to`: an assignment may start and
 end at a word of its first and last āya (S3.2), the word keys `hafs:sura:aya:n`.
+Migration `0009_assignment_pages` adds `page_layout` (`indopak-15` or `madina`), `page_from`
+and `page_to`: an assignment may name pages of the printed muṣḥaf instead of āyāt (ADR-0014
+update 2026-10-07); reading and reciting need one or the other, never both.
 
 Both point at the student's membership (`halaqa_id, student_id` → `halaqa_members`): when a
 student leaves, is removed or deletes the account, their own assignments and their completions
@@ -190,13 +193,13 @@ Built for T1 (`/api/v1/halaqat`, every route checked against every kind of calle
 Built for T2 (mounted at `/api/v1`, every route checked against every kind of caller in
 `assignments.routes.test.ts`):
 
-| Method and path                                    | Action                    | Purpose                                                                         |
-| -------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------- |
-| `GET /assignments`                                 | `halaqa:join`             | what I still have to do across my active ḥalaqāt, soonest due first             |
-| `GET /halaqat/:id/assignments?before=`             | `halaqa:read` (active)    | 50 at a time, latest due first; the teacher also sees who is done               |
-| `POST /halaqat/:id/assignments`                    | `halaqa:manage` (teacher) | give one: kind, student or all, range (and words), rule, repetitions, note, due |
-| `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                                    |
-| `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                             |
+| Method and path                                    | Action                    | Purpose                                                                                  |
+| -------------------------------------------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
+| `GET /assignments`                                 | `halaqa:join`             | what I still have to do across my active ḥalaqāt, soonest due first                      |
+| `GET /halaqat/:id/assignments?before=`             | `halaqa:read` (active)    | 50 at a time, latest due first; the teacher also sees who is done                        |
+| `POST /halaqat/:id/assignments`                    | `halaqa:manage` (teacher) | give one: kind, student or all, range (and words) or pages, rule, repetitions, note, due |
+| `DELETE /halaqat/:id/assignments/:aid`             | `halaqa:manage`           | take it back                                                                             |
+| `PUT`, `DELETE /halaqat/:id/assignments/:aid/done` | `halaqa:study` (student)  | mark it done, or take the mark back                                                      |
 
 Built for F7 and T3 (mounted at `/api/v1`, every route checked against every kind of caller
 in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari needs, and
