@@ -14,6 +14,7 @@ import {
 } from '@/content/unit2';
 import { useI18n } from '@/i18n/I18nProvider';
 import { Soon } from '@/modules/Soon';
+import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
@@ -31,6 +32,7 @@ export function RuleCardPage() {
  */
 export function RuleCard({ id }: { id: Unit2Card }) {
   const { m } = useI18n();
+  const review = useReview();
   const card = UNIT2[id];
   const index = UNIT2_CARDS.indexOf(id);
   const previous = UNIT2_CARDS[index - 1];
@@ -132,7 +134,14 @@ export function RuleCard({ id }: { id: Unit2Card }) {
           ) : (
             <span />
           )}
-          <Link className="btn btn-primary" to={next ? `/pfad/2/${next}` : '/pfad'}>
+          <Link
+            className="btn btn-primary"
+            to={next ? `/pfad/2/${next}` : '/pfad'}
+            // Read to its end (ADR-0023): XP the first time, the streak every time.
+            onClick={() =>
+              review.logActivity({ kind: 'rule-card', ref: id, right: 0, total: 0 })
+            }
+          >
             {next ? (
               <>
                 {m.ruleCard.next}: <CardName id={next} />

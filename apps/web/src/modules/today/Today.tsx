@@ -11,6 +11,7 @@ import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentIt
 import { useOpenAssignments } from '@/modules/assignments/useOpenAssignments';
 import { useHalaqat } from '@/modules/halaqa/useHalaqat';
 import { MyRecitations } from '@/modules/recite/MyRecitations';
+import { ProgressCard } from './ProgressCard';
 import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
 
@@ -120,6 +121,8 @@ export function Today() {
         )}
         {open.failure && <p role="alert">{errorMessage(m, open.failure)}</p>}
       </section>
+
+      <ProgressCard />
 
       <MyRecitations />
 

@@ -126,6 +126,11 @@ describe('Which rule?', () => {
     }
     expect(screen.getByRole('heading', { name: '9 von 10 richtig' })).toBeInTheDocument();
     expect(screen.getByText('1 Karte kommt in deine Wiederholung.')).toBeInTheDocument();
+    // The round goes into the activity log (ADR-0023): 9 × 2 + 5 XP.
+    expect(screen.getByText('+23 XP')).toBeInTheDocument();
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'which-rule', ref: '', right: 9, total: 10 }),
+    ]);
 
     await userEvent.click(screen.getByRole('link', { name: '1 Karte wiederholen' }));
     expect(screen.getByRole('heading', { name: 'Wiederholen' })).toBeInTheDocument();
@@ -163,6 +168,11 @@ describe('Sort the 28', () => {
     expect(screen.getByText(/Neue Bestzeit!/)).toBeInTheDocument();
     expect(store.load().bestTimes['sort-28']).toBe(42_000);
     expect(store.load().cards).toEqual({});
+    // A perfect round: 28 × 2 + 5 + 5 XP.
+    expect(screen.getByText('+66 XP')).toBeInTheDocument();
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'sort-28', right: 28, total: 28 }),
+    ]);
   });
 });
 

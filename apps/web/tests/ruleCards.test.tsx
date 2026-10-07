@@ -1,5 +1,6 @@
 import { IZHAR_EXCEPTIONS, RULES, SHEET_EXAMPLES, detect } from '@arda/tajweed';
 import { render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { UNIT2, UNIT2_CARDS } from '@/content/unit2';
@@ -18,11 +19,11 @@ const NUN_RULES = new Set([
   'ikhfa',
 ]);
 
-function renderAt(path: string) {
+function renderAt(path: string, store = new MemoryReviewStore()) {
   const { client } = fakeApi({});
   return render(
     <Providers client={client}>
-      <ReviewProvider store={new MemoryReviewStore()}>
+      <ReviewProvider store={store}>
         <MemoryRouter initialEntries={[path]}>
           <Routes>
             <Route path="/pfad" element={<Path />} />
@@ -123,6 +124,15 @@ describe('the rule card', () => {
       'href',
       '/pfad/2/ikhfa'
     );
+  });
+
+  it('counts a card read to its end for XP and the streak (ADR-0023)', async () => {
+    const store = new MemoryReviewStore();
+    renderAt('/pfad/2/iqlab', store);
+    await userEvent.click(screen.getByRole('link', { name: 'Weiter: Ikhfāʾ' }));
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'rule-card', ref: 'iqlab', right: 0, total: 0 }),
+    ]);
   });
 
   it('teaches idghām with and without ghunna and the four exceptions', () => {

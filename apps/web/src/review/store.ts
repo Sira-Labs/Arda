@@ -1,13 +1,25 @@
+import { isActivityEvent, type ActivityEvent } from '@arda/engagement';
 import { logger } from '@/services/logger';
 import { BOXES, type ReviewCard } from './leitner';
 
 const log = logger.child('review');
 
-/** The review deck and the best times of the timed games (ADR-0021). */
+/** An activity event on the device; `seq` once the account has stored it (ADR-0023). */
+export type LoggedEvent = ActivityEvent & { seq?: number };
+
+/**
+ * The review deck and the best times of the timed games (ADR-0021), and the activity log that
+ * XP and the streak come from (ADR-0023). A deck saved before the log existed has neither
+ * `activity` nor `cursor`.
+ */
 export interface ReviewState {
   cards: Record<string, ReviewCard>;
   /** Best time per game in milliseconds. */
   bestTimes: Record<string, number>;
+  /** Events by id; they are only ever added. */
+  activity?: Record<string, LoggedEvent>;
+  /** The highest sequence number the account has sent this device. */
+  cursor?: number;
 }
 
 /** Where the deck lives on the device; `useProgressSync` keeps it in step with the account. */
@@ -48,11 +60,50 @@ export function mergeStates(a: ReviewState, b: ReviewState): ReviewState {
     const other = bestTimes[game];
     if (other === undefined || ms < other) bestTimes[game] = ms;
   }
-  return { cards, bestTimes };
+  const merged: ReviewState = { cards, bestTimes };
+  if (a.activity || b.activity) {
+    // The union of both logs; an event the account has numbered beats the device's copy.
+    const activity = { ...a.activity };
+    for (const [id, event] of Object.entries(b.activity ?? {})) {
+      const other = activity[id];
+      if (!other || (event.seq !== undefined && other.seq === undefined))
+        activity[id] = event;
+    }
+    merged.activity = activity;
+  }
+  if (a.cursor !== undefined || b.cursor !== undefined) {
+    merged.cursor = Math.max(a.cursor ?? 0, b.cursor ?? 0);
+  }
+  return merged;
+}
+
+/** Events the account has not confirmed yet, oldest first. */
+export function unsentEvents(state: ReviewState): ActivityEvent[] {
+  return Object.values(state.activity ?? {})
+    .filter((event) => event.seq === undefined)
+    .sort((a, b) => a.at - b.at)
+    .map(({ seq: _seq, ...event }) => event);
+}
+
+/** Do both hold the same activity log, numbered alike, and the same cursor? */
+function sameActivity(a: ReviewState, b: ReviewState): boolean {
+  const x = a.activity ?? {};
+  const y = b.activity ?? {};
+  const ids = Object.keys(x);
+  return (
+    (a.cursor ?? 0) === (b.cursor ?? 0) &&
+    ids.length === Object.keys(y).length &&
+    ids.every((id) => y[id] !== undefined && y[id]!.seq === x[id]!.seq)
+  );
+}
+
+/** Both decks and both logs alike: nothing to save. */
+export function sameState(a: ReviewState, b: ReviewState): boolean {
+  return sameDeck(a, b) && sameActivity(a, b);
 }
 
 /** Do both decks hold the same cards in the same boxes and the same times? */
-export function sameState(a: ReviewState, b: ReviewState): boolean {
+export function sameDeck(a: ReviewState, b: ReviewState): boolean {
   const ids = Object.keys(a.cards);
   const games = Object.keys(a.bestTimes);
   if (ids.length !== Object.keys(b.cards).length) return false;
@@ -144,13 +195,30 @@ export function parseState(value: unknown): ReviewState | undefined {
       ([, ms]) => typeof ms === 'number' && Number.isFinite(ms) && ms > 0
     )
   ) as Record<string, number>;
-  const dropped =
+  const state: ReviewState = { cards, bestTimes };
+  let dropped =
     Object.keys(value.cards).length -
     Object.keys(cards).length +
     Object.keys(value.bestTimes).length -
     Object.keys(bestTimes).length;
+  if (isRecord(value.activity)) {
+    const entries = Object.entries(value.activity);
+    state.activity = Object.fromEntries(
+      entries.filter(([id, event]) => isLogged(id, event))
+    ) as Record<string, LoggedEvent>;
+    dropped += entries.length - Object.keys(state.activity).length;
+  }
+  if (Number.isSafeInteger(value.cursor) && (value.cursor as number) >= 0) {
+    state.cursor = value.cursor as number;
+  }
   if (dropped > 0) log.warn('review deck: damaged entries dropped', { dropped });
-  return { cards, bestTimes };
+  return state;
+}
+
+function isLogged(id: string, value: unknown): value is LoggedEvent {
+  if (!isActivityEvent(value) || value.id !== id) return false;
+  const seq = (value as LoggedEvent).seq;
+  return seq === undefined || (Number.isSafeInteger(seq) && seq > 0);
 }
 
 /**

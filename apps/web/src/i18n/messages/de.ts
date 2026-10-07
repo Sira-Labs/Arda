@@ -65,6 +65,21 @@ export const de = {
       'Du kannst ohne Konto üben. Melde dich an, damit dein Fortschritt gespeichert wird und auf all deinen Geräten gleich ist.',
     saveProgressAction: 'Anmelden und sichern',
   },
+  engagement: {
+    title: 'Dein Fortschritt',
+    level: (level: number) => `Level ${level}`,
+    xp: (points: number) => `${points} XP`,
+    toNext: (left: number) => `noch ${left} XP bis zum nächsten Level`,
+    today: (points: number) => `heute +${points} XP`,
+    streak: (days: number) => (days === 1 ? '1 Tag in Folge' : `${days} Tage in Folge`),
+    streakStart: 'Übe heute – dann beginnt deine Serie.',
+    streakToday: 'Heute schon geübt.',
+    streakOpen: 'Übe heute, damit deine Serie weitergeht.',
+    shields: (count: number) =>
+      count === 1 ? '1 Schutzschild' : `${count} Schutzschilde`,
+    shieldHint:
+      'Alle 7 Übungstage gibt es ein Schutzschild (höchstens 2). Es deckt einen verpassten Tag.',
+  },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'Nasenklang, 2 Zählzeiten (Ikhfāʾ, Idghām, Iqlāb)' },
     qalqala: { name: 'Qalqala', hint: 'Rückprall bei ق ط ب ج د mit Sukūn' },
@@ -167,6 +182,7 @@ export const de = {
     practise: 'Üben',
     progress: (index: number, total: number) => `${index} / ${total}`,
     seconds: (seconds: number) => `${seconds.toLocaleString('de-DE')} s`,
+    xp: (points: number) => `+${points} XP`,
     options: 'Regeln',
     whichRule: {
       title: 'Welche Regel?',

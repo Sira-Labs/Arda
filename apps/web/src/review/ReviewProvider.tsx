@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { xpAwards, type ActivityEvent } from '@arda/engagement';
 import { answer, fromMistake, isDue, type NewCard, type ReviewCard } from './leitner';
 import {
   LocalReviewStore,
@@ -35,7 +36,19 @@ export interface Review {
   claim(userId: string): boolean;
   /** Is the deck on this device `userId`'s now (another tab may have handed it on)? */
   owns(userId: string): boolean;
+  /**
+   * Adds a finished round or a rule card read to its end to the activity log (ADR-0023);
+   * returns the XP it earned.
+   */
+  logActivity(entry: ActivityEntry): number;
 }
+
+/** What a screen reports; the provider adds the id and the time. */
+export type ActivityEntry = Pick<ActivityEvent, 'kind' | 'ref' | 'right' | 'total'>;
+
+/** The device's time zone: days and the streak follow local midnight. */
+export const deviceTimeZone = (): string =>
+  Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const ReviewContext = createContext<Review | null>(null);
 
@@ -105,6 +118,20 @@ export function ReviewProvider({
     [store, update]
   );
 
+  const logActivity = useCallback(
+    (entry: ActivityEntry) => {
+      const event: ActivityEvent = { id: crypto.randomUUID(), at: now(), ...entry };
+      const log = [...Object.values(state.activity ?? {}), event];
+      const earned = xpAwards(log, deviceTimeZone()).find((a) => a.event.id === event.id);
+      update((current) => ({
+        ...current,
+        activity: { ...current.activity, [event.id]: event },
+      }));
+      return earned?.points ?? 0;
+    },
+    [state.activity, update, now]
+  );
+
   const record = useCallback(
     (card: NewCard, correct: boolean) => {
       update((current) => {
@@ -145,8 +172,9 @@ export function ReviewProvider({
       receive,
       claim,
       owns,
+      logActivity,
     };
-  }, [state, record, offerTime, receive, claim, owns, now, clockAt]);
+  }, [state, record, offerTime, receive, claim, owns, logActivity, now, clockAt]);
 
   return <ReviewContext.Provider value={value}>{children}</ReviewContext.Provider>;
 }

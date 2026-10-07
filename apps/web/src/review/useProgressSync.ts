@@ -13,25 +13,45 @@ import { useEffect, useRef } from 'react';
 import type { AuthClient, ProgressPayload } from '@/services/auth';
 import { logger } from '@/services/logger';
 import type { Review } from './ReviewProvider';
-import { emptyState, parseState, sameState, type ReviewState } from './store';
+import {
+  emptyState,
+  parseState,
+  sameDeck,
+  unsentEvents,
+  type ReviewState,
+} from './store';
 
 const log = logger.child('progress-sync');
 
 /** How long after a change the deck is sent: the rest of a game's answers go along. */
 export const SYNC_DELAY_MS = 3000;
 
-const toPayload = (deck: ReviewState): ProgressPayload => ({
-  cards: Object.values(deck.cards),
-  bestTimes: deck.bestTimes,
-});
+/** Events one request carries at most (the API's limit); the rest go in the next one. */
+export const EVENTS_PER_REQUEST = 500;
 
-/** The account's deck from the answer, damaged entries dropped like a stored deck's. */
+const byId = (items: unknown[] | undefined) =>
+  Object.fromEntries((items ?? []).map((item) => [(item as { id?: unknown })?.id, item]));
+
+/**
+ * The account's deck and the new part of its log from the answer, damaged entries dropped like
+ * a stored deck's.
+ */
 function fromPayload(payload: ProgressPayload): ReviewState | undefined {
-  if (!Array.isArray(payload?.cards)) return undefined;
-  const cards = Object.fromEntries(
-    payload.cards.map((card) => [(card as { id?: unknown })?.id, card])
-  );
-  return parseState({ cards, bestTimes: payload.bestTimes });
+  if (
+    !Array.isArray(payload?.cards) ||
+    (payload.events && !Array.isArray(payload.events))
+  ) {
+    return undefined;
+  }
+  const state = parseState({
+    cards: byId(payload.cards),
+    bestTimes: payload.bestTimes,
+    activity: byId(payload.events),
+  });
+  if (!state) return undefined;
+  const seqs = Object.values(state.activity ?? {}).map((event) => event.seq ?? 0);
+  if (seqs.length > 0) state.cursor = Math.max(...seqs);
+  return state;
 }
 
 export function useProgressSync(
@@ -59,6 +79,10 @@ export function useProgressSync(
     let timer: ReturnType<typeof setTimeout> | undefined;
     let running: Promise<void> | null = null;
     let again = false;
+    // The highest sequence number received and the events the account confirmed, ahead of
+    // the deck until it has rendered: the next request never repeats them.
+    let seen = 0;
+    const confirmed = new Set<string>();
 
     const syncOnce = async () => {
       // Another tab signed a different account in: this tab's deck and session are stale.
@@ -69,7 +93,14 @@ export function useProgressSync(
       // Until the replaced deck has rendered, the deck at hand is still the other account's.
       const deck = dropped ? emptyState() : latest.current.deck;
       dropped = false;
-      const result = await client.syncProgress(toPayload(deck), userId);
+      const waiting = unsentEvents(deck).filter((event) => !confirmed.has(event.id));
+      const payload: ProgressPayload = {
+        cards: Object.values(deck.cards),
+        bestTimes: deck.bestTimes,
+        events: waiting.slice(0, EVENTS_PER_REQUEST),
+        since: Math.max(deck.cursor ?? 0, seen),
+      };
+      const result = await client.syncProgress(payload, userId);
       if (stopped) return;
       if (!result.ok) {
         // Offline waits for the `online` event; anything else is tried at the next change.
@@ -87,7 +118,11 @@ export function useProgressSync(
         return;
       }
       synced.current = incoming;
+      seen = Math.max(seen, incoming.cursor ?? 0);
+      for (const id of Object.keys(incoming.activity ?? {})) confirmed.add(id);
       latest.current.receive(incoming, userId);
+      // Another page of the log, or events left over for the next request: go on at once.
+      if (result.value.more || waiting.length > EVENTS_PER_REQUEST) again = true;
     };
 
     const sync = () => {
@@ -133,8 +168,14 @@ export function useProgressSync(
   useEffect(() => {
     if (deck === seen.current) return;
     seen.current = deck;
-    // The account's own answer coming back is no change to send.
-    if (synced.current && sameState(deck, synced.current)) return;
+    // The account's own answer coming back is no change to send; a new event always is.
+    if (
+      synced.current &&
+      sameDeck(deck, synced.current) &&
+      unsentEvents(deck).length === 0
+    ) {
+      return;
+    }
     schedule.current?.();
   }, [deck]);
 }

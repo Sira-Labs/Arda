@@ -75,6 +75,27 @@ export const ar: Messages = {
       'يمكنك التدرّب دون حساب. سجّل الدخول ليُحفظ تقدّمك ويكون نفسه على جميع أجهزتك.',
     saveProgressAction: 'سجّل الدخول واحفظ',
   },
+  engagement: {
+    title: 'تقدّمك',
+    level: (level) => `المستوى ${num(level)}`,
+    xp: (points) => `${num(points)} XP`,
+    toNext: (left) => `باقٍ ${num(left)} XP حتى المستوى التالي`,
+    today: (points) => `اليوم +${num(points)} XP`,
+    streak: (days) =>
+      days === 1
+        ? 'يوم واحد على التوالي'
+        : days === 2
+          ? 'يومان على التوالي'
+          : days <= 10
+            ? `${num(days)} أيام على التوالي`
+            : `${num(days)} يومًا على التوالي`,
+    streakStart: 'تدرّب اليوم لتبدأ سلسلتك.',
+    streakToday: 'تدرّبت اليوم.',
+    streakOpen: 'تدرّب اليوم لتستمر سلسلتك.',
+    shields: (count) =>
+      count === 1 ? 'درع واحد' : count === 2 ? 'درعان' : `${num(count)} دروع`,
+    shieldHint: 'كل سبعة أيام تدريب تمنحك درعًا (درعان على الأكثر)، يغطي يومًا فاتك.',
+  },
   rules: {
     ghunna: { name: 'غنة', hint: 'صوت من الخيشوم، حركتان (إخفاء، إدغام، إقلاب)' },
     qalqala: { name: 'قلقلة', hint: 'اضطراب الصوت في ق ط ب ج د عند السكون' },
@@ -177,6 +198,7 @@ export const ar: Messages = {
     practise: 'التدريب',
     progress: (index, total) => `${num(index)} / ${num(total)}`,
     seconds: (seconds) => `${num(seconds)} ث`,
+    xp: (points) => `+${num(points)} XP`,
     options: 'الأحكام',
     whichRule: {
       title: 'ما الحكم؟',

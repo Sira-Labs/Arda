@@ -18,6 +18,7 @@ export function SortLetters({
   const [questions, setQuestions] = useState(() => sortRound(random));
   return (
     <RuleQuiz
+      activity="sort-28"
       key={round}
       timed
       clock={clock}
