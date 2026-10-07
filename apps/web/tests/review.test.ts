@@ -5,6 +5,7 @@ import {
   MemoryReviewStore,
   STORAGE_KEY,
   mergeStates,
+  sameState,
 } from '@/review/store';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -205,5 +206,34 @@ describe('the browser default', () => {
     const state = { cards: {}, bestTimes: { 'sort-28': 30_000 } };
     expect(() => store.save(state)).not.toThrow();
     expect(store.load()).toEqual(state);
+  });
+});
+
+describe('account sync helpers (ADR-0022)', () => {
+  const state = {
+    cards: { [CARD.id]: fromMistake(CARD, NOW) },
+    bestTimes: { 'sort-28': 41_000 },
+  };
+
+  it("replaces the deck instead of merging it (another account's, ADR-0022)", () => {
+    const storage = fakeStorage();
+    const store = new LocalReviewStore(storage);
+    store.save(state);
+    const other = { cards: {}, bestTimes: { 'sort-28': 50_000 } };
+    expect(store.replace(other)).toEqual(other);
+    expect(store.load()).toEqual(other);
+    expect(JSON.parse(storage.data.get(STORAGE_KEY)!)).toEqual(other);
+    const memory = new MemoryReviewStore(state);
+    expect(memory.replace(other)).toEqual(other);
+  });
+
+  it('tells equal decks from changed ones', () => {
+    const copy = structuredClone(state);
+    expect(sameState(state, copy)).toBe(true);
+    const answered = answer(state.cards[CARD.id]!, true, NOW + 1);
+    expect(sameState(state, { ...copy, cards: { [CARD.id]: answered } })).toBe(false);
+    expect(sameState(state, { ...copy, bestTimes: { 'sort-28': 40_000 } })).toBe(false);
+    expect(sameState(state, { ...copy, bestTimes: {} })).toBe(false);
+    expect(sameState(state, { cards: {}, bestTimes: copy.bestTimes })).toBe(false);
   });
 });

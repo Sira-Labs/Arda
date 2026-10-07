@@ -30,6 +30,10 @@ export const en: Messages = {
     nextUnit: 'Next on the path · Unit 2',
     openCard: 'Open the rule card',
     legend: 'Colours in the muṣḥaf',
+    saveProgress: 'Keep your progress',
+    saveProgressHint:
+      'You can practise without an account. Sign in so your progress is saved and the same on all your devices.',
+    saveProgressAction: 'Sign in to keep it',
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'nasal sound, 2 counts (ikhfāʾ, idghām, iqlāb)' },

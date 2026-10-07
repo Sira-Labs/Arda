@@ -70,6 +70,10 @@ export const ar: Messages = {
     nextUnit: 'التالي في المسار · الوحدة ٢',
     openCard: 'افتح بطاقة الحكم',
     legend: 'ألوان المصحف',
+    saveProgress: 'احفظ تقدّمك',
+    saveProgressHint:
+      'يمكنك التدرّب دون حساب. سجّل الدخول ليُحفظ تقدّمك ويكون نفسه على جميع أجهزتك.',
+    saveProgressAction: 'سجّل الدخول واحفظ',
   },
   rules: {
     ghunna: { name: 'غنة', hint: 'صوت من الخيشوم، حركتان (إخفاء، إدغام، إقلاب)' },

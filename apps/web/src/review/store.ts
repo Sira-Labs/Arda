@@ -10,16 +10,18 @@ export interface ReviewState {
   bestTimes: Record<string, number>;
 }
 
-/** Where the deck lives: on the device now, synced with the account later (L3). */
+/** Where the deck lives on the device; `useProgressSync` keeps it in step with the account. */
 export interface ReviewStore {
   load(): ReviewState;
   /** Saves the deck and returns what is stored now: it may hold changes made elsewhere. */
   save(state: ReviewState): ReviewState;
+  /** Stores exactly `state`, dropping what was there (another account's deck, ADR-0022). */
+  replace(state: ReviewState): ReviewState;
   /** Calls `listener` when the deck changes elsewhere (another tab); returns the unsubscribe. */
   subscribe?(listener: (state: ReviewState) => void): () => void;
 }
 
-const empty = (): ReviewState => ({ cards: {}, bestTimes: {} });
+export const emptyState = (): ReviewState => ({ cards: {}, bestTimes: {} });
 
 /**
  * Two decks as one (ADR-0021: last write wins per card): for each card the more recently
@@ -39,10 +41,31 @@ export function mergeStates(a: ReviewState, b: ReviewState): ReviewState {
   return { cards, bestTimes };
 }
 
+/** Do both decks hold the same cards in the same boxes and the same times? */
+export function sameState(a: ReviewState, b: ReviewState): boolean {
+  const ids = Object.keys(a.cards);
+  const games = Object.keys(a.bestTimes);
+  if (ids.length !== Object.keys(b.cards).length) return false;
+  if (games.length !== Object.keys(b.bestTimes).length) return false;
+  return (
+    ids.every((id) => {
+      const x = a.cards[id]!;
+      const y = b.cards[id];
+      return (
+        y !== undefined &&
+        x.updatedAt === y.updatedAt &&
+        x.box === y.box &&
+        x.due === y.due &&
+        x.lapses === y.lapses
+      );
+    }) && games.every((game) => a.bestTimes[game] === b.bestTimes[game])
+  );
+}
+
 /** In memory: for tests, and the fallback when the browser blocks storage. */
 export class MemoryReviewStore implements ReviewStore {
   private state: ReviewState;
-  constructor(initial: ReviewState = empty()) {
+  constructor(initial: ReviewState = emptyState()) {
     this.state = structuredClone(initial);
   }
   load(): ReviewState {
@@ -51,6 +74,9 @@ export class MemoryReviewStore implements ReviewStore {
   save(state: ReviewState): ReviewState {
     this.state = structuredClone(state);
     return this.load();
+  }
+  replace(state: ReviewState): ReviewState {
+    return this.save(state);
   }
 }
 
@@ -84,7 +110,7 @@ function isCard(id: string, value: unknown): value is ReviewCard {
  * edited or half-written document) are dropped one by one, so one bad card never costs the
  * whole deck or breaks the app.
  */
-function parseState(value: unknown): ReviewState | undefined {
+export function parseState(value: unknown): ReviewState | undefined {
   if (!isRecord(value) || !isRecord(value.cards) || !isRecord(value.bestTimes))
     return undefined;
   const cards = Object.fromEntries(
@@ -131,15 +157,15 @@ export class LocalReviewStore implements ReviewStore {
   private readStored(): ReviewState | undefined {
     try {
       const raw = this.backend().getItem(STORAGE_KEY);
-      if (!raw) return empty();
+      if (!raw) return emptyState();
       const parsed = parseState(JSON.parse(raw));
       if (parsed) return parsed;
       log.warn('review deck ignored: unknown shape');
-      return empty();
+      return emptyState();
     } catch (error) {
       if (error instanceof SyntaxError) {
         log.warn('review deck ignored: not JSON');
-        return empty();
+        return emptyState();
       }
       log.debug('review storage unavailable', { name: (error as Error).name });
       return undefined;
@@ -149,17 +175,24 @@ export class LocalReviewStore implements ReviewStore {
   save(state: ReviewState): ReviewState {
     // Another tab may have saved since this one loaded: merge instead of overwriting it.
     const stored = this.memoryIsNewer ? undefined : this.readStored();
-    const merged = mergeStates(stored ?? this.memory.load(), state);
-    this.memory.save(merged);
+    return this.write(mergeStates(stored ?? this.memory.load(), state));
+  }
+
+  replace(state: ReviewState): ReviewState {
+    return this.write(state);
+  }
+
+  private write(state: ReviewState): ReviewState {
+    this.memory.save(state);
     try {
-      this.backend().setItem(STORAGE_KEY, JSON.stringify(merged));
+      this.backend().setItem(STORAGE_KEY, JSON.stringify(state));
       this.memoryIsNewer = false;
     } catch (error) {
       // Quota or blocked storage: keep practising, the deck lives for this session.
       log.debug('review storage unavailable', { name: (error as Error).name });
       this.memoryIsNewer = true;
     }
-    return merged;
+    return this.memory.load();
   }
 
   subscribe(listener: (state: ReviewState) => void): () => void {
