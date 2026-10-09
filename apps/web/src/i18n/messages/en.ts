@@ -706,6 +706,10 @@ export const en: Messages = {
         title: 'Ḍād and the tip of the tongue: Ḍād, Ṭāʾ, Dāl and Tāʾ',
         hint: 'Three sounds from the same place – heavy, voiced, breathed – and Ḍād, which only Arabic has. Here you hear what sets them apart.',
       },
+      teeth: {
+        title: 'The teeth, Lām and Nūn: Thāʾ, Dhāl, Ẓāʾ, Lām and Nūn',
+        hint: 'Three sounds with the tip of the tongue at the upper front teeth – German speakers easily turn them into s and z –, and Lām and Nūn from the gum ridge.',
+      },
     },
     more: 'The other letters follow once your sheikh has checked the drawing.',
     draft: 'Draft – the sheikh is still checking',
@@ -735,6 +739,9 @@ export const en: Messages = {
       tongueMid: { line1: 'Mid-tongue', line2: 'hard palate' },
       tongueSide: { line1: 'Edge of tongue', line2: 'upper molars' },
       tongueTip: { line1: 'Tip of tongue', line2: 'tooth roots' },
+      teeth: { line1: 'Tip of tongue', line2: 'incisor edges' },
+      lam: { line1: 'Front edges', line2: 'gum ridge' },
+      nun: { line1: 'Tip of tongue', line2: 'before Lām' },
     },
     letters: {
       sin: {
@@ -947,6 +954,61 @@ export const en: Messages = {
           'Do not voice it: if it buzzes, it becomes Dāl – هَاتُوا۟ (“bring!”) becomes هَادُوا۟.',
         ],
       },
+      tha: {
+        name: 'Thāʾ',
+        short: 'light, voiceless, like th in “think”',
+        makhraj:
+          'The tip of the tongue touches the edges of the upper front teeth – it shows a little.',
+        mistakes: [
+          'Not like s: the tongue has to reach the teeth. If it stays behind them, Thāʾ becomes Sīn.',
+          'Voiceless (Hams): if it buzzes, it becomes Dhāl.',
+          'Stay light (Istifāl): if the back of the tongue rises, it sounds heavy like Ẓāʾ.',
+        ],
+      },
+      dha: {
+        name: 'Dhāl',
+        short: 'light, voiced, like th in “this”',
+        makhraj:
+          'The same place as Thāʾ: the tip of the tongue at the edges of the upper front teeth.',
+        mistakes: [
+          'Not like z: the tongue has to reach the teeth. If it stays behind them, Dhāl becomes Zāy.',
+          'Voiced (Jahr): without voice it becomes Thāʾ.',
+          'Stay light (Istifāl): a heavy Dhāl becomes Ẓāʾ.',
+        ],
+      },
+      zza: {
+        name: 'Ẓāʾ',
+        short: 'heavy, voiced, the tongue at the teeth',
+        makhraj:
+          'The same place as Dhāl: the tip of the tongue at the edges of the upper front teeth. The back of the tongue also lies broadly against the palate.',
+        mistakes: [
+          'Not like z: the tongue has to reach the teeth, or it becomes a heavy Zāy.',
+          'Heavy (Iṭbāq): the vowel after it sounds full and dark – otherwise it becomes Dhāl.',
+          'Do not confuse it with Ḍād: for Ẓāʾ the tip of the tongue is at the teeth, for Ḍād the edge of the tongue is at the molars.',
+        ],
+      },
+      lam: {
+        name: 'Lām',
+        short: 'light, like l in “leaf”',
+        makhraj:
+          'The front edges of the tongue with its tip at the gum ridge behind the upper front teeth.',
+        mistakes: [
+          'Bright like the l in “leaf”, not dark like in “full”: Lām is light by nature.',
+          'Only the Lām in ٱللَّه becomes heavy after fatḥa or ḍamma; after kasra it stays light – لِلَّهِ.',
+          'Keep it clear with sukūn, do not swallow it – لَمْ.',
+        ],
+      },
+      nun: {
+        name: 'Nūn',
+        short: 'light, with ghunna',
+        makhraj:
+          'The tip of the tongue at the gum ridge, a little in front of Lām, nearer the tip. Part of the sound comes from the nasal cavity (ghunna).',
+        mistakes: [
+          'Like an ordinary n – but with shadda held clearly and nasalised (ghunna), about two beats long.',
+          'Nūn sākin and tanwīn follow their own rules: clear, hidden or merged. You learn them on the path.',
+          'Do not confuse it with Lām: for Nūn part of the air goes through the nose – otherwise إِنَّا (“we”) becomes إِلَّآ (“except”).',
+        ],
+      },
     },
     makhraj: 'Makhraj · where it is made',
     sifat: 'Ṣifāt · its qualities',
@@ -1027,6 +1089,11 @@ export const en: Messages = {
         meaning:
           'Lengthening: the sound runs along the whole edge of the tongue, from the back to the tip (Ḍād only).',
       },
+      ghunna: {
+        name: 'Ghunna',
+        meaning:
+          'Nasal sound: a sound from the nasal cavity that belongs to Nūn and Mīm.',
+      },
     },
     mistakesTitle: 'Typical mistakes',
     raRules: {
@@ -1096,6 +1163,18 @@ export const en: Messages = {
           'Ten words, by ear only: heavy (Ṭāʾ), voiced (Dāl) or light with a breath (Tāʾ)?',
         question: 'Which letter do you hear?',
       },
+      teeth: {
+        title: 'Thāʾ, Dhāl or Ẓāʾ?',
+        intro:
+          'Ten words, by ear only: without voice (Thāʾ), with voice (Dhāl) or heavy with voice (Ẓāʾ)?',
+        question: 'Which letter do you hear?',
+      },
+      lamNun: {
+        title: 'Lām or Nūn?',
+        intro:
+          'Ten words, by ear only: does the sound flow along the edge of the tongue (Lām) or through the nose (Nūn)?',
+        question: 'Which letter do you hear?',
+      },
       weight: {
         title: 'Heavy or light?',
         intro: 'Ten words with Rāʾ: does it sound heavy or light?',
@@ -1122,6 +1201,11 @@ export const en: Messages = {
         tta: 'Ṭāʾ: heavy and firm, without a breath.',
         dal: 'Dāl: light and voiced.',
         ta: 'Tāʾ: light, with a soft breath.',
+        tha: 'Thāʾ: at the teeth, without voice.',
+        dha: 'Dhāl: at the teeth, with voice, light.',
+        zza: 'Ẓāʾ: at the teeth, with voice, heavy.',
+        lam: 'Lām: bright, the sound flows along the edge of the tongue.',
+        nun: 'Nūn: part of the sound comes from the nose.',
         sin: 'Sīn: light, sharp and voiceless.',
         zay: 'Zāy: voiced – it buzzes – but thin.',
         sad: 'Ṣād: heavy, the back of the tongue rises.',

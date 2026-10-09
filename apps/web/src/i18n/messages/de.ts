@@ -756,6 +756,10 @@ export const de = {
         title: 'Ḍād und die Zungenspitze: Ḍād, Ṭāʾ, Dāl und Tāʾ',
         hint: 'Drei Laute von derselben Stelle – schwer, stimmhaft, gehaucht – und Ḍād, den es nur im Arabischen gibt. Hier hörst du, was sie unterscheidet.',
       },
+      teeth: {
+        title: 'Zähne, Lām und Nūn: Thāʾ, Dhāl, Ẓāʾ, Lām und Nūn',
+        hint: 'Drei Laute mit der Zungenspitze an den oberen Schneidezähnen – im Deutschen werden sie leicht zu s und z –, dazu Lām und Nūn vom Zahndamm.',
+      },
     } as Record<LabSet, { title: string; hint: string }>,
     more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
     draft: 'Entwurf – der Sheikh prüft noch',
@@ -785,6 +789,9 @@ export const de = {
       tongueMid: { line1: 'Zungenmitte', line2: 'harter Gaumen' },
       tongueSide: { line1: 'Zungenrand', line2: 'an Backenzähnen' },
       tongueTip: { line1: 'Zungenspitze', line2: 'Zahnwurzeln' },
+      teeth: { line1: 'Zungenspitze', line2: 'Zahnkanten' },
+      lam: { line1: 'Zungenrand vorn', line2: 'Zahndamm' },
+      nun: { line1: 'Zungenspitze', line2: 'vor dem Lām' },
     } as Record<Point, { line1: string; line2: string }>,
     letters: {
       sin: {
@@ -997,6 +1004,61 @@ export const de = {
           'Nicht stimmhaft werden lassen: Summt es, wird es Dāl – aus هَاتُوا۟ („bringt her!“) wird هَادُوا۟.',
         ],
       },
+      tha: {
+        name: 'Thāʾ',
+        short: 'leicht, stimmlos, wie th in „think“',
+        makhraj:
+          'Die Zungenspitze berührt die Kanten der oberen Schneidezähne – sie schaut ein wenig heraus.',
+        mistakes: [
+          'Nicht wie s: Die Zunge muss an die Zähne. Bleibt sie dahinter, wird aus Thāʾ ein Sīn.',
+          'Stimmlos (Hams): Summt es, wird es Dhāl.',
+          'Leicht bleiben (Istifāl): Hebt sich der Zungenrücken, klingt es schwer wie Ẓāʾ.',
+        ],
+      },
+      dha: {
+        name: 'Dhāl',
+        short: 'leicht, stimmhaft, wie th in „this“',
+        makhraj:
+          'Dieselbe Stelle wie Thāʾ: die Zungenspitze an den Kanten der oberen Schneidezähne.',
+        mistakes: [
+          'Nicht wie z oder das weiche s: Die Zunge muss an die Zähne. Bleibt sie dahinter, wird aus Dhāl ein Zāy.',
+          'Stimmhaft (Jahr): Ohne Stimme wird es Thāʾ.',
+          'Leicht bleiben (Istifāl): Ein schweres Dhāl wird zu Ẓāʾ.',
+        ],
+      },
+      zza: {
+        name: 'Ẓāʾ',
+        short: 'schwer, stimmhaft, die Zunge an den Zähnen',
+        makhraj:
+          'Dieselbe Stelle wie Dhāl: die Zungenspitze an den Kanten der oberen Schneidezähne. Dazu legt sich der Zungenrücken breit an den Gaumen.',
+        mistakes: [
+          'Nicht wie z: Die Zunge muss an die Zähne, sonst wird es ein schweres Zāy.',
+          'Schwer (Iṭbāq): Der Vokal danach klingt voll und dunkel – sonst wird es Dhāl.',
+          'Nicht mit Ḍād verwechseln: Bei Ẓāʾ liegt die Zungenspitze an den Zähnen, bei Ḍād der Zungenrand an den Backenzähnen.',
+        ],
+      },
+      lam: {
+        name: 'Lām',
+        short: 'leicht, wie l in „Licht“',
+        makhraj:
+          'Die vorderen Ränder der Zunge mit ihrer Spitze am Zahndamm hinter den oberen Vorderzähnen.',
+        mistakes: [
+          'Hell wie l in „Licht“, nicht dunkel wie im englischen „full“: Lām ist grundsätzlich leicht.',
+          'Nur das Lām in ٱللَّه wird schwer, wenn davor Fatḥa oder Ḍamma steht; nach Kasra bleibt es leicht – لِلَّهِ.',
+          'Mit Sukūn deutlich halten, nicht verschlucken – لَمْ.',
+        ],
+      },
+      nun: {
+        name: 'Nūn',
+        short: 'leicht, mit Ghunna',
+        makhraj:
+          'Die Zungenspitze am Zahndamm, ein wenig vor dem Lām, näher an der Spitze. Ein Teil des Klangs kommt aus dem Nasenraum (Ghunna).',
+        mistakes: [
+          'Wie das deutsche n – aber mit Shadda deutlich gehalten und genäselt (Ghunna), etwa zwei Schläge lang.',
+          'Nūn sākin und Tanwīn folgen eigenen Regeln: deutlich, verborgen oder verschmolzen. Die lernst du auf dem Pfad.',
+          'Nicht mit Lām verwechseln: Bei Nūn geht ein Teil der Luft durch die Nase – sonst wird aus إِنَّا („wir“) إِلَّآ („außer“).',
+        ],
+      },
     } as Record<LabLetterId, LetterTexts>,
     makhraj: 'Makhraj · wo er entsteht',
     sifat: 'Ṣifāt · seine Eigenschaften',
@@ -1075,6 +1137,10 @@ export const de = {
         meaning:
           'Verlängern: Der Laut zieht sich über den ganzen Zungenrand, von hinten bis zur Spitze (nur Ḍād).',
       },
+      ghunna: {
+        name: 'Ghunna',
+        meaning: 'Näseln: ein Klang aus dem Nasenraum, der zu Nūn und Mīm gehört.',
+      },
     } as Record<Sifa, { name: string; meaning: string }>,
     mistakesTitle: 'Typische Fehler',
     raRules: {
@@ -1145,6 +1211,18 @@ export const de = {
           'Zehn Wörter, nur zum Hören: schwer (Ṭāʾ), stimmhaft (Dāl) oder leicht mit Hauch (Tāʾ)?',
         question: 'Welchen Buchstaben hörst du?',
       },
+      teeth: {
+        title: 'Thāʾ, Dhāl oder Ẓāʾ?',
+        intro:
+          'Zehn Wörter, nur zum Hören: ohne Stimme (Thāʾ), mit Stimme (Dhāl) oder schwer mit Stimme (Ẓāʾ)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      lamNun: {
+        title: 'Lām oder Nūn?',
+        intro:
+          'Zehn Wörter, nur zum Hören: Fließt der Laut am Zungenrand (Lām) oder durch die Nase (Nūn)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
       weight: {
         title: 'Schwer oder leicht?',
         intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
@@ -1171,6 +1249,11 @@ export const de = {
         tta: 'Ṭāʾ: schwer und fest, ohne Hauch.',
         dal: 'Dāl: leicht und stimmhaft.',
         ta: 'Tāʾ: leicht, mit leisem Hauch.',
+        tha: 'Thāʾ: an den Zähnen, ohne Stimme.',
+        dha: 'Dhāl: an den Zähnen, mit Stimme, leicht.',
+        zza: 'Ẓāʾ: an den Zähnen, mit Stimme, schwer.',
+        lam: 'Lām: hell, der Laut fließt am Zungenrand.',
+        nun: 'Nūn: ein Teil des Klangs kommt aus der Nase.',
         sin: 'Sīn: leicht, scharf und stimmlos.',
         zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
         sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',
