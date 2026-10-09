@@ -76,6 +76,10 @@ describe('the letter lab’s words', () => {
       jim: ['ج'],
       shin: ['ش'],
       ya: ['ي'],
+      dad: ['ض'],
+      tta: ['ط'],
+      dal: ['د'],
+      ta: ['ت'],
     };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
       expect(signs[word.letter], word.key).toContain(
@@ -135,6 +139,31 @@ describe('the letter lab’s words', () => {
     // qadḥan / kadḥan, jāʾa / shāʾa, sujjirat / suyyirat; qāla / kāna is a near pair.
     const tongue = lab.pairs.filter((p) => ['qaf', 'jim'].includes(p.letters[0]));
     expect(tongue.map((p) => p.exact)).toEqual([true, false, true, true]);
+  });
+
+  it('give ḍād and the tip of the tongue ten words each, one answer to every quiz', () => {
+    // The tied tāʾ (ة) is a tāʾ when the reciter goes on; ḍād keeps clear of ẓāʾ too.
+    const rivals = { dad: 'ضدظ', tta: 'طدتة', dal: 'طدتةض', ta: 'طدتة' };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set(
+          [...word.uthmani]
+            .filter((c) => chars.includes(c))
+            .map((c) => (c === 'ة' ? 'ت' : c))
+        );
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // baʿḍa / baʿda, ṭaḥāhā / daḥāhā, hātū / hādū; ṭaḥāhā / talāhā is a near pair.
+    const tip = lab.pairs.filter((p) => ['dad', 'tta', 'ta'].includes(p.letters[0]));
+    expect(tip.map((p) => [...p.letters, p.exact])).toEqual([
+      ['dad', 'dal', true],
+      ['tta', 'dal', true],
+      ['tta', 'ta', false],
+      ['ta', 'dal', true],
+    ]);
   });
 
   it('leave out a word the reciter joins to a nūn sākin or tanwīn before it', () => {

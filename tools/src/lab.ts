@@ -3,10 +3,10 @@ import type { LabClips } from './labClips';
 
 /**
  * The words of the letter lab (spec F5; first set س ز ص ر, the throat ء ه ع ح غ خ, the back
- * and middle of the tongue ق ك ج ش ي), taken from the shipped packs rather than typed by hand.
- * The picks below are only word keys; the text in both scripts,
- * the letter to mark and, for rāʾ, whether it is heavy or light are read from the words and
- * checked here, so a pick that does not show what it is meant to show fails the build.
+ * and middle of the tongue ق ك ج ش ي, ḍād and the tip of the tongue ض ط د ت), taken from the
+ * shipped packs rather than typed by hand. The picks below are only word keys; the text in both
+ * scripts, the letter to mark and, for rāʾ, whether it is heavy or light are read from the words
+ * and checked here, so a pick that does not show what it is meant to show fails the build.
  */
 
 export type LabLetter =
@@ -24,7 +24,11 @@ export type LabLetter =
   | 'kaf'
   | 'jim'
   | 'shin'
-  | 'ya';
+  | 'ya'
+  | 'dad'
+  | 'tta'
+  | 'dal'
+  | 'ta';
 export type Weight = 'heavy' | 'light';
 
 /** How each letter is written; hamza has its seats (أ إ ؤ ئ) and stands alone (ء). */
@@ -44,6 +48,10 @@ const LETTER: Record<LabLetter, string> = {
   jim: 'ج',
   shin: 'ش',
   ya: 'ي',
+  dad: 'ض',
+  tta: 'ط',
+  dal: 'د',
+  ta: 'ت',
 };
 
 /** IndoPak writes a hamza that opens a word as a bare alif with its vowel (اَحَدٌ). */
@@ -52,8 +60,10 @@ const INDOPAK_LETTER: Partial<Record<LabLetter, string>> = { hamza: `ا${LETTER.
 /**
  * The letters a word of a letter must not also hold, so that its listening quiz has one answer:
  * the letters it is heard against (the whistling three; hamza and ʿayn; hāʾ, ḥāʾ and khāʾ;
- * khāʾ and ghayn; qāf and kāf; jīm, shīn and yāʾ). Rāʾ is asked heavy or light instead. Yāʾ
- * has its dotless form too (ى, as in شَىْءٍ, where it is heard as a yāʾ).
+ * khāʾ and ghayn; qāf and kāf; jīm, shīn and yāʾ; ḍād and dāl; ṭāʾ, dāl and tāʾ). Rāʾ is
+ * asked heavy or light instead. Yāʾ has its dotless form too (ى, as in شَىْءٍ, where it is
+ * heard as a yāʾ), and tāʾ its tied form (ة, a t when the reciter goes on). Ḍād keeps clear of
+ * ẓāʾ too, the letter it is most often mixed up with in Arabic.
  */
 const RIVALS: Record<Exclude<LabLetter, 'ra'>, string> = {
   sin: 'سزص',
@@ -70,10 +80,14 @@ const RIVALS: Record<Exclude<LabLetter, 'ra'>, string> = {
   jim: 'جشيى',
   shin: 'جشيى',
   ya: 'جشيى',
+  dad: 'ضدظ',
+  tta: 'طدتة',
+  dal: 'طدتةض',
+  ta: 'طدتة',
 };
 
-/** The other forms of a letter, counted as that letter: the dotless yāʾ. */
-const SAME: Record<string, string> = { ى: 'ي' };
+/** The other forms of a letter, counted as that letter: dotless yāʾ, tied tāʾ. */
+const SAME: Record<string, string> = { ى: 'ي', ة: 'ت' };
 
 const FATHA = '\u064E';
 const DAMMA = '\u064F';
@@ -260,6 +274,54 @@ export const LAB_PICKS: Record<LabLetter, readonly string[]> = {
     '87:13:3', // yamūtu
     '96:5:5', // yaʿlam
   ],
+  dad: [
+    '2:282:42', // ḍaʿīfan
+    '93:7:2', // ḍāllan
+    '100:1:2', // ḍabḥan
+    '2:273:9', // ḍarban
+    '79:29:4', // ḍuḥāhā
+    '80:39:1', // ḍāḥikatun
+    '2:231:13', // ḍirāran
+    '2:265:18', // ḍiʿfayni
+    '1:7:9', // aḍ-ḍāllīna
+    '93:1:1', // wa-ḍ-ḍuḥā
+  ],
+  tta: [
+    '79:17:5', // ṭaghā
+    '84:19:2', // ṭabaqan
+    '88:6:3', // ṭaʿāmun
+    '95:2:1', // wa-ṭūri
+    '105:3:3', // ṭayran
+    '91:6:3', // ṭaḥāhā
+    '2:15:6', // ṭughyānihim
+    '79:16:6', // ṭuwan
+    '2:227:3', // aṭ-ṭalāqa
+    '86:2:4', // aṭ-ṭāriqu
+  ],
+  dal: [
+    '89:21:5', // dakkan
+    '1:4:3', // ad-dīni
+    '109:6:2', // dīnukum
+    '2:251:15', // dafʿu
+    '2:171:11', // duʿāʾan
+    '2:186:11', // daʿāni
+    '79:30:4', // daḥāhā
+    '2:94:5', // ad-dāru
+    '2:173:5', // wa-d-dama
+    '79:38:3', // ad-dunyā
+  ],
+  ta: [
+    '79:12:2', // tilka
+    '2:69:17', // tasurru
+    '79:6:2', // tarjufu
+    '83:24:1', // taʿrifu
+    '88:4:1', // taṣlā
+    '88:11:2', // tasmaʿu
+    '97:4:1', // tanazzalu
+    '86:9:2', // tublā
+    '88:5:1', // tusqā
+    '78:40:15', // turāban
+  ],
   ra: [
     '1:2:3', // rabbi (heavy)
     '1:1:3', // ar-raḥmāni (heavy)
@@ -302,6 +364,10 @@ export const LAB_PAIR_PICKS: readonly {
   { letters: ['qaf', 'kaf'], keys: ['83:13:5', '78:17:4'] }, // qāla / kāna
   { letters: ['jim', 'shin'], keys: ['110:1:2', '2:20:15'] }, // jāʾa / shāʾa
   { letters: ['jim', 'ya'], keys: ['81:6:3', '81:3:3'] }, // sujjirat / suyyirat
+  { letters: ['dad', 'dal'], keys: ['2:259:30', '2:120:19'] }, // baʿḍa / baʿda
+  { letters: ['tta', 'dal'], keys: ['91:6:3', '79:30:4'] }, // ṭaḥāhā / daḥāhā
+  { letters: ['tta', 'ta'], keys: ['91:6:3', '91:2:3'] }, // ṭaḥāhā / talāhā
+  { letters: ['ta', 'dal'], keys: ['2:111:14', '2:62:5'] }, // hātū / hādū
 ];
 
 /** One word of the lab, in both scripts, with the letter to mark as UTF-16 offsets. */
@@ -462,7 +528,7 @@ function labWord(
     return word;
   }
   // Kinds of letter, not occurrences (zulzilat has zāy twice); hamza's forms are one letter,
-  // and so are the two forms of yāʾ.
+  // and so are the two forms of yāʾ and of tāʾ.
   const rivals = new Set(
     [...uthmani]
       .filter((c) => RIVALS[letter].includes(c))
