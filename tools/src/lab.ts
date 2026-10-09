@@ -2,15 +2,28 @@ import type { Pack } from '@arda/quran';
 import type { LabClips } from './labClips';
 
 /**
- * The words of the letter lab (spec F5; first set س ز ص ر, the throat ء ه ع ح غ خ), taken from
- * the shipped packs
- * rather than typed by hand. The picks below are only word keys; the text in both scripts,
+ * The words of the letter lab (spec F5; first set س ز ص ر, the throat ء ه ع ح غ خ, the back
+ * and middle of the tongue ق ك ج ش ي), taken from the shipped packs rather than typed by hand. The picks below are only word keys; the text in both scripts,
  * the letter to mark and, for rāʾ, whether it is heavy or light are read from the words and
  * checked here, so a pick that does not show what it is meant to show fails the build.
  */
 
 export type LabLetter =
-  'sin' | 'zay' | 'sad' | 'ra' | 'hamza' | 'ha' | 'ayn' | 'hha' | 'ghayn' | 'kha';
+  | 'sin'
+  | 'zay'
+  | 'sad'
+  | 'ra'
+  | 'hamza'
+  | 'ha'
+  | 'ayn'
+  | 'hha'
+  | 'ghayn'
+  | 'kha'
+  | 'qaf'
+  | 'kaf'
+  | 'jim'
+  | 'shin'
+  | 'ya';
 export type Weight = 'heavy' | 'light';
 
 /** How each letter is written; hamza has its seats (أ إ ؤ ئ) and stands alone (ء). */
@@ -25,6 +38,11 @@ const LETTER: Record<LabLetter, string> = {
   hha: 'ح',
   ghayn: 'غ',
   kha: 'خ',
+  qaf: 'ق',
+  kaf: 'ك',
+  jim: 'ج',
+  shin: 'ش',
+  ya: 'ي',
 };
 
 /** IndoPak writes a hamza that opens a word as a bare alif with its vowel (اَحَدٌ). */
@@ -33,7 +51,8 @@ const INDOPAK_LETTER: Partial<Record<LabLetter, string>> = { hamza: `ا${LETTER.
 /**
  * The letters a word of a letter must not also hold, so that its listening quiz has one answer:
  * the letters it is heard against (the whistling three; hamza and ʿayn; hāʾ, ḥāʾ and khāʾ;
- * khāʾ and ghayn). Rāʾ is asked heavy or light instead.
+ * khāʾ and ghayn; qāf and kāf; jīm, shīn and yāʾ). Rāʾ is asked heavy or light instead. Yāʾ
+ * has its dotless form too (ى, as in شَىْءٍ, where it is heard as a yāʾ).
  */
 const RIVALS: Record<Exclude<LabLetter, 'ra'>, string> = {
   sin: 'سزص',
@@ -45,6 +64,11 @@ const RIVALS: Record<Exclude<LabLetter, 'ra'>, string> = {
   hha: 'هحخ',
   kha: 'هحخغ',
   ghayn: 'غخ',
+  qaf: 'قك',
+  kaf: 'قك',
+  jim: 'جشيى',
+  shin: 'جشيى',
+  ya: 'جشيى',
 };
 
 const FATHA = '\u064E';
@@ -170,6 +194,66 @@ export const LAB_PICKS: Record<LabLetter, readonly string[]> = {
     '2:85:35', // khizyun
     '78:37:10', // khiṭāban
   ],
+  qaf: [
+    '83:13:5', // qāla
+    '80:17:1', // qutila
+    '81:20:2', // quwwatin
+    '87:3:2', // qaddara
+    '2:11:2', // qīla
+    '2:263:1', // qawlun
+    '79:8:1', // qulūbun
+    '97:1:5', // al-qadri
+    '106:1:2', // qurayshin
+    '2:177:6', // qibala
+  ],
+  kaf: [
+    '78:4:1', // kallā
+    '78:17:4', // kāna
+    '88:17:5', // kayfa
+    '92:16:2', // kadhdhaba
+    '98:3:2', // kutubun
+    '83:9:1', // kitābun
+    '81:19:4', // karīmin
+    '81:1:3', // kuwwirat
+    '112:4:4', // kufuwan
+    '82:11:1', // kirāman
+  ],
+  jim: [
+    '110:1:2', // jāʾa
+    '85:11:7', // jannātun
+    '88:7:6', // jūʿin
+    '104:2:2', // jamaʿa
+    '2:260:28', // jabalin
+    '78:21:2', // jahannama
+    '78:26:1', // jazāʾan
+    '2:197:13', // jidāla
+    '2:158:13', // junāḥa
+    '78:20:2', // al-jibālu
+  ],
+  shin: [
+    '78:39:5', // shāʾa
+    '80:26:4', // shaqqan
+    '80:37:5', // shaʾnun
+    '97:3:6', // shahrin
+    '99:8:5', // sharran
+    '2:249:11', // shariba
+    '85:7:6', // shuhūdun
+    '2:137:14', // shiqāqin
+    '78:12:4', // shidādan
+    '106:2:3', // ash-shitāʾi
+  ],
+  ya: [
+    '1:4:2', // yawmi
+    '112:3:2', // yalid
+    '112:3:4', // yūlad
+    '112:4:2', // yakun
+    '107:2:3', // yaduʿʿu
+    '2:190:12', // yuḥibbu
+    '78:38:2', // yaqūmu
+    '89:24:1', // yaqūlu
+    '87:13:3', // yamūtu
+    '96:5:5', // yaʿlam
+  ],
   ra: [
     '1:2:3', // rabbi (heavy)
     '1:1:3', // ar-raḥmāni (heavy)
@@ -209,6 +293,10 @@ export const LAB_PAIR_PICKS: readonly {
   { letters: ['hha', 'ha'], keys: ['2:187:1', '2:173:9'] }, // uḥilla / uhilla
   { letters: ['kha', 'ghayn'], keys: ['2:197:24', '2:59:5'] }, // khayra / ghayra
   { letters: ['kha', 'ghayn'], keys: ['79:26:6', '92:1:3'] }, // yakhshā / yaghshā
+  { letters: ['qaf', 'kaf'], keys: ['100:2:2', '84:6:7'] }, // qadḥan / kadḥan
+  { letters: ['qaf', 'kaf'], keys: ['83:13:5', '78:17:4'] }, // qāla / kāna
+  { letters: ['jim', 'shin'], keys: ['110:1:2', '2:20:15'] }, // jāʾa / shāʾa
+  { letters: ['jim', 'ya'], keys: ['81:6:3', '81:3:3'] }, // sujjirat / suyyirat
 ];
 
 /** One word of the lab, in both scripts, with the letter to mark as UTF-16 offsets. */
@@ -341,11 +429,12 @@ function labWord(
     word.weight = vowel === KASRA ? 'light' : 'heavy';
     return word;
   }
-  // Kinds of letter, not occurrences (zulzilat has zāy twice); hamza's forms are one letter.
+  // Kinds of letter, not occurrences (zulzilat has zāy twice); hamza's forms are one letter,
+  // and so are the two forms of yāʾ.
   const rivals = new Set(
     [...uthmani]
       .filter((c) => RIVALS[letter].includes(c))
-      .map((c) => (LETTER.hamza.includes(c) ? 'ء' : c))
+      .map((c) => (LETTER.hamza.includes(c) ? 'ء' : c === 'ى' ? 'ي' : c))
   );
   if (rivals.size !== 1) {
     throw new Error(`${key}: ${uthmani} holds more than one of ${RIVALS[letter]}`);

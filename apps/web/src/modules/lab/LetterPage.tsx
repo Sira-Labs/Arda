@@ -6,6 +6,7 @@ import { Soon } from '@/modules/Soon';
 import { PlayIcon } from '../mushaf/PlayerBar';
 import { SPEEDS, chooseSpeed, useSpeed } from '../mushaf/reciters';
 import { HeadDiagram } from './HeadDiagram';
+import { ArabicRuns } from './ArabicRuns';
 import { DraftBadge } from './Lab';
 import { LETTERS, isLabLetter } from './letters';
 import type { LabLetterId, LabPair, LabWord } from './types';
@@ -82,7 +83,9 @@ export function Letter({ id }: { id: LabLetterId }) {
           {letter.sifat.map((sifa) => (
             <li key={sifa}>
               <span className="chip">{t.sifa[sifa].name}</span>
-              <span>{t.sifa[sifa].meaning}</span>
+              <span>
+                <ArabicRuns text={t.sifa[sifa].meaning} />
+              </span>
             </li>
           ))}
         </ul>
@@ -94,7 +97,9 @@ export function Letter({ id }: { id: LabLetterId }) {
         </h2>
         <ul className="steps">
           {texts.mistakes.map((mistake) => (
-            <li key={mistake}>{mistake}</li>
+            <li key={mistake}>
+              <ArabicRuns text={mistake} />
+            </li>
           ))}
         </ul>
       </section>

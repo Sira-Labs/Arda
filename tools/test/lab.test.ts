@@ -70,6 +70,11 @@ describe('the letter lab’s words', () => {
       hha: ['ح'],
       ghayn: ['غ'],
       kha: ['خ'],
+      qaf: ['ق'],
+      kaf: ['ك'],
+      jim: ['ج'],
+      shin: ['ش'],
+      ya: ['ي'],
     };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
       expect(signs[word.letter], word.key).toContain(
@@ -104,9 +109,31 @@ describe('the letter lab’s words', () => {
       }
     }
     // The throat's pairs differ in that one letter only: ʿalīm / alīm, khayr / ghayr …
-    const throat = lab.pairs.filter((p) => !['sin', 'zay', 'sad'].includes(p.letters[0]));
+    const throat = lab.pairs.filter((p) =>
+      ['hamza', 'ha', 'ayn', 'hha', 'ghayn', 'kha'].includes(p.letters[0])
+    );
     expect(throat).toHaveLength(6);
     expect(throat.every((p) => p.exact)).toBe(true);
+  });
+
+  it('give each letter of the tongue ten words, none holding a letter it is heard against', () => {
+    // Yāʾ is heard in its dotless form too (شَىْءٍ), so that counts as a yāʾ.
+    const rivals = { qaf: 'قك', kaf: 'قك', jim: 'جشيى', shin: 'جشيى', ya: 'جشيى' };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set(
+          [...word.uthmani]
+            .filter((c) => chars.includes(c))
+            .map((c) => (c === 'ى' ? 'ي' : c))
+        );
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // qadḥan / kadḥan, jāʾa / shāʾa, sujjirat / suyyirat; qāla / kāna is a near pair.
+    const tongue = lab.pairs.filter((p) => ['qaf', 'jim'].includes(p.letters[0]));
+    expect(tongue.map((p) => p.exact)).toEqual([true, false, true, true]);
   });
 
   it('read heavy and light from the vowel on the rāʾ', () => {

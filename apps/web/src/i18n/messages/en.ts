@@ -698,6 +698,10 @@ export const en: Messages = {
         title: 'The throat: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn and Khāʾ',
         hint: 'Six sounds from the throat, from the deepest up. German has only the h and the glottal stop – the others are new.',
       },
+      tongueBack: {
+        title: 'Back and middle of the tongue: Qāf, Kāf, Jīm, Shīn and Yāʾ',
+        hint: 'Five sounds from the body of the tongue. Qāf and Kāf sit close together – here you learn to keep them apart.',
+      },
     },
     more: 'The other letters follow once your sheikh has checked the drawing.',
     draft: 'Draft – the sheikh is still checking',
@@ -722,6 +726,9 @@ export const en: Messages = {
       halqDeep: { line1: 'Deepest part', line2: 'of the throat' },
       halqMid: { line1: 'Middle', line2: 'of the throat' },
       halqNear: { line1: 'Upper part', line2: 'of the throat' },
+      tongueFar: { line1: 'Back of tongue', line2: 'soft palate' },
+      tongueBack: { line1: 'Back of tongue', line2: 'just before Qāf' },
+      tongueMid: { line1: 'Mid-tongue', line2: 'hard palate' },
     },
     letters: {
       sin: {
@@ -835,6 +842,61 @@ export const en: Messages = {
           'Do not confuse it with Ḥāʾ: Khāʾ rubs higher up; for Ḥāʾ only the throat narrows.',
         ],
       },
+      qaf: {
+        name: 'Qāf',
+        short: 'heavy, deep, with qalqala',
+        makhraj:
+          'The very back of the tongue rises to the soft palate above it and closes briefly – further back than Kāf.',
+        mistakes: [
+          'Not like the k in German or English: Qāf is made further back, at the soft palate – otherwise قَدْحًا (“striking sparks”) becomes كَدْحًا (“toil”).',
+          'Heavy (Istiʿlāʾ): the back of the tongue rises, the vowel after it sounds full and dark.',
+          'No breath after it: Qāf is voiced and firm. With sukūn it bounces briefly (qalqala) – ٱلْقَدْرِ.',
+        ],
+      },
+      kaf: {
+        name: 'Kāf',
+        short: 'light, with a breath',
+        makhraj:
+          'The back of the tongue against the palate, a little further forward and lower than for Qāf.',
+        mistakes: [
+          'Stay light (Istifāl): the vowel after it sounds bright. A dark Kāf sounds like Qāf.',
+          'With a soft breath (Hams), above all with sukūn – audible, but not overdone.',
+          'Do not pull it back to Qāf: otherwise كَدْحًا (“toil”) becomes قَدْحًا (“striking sparks”).',
+        ],
+      },
+      jim: {
+        name: 'Jīm',
+        short: 'firm, voiced, with qalqala',
+        makhraj:
+          'The middle of the tongue against the hard palate above it – the same place as Shīn and Yāʾ.',
+        mistakes: [
+          'Firm (Shidda): the tongue closes completely, like the j in “jungle” – not soft like the s in “measure”.',
+          'Voiced: without voice and without the closure it becomes Shīn – جَآءَ (“he came”) becomes شَآءَ (“he willed”).',
+          'With sukūn, Jīm bounces briefly (qalqala), without adding a vowel.',
+        ],
+      },
+      shin: {
+        name: 'Shīn',
+        short: 'voiceless, the air spreads',
+        makhraj:
+          'The middle of the tongue towards the hard palate, like Jīm and Yāʾ – but not closed: the air flows through and spreads in the mouth (Tafashshī).',
+        mistakes: [
+          'Like the sh in “ship”, but without pushing the lips forward: they stay relaxed.',
+          'Not like Sīn: for Shīn the middle of the tongue meets the palate, not the tip at the teeth; it does not whistle.',
+          'Light (Istifāl) and voiceless (Hams): no buzz like the s in “measure”.',
+        ],
+      },
+      ya: {
+        name: 'Yāʾ',
+        short: 'soft, voiced, like the y in “yes”',
+        makhraj:
+          'The middle of the tongue towards the hard palate, like Jīm and Shīn – with room between, the sound flows on.',
+        mistakes: [
+          'Like the y in “yes”: soft, without friction and without a stop.',
+          'Do not let it become Jīm: the tongue does not press against the palate – otherwise سُيِّرَتْ (“set in motion”) becomes سُجِّرَتْ (“set ablaze”).',
+          'A Yāʾ with a vowel is a consonant, not a long vowel: يَوْمِ begins with y, not with i.',
+        ],
+      },
     },
     makhraj: 'Makhraj · where it is made',
     sifat: 'Ṣifāt · its qualities',
@@ -901,6 +963,15 @@ export const en: Messages = {
         meaning:
           'Repetition: the tongue tends to trill – you know it in order to avoid it.',
       },
+      qalqala: {
+        name: 'Qalqala',
+        meaning:
+          'Bounce: with sukūn the sound bounces briefly, like a small echo (ق ط ب ج د).',
+      },
+      tafashshi: {
+        name: 'Tafashshī',
+        meaning: 'Spreading: the air spreads through the whole mouth (Shīn only).',
+      },
     },
     mistakesTitle: 'Typical mistakes',
     raRules: {
@@ -946,6 +1017,18 @@ export const en: Messages = {
           'Ten words, by ear only: does it rub without voice (Khāʾ) or with voice (Ghayn)?',
         question: 'Which letter do you hear?',
       },
+      qafKaf: {
+        title: 'Qāf or Kāf?',
+        intro:
+          'Ten words, by ear only: deep and heavy (Qāf) or further forward and light (Kāf)?',
+        question: 'Which letter do you hear?',
+      },
+      middle: {
+        title: 'Jīm, Shīn or Yāʾ?',
+        intro:
+          'Ten words, by ear only: firm with voice (Jīm), a wide rush of air (Shīn) or soft like the y in “yes” (Yāʾ)?',
+        question: 'Which letter do you hear?',
+      },
       weight: {
         title: 'Heavy or light?',
         intro: 'Ten words with Rāʾ: does it sound heavy or light?',
@@ -963,6 +1046,11 @@ export const en: Messages = {
         hha: 'Ḥāʾ: a strong breath from the narrowed throat, no friction above.',
         ghayn: 'Ghayn: a soft friction with voice.',
         kha: 'Khāʾ: friction without voice, as in “Bach”.',
+        qaf: 'Qāf: deep and heavy, the vowel sounds dark.',
+        kaf: 'Kāf: further forward, light, with a soft breath.',
+        jim: 'Jīm: firm and voiced, like the j in “jungle”.',
+        shin: 'Shīn: a wide rush of air without voice.',
+        ya: 'Yāʾ: soft, like the y in “yes”.',
         sin: 'Sīn: light, sharp and voiceless.',
         zay: 'Zāy: voiced – it buzzes – but thin.',
         sad: 'Ṣād: heavy, the back of the tongue rises.',

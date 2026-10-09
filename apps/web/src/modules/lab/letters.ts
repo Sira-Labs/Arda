@@ -10,7 +10,8 @@ import {
 /**
  * The letter lab's letters (spec F5): the first set (owner 2026-10-06) – sīn, zāy and ṣād,
  * the three whistling letters a German speaker easily mixes up, and rāʾ – and the six of the
- * throat (2026-10-07), which German lacks but for hāʾ and the glottal stop. The texts are in the
+ * throat (2026-10-07), which German lacks but for hāʾ and the glottal stop, and five of the tongue
+ * (2026-10-09): qāf and kāf at its back, jīm, shīn and yāʾ at its middle. The texts are in the
  * i18n catalogs (`lab`); this module says which letter has which point, area and ṣifāt. Every
  * makhraj and its drawing is a draft until the sheikh has reviewed it (spec 03 §6, ADR-0018).
  */
@@ -22,11 +23,20 @@ export type Area = (typeof AREAS)[number];
 /**
  * Where a letter is made, as a point on the head (HeadDiagram): the whistling letters, rāʾ, and
  * the three parts of the throat – the deepest (ء ه), the middle (ع ح), the nearest the mouth
- * (غ خ).
+ * (غ خ) – and the tongue under the palate: its very back (ق), a little before it (ك), its
+ * middle (ج ش ي).
  */
-export type Point = 'whistle' | 'ra' | 'halqDeep' | 'halqMid' | 'halqNear';
+export type Point =
+  | 'whistle'
+  | 'ra'
+  | 'halqDeep'
+  | 'halqMid'
+  | 'halqNear'
+  | 'tongueFar'
+  | 'tongueBack'
+  | 'tongueMid';
 
-/** The ṣifāt of the first set; each has a name and a one-line meaning in the catalogs. */
+/** The ṣifāt of the lab's letters; each has a name and a one-line meaning in the catalogs. */
 export const SIFAT = [
   'hams',
   'jahr',
@@ -42,14 +52,18 @@ export const SIFAT = [
   'safir',
   'inhiraf',
   'takrir',
+  'qalqala',
+  'tafashshi',
 ] as const;
 export type Sifa = (typeof SIFAT)[number];
 
 /**
  * What a listening quiz asks: which of the letters heard against each other (the whistling
- * three; hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn), or whether the rāʾ is heavy.
+ * three; hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn; qāf or kāf; jīm, shīn or yāʾ), or
+ * whether the rāʾ is heavy.
  */
-export type QuizKind = 'whistling' | 'hamzaAyn' | 'hSounds' | 'khGh' | 'weight';
+export type QuizKind =
+  'whistling' | 'hamzaAyn' | 'hSounds' | 'khGh' | 'qafKaf' | 'middle' | 'weight';
 
 /** The letters each quiz offers, in a fixed order; `weight` offers heavy and light. */
 export const QUIZ_LETTERS: Record<Exclude<QuizKind, 'weight'>, readonly HeardId[]> = {
@@ -57,6 +71,8 @@ export const QUIZ_LETTERS: Record<Exclude<QuizKind, 'weight'>, readonly HeardId[
   hamzaAyn: ['hamza', 'ayn'],
   hSounds: ['ha', 'hha', 'kha'],
   khGh: ['kha', 'ghayn'],
+  qafKaf: ['qaf', 'kaf'],
+  middle: ['jim', 'shin', 'ya'],
 };
 
 export interface LetterContent {
@@ -171,6 +187,56 @@ export const LETTERS: Readonly<Record<LabLetterId, LetterContent>> = {
     point: 'halqNear',
     sifat: ['hams', 'rakhawa', 'istila', 'infitah', 'ismat'],
     quiz: 'hSounds',
+    review: { status: 'draft' },
+  },
+  qaf: {
+    id: 'qaf',
+    letter: 'ق',
+    arabicName: 'قَاف',
+    area: 'lisan',
+    point: 'tongueFar',
+    sifat: ['jahr', 'shidda', 'istila', 'infitah', 'ismat', 'qalqala'],
+    quiz: 'qafKaf',
+    review: { status: 'draft' },
+  },
+  kaf: {
+    id: 'kaf',
+    letter: 'ك',
+    arabicName: 'كَاف',
+    area: 'lisan',
+    point: 'tongueBack',
+    sifat: ['hams', 'shidda', 'istifal', 'infitah', 'ismat'],
+    quiz: 'qafKaf',
+    review: { status: 'draft' },
+  },
+  jim: {
+    id: 'jim',
+    letter: 'ج',
+    arabicName: 'جِيم',
+    area: 'lisan',
+    point: 'tongueMid',
+    sifat: ['jahr', 'shidda', 'istifal', 'infitah', 'ismat', 'qalqala'],
+    quiz: 'middle',
+    review: { status: 'draft' },
+  },
+  shin: {
+    id: 'shin',
+    letter: 'ش',
+    arabicName: 'شِين',
+    area: 'lisan',
+    point: 'tongueMid',
+    sifat: ['hams', 'rakhawa', 'istifal', 'infitah', 'ismat', 'tafashshi'],
+    quiz: 'middle',
+    review: { status: 'draft' },
+  },
+  ya: {
+    id: 'ya',
+    letter: 'ي',
+    arabicName: 'يَاء',
+    area: 'lisan',
+    point: 'tongueMid',
+    sifat: ['jahr', 'rakhawa', 'istifal', 'infitah', 'ismat'],
+    quiz: 'middle',
     review: { status: 'draft' },
   },
 };

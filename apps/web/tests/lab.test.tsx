@@ -155,6 +155,13 @@ describe('the lab’s words (generated from the packs)', () => {
     expect([count('ayn', ayn), count('hamza', ayn)]).toEqual([5, 5]);
     const ghayn = labRound('ghayn', () => 0.3);
     expect([count('ghayn', ghayn), count('kha', ghayn)]).toEqual([5, 5]);
+    // The tongue: qāf against kāf, and the middle three against each other.
+    const kaf = labRound('kaf', () => 0.3);
+    expect([count('kaf', kaf), count('qaf', kaf)]).toEqual([5, 5]);
+    const shin = labRound('shin', () => 0.3);
+    expect([count('jim', shin), count('shin', shin), count('ya', shin)]).toEqual([
+      3, 4, 3,
+    ]);
     // A word holds no other letter of its quiz, so every question has one answer.
     const forms: Record<string, string> = { hamza: 'أإءؤئ' };
     const signs: Record<string, string> = {
@@ -163,6 +170,12 @@ describe('the lab’s words (generated from the packs)', () => {
       hha: 'ح',
       ghayn: 'غ',
       kha: 'خ',
+      qaf: 'ق',
+      kaf: 'ك',
+      jim: 'ج',
+      shin: 'ش',
+      // The dotless yāʾ is a yāʾ too (شَىْءٍ).
+      ya: 'يى',
     };
     for (const letters of Object.values(QUIZ_LETTERS)) {
       for (const word of LAB_WORDS.filter((w) => letters.includes(w.letter as never))) {
@@ -227,6 +240,36 @@ describe('the letter lab (F5)', () => {
       '/labor/ghayn',
       '/labor/kha',
     ]);
+    // The back and the middle of the tongue, the third set.
+    const tongue = screen.getByRole('region', { name: /Hinterzunge und Zungenmitte/ });
+    expect(
+      within(tongue)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('href'))
+    ).toEqual(['/labor/qaf', '/labor/kaf', '/labor/jim', '/labor/shin', '/labor/ya']);
+  });
+
+  it('shows a letter of the tongue: its point, qalqala and its pairs', () => {
+    renderAt('/labor/qaf');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Qāf');
+    expect(
+      screen.getByRole('img', { name: /Hinterste Zunge – weicher Gaumen/ })
+    ).toBeVisible();
+    const sifat = screen.getByRole('region', { name: 'Ṣifāt · seine Eigenschaften' });
+    expect(
+      within(sifat)
+        .getAllByRole('listitem')
+        .map((li) => li.querySelector('.chip')?.textContent)
+    ).toEqual(['Jahr', 'Shidda', 'Istiʿlāʾ', 'Infitāḥ', 'Iṣmāt', 'Qalqala']);
+    expect(within(sifat).getByText(/Nachfedern/)).toBeInTheDocument();
+    // Arabic inside a German text is marked as Arabic, its letters kept in one run.
+    expect(within(sifat).getByText('ق ط ب ج د')).toHaveAttribute('dir', 'rtl');
+    const mistakes = screen.getByRole('region', { name: 'Typische Fehler' });
+    expect(within(mistakes).getByText('قَدْحًا')).toHaveAttribute('lang', 'ar');
+    expect(screen.getByRole('heading', { name: 'Qāf oder Kāf?' })).toBeInTheDocument();
+    // qadḥan / kadḥan differ in that one letter; qāla / kāna in more.
+    expect(screen.getAllByText('Nur dieser Laut ist anders.').length).toBe(1);
+    expect(screen.getAllByText(/^Ähnlich/).length).toBe(1);
   });
 
   it('shows a letter of the throat: its point, its ṣifāt and the pairs to hear', () => {

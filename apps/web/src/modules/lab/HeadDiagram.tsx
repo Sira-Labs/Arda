@@ -7,7 +7,9 @@ import './lab.css';
  * Where each point sits on the drawing (viewBox 640 × 700, the face looking left). The
  * whistling letters: the tip of the tongue at the incisors, a narrow gap for the air; rāʾ:
  * the tip of the tongue against the gum ridge behind the upper incisors, a little behind the
- * point of nūn; the throat's three points down the throat.
+ * point of nūn; the throat's three points down the throat; the tongue's under the palate, on
+ * the drawn tongue's upper edge (qāf where it meets the soft palate, kāf just before it, the
+ * middle three under the hard palate).
  */
 const POINTS: Record<Point, { x: number; y: number }> = {
   whistle: { x: 180, y: 406 },
@@ -16,6 +18,9 @@ const POINTS: Record<Point, { x: number; y: number }> = {
   halqNear: { x: 429, y: 430 },
   halqMid: { x: 430, y: 515 },
   halqDeep: { x: 432, y: 610 },
+  tongueFar: { x: 385, y: 429 },
+  tongueBack: { x: 362, y: 413 },
+  tongueMid: { x: 272, y: 400 },
 };
 
 /** Where each area's number stands on the drawing; the lips' stands just in front of them. */
