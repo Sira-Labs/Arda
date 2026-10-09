@@ -602,11 +602,16 @@ const TRAILING = /[\u06D6-\u06ED]+$/u;
 export function nasalBefore(packs: readonly Pack[], key: string): boolean {
   const [sura, aya, n] = key.split(':').map(Number);
   if (n === 1) return false;
-  const first = wordIn(packs, key)[0]!;
+  return joinsNasal(wordIn(packs, `${sura}:${aya}:${n! - 1}`), wordIn(packs, key));
+}
+
+/** `nasalBefore` for two words of text: whether `word` starts in the ghunna of `before`. */
+export function joinsNasal(before: string, word: string): boolean {
+  const first = word[0]!;
   if (first === 'ٱ' || THROAT.includes(first)) return false;
-  const before = wordIn(packs, `${sura}:${aya}:${n! - 1}`).replace(TRAILING, '');
+  const bare = before.replace(TRAILING, '');
   // A fatḥatān sits before the alif (or yāʾ) that carries it: سَبْعًا, هُدًى.
-  const end = 'اى'.includes(before.at(-1)!) ? before.slice(0, -1) : before;
+  const end = 'اى'.includes(bare.at(-1)!) ? bare.slice(0, -1) : bare;
   const last = end.at(-1)!;
   const sakin = (letter: string) =>
     last === letter || (last === '\u0652' && end.at(-2) === letter);

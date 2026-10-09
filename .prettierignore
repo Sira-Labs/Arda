@@ -10,6 +10,9 @@ apps/web/public/packs
 apps/web/public/audio
 # Generated letter-lab words (tools lab), one word per line
 apps/web/src/modules/lab/words.ts
+# Generated rule card audio (tools card-audio), one example per line
+apps/web/src/content/cardAudio.ts
+tools/card-audio.json
 
 # Downloaded sources (tools fetch), never committed
 tools/.cache
