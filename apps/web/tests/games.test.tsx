@@ -351,9 +351,9 @@ describe('unit tests (ADR-0024)', () => {
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
     for (let i = 0; i < 10; i++) await answerLetter(i >= 2);
-    // Unit 4 passed, but units 2 and 3 are still open: not "every unit done".
+    // Unit 4 passed, but units 1 to 3 are still open: not "every unit done".
     expect(
-      screen.getByText('Bestanden – offen ist noch der Test von Einheit 2.')
+      screen.getByText('Bestanden – offen ist noch der Test von Einheit 1.')
     ).toBeInTheDocument();
     expect(
       Object.values(store.load().activity ?? {}).map((e) => [e.kind, e.ref, e.right])
@@ -384,7 +384,11 @@ describe('unit tests (ADR-0024)', () => {
     const store = new MemoryReviewStore({
       cards: {},
       bestTimes: {},
-      activity: { [passed(2, 1).id]: passed(2, 1), [passed(3, 2).id]: passed(3, 2) },
+      activity: {
+        [passed(1, 3).id]: passed(1, 3),
+        [passed(2, 1).id]: passed(2, 1),
+        [passed(3, 2).id]: passed(3, 2),
+      },
     });
     const { client } = fakeApi({});
     render(

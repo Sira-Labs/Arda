@@ -1,27 +1,17 @@
-import {
-  UNIT_TEST_PASS,
-  passedUnits,
-  passesUnitTest,
-  type ActivityKind,
-} from '@arda/engagement';
+import { passedUnits, type ActivityKind } from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
-import {
-  CARD_UNITS,
-  NO_QALQALA,
-  cardName,
-  type AnswerId,
-  type CardUnit,
-} from '@/content/units';
+import { NO_QALQALA, cardName, type AnswerId, type CardUnit } from '@/content/units';
 import { optionsOf, type Question } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
 import type { Messages } from '@/i18n/messages';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useReview } from '@/review/ReviewProvider';
 import { focusSegments, segmentsOf } from '@/tajweed/segments';
+import { testVerdict } from './testVerdict';
 
 export interface QuizResult {
   right: number;
@@ -312,11 +302,7 @@ function Results({
 }) {
   const { m } = useI18n();
   const review = useReview();
-  const passed = unitTest !== undefined && passesUnitTest(result.right, result.total);
-  const following = unitTest && CARD_UNITS.find((unit) => unit > unitTest);
-  // The last unit passed is not the whole sheet: a unit before it may still be open.
   const passedBefore = passedUnits(Object.values(review.deck.activity ?? {}));
-  const open = CARD_UNITS.find((unit) => unit !== unitTest && !passedBefore.has(unit));
   return (
     <section className="card stack" style={{ gap: 12 }} role="status">
       <div className="row" style={{ justifyContent: 'space-between' }}>
@@ -332,16 +318,7 @@ function Results({
       {unitTest !== undefined && (
         <p>
           <strong>
-            {passed
-              ? following
-                ? m.games.test.passedNext(following)
-                : open !== undefined
-                  ? m.games.test.passedOpen(open)
-                  : m.games.test.passedLast
-              : m.games.test.notYet(
-                  Math.ceil(result.total * UNIT_TEST_PASS),
-                  result.total
-                )}
+            {testVerdict(m, unitTest, result.right, result.total, passedBefore)}
           </strong>
         </p>
       )}

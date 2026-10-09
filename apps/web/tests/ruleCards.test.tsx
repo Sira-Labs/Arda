@@ -223,6 +223,7 @@ describe('the path', () => {
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
     expect(links).toEqual([
       '/labor',
+      '/pfad/1/test',
       '/pfad/2/izhar',
       '/pfad/2/idgham',
       '/pfad/2/iqlab',

@@ -6,14 +6,16 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import type { Pack, PackIndex } from '@arda/quran';
 import { Lab } from '@/modules/lab/Lab';
+import { UnitTest } from '@/modules/games/UnitTest';
 import { LabQuizPage } from '@/modules/lab/LabQuiz';
 import { LetterPage } from '@/modules/lab/LetterPage';
 import { QUIZ_LETTERS } from '@/modules/lab/letters';
-import { labRound } from '@/modules/lab/quiz';
+import { QUIZ_KINDS, answersOf, labRound, labUnitTest } from '@/modules/lab/quiz';
 import { LAB_LETTERS } from '@/modules/lab/types';
 import { LAB_PAIRS, LAB_WORDS } from '@/modules/lab/words';
 import { resetSpeedForTests } from '@/modules/mushaf/reciters';
 import { chooseScript, resetScriptForTests } from '@/modules/mushaf/script';
+import { Path } from '@/modules/path/Path';
 import type { Timings } from '@/modules/mushaf/timings';
 import { PlayerContext, type PlayerDeps } from '@/modules/mushaf/usePlayer';
 import { fakeApi, Providers } from './render';
@@ -81,6 +83,8 @@ function renderAt(path: string, player: PlayerDeps = fakePlayer().deps) {
               path="/labor/:letter/quiz"
               element={<LabQuizPage random={() => 0} />}
             />
+            <Route path="/pfad/:unit/test" element={<UnitTest random={() => 0} />} />
+            <Route path="/pfad" element={<Path />} />
           </Routes>
         </MemoryRouter>
       </PlayerContext.Provider>
@@ -553,5 +557,60 @@ describe('Welcher Buchstabe? (the listening quiz)', () => {
       })
     );
     expect(screen.getByRole('status')).toHaveTextContent('gut');
+  });
+});
+
+describe('unit 1’s test (ADR-0024)', () => {
+  it('asks ten words from ten different quizzes across the lab', () => {
+    let seed = 1;
+    const random = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
+    for (let run = 0; run < 20; run++) {
+      const test = labUnitTest(random);
+      expect(test).toHaveLength(10);
+      expect(new Set(test.map((q) => q.kind)).size).toBe(10);
+      for (const question of test) {
+        expect(QUIZ_KINDS).toContain(question.kind);
+        expect(answersOf(question.kind)).toContain(question.answer);
+        expect(
+          question.kind === 'weight'
+            ? question.word.letter === 'ra' && question.word.weight === question.answer
+            : question.word.letter === question.answer
+        ).toBe(true);
+      }
+    }
+  });
+
+  it('is passed with eight of ten and marks unit 1 on the path', async () => {
+    renderAt('/pfad/1/test');
+    const user = userEvent.setup();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Einheitentest');
+    expect(screen.getByText(/Zehn Wörter quer durch das Labor/)).toBeInTheDocument();
+    const test = labUnitTest(() => 0);
+    for (const [i, question] of test.entries()) {
+      // Each word names the letters it is heard against.
+      expect(
+        screen.getByText(question.kind === 'weight' ? 'Schwer oder leicht?' : /\?$/, {
+          selector: '.paper p',
+        })
+      ).toBeInTheDocument();
+      const options = within(
+        screen.getByRole('group', { name: 'Antworten' })
+      ).getAllByRole('button');
+      const answers = answersOf(question.kind);
+      const right = answers.indexOf(question.answer);
+      // Two answered wrongly: eight of ten still pass.
+      await user.click(options[i < 2 ? (right + 1) % answers.length : right]!);
+      await user.click(
+        screen.getByRole('button', { name: i === 9 ? 'Auswerten' : 'Weiter' })
+      );
+    }
+    expect(screen.getByText('8 von 10 richtig')).toBeInTheDocument();
+    expect(screen.getByText('Bestanden – weiter mit Einheit 2.')).toBeInTheDocument();
+    await user.click(screen.getByRole('link', { name: 'Zur Einheit' }));
+    expect(
+      screen.getByRole('heading', { name: /Einheit 1 · Makhārij/ })
+    ).toHaveTextContent('✓ Bestanden');
+    // Unit 2 is no longer waiting for unit 1's test.
+    expect(screen.queryByText('Empfohlen nach dem Test von Einheit 1.')).toBeNull();
   });
 });

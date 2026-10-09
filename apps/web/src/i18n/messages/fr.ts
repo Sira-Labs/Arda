@@ -64,7 +64,7 @@ export const fr: Messages = {
       1: {
         title: 'Unité 1 · Makhārij et ṣifāt',
         intro:
-          'D’où vient chaque lettre : cinq zones, dix-sept points. Au labo, tu commences par sīn, zāy, ṣād et rāʾ ; les autres lettres suivent.',
+          'D’où vient chaque lettre : cinq zones, dix-sept points, les 28 lettres au labo. À la fin, tu entends dix mots de tout le labo.',
       },
       2: {
         title: 'Unité 2 · Nūn sākina et tanwīn',
@@ -739,6 +739,9 @@ export const fr: Messages = {
     more: 'Les 28 lettres sont là. Ton cheikh vérifie encore le dessin et les textes.',
     draft: 'Brouillon – le cheikh vérifie encore',
     back: 'Au labo',
+    /** Unit 1's test, heard across the whole lab (ADR-0024). */
+    unitTest:
+      'Dix mots de tout le labo, à l’oreille seulement. Pour chacun, tu vois quelles lettres sont possibles.',
     diagram: {
       title: 'La tête de profil',
       description:
