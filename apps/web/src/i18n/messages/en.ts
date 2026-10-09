@@ -85,6 +85,8 @@ export const en: Messages = {
     next: 'Units 5 (madd) to 7 (waqf) follow after the pilot.',
   },
   ruleCard: {
+    play: (sura, aya) => `Listen: sūra ${sura}, āya ${aya}`,
+    inQuran: 'In the Qurʾān:',
     eyebrow: (unit) => `Unit ${unit} · Understand`,
     close: 'Close',
     progress: (index, total) => `Card ${index} of ${total}`,

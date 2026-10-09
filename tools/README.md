@@ -9,6 +9,7 @@ npm run pack -w @arda/tools    # build apps/web/public/packs/<id>.v<version>.jso
 npm run counts -w @arda/tools  # words per āya of the whole muṣḥaf → packages/quran/src/words.ts
 npm run lab-clips -w @arda/tools # where each lab word sounds, measured (ffmpeg, network) → tools/lab-clips.json
 npm run lab -w @arda/tools     # the letter lab's words from the packs → apps/web/src/modules/lab/words.ts
+npm run card-audio -w @arda/tools # the rule cards' examples in the Qurʾān, timed and measured (ffmpeg, network) → tools/card-audio.json and apps/web/src/content/cardAudio.ts
 npm test -w @arda/tools        # also rebuilds the pack byte for byte when the sources are there
 ```
 

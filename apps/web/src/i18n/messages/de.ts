@@ -117,6 +117,8 @@ export const de = {
     next: 'Einheit 5 (Madd) bis 7 (Waqf) folgen nach dem Pilot.',
   },
   ruleCard: {
+    play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
+    inQuran: 'Im Qurʾān:',
     eyebrow: (unit: number) => `Einheit ${unit} · Verstehen`,
     close: 'Schließen',
     progress: (index: number, total: number) => `Karte ${index} von ${total}`,

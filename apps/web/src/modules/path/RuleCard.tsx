@@ -1,8 +1,9 @@
-import { RULES } from '@arda/tajweed';
+import { RULES, type RuleId } from '@arda/tajweed';
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
+import { CARD_AUDIO } from '@/content/cardAudio';
 import {
   CARDS,
   UNIT_CARDS,
@@ -15,6 +16,8 @@ import {
   type ExampleGroup,
 } from '@/content/units';
 import { useI18n } from '@/i18n/I18nProvider';
+import { useWordPlayer, type WordPlayer } from '@/modules/lab/useWordPlayer';
+import { PlayIcon } from '@/modules/mushaf/PlayerBar';
 import { Soon } from '@/modules/Soon';
 import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
@@ -37,6 +40,8 @@ export function RuleCardPage() {
 export function RuleCard({ id }: { id: CardId }) {
   const { m } = useI18n();
   const review = useReview();
+  // Every example is heard in al-Ḥuṣarī's teaching recitation where the Qurʾān says it.
+  const player = useWordPlayer();
   const card = CARDS[id];
   const unit = unitOf(id);
   const cards: readonly CardId[] = UNIT_CARDS[unit];
@@ -79,7 +84,12 @@ export function RuleCard({ id }: { id: CardId }) {
         </header>
 
         {card.groups.map((group) => (
-          <Group key={group.rule} group={group} titled={card.groups.length > 1} />
+          <Group
+            key={group.rule}
+            group={group}
+            titled={card.groups.length > 1}
+            player={player}
+          />
         ))}
 
         <div className="legend" aria-label={m.today.legend}>
@@ -121,12 +131,15 @@ export function RuleCard({ id }: { id: CardId }) {
             <div className="examples" dir="rtl">
               {card.exceptions.map((text) => (
                 <figure key={text} className="example">
-                  <TajweedText segments={segmentsOf(text, new Set(['izhar']))} />
+                  <Example text={text} only={IZHAR} player={player} />
                 </figure>
               ))}
             </div>
           </section>
         )}
+
+        {player.failed && <p role="alert">{m.lab.listen.failed}</p>}
+        <p className="muted example-source">{m.lab.listen.source}</p>
 
         {card.sourcesDiffer && (
           <aside className="note stack" style={{ gap: 4 }}>
@@ -172,8 +185,64 @@ function CardName({ id }: { id: CardId }) {
   return <>{cardName(id, language)}</>;
 }
 
+const IZHAR = new Set(['izhar'] as const);
+
+/**
+ * An example as the sheet writes it, coloured by the engine; where the Qurʾān has it, a button
+ * that plays it in al-Ḥuṣarī's teaching recitation, with where it is and, if the reciter's
+ * vowels differ from the sheet's, the Qurʾān's wording.
+ */
+function Example({
+  text,
+  only,
+  player,
+}: {
+  text: string;
+  only: ReadonlySet<RuleId>;
+  player: WordPlayer;
+}) {
+  const { m } = useI18n();
+  const coloured = <TajweedText segments={segmentsOf(text, only)} />;
+  const audio = CARD_AUDIO[text];
+  if (!audio) return coloured;
+  return (
+    <>
+      <button
+        type="button"
+        className="example-play"
+        data-playing={player.playing === audio.key ? 'true' : undefined}
+        aria-label={m.ruleCard.play(audio.sura, audio.aya)}
+        disabled={!player.ready}
+        onClick={() => player.play(audio.key)}
+      >
+        {coloured}
+        <span className="example-where" dir="ltr">
+          <PlayIcon pause={false} /> {m.lab.listen.where(audio.sura, audio.aya)}
+        </span>
+      </button>
+      {audio.quran && (
+        // The examples run right to left; the label reads in the interface's direction.
+        <span className="example-quran muted" dir="auto">
+          {m.ruleCard.inQuran}{' '}
+          <bdi className="arabic" lang="ar" dir="rtl">
+            {audio.quran}
+          </bdi>
+        </span>
+      )}
+    </>
+  );
+}
+
 /** One rule of the card: the letters that call for it and the sheet's examples. */
-function Group({ group, titled }: { group: ExampleGroup; titled: boolean }) {
+function Group({
+  group,
+  titled,
+  player,
+}: {
+  group: ExampleGroup;
+  titled: boolean;
+  player: WordPlayer;
+}) {
   const { m, language } = useI18n();
   const rule = RULES[group.rule];
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
@@ -224,7 +293,7 @@ function Group({ group, titled }: { group: ExampleGroup; titled: boolean }) {
       <div className="paper examples" dir="rtl" aria-label={m.ruleCard.examples}>
         {group.examples.map((example) => (
           <figure key={example.text} className="example">
-            <TajweedText segments={segmentsOf(example.text, only)} />
+            <Example text={example.text} only={only} player={player} />
             {/* Where it happens matters for nūn and mīm sākina, not for a shadda or a sukūn. */}
             {decided && (
               <figcaption className="muted" dir="auto">

@@ -1,4 +1,5 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { CARD_AUDIO } from '@/content/cardAudio';
 import { logger } from '@/services/logger';
 import { reciterOf, recordingOf, useSpeed } from '../mushaf/reciters';
 import type { Timings } from '../mushaf/timings';
@@ -25,14 +26,25 @@ const MEASURED = new Map(
   [...LAB_WORDS, ...LAB_PAIRS.flatMap((pair) => pair.words)].map((w) => [w.key, w.clip])
 );
 
+/** The rule cards' examples by key (`hafs:sura:aya:from-to`), measured like the lab's words. */
+const EXAMPLES = new Map(Object.values(CARD_AUDIO).map((audio) => [audio.key, audio]));
+
 /**
  * The clip of `hafs:sura:aya:n` in the teaching recitation, when the word is timed alone: the
- * measured bounds of a lab word (its whole first and last sound), else its timing.
+ * measured bounds of a lab word (its whole first and last sound), else its timing. A rule card
+ * example (`hafs:sura:aya:from-to`) is measured wherever in the Qurʾān it is, shipped or not.
  */
 export function clipOf(
   key: string,
   timings: Timings | null | undefined
 ): WordClip | null {
+  const example = EXAMPLES.get(key);
+  if (example) {
+    const recording = recordingOf(LAB_RECITER, example.sura, example.aya);
+    return (
+      recording && { src: recording.src, start: example.clip[0], end: example.clip[1] }
+    );
+  }
   const [, sura, aya, n] = key.split(':').map(Number);
   if (!sura || !aya || !n || !timings) return null;
   const segment = timings.ayat[`${sura}:${aya}`]?.find(

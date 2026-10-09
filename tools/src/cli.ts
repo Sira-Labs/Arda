@@ -9,6 +9,9 @@
  *   npm run lab-clips -w @arda/tools  measure where each lab word sounds (needs ffmpeg and
  *                                     the network) into tools/lab-clips.json
  *   npm run lab -w @arda/tools     write the letter lab's words to apps/web/src/modules/lab
+ *   npm run card-audio -w @arda/tools  find the rule cards' examples in the Qurʾān and measure
+ *                                     where they sound (needs ffmpeg and the network) into
+ *                                     tools/card-audio.json and apps/web/src/content
  *
  * Sources and their checksums are pinned in tools/sources.json; a source that changed fails
  * the build instead of changing the Qurʾān text the app shows.
@@ -21,6 +24,14 @@ import { gunzipSync } from 'node:zlib';
 import { parseCpfair } from './cpfair';
 import type { Pack, PackIndex, PackIndexEntry, PackSource } from '@arda/quran';
 import { countsModule, wordCounts } from './counts';
+import {
+  CARD_EXAMPLES,
+  alignedAyat,
+  cardAudioModule,
+  locate,
+  serialiseCardAudio,
+  type CardAudio,
+} from './cardAudio';
 import { LAB_KEYS, buildLab, labModule, timedWord, type ShippedTimings } from './lab';
 import { envelope, serialiseClips, wordBounds, type LabClips } from './labClips';
 import {
@@ -63,6 +74,10 @@ const labFile = fileURLToPath(
   new URL('../../apps/web/src/modules/lab/words.ts', import.meta.url)
 );
 const clipsFile = `${root}lab-clips.json`;
+const cardAudioFile = `${root}card-audio.json`;
+const cardAudioModuleFile = fileURLToPath(
+  new URL('../../apps/web/src/content/cardAudio.ts', import.meta.url)
+);
 /** al-Ḥuṣarī's teaching recitation, one file per āya (the timings were aligned to it). */
 const MUALLIM_AUDIO = 'https://everyayah.com/data/Husary_Muallim_128kbps/';
 
@@ -276,33 +291,46 @@ function decode(mp3: Buffer): Promise<Int16Array> {
   });
 }
 
+/** The loudness of āya files of the teaching recitation, downloaded once into the cache. */
+function ayaLoudness(): (sura: number, aya: number) => Promise<Float64Array> {
+  const audioDir = `${cacheDir}husary-muallim/`;
+  const loudness = new Map<string, Float64Array>();
+  return async (sura, aya) => {
+    const file = `${String(sura).padStart(3, '0')}${String(aya).padStart(3, '0')}.mp3`;
+    const known = loudness.get(file);
+    if (known) return known;
+    await mkdir(audioDir, { recursive: true });
+    let mp3: Buffer;
+    try {
+      mp3 = await readFile(`${audioDir}${file}`);
+    } catch {
+      const response = await fetch(`${MUALLIM_AUDIO}${file}`);
+      if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
+      mp3 = Buffer.from(await response.arrayBuffer());
+      await writeWhole(`${audioDir}${file}`, mp3);
+    }
+    const envelopeOf = envelope(await decode(mp3), 16000);
+    loudness.set(file, envelopeOf);
+    return envelopeOf;
+  };
+}
+
 /** Where each lab word really sounds in its āya's file (labClips.ts). */
 async function writeLabClips(): Promise<void> {
   const timings = JSON.parse(
     await readFile(`${timingsDir}husary-muallim.json`, 'utf8')
   ) as ShippedTimings;
-  const audioDir = `${cacheDir}husary-muallim/`;
-  await mkdir(audioDir, { recursive: true });
-  const loudness = new Map<string, Float64Array>();
+  const loudnessOf = ayaLoudness();
   const clips: LabClips['clips'] = {};
   for (const key of LAB_KEYS) {
     const timed = timedWord(timings, key);
     if (!timed) throw new Error(`${key}: not timed as a word of its own`);
-    const [sura, aya] = key.split(':').map(Number);
-    const file = `${String(sura).padStart(3, '0')}${String(aya).padStart(3, '0')}.mp3`;
-    if (!loudness.has(file)) {
-      let mp3: Buffer;
-      try {
-        mp3 = await readFile(`${audioDir}${file}`);
-      } catch {
-        const response = await fetch(`${MUALLIM_AUDIO}${file}`);
-        if (!response.ok) throw new Error(`${file}: HTTP ${response.status}`);
-        mp3 = Buffer.from(await response.arrayBuffer());
-        await writeWhole(`${audioDir}${file}`, mp3);
-      }
-      loudness.set(file, envelope(await decode(mp3), 16000));
-    }
-    clips[key] = wordBounds(loudness.get(file)!, [timed.start, timed.end], timed.last);
+    const [sura, aya] = key.split(':').map(Number) as [number, number];
+    clips[key] = wordBounds(
+      await loudnessOf(sura, aya),
+      [timed.start, timed.end],
+      timed.last
+    );
   }
   await writeWhole(
     clipsFile,
@@ -343,6 +371,45 @@ async function writeLab(): Promise<void> {
   );
 }
 
+/**
+ * The rule cards' examples in the Qurʾān (cardAudio.ts), timed in the whole of al-Ḥuṣarī's
+ * teaching recitation and measured like the lab's words.
+ */
+async function writeCardAudio(): Promise<void> {
+  const sources = await loadSources();
+  const { tanzil } = await readSources();
+  const source = sources['quran-align'];
+  const archive = await readFile(`${cacheDir}${source.file}`);
+  if (sha256(archive) !== source.sha256) {
+    throw new Error('quran-align: checksum differs from the pinned one');
+  }
+  const reciter = TIMED_RECITERS.find((r) => r.id === 'husary-muallim')!;
+  const timings = alignedAyat(unzipFile(archive, reciter.file).toString('utf8'));
+  const loudnessOf = ayaLoudness();
+  const examples: CardAudio[] = [];
+  const missing: string[] = [];
+  for (const example of CARD_EXAMPLES) {
+    const span = locate(example, tanzil, timings);
+    if (!span) {
+      missing.push(example.text);
+      continue;
+    }
+    const clip = wordBounds(await loudnessOf(span.sura, span.aya), span.timed, span.last);
+    examples.push({ ...span, clip });
+  }
+  const data = {
+    reciter: 'husary-muallim' as const,
+    note: 'Generated by npm run card-audio -w @arda/tools (tools/src/cardAudio.ts); do not edit.',
+    examples,
+    missing,
+  };
+  await writeWhole(cardAudioFile, serialiseCardAudio(data));
+  await writeFile(cardAudioModuleFile, cardAudioModule(data));
+  process.stdout.write(
+    `${cardAudioFile}: ${examples.length} examples heard, not in the Qurʾān: ${missing.join(' · ') || 'none'}\n`
+  );
+}
+
 const command = process.argv[2];
 if (command === 'fetch') await fetchSources();
 else if (command === 'pack') await buildPacks();
@@ -351,9 +418,10 @@ else if (command === 'pages') await writePages();
 else if (command === 'timings') await writeTimings();
 else if (command === 'lab-clips') await writeLabClips();
 else if (command === 'lab') await writeLab();
+else if (command === 'card-audio') await writeCardAudio();
 else {
   process.stderr.write(
-    'usage: cli.ts fetch | pack | counts | pages | timings | lab-clips | lab\n'
+    'usage: cli.ts fetch | pack | counts | pages | timings | lab-clips | lab | card-audio\n'
   );
   process.exitCode = 2;
 }
