@@ -178,8 +178,12 @@ the letter recorded and sent to him (F7). Not yet animated.)_
 _(Built (owner, 2026-10-07): the throat, ء ه ع ح غ خ, with its three points (deepest, middle,
 nearest the mouth), ten words each and the pairs that differ in that letter only (ʿalīm / alīm,
 ʿammā / ammā, ʿayna / ayna, uḥilla / uhilla, khayra / ghayra, yakhshā / yaghshā). Each letter is
-heard against the ones it is mixed up with: hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn. The
-other 18 letters follow, set by set.)_
+heard against the ones it is mixed up with: hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn.)_
+_(Built (2026-10-09): the back and middle of the tongue, ق ك ج ش ي, with three points on the
+drawn tongue (qāf where it meets the soft palate, kāf just before it, the middle three under the
+hard palate), ten words each, the exact pairs qadḥan / kadḥan, jāʾa / shāʾa, sujjirat / suyyirat
+and the near pair qāla / kāna; heard as qāf or kāf, and jīm, shīn or yāʾ. Ḍād moved to the next
+set, to be heard against dāl. The other 13 letters follow, set by set.)_
 
 ### F6 — Games _(Must)_
 
