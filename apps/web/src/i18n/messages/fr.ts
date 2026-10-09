@@ -727,6 +727,10 @@ export const fr: Messages = {
         title: 'Le Ḍād et la pointe de la langue\u202f: Ḍād, Ṭāʾ, Dāl et Tāʾ',
         hint: 'Trois sons du même point – emphatique, sonore, soufflé – et le Ḍād, propre à l’arabe. Ici tu entends ce qui les distingue.',
       },
+      teeth: {
+        title: 'Les dents, le Lām et le Nūn\u202f: Thāʾ, Dhāl, Ẓāʾ, Lām et Nūn',
+        hint: 'Trois sons avec la pointe de la langue aux incisives supérieures – en allemand ils deviennent vite s et z –, et le Lām et le Nūn des gencives.',
+      },
     },
     more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
     draft: 'Brouillon – le cheikh vérifie encore',
@@ -760,6 +764,9 @@ export const fr: Messages = {
       tongueMid: { line1: 'Milieu', line2: 'de la langue' },
       tongueSide: { line1: 'Bord de langue', line2: 'molaires' },
       tongueTip: { line1: 'Pointe, racine', line2: 'des incisives' },
+      teeth: { line1: 'Pointe, bord', line2: 'des incisives' },
+      lam: { line1: 'Bords avant', line2: 'gencives' },
+      nun: { line1: 'Pointe', line2: 'devant le Lām' },
     },
     letters: {
       sin: {
@@ -972,6 +979,61 @@ export const fr: Messages = {
           'Ne pas le rendre sonore\u202f: s’il vibre, il devient Dāl – هَاتُوا۟ («\u202fapportez\u202f!\u202f») devient هَادُوا۟.',
         ],
       },
+      tha: {
+        name: 'Thāʾ',
+        short: 'léger, sourd, comme th dans «\u202fthink\u202f»',
+        makhraj:
+          'La pointe de la langue touche le bord des incisives supérieures – elle dépasse un peu.',
+        mistakes: [
+          'Pas comme s\u202f: la langue doit toucher les dents. Si elle reste derrière, le Thāʾ devient Sīn.',
+          'Sourd (Hams)\u202f: s’il vibre, il devient Dhāl.',
+          'Rester léger (Istifāl)\u202f: si l’arrière de la langue se lève, il sonne lourd comme le Ẓāʾ.',
+        ],
+      },
+      dha: {
+        name: 'Dhāl',
+        short: 'léger, sonore, comme th dans «\u202fthis\u202f»',
+        makhraj:
+          'Le même point que le Thāʾ\u202f: la pointe de la langue au bord des incisives supérieures.',
+        mistakes: [
+          'Pas comme z\u202f: la langue doit toucher les dents. Si elle reste derrière, le Dhāl devient Zāy.',
+          'Sonore (Jahr)\u202f: sans voix, il devient Thāʾ.',
+          'Rester léger (Istifāl)\u202f: un Dhāl lourd devient Ẓāʾ.',
+        ],
+      },
+      zza: {
+        name: 'Ẓāʾ',
+        short: 'emphatique, sonore, la langue aux dents',
+        makhraj:
+          'Le même point que le Dhāl\u202f: la pointe de la langue au bord des incisives supérieures. L’arrière de la langue s’appuie en plus largement au palais.',
+        mistakes: [
+          'Pas comme z\u202f: la langue doit toucher les dents, sinon on entend un Zāy lourd.',
+          'Emphatique (Iṭbāq)\u202f: la voyelle suivante sonne pleine et sombre – sinon il devient Dhāl.',
+          'Ne pas le confondre avec le Ḍād\u202f: pour le Ẓāʾ, la pointe de la langue est aux dents\u202f; pour le Ḍād, le bord de la langue est aux molaires.',
+        ],
+      },
+      lam: {
+        name: 'Lām',
+        short: 'léger, comme l dans «\u202flune\u202f»',
+        makhraj:
+          'Les bords avant de la langue, avec sa pointe, contre les gencives derrière les dents de devant du haut.',
+        mistakes: [
+          'Clair comme le l de «\u202flune\u202f», pas sombre comme dans l’anglais «\u202ffull\u202f»\u202f: le Lām est léger par nature.',
+          'Seul le Lām de ٱللَّه devient lourd après fatḥa ou ḍamma\u202f; après kasra il reste léger – لِلَّهِ.',
+          'Le garder net avec sukūn, sans l’avaler – لَمْ.',
+        ],
+      },
+      nun: {
+        name: 'Nūn',
+        short: 'léger, avec ghunna',
+        makhraj:
+          'La pointe de la langue contre les gencives, un peu devant le Lām, plus près de la pointe. Une partie du son vient de la cavité nasale (ghunna).',
+        mistakes: [
+          'Comme un n ordinaire – mais avec shadda tenu nettement et nasalisé (ghunna), environ deux temps.',
+          'Le nūn sākin et le tanwīn suivent leurs propres règles\u202f: net, caché ou fusionné. Tu les apprends sur le parcours.',
+          'Ne pas le confondre avec le Lām\u202f: pour le Nūn, une partie de l’air passe par le nez – sinon إِنَّا («\u202fnous\u202f») devient إِلَّآ («\u202fsauf\u202f»).',
+        ],
+      },
     },
     makhraj: 'Makhraj · où il naît',
     sifat: 'Ṣifāt · ses qualités',
@@ -1053,6 +1115,11 @@ export const fr: Messages = {
         meaning:
           'Allongement\u202f: le son court le long de tout le bord de la langue, de l’arrière à la pointe (seulement le Ḍād).',
       },
+      ghunna: {
+        name: 'Ghunna',
+        meaning:
+          'Nasalisation\u202f: un son de la cavité nasale, propre au Nūn et au Mīm.',
+      },
     },
     mistakesTitle: 'Erreurs fréquentes',
     raRules: {
@@ -1123,6 +1190,18 @@ export const fr: Messages = {
           'Dix mots, à l’oreille seulement\u202f: emphatique (Ṭāʾ), sonore (Dāl) ou léger avec un souffle (Tāʾ)\u202f?',
         question: 'Quelle lettre entends-tu\u202f?',
       },
+      teeth: {
+        title: 'Thāʾ, Dhāl ou Ẓāʾ\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: sans voix (Thāʾ), avec voix (Dhāl) ou emphatique avec voix (Ẓāʾ)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      lamNun: {
+        title: 'Lām ou Nūn\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: le son coule-t-il le long du bord de la langue (Lām) ou par le nez (Nūn)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
       weight: {
         title: 'Lourd ou léger\u202f?',
         intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
@@ -1149,6 +1228,11 @@ export const fr: Messages = {
         tta: 'Ṭāʾ\u202f: emphatique et ferme, sans souffle.',
         dal: 'Dāl\u202f: léger et sonore.',
         ta: 'Tāʾ\u202f: léger, avec un léger souffle.',
+        tha: 'Thāʾ\u202f: aux dents, sans voix.',
+        dha: 'Dhāl\u202f: aux dents, avec voix, léger.',
+        zza: 'Ẓāʾ\u202f: aux dents, avec voix, emphatique.',
+        lam: 'Lām\u202f: clair, le son coule le long du bord de la langue.',
+        nun: 'Nūn\u202f: une partie du son vient du nez.',
         sin: 'Sīn\u202f: léger, net et sourd.',
         zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
         sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',

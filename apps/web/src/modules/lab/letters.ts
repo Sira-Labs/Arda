@@ -12,7 +12,8 @@ import {
  * the three whistling letters a German speaker easily mixes up, and rāʾ – and the six of the
  * throat (2026-10-07), which German lacks but for hāʾ and the glottal stop, and five of the tongue
  * (2026-10-09): qāf and kāf at its back, jīm, shīn and yāʾ at its middle, then ḍād at its edge
- * and ṭāʾ, dāl and tāʾ at its tip. The texts are in the
+ * and ṭāʾ, dāl and tāʾ at its tip, then thāʾ, dhāl and ẓāʾ at the teeth, lām and nūn. The texts
+ * are in the
  * i18n catalogs (`lab`); this module says which letter has which point, area and ṣifāt. Every
  * makhraj and its drawing is a draft until the sheikh has reviewed it (spec 03 §6, ADR-0018).
  */
@@ -25,8 +26,9 @@ export type Area = (typeof AREAS)[number];
  * Where a letter is made, as a point on the head (HeadDiagram): the whistling letters, rāʾ, and
  * the three parts of the throat – the deepest (ء ه), the middle (ع ح), the nearest the mouth
  * (غ خ) – and the tongue under the palate: its very back (ق), a little before it (ك), its
- * middle (ج ش ي), its edge at the upper molars (ض) and its tip at the roots of the upper
- * incisors (ط د ت).
+ * middle (ج ش ي), its edge at the upper molars (ض), its tip at the roots of the upper incisors
+ * (ط د ت) and at their edges (ث ذ ظ); lām with the front edges of the tongue at the gum ridge,
+ * nūn with its tip a little below.
  */
 export type Point =
   | 'whistle'
@@ -38,7 +40,10 @@ export type Point =
   | 'tongueBack'
   | 'tongueMid'
   | 'tongueSide'
-  | 'tongueTip';
+  | 'tongueTip'
+  | 'teeth'
+  | 'lam'
+  | 'nun';
 
 /** The ṣifāt of the lab's letters; each has a name and a one-line meaning in the catalogs. */
 export const SIFAT = [
@@ -59,13 +64,14 @@ export const SIFAT = [
   'qalqala',
   'tafashshi',
   'istitala',
+  'ghunna',
 ] as const;
 export type Sifa = (typeof SIFAT)[number];
 
 /**
  * What a listening quiz asks: which of the letters heard against each other (the whistling
  * three; hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn; qāf or kāf; jīm, shīn or yāʾ; ḍād
- * or dāl; ṭāʾ, dāl or tāʾ), or whether the rāʾ is heavy.
+ * or dāl; ṭāʾ, dāl or tāʾ; thāʾ, dhāl or ẓāʾ; lām or nūn), or whether the rāʾ is heavy.
  */
 export type QuizKind =
   | 'whistling'
@@ -76,6 +82,8 @@ export type QuizKind =
   | 'middle'
   | 'dadDal'
   | 'tip'
+  | 'teeth'
+  | 'lamNun'
   | 'weight';
 
 /** The letters each quiz offers, in a fixed order; `weight` offers heavy and light. */
@@ -88,6 +96,8 @@ export const QUIZ_LETTERS: Record<Exclude<QuizKind, 'weight'>, readonly HeardId[
   middle: ['jim', 'shin', 'ya'],
   dadDal: ['dad', 'dal'],
   tip: ['tta', 'dal', 'ta'],
+  teeth: ['tha', 'dha', 'zza'],
+  lamNun: ['lam', 'nun'],
 };
 
 export interface LetterContent {
@@ -292,6 +302,56 @@ export const LETTERS: Readonly<Record<LabLetterId, LetterContent>> = {
     point: 'tongueTip',
     sifat: ['hams', 'shidda', 'istifal', 'infitah', 'ismat'],
     quiz: 'tip',
+    review: { status: 'draft' },
+  },
+  tha: {
+    id: 'tha',
+    letter: 'ث',
+    arabicName: 'ثَاء',
+    area: 'lisan',
+    point: 'teeth',
+    sifat: ['hams', 'rakhawa', 'istifal', 'infitah', 'ismat'],
+    quiz: 'teeth',
+    review: { status: 'draft' },
+  },
+  dha: {
+    id: 'dha',
+    letter: 'ذ',
+    arabicName: 'ذَال',
+    area: 'lisan',
+    point: 'teeth',
+    sifat: ['jahr', 'rakhawa', 'istifal', 'infitah', 'ismat'],
+    quiz: 'teeth',
+    review: { status: 'draft' },
+  },
+  zza: {
+    id: 'zza',
+    letter: 'ظ',
+    arabicName: 'ظَاء',
+    area: 'lisan',
+    point: 'teeth',
+    sifat: ['jahr', 'rakhawa', 'istila', 'itbaq', 'ismat'],
+    quiz: 'teeth',
+    review: { status: 'draft' },
+  },
+  lam: {
+    id: 'lam',
+    letter: 'ل',
+    arabicName: 'لَام',
+    area: 'lisan',
+    point: 'lam',
+    sifat: ['jahr', 'tawassut', 'istifal', 'infitah', 'idhlaq', 'inhiraf'],
+    quiz: 'lamNun',
+    review: { status: 'draft' },
+  },
+  nun: {
+    id: 'nun',
+    letter: 'ن',
+    arabicName: 'نُون',
+    area: 'lisan',
+    point: 'nun',
+    sifat: ['jahr', 'tawassut', 'istifal', 'infitah', 'idhlaq', 'ghunna'],
+    quiz: 'lamNun',
     review: { status: 'draft' },
   },
 };
