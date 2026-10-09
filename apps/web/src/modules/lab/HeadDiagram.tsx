@@ -9,7 +9,8 @@ import './lab.css';
  * the tip of the tongue against the gum ridge behind the upper incisors, a little behind the
  * point of nūn; the throat's three points down the throat; the tongue's under the palate, on
  * the drawn tongue's upper edge (qāf where it meets the soft palate, kāf just before it, the
- * middle three under the hard palate).
+ * middle three under the hard palate, ḍād on the edge where the molars stand, ṭāʾ, dāl and
+ * tāʾ with the tip at the roots of the upper incisors, in front of rāʾ).
  */
 const POINTS: Record<Point, { x: number; y: number }> = {
   whistle: { x: 180, y: 406 },
@@ -21,6 +22,8 @@ const POINTS: Record<Point, { x: number; y: number }> = {
   tongueFar: { x: 385, y: 429 },
   tongueBack: { x: 362, y: 413 },
   tongueMid: { x: 272, y: 400 },
+  tongueSide: { x: 227, y: 404 },
+  tongueTip: { x: 186, y: 378 },
 };
 
 /** Where each area's number stands on the drawing; the lips' stands just in front of them. */

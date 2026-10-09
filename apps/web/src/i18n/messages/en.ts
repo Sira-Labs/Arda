@@ -702,6 +702,10 @@ export const en: Messages = {
         title: 'Back and middle of the tongue: Qāf, Kāf, Jīm, Shīn and Yāʾ',
         hint: 'Five sounds from the body of the tongue. Qāf and Kāf sit close together – here you learn to keep them apart.',
       },
+      tongueTip: {
+        title: 'Ḍād and the tip of the tongue: Ḍād, Ṭāʾ, Dāl and Tāʾ',
+        hint: 'Three sounds from the same place – heavy, voiced, breathed – and Ḍād, which only Arabic has. Here you hear what sets them apart.',
+      },
     },
     more: 'The other letters follow once your sheikh has checked the drawing.',
     draft: 'Draft – the sheikh is still checking',
@@ -729,6 +733,8 @@ export const en: Messages = {
       tongueFar: { line1: 'Back of tongue', line2: 'soft palate' },
       tongueBack: { line1: 'Back of tongue', line2: 'just before Qāf' },
       tongueMid: { line1: 'Mid-tongue', line2: 'hard palate' },
+      tongueSide: { line1: 'Edge of tongue', line2: 'upper molars' },
+      tongueTip: { line1: 'Tip of tongue', line2: 'tooth roots' },
     },
     letters: {
       sin: {
@@ -897,6 +903,50 @@ export const en: Messages = {
           'A Yāʾ with a vowel is a consonant, not a long vowel: يَوْمِ begins with y, not with i.',
         ],
       },
+      dad: {
+        name: 'Ḍād',
+        short: 'heavy, voiced, only in Arabic',
+        makhraj:
+          'One edge of the tongue – or both – rests against the upper molars, and the tongue rises broadly to the palate. The sound runs along the whole edge (Istiṭāla).',
+        mistakes: [
+          'Not like the d in German or English: Ḍād is heavy, the tongue lies broadly against the palate – otherwise بَعْضَ (“some”) becomes بَعْدَ (“after”).',
+          'Not like Ẓāʾ: the tip of the tongue stays behind the teeth and does not show.',
+          'No qalqala with sukūn: Ḍād is not one of ق ط ب ج د.',
+        ],
+      },
+      tta: {
+        name: 'Ṭāʾ',
+        short: 'heavy, firm, with qalqala',
+        makhraj:
+          'The tip of the tongue at the roots of the upper front teeth, like Dāl and Tāʾ. The back of the tongue also lies broadly against the palate.',
+        mistakes: [
+          'Not like a plain t: Ṭāʾ is heavy (Iṭbāq), the vowel after it sounds full and dark.',
+          'No breath (Jahr): the German or English t is aspirated, Ṭāʾ is not – the breath is held.',
+          'With sukūn, Ṭāʾ bounces briefly (qalqala).',
+        ],
+      },
+      dal: {
+        name: 'Dāl',
+        short: 'light, voiced, with qalqala',
+        makhraj:
+          'The tip of the tongue at the roots of the upper front teeth, like Ṭāʾ and Tāʾ.',
+        mistakes: [
+          'Do not let it turn into t at the end of a word or before sukūn, as German does (“Rad”): Dāl stays voiced and bounces (qalqala).',
+          'Stay light: a heavy Dāl sounds like Ḍād – بَعْدَ (“after”) becomes بَعْضَ (“some”).',
+          'Do not confuse it with Tāʾ: without voice, هَادُوا۟ (“those who are Jewish”) becomes هَاتُوا۟ (“bring!”).',
+        ],
+      },
+      ta: {
+        name: 'Tāʾ',
+        short: 'light, with a breath',
+        makhraj:
+          'The tip of the tongue at the roots of the upper front teeth, like Ṭāʾ and Dāl.',
+        mistakes: [
+          'Stay light (Istifāl): the vowel after it sounds bright. A dark Tāʾ becomes Ṭāʾ.',
+          'With a soft breath (Hams), above all with sukūn – like an ordinary t, but not overdone.',
+          'Do not voice it: if it buzzes, it becomes Dāl – هَاتُوا۟ (“bring!”) becomes هَادُوا۟.',
+        ],
+      },
     },
     makhraj: 'Makhraj · where it is made',
     sifat: 'Ṣifāt · its qualities',
@@ -972,6 +1022,11 @@ export const en: Messages = {
         name: 'Tafashshī',
         meaning: 'Spreading: the air spreads through the whole mouth (Shīn only).',
       },
+      istitala: {
+        name: 'Istiṭāla',
+        meaning:
+          'Lengthening: the sound runs along the whole edge of the tongue, from the back to the tip (Ḍād only).',
+      },
     },
     mistakesTitle: 'Typical mistakes',
     raRules: {
@@ -1029,6 +1084,18 @@ export const en: Messages = {
           'Ten words, by ear only: firm with voice (Jīm), a wide rush of air (Shīn) or soft like the y in “yes” (Yāʾ)?',
         question: 'Which letter do you hear?',
       },
+      dadDal: {
+        title: 'Ḍād or Dāl?',
+        intro:
+          'Ten words, by ear only: heavy and full (Ḍād) or light like an ordinary d (Dāl)?',
+        question: 'Which letter do you hear?',
+      },
+      tip: {
+        title: 'Ṭāʾ, Dāl or Tāʾ?',
+        intro:
+          'Ten words, by ear only: heavy (Ṭāʾ), voiced (Dāl) or light with a breath (Tāʾ)?',
+        question: 'Which letter do you hear?',
+      },
       weight: {
         title: 'Heavy or light?',
         intro: 'Ten words with Rāʾ: does it sound heavy or light?',
@@ -1051,6 +1118,10 @@ export const en: Messages = {
         jim: 'Jīm: firm and voiced, like the j in “jungle”.',
         shin: 'Shīn: a wide rush of air without voice.',
         ya: 'Yāʾ: soft, like the y in “yes”.',
+        dad: 'Ḍād: heavy, the tongue lies broadly against the palate.',
+        tta: 'Ṭāʾ: heavy and firm, without a breath.',
+        dal: 'Dāl: light and voiced.',
+        ta: 'Tāʾ: light, with a soft breath.',
         sin: 'Sīn: light, sharp and voiceless.',
         zay: 'Zāy: voiced – it buzzes – but thin.',
         sad: 'Ṣād: heavy, the back of the tongue rises.',

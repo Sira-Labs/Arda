@@ -162,6 +162,11 @@ describe('the lab’s words (generated from the packs)', () => {
     expect([count('jim', shin), count('shin', shin), count('ya', shin)]).toEqual([
       3, 4, 3,
     ]);
+    // Ḍād against dāl; ṭāʾ, dāl and tāʾ, made at one point, against each other.
+    const dad = labRound('dad', () => 0.3);
+    expect([count('dad', dad), count('dal', dad)]).toEqual([5, 5]);
+    const dal = labRound('dal', () => 0.3);
+    expect([count('tta', dal), count('dal', dal), count('ta', dal)]).toEqual([3, 4, 3]);
     // A word holds no other letter of its quiz, so every question has one answer.
     const forms: Record<string, string> = { hamza: 'أإءؤئ' };
     const signs: Record<string, string> = {
@@ -176,6 +181,11 @@ describe('the lab’s words (generated from the packs)', () => {
       shin: 'ش',
       // The dotless yāʾ is a yāʾ too (شَىْءٍ).
       ya: 'يى',
+      dad: 'ض',
+      tta: 'ط',
+      dal: 'د',
+      // The tied tāʾ is a tāʾ when the reciter goes on.
+      ta: 'تة',
     };
     for (const letters of Object.values(QUIZ_LETTERS)) {
       for (const word of LAB_WORDS.filter((w) => letters.includes(w.letter as never))) {
@@ -247,6 +257,26 @@ describe('the letter lab (F5)', () => {
         .getAllByRole('link')
         .map((a) => a.getAttribute('href'))
     ).toEqual(['/labor/qaf', '/labor/kaf', '/labor/jim', '/labor/shin', '/labor/ya']);
+    // Ḍād and the tip of the tongue, the fourth set.
+    const tip = screen.getByRole('region', { name: /Ḍād und die Zungenspitze/ });
+    expect(
+      within(tip)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('href'))
+    ).toEqual(['/labor/dad', '/labor/tta', '/labor/dal', '/labor/ta']);
+  });
+
+  it('shows ḍād at the edge of the tongue, heard against dāl', () => {
+    renderAt('/labor/dad');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Ḍād');
+    expect(
+      screen.getByRole('img', { name: /Zungenrand – an Backenzähnen/ })
+    ).toBeVisible();
+    const sifat = screen.getByRole('region', { name: 'Ṣifāt · seine Eigenschaften' });
+    expect(within(sifat).getByText('Istiṭāla')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ḍād oder Dāl?' })).toBeInTheDocument();
+    // baʿḍa / baʿda: only this sound differs.
+    expect(screen.getAllByText('Nur dieser Laut ist anders.').length).toBe(1);
   });
 
   it('shows a letter of the tongue: its point, qalqala and its pairs', () => {
