@@ -3,7 +3,7 @@
  * and rāʾ (owner, 2026-10-06), then the six of the throat, from the deepest out (2026-10-07),
  * then the back and the middle of the tongue (2026-10-09), then ḍād with the three of the tip of
  * the tongue (2026-10-09), so that it is heard against dāl, the sound German speakers put in its
- * place, then the three of the teeth with lām and nūn (2026-10-09).
+ * place, then the three of the teeth with lām and nūn, then the lips (2026-10-09).
  */
 export const LAB_SETS = {
   first: ['sin', 'zay', 'sad', 'ra'],
@@ -11,6 +11,7 @@ export const LAB_SETS = {
   tongueBack: ['qaf', 'kaf', 'jim', 'shin', 'ya'],
   tongueTip: ['dad', 'tta', 'dal', 'ta'],
   teeth: ['tha', 'dha', 'zza', 'lam', 'nun'],
+  lips: ['fa', 'ba', 'mim', 'waw'],
 } as const;
 export type LabSet = keyof typeof LAB_SETS;
 
@@ -20,6 +21,7 @@ export const LAB_LETTERS = [
   ...LAB_SETS.tongueBack,
   ...LAB_SETS.tongueTip,
   ...LAB_SETS.teeth,
+  ...LAB_SETS.lips,
 ] as const;
 export type LabLetterId = (typeof LAB_LETTERS)[number];
 /** The letters a listening quiz can answer with: every letter of the lab but rāʾ. */
