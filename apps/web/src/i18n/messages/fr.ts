@@ -723,6 +723,10 @@ export const fr: Messages = {
         title: 'Arrière et milieu de la langue\u202f: Qāf, Kāf, Jīm, Shīn et Yāʾ',
         hint: 'Cinq sons du dos de la langue. Le Qāf et le Kāf sont tout proches – ici tu apprends à les distinguer.',
       },
+      tongueTip: {
+        title: 'Le Ḍād et la pointe de la langue\u202f: Ḍād, Ṭāʾ, Dāl et Tāʾ',
+        hint: 'Trois sons du même point – emphatique, sonore, soufflé – et le Ḍād, propre à l’arabe. Ici tu entends ce qui les distingue.',
+      },
     },
     more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
     draft: 'Brouillon – le cheikh vérifie encore',
@@ -754,6 +758,8 @@ export const fr: Messages = {
       tongueFar: { line1: 'Fond de langue', line2: 'voile du palais' },
       tongueBack: { line1: 'Fond de langue', line2: 'devant le Qāf' },
       tongueMid: { line1: 'Milieu', line2: 'de la langue' },
+      tongueSide: { line1: 'Bord de langue', line2: 'molaires' },
+      tongueTip: { line1: 'Pointe, racine', line2: 'des incisives' },
     },
     letters: {
       sin: {
@@ -922,6 +928,50 @@ export const fr: Messages = {
           'Un Yāʾ avec voyelle est une consonne, pas une voyelle longue\u202f: يَوْمِ commence par y, pas par i.',
         ],
       },
+      dad: {
+        name: 'Ḍād',
+        short: 'emphatique, sonore, propre à l’arabe',
+        makhraj:
+          'Un bord de la langue – ou les deux – contre les molaires du haut, et la langue se lève largement vers le palais. Le son court le long de tout le bord (Istiṭāla).',
+        mistakes: [
+          'Pas comme le d allemand\u202f: le Ḍād est emphatique, la langue s’appuie largement au palais – sinon بَعْضَ («\u202fune partie\u202f») devient بَعْدَ («\u202faprès\u202f»).',
+          'Pas comme le Ẓāʾ\u202f: la pointe de la langue reste derrière les dents et ne sort pas.',
+          'Pas de qalqala avec sukūn\u202f: le Ḍād ne fait pas partie de ق ط ب ج د.',
+        ],
+      },
+      tta: {
+        name: 'Ṭāʾ',
+        short: 'emphatique, ferme, avec qalqala',
+        makhraj:
+          'La pointe de la langue aux racines des incisives supérieures, comme le Dāl et le Tāʾ. L’arrière de la langue s’appuie en plus largement au palais.',
+        mistakes: [
+          'Pas comme un t simple\u202f: le Ṭāʾ est emphatique (Iṭbāq), la voyelle suivante sonne pleine et sombre.',
+          'Sans souffle (Jahr)\u202f: le t allemand est aspiré, le Ṭāʾ non – le souffle est retenu.',
+          'Avec sukūn, le Ṭāʾ rebondit brièvement (qalqala).',
+        ],
+      },
+      dal: {
+        name: 'Dāl',
+        short: 'léger, sonore, avec qalqala',
+        makhraj:
+          'La pointe de la langue aux racines des incisives supérieures, comme le Ṭāʾ et le Tāʾ.',
+        mistakes: [
+          'Ne pas le changer en t en fin de mot ou avant sukūn, comme en allemand («\u202fRad\u202f»)\u202f: le Dāl reste sonore et rebondit (qalqala).',
+          'Rester léger\u202f: un Dāl lourd ressemble au Ḍād – بَعْدَ («\u202faprès\u202f») devient بَعْضَ («\u202fune partie\u202f»).',
+          'Ne pas le confondre avec le Tāʾ\u202f: sans voix, هَادُوا۟ («\u202fceux qui sont juifs\u202f») devient هَاتُوا۟ («\u202fapportez\u202f!\u202f»).',
+        ],
+      },
+      ta: {
+        name: 'Tāʾ',
+        short: 'léger, avec un souffle',
+        makhraj:
+          'La pointe de la langue aux racines des incisives supérieures, comme le Ṭāʾ et le Dāl.',
+        mistakes: [
+          'Rester léger (Istifāl)\u202f: la voyelle suivante sonne claire. Un Tāʾ sombre devient Ṭāʾ.',
+          'Avec un léger souffle (Hams), surtout avec sukūn – comme un t ordinaire, sans exagérer.',
+          'Ne pas le rendre sonore\u202f: s’il vibre, il devient Dāl – هَاتُوا۟ («\u202fapportez\u202f!\u202f») devient هَادُوا۟.',
+        ],
+      },
     },
     makhraj: 'Makhraj · où il naît',
     sifat: 'Ṣifāt · ses qualités',
@@ -998,6 +1048,11 @@ export const fr: Messages = {
         meaning:
           'Diffusion\u202f: l’air se répand dans toute la bouche (seulement le Shīn).',
       },
+      istitala: {
+        name: 'Istiṭāla',
+        meaning:
+          'Allongement\u202f: le son court le long de tout le bord de la langue, de l’arrière à la pointe (seulement le Ḍād).',
+      },
     },
     mistakesTitle: 'Erreurs fréquentes',
     raRules: {
@@ -1056,6 +1111,18 @@ export const fr: Messages = {
           'Dix mots, à l’oreille seulement\u202f: ferme avec voix (Jīm), un souffle large (Shīn) ou doux comme le y de «\u202fyeux\u202f» (Yāʾ)\u202f?',
         question: 'Quelle lettre entends-tu\u202f?',
       },
+      dadDal: {
+        title: 'Ḍād ou Dāl\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: emphatique et plein (Ḍād) ou léger comme un d ordinaire (Dāl)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      tip: {
+        title: 'Ṭāʾ, Dāl ou Tāʾ\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: emphatique (Ṭāʾ), sonore (Dāl) ou léger avec un souffle (Tāʾ)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
       weight: {
         title: 'Lourd ou léger\u202f?',
         intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
@@ -1078,6 +1145,10 @@ export const fr: Messages = {
         jim: 'Jīm\u202f: ferme et sonore, comme dj.',
         shin: 'Shīn\u202f: un souffle large sans voix.',
         ya: 'Yāʾ\u202f: doux, comme le y de «\u202fyeux\u202f».',
+        dad: 'Ḍād\u202f: emphatique, la langue s’appuie largement au palais.',
+        tta: 'Ṭāʾ\u202f: emphatique et ferme, sans souffle.',
+        dal: 'Dāl\u202f: léger et sonore.',
+        ta: 'Tāʾ\u202f: léger, avec un léger souffle.',
         sin: 'Sīn\u202f: léger, net et sourd.',
         zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
         sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',

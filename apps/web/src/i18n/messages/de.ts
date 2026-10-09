@@ -752,6 +752,10 @@ export const de = {
         title: 'Hinterzunge und Zungenmitte: Qāf, Kāf, Jīm, Shīn und Yāʾ',
         hint: 'Fünf Laute vom Zungenrücken. Qāf und Kāf liegen dicht beieinander – hier lernst du, sie zu trennen.',
       },
+      tongueTip: {
+        title: 'Ḍād und die Zungenspitze: Ḍād, Ṭāʾ, Dāl und Tāʾ',
+        hint: 'Drei Laute von derselben Stelle – schwer, stimmhaft, gehaucht – und Ḍād, den es nur im Arabischen gibt. Hier hörst du, was sie unterscheidet.',
+      },
     } as Record<LabSet, { title: string; hint: string }>,
     more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
     draft: 'Entwurf – der Sheikh prüft noch',
@@ -779,6 +783,8 @@ export const de = {
       tongueFar: { line1: 'Hinterste Zunge', line2: 'weicher Gaumen' },
       tongueBack: { line1: 'Hinterzunge,', line2: 'etwas vor Qāf' },
       tongueMid: { line1: 'Zungenmitte', line2: 'harter Gaumen' },
+      tongueSide: { line1: 'Zungenrand', line2: 'an Backenzähnen' },
+      tongueTip: { line1: 'Zungenspitze', line2: 'Zahnwurzeln' },
     } as Record<Point, { line1: string; line2: string }>,
     letters: {
       sin: {
@@ -947,6 +953,50 @@ export const de = {
           'Ein Yāʾ mit Vokal ist ein Konsonant, kein Dehnungslaut: يَوْمِ beginnt mit j, nicht mit i.',
         ],
       },
+      dad: {
+        name: 'Ḍād',
+        short: 'schwer, stimmhaft, nur im Arabischen',
+        makhraj:
+          'Ein Rand der Zunge – oder beide – liegt an den oberen Backenzähnen, und die Zunge hebt sich breit zum Gaumen. Der Laut zieht sich über den ganzen Rand (Istiṭāla).',
+        mistakes: [
+          'Nicht wie das deutsche d: Ḍād ist schwer, die Zunge liegt breit am Gaumen – sonst wird aus بَعْضَ („ein Teil“) بَعْدَ („nach“).',
+          'Nicht wie Ẓāʾ: Die Zungenspitze bleibt hinter den Zähnen und schaut nicht heraus.',
+          'Mit Sukūn keine Qalqala: Ḍād gehört nicht zu ق ط ب ج د.',
+        ],
+      },
+      tta: {
+        name: 'Ṭāʾ',
+        short: 'schwer, fest, mit Qalqala',
+        makhraj:
+          'Die Zungenspitze an den Wurzeln der oberen Schneidezähne, wie bei Dāl und Tāʾ. Dazu legt sich der Zungenrücken breit an den Gaumen.',
+        mistakes: [
+          'Nicht wie das deutsche t: Ṭāʾ ist schwer (Iṭbāq), der Vokal danach klingt voll und dunkel.',
+          'Ohne Hauch (Jahr): Das deutsche t wird angehaucht, Ṭāʾ nicht – der Atem bleibt gehalten.',
+          'Mit Sukūn federt Ṭāʾ kurz nach (Qalqala).',
+        ],
+      },
+      dal: {
+        name: 'Dāl',
+        short: 'leicht, stimmhaft, mit Qalqala',
+        makhraj:
+          'Die Zungenspitze an den Wurzeln der oberen Schneidezähne, wie bei Ṭāʾ und Tāʾ.',
+        mistakes: [
+          'Am Wortende und vor Sukūn nicht zu t werden lassen wie im Deutschen („Rad“): Dāl bleibt stimmhaft und federt nach (Qalqala).',
+          'Leicht bleiben: Ein schweres Dāl klingt wie Ḍād – aus بَعْدَ („nach“) wird بَعْضَ („ein Teil“).',
+          'Nicht mit Tāʾ verwechseln: Ohne Stimme wird aus هَادُوا۟ („die dem Judentum angehören“) هَاتُوا۟ („bringt her!“).',
+        ],
+      },
+      ta: {
+        name: 'Tāʾ',
+        short: 'leicht, mit einem Hauch',
+        makhraj:
+          'Die Zungenspitze an den Wurzeln der oberen Schneidezähne, wie bei Ṭāʾ und Dāl.',
+        mistakes: [
+          'Leicht bleiben (Istifāl): Der Vokal danach klingt hell. Ein dunkles Tāʾ wird zu Ṭāʾ.',
+          'Mit einem leisen Hauch (Hams), vor allem mit Sukūn – wie das deutsche t, nur nicht übertrieben.',
+          'Nicht stimmhaft werden lassen: Summt es, wird es Dāl – aus هَاتُوا۟ („bringt her!“) wird هَادُوا۟.',
+        ],
+      },
     } as Record<LabLetterId, LetterTexts>,
     makhraj: 'Makhraj · wo er entsteht',
     sifat: 'Ṣifāt · seine Eigenschaften',
@@ -1020,6 +1070,11 @@ export const de = {
         name: 'Tafashshī',
         meaning: 'Ausbreiten: Die Luft verteilt sich im ganzen Mund (nur Shīn).',
       },
+      istitala: {
+        name: 'Istiṭāla',
+        meaning:
+          'Verlängern: Der Laut zieht sich über den ganzen Zungenrand, von hinten bis zur Spitze (nur Ḍād).',
+      },
     } as Record<Sifa, { name: string; meaning: string }>,
     mistakesTitle: 'Typische Fehler',
     raRules: {
@@ -1078,6 +1133,18 @@ export const de = {
           'Zehn Wörter, nur zum Hören: fest mit Stimme (Jīm), ein breites Rauschen (Shīn) oder weich wie j in „ja“ (Yāʾ)?',
         question: 'Welchen Buchstaben hörst du?',
       },
+      dadDal: {
+        title: 'Ḍād oder Dāl?',
+        intro:
+          'Zehn Wörter, nur zum Hören: schwer und voll (Ḍād) oder leicht wie das deutsche d (Dāl)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      tip: {
+        title: 'Ṭāʾ, Dāl oder Tāʾ?',
+        intro:
+          'Zehn Wörter, nur zum Hören: schwer (Ṭāʾ), stimmhaft (Dāl) oder leicht mit Hauch (Tāʾ)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
       weight: {
         title: 'Schwer oder leicht?',
         intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
@@ -1100,6 +1167,10 @@ export const de = {
         jim: 'Jīm: fest und stimmhaft, wie dsch.',
         shin: 'Shīn: ein breites Rauschen ohne Stimme.',
         ya: 'Yāʾ: weich, wie j in „ja“.',
+        dad: 'Ḍād: schwer, die Zunge liegt breit am Gaumen.',
+        tta: 'Ṭāʾ: schwer und fest, ohne Hauch.',
+        dal: 'Dāl: leicht und stimmhaft.',
+        ta: 'Tāʾ: leicht, mit leisem Hauch.',
         sin: 'Sīn: leicht, scharf und stimmlos.',
         zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
         sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',

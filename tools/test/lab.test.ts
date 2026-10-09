@@ -5,6 +5,7 @@ import type { Pack, PackIndex } from '@arda/quran';
 import {
   LAB_KEYS,
   LAB_PICKS,
+  nasalBefore,
   PAUSE_SIGNS,
   buildLab,
   labModule,
@@ -75,6 +76,10 @@ describe('the letter lab’s words', () => {
       jim: ['ج'],
       shin: ['ش'],
       ya: ['ي'],
+      dad: ['ض'],
+      tta: ['ط'],
+      dal: ['د'],
+      ta: ['ت'],
     };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
       expect(signs[word.letter], word.key).toContain(
@@ -134,6 +139,48 @@ describe('the letter lab’s words', () => {
     // qadḥan / kadḥan, jāʾa / shāʾa, sujjirat / suyyirat; qāla / kāna is a near pair.
     const tongue = lab.pairs.filter((p) => ['qaf', 'jim'].includes(p.letters[0]));
     expect(tongue.map((p) => p.exact)).toEqual([true, false, true, true]);
+  });
+
+  it('give ḍād and the tip of the tongue ten words each, one answer to every quiz', () => {
+    // The tied tāʾ (ة) is a tāʾ when the reciter goes on; ḍād keeps clear of ẓāʾ too.
+    const rivals = { dad: 'ضدظ', tta: 'طدتة', dal: 'طدتةض', ta: 'طدتة' };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set(
+          [...word.uthmani]
+            .filter((c) => chars.includes(c))
+            .map((c) => (c === 'ة' ? 'ت' : c))
+        );
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // baʿḍa / baʿda, ṭaḥāhā / daḥāhā, hātū / hādū; ṭaḥāhā / talāhā is a near pair.
+    const tip = lab.pairs.filter((p) => ['dad', 'tta', 'ta'].includes(p.letters[0]));
+    expect(tip.map((p) => [...p.letters, p.exact])).toEqual([
+      ['dad', 'dal', true],
+      ['tta', 'dal', true],
+      ['tta', 'ta', false],
+      ['ta', 'dal', true],
+    ]);
+  });
+
+  it('leave out a word the reciter joins to a nūn sākin or tanwīn before it', () => {
+    // min sijjīl: the nūn is hidden in the sīn, the word starts in the ghunna.
+    expect(nasalBefore(shipped.uthmani, '105:4:4')).toBe(true);
+    // fa-man shāʾa; sabʿan shidādan: the same before shīn, after nūn and after tanwīn.
+    expect(nasalBefore(shipped.uthmani, '78:39:5')).toBe(true);
+    expect(nasalBefore(shipped.uthmani, '78:12:4')).toBe(true);
+    // min ʿalaqin: said plainly before a throat letter; mālik yawmi: no nūn; the āya's first.
+    expect(nasalBefore(shipped.uthmani, '96:2:4')).toBe(false);
+    expect(nasalBefore(shipped.uthmani, '1:4:2')).toBe(false);
+    expect(nasalBefore(shipped.uthmani, '87:1:1')).toBe(false);
+    for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
+      expect(nasalBefore(shipped.uthmani, word.key.slice('hafs:'.length)), word.key).toBe(
+        false
+      );
+    }
   });
 
   it('read heavy and light from the vowel on the rāʾ', () => {
@@ -209,8 +256,8 @@ describe('where a lab word sounds (owner, 2026-10-06: the sīn was cut off)', ()
       expect(end, key).toBeGreaterThanOrEqual(timed.end);
       expect(end - timed.end, key).toBeLessThanOrEqual(timed.last ? 1600 : 400);
     }
-    // sijjīl, the āya's last word, now sounds to its end.
-    expect(clips.clips['105:4:4']![1]).toBeGreaterThan(7400);
+    // qadḥan, the āya's last word, sounds well past its timed end.
+    expect(clips.clips['100:2:2']![1]).toBeGreaterThan(4100);
     expect(serialiseClips(clips)).toBe(readFileSync(clipsFile, 'utf8'));
   });
 });
