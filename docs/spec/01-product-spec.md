@@ -182,8 +182,12 @@ heard against the ones it is mixed up with: hamza or ʿayn; hāʾ, ḥāʾ or kh
 _(Built (2026-10-09): the back and middle of the tongue, ق ك ج ش ي, with three points on the
 drawn tongue (qāf where it meets the soft palate, kāf just before it, the middle three under the
 hard palate), ten words each, the exact pairs qadḥan / kadḥan, jāʾa / shāʾa, sujjirat / suyyirat
-and the near pair qāla / kāna; heard as qāf or kāf, and jīm, shīn or yāʾ. Ḍād moved to the next
-set, to be heard against dāl. The other 13 letters follow, set by set.)_
+and the near pair qāla / kāna; heard as qāf or kāf, and jīm, shīn or yāʾ.)_
+_(Built (2026-10-09): ḍād on the edge of the tongue at the molars and ṭāʾ, dāl, tāʾ at its tip,
+ten words each, the exact pairs baʿḍa / baʿda, ṭaḥāhā / daḥāhā, hātū / hādū and the near pair
+ṭaḥāhā / talāhā; heard as ḍād or dāl, and ṭāʾ, dāl or tāʾ. No lab word follows a nūn sākin or
+tanwīn: the reciter carries the nūn into it and its clip would start in the ghunna. The other 9
+letters follow, set by set.)_
 
 ### F6 — Games _(Must)_
 
