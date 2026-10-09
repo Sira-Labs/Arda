@@ -85,6 +85,10 @@ describe('the letter lab’s words', () => {
       zza: ['ظ'],
       lam: ['ل'],
       nun: ['ن'],
+      fa: ['ف'],
+      ba: ['ب'],
+      mim: ['م'],
+      waw: ['و'],
     };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
       expect(signs[word.letter], word.key).toContain(
@@ -173,7 +177,8 @@ describe('the letter lab’s words', () => {
 
   it('give the teeth, lām and nūn ten words each, one answer to every quiz', () => {
     // Ẓāʾ keeps clear of ḍād, the letter it is mixed up with in Arabic.
-    const rivals = { tha: 'ثذظ', dha: 'ثذظ', zza: 'ثذظض', lam: 'لن', nun: 'لن' };
+    // Thāʾ keeps clear of fāʾ too, the letter it is heard against on the lips' page.
+    const rivals = { tha: 'ثذظف', dha: 'ثذظ', zza: 'ثذظض', lam: 'لن', nun: 'لن' };
     for (const [letter, chars] of Object.entries(rivals)) {
       const words = lab.words.filter((w) => w.letter === letter);
       expect(words, letter).toHaveLength(10);
@@ -190,6 +195,27 @@ describe('the letter lab’s words', () => {
       ['tha', 'zza', false],
       ['lam', 'nun', true],
       ['lam', 'nun', true],
+    ]);
+  });
+
+  it('give the lips ten words each, one answer to every quiz', () => {
+    const rivals = { fa: 'فث', ba: 'بمو', mim: 'بمو', waw: 'بمو' };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set([...word.uthmani].filter((c) => chars.includes(c)));
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // baladan / waladan, lam / law and am / aw are exact; yunfiqu / yūthiqu, balā / matā near.
+    const lips = lab.pairs.filter((p) => ['fa', 'ba', 'mim'].includes(p.letters[0]));
+    expect(lips.map((p) => [...p.letters, p.exact])).toEqual([
+      ['fa', 'tha', false],
+      ['ba', 'mim', false],
+      ['ba', 'waw', true],
+      ['mim', 'waw', true],
+      ['mim', 'waw', true],
     ]);
   });
 
