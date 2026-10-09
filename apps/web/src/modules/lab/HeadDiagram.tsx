@@ -12,7 +12,8 @@ import './lab.css';
  * middle three under the hard palate, ḍād on the edge where the molars stand, ṭāʾ, dāl and
  * tāʾ with the tip at the roots of the upper incisors, in front of rāʾ; thāʾ, dhāl and ẓāʾ at
  * the incisors' edges; lām and nūn at the gum ridge, nūn a little in front of lām – the books'
- * "below" it – and of rāʾ).
+ * "below" it – and of rāʾ); fāʾ where the lower lip meets the upper incisors, bāʾ, mīm and
+ * wāw between the lips.
  */
 const POINTS: Record<Point, { x: number; y: number }> = {
   whistle: { x: 180, y: 406 },
@@ -29,6 +30,8 @@ const POINTS: Record<Point, { x: number; y: number }> = {
   teeth: { x: 167, y: 386 },
   lam: { x: 202, y: 378 },
   nun: { x: 190, y: 372 },
+  lipTeeth: { x: 158, y: 406 },
+  lips: { x: 140, y: 409 },
 };
 
 /** Where each area's number stands on the drawing; the lips' stands just in front of them. */

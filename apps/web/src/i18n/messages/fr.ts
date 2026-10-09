@@ -731,8 +731,12 @@ export const fr: Messages = {
         title: 'Les dents, le Lām et le Nūn\u202f: Thāʾ, Dhāl, Ẓāʾ, Lām et Nūn',
         hint: 'Trois sons avec la pointe de la langue aux incisives supérieures – en allemand ils deviennent vite s et z –, et le Lām et le Nūn des gencives.',
       },
+      lips: {
+        title: 'Les lèvres\u202f: Fāʾ, Bāʾ, Mīm et Wāw',
+        hint: 'Quatre sons des lèvres, presque tous familiers. Ici, il s’agit des détails\u202f: qalqala, ghunna et lèvres arrondies.',
+      },
     },
-    more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
+    more: 'Les 28 lettres sont là. Ton cheikh vérifie encore le dessin et les textes.',
     draft: 'Brouillon – le cheikh vérifie encore',
     back: 'Au labo',
     diagram: {
@@ -767,6 +771,8 @@ export const fr: Messages = {
       teeth: { line1: 'Pointe, bord', line2: 'des incisives' },
       lam: { line1: 'Bords avant', line2: 'gencives' },
       nun: { line1: 'Pointe', line2: 'devant le Lām' },
+      lipTeeth: { line1: 'Lèvre du bas', line2: 'dents du haut' },
+      lips: { line1: 'Les deux', line2: 'lèvres' },
     },
     letters: {
       sin: {
@@ -1034,6 +1040,48 @@ export const fr: Messages = {
           'Ne pas le confondre avec le Lām\u202f: pour le Nūn, une partie de l’air passe par le nez – sinon إِنَّا («\u202fnous\u202f») devient إِلَّآ («\u202fsauf\u202f»).',
         ],
       },
+      fa: {
+        name: 'Fāʾ',
+        short: 'léger, sourd, comme f',
+        makhraj:
+          'L’intérieur de la lèvre inférieure contre le bord des incisives supérieures.',
+        mistakes: [
+          'Comme un f ordinaire – mais ne jamais en faire un v\u202f: le Fāʾ est toujours sourd (Hams).',
+          'Ne pas le confondre avec le Thāʾ\u202f: pour le Fāʾ, l’air frotte à la lèvre, pour le Thāʾ à la langue entre les dents – يُنفِقُ («\u202fil dépense\u202f»), pas يُوثِقُ («\u202fil attache\u202f»).',
+          'Rester léger (Istifāl)\u202f: la voyelle suivante sonne claire.',
+        ],
+      },
+      ba: {
+        name: 'Bāʾ',
+        short: 'sonore, ferme, avec qalqala',
+        makhraj: 'Les deux lèvres se ferment fermement et s’ouvrent d’un coup.',
+        mistakes: [
+          'Ne pas le changer en p en fin de mot ou avant sukūn, comme en allemand («\u202fab\u202f»)\u202f: le Bāʾ reste sonore et rebondit (qalqala).',
+          'Ferme (Shidda)\u202f: les lèvres se ferment complètement, le son s’arrête.',
+          'Ne pas le confondre avec le Wāw\u202f: pour le Bāʾ, les lèvres se ferment – بَلَدًا («\u202fun pays\u202f»), pas وَلَدًا («\u202fun enfant\u202f»).',
+        ],
+      },
+      mim: {
+        name: 'Mīm',
+        short: 'lèvres fermées, avec ghunna',
+        makhraj:
+          'Les deux lèvres se ferment, plus légèrement que pour le Bāʾ\u202f; le son passe par le nez (ghunna).',
+        mistakes: [
+          'Avec shadda, tenir nettement le son nasal, environ deux temps – ثُمَّ.',
+          'Le mīm sākin est caché devant le Bāʾ et fusionné devant le Mīm\u202f; devant toutes les autres lettres, il reste net.',
+          'Ne pas le confondre avec le Wāw\u202f: pour le Mīm, les lèvres se ferment complètement – لَمْ («\u202fne… pas\u202f»), pas لَوْ («\u202fsi\u202f»).',
+        ],
+      },
+      waw: {
+        name: 'Wāw',
+        short: 'doux, sonore, lèvres arrondies',
+        makhraj: 'Les deux lèvres s’arrondissent vers l’avant sans se fermer.',
+        mistakes: [
+          'Pas comme le w allemand, où les dents touchent la lèvre inférieure\u202f: pour le Wāw, seules les lèvres s’arrondissent, comme le ou de «\u202foui\u202f».',
+          'Ne pas en faire un Bāʾ\u202f: les lèvres ne se ferment pas – وَلَدًا («\u202fun enfant\u202f»), pas بَلَدًا («\u202fun pays\u202f»).',
+          'Un Wāw avec voyelle est une consonne, pas une voyelle longue\u202f: وُجُوهٌ commence par w, pas par ou.',
+        ],
+      },
     },
     makhraj: 'Makhraj · où il naît',
     sifat: 'Ṣifāt · ses qualités',
@@ -1202,6 +1250,18 @@ export const fr: Messages = {
           'Dix mots, à l’oreille seulement\u202f: le son coule-t-il le long du bord de la langue (Lām) ou par le nez (Nūn)\u202f?',
         question: 'Quelle lettre entends-tu\u202f?',
       },
+      faTha: {
+        title: 'Fāʾ ou Thāʾ\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: l’air frotte-t-il à la lèvre (Fāʾ) ou à la langue entre les dents (Thāʾ)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      lips: {
+        title: 'Bāʾ, Mīm ou Wāw\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: fermé d’un coup (Bāʾ), fermé par le nez (Mīm) ou rond et ouvert (Wāw)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
       weight: {
         title: 'Lourd ou léger\u202f?',
         intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
@@ -1233,6 +1293,10 @@ export const fr: Messages = {
         zza: 'Ẓāʾ\u202f: aux dents, avec voix, emphatique.',
         lam: 'Lām\u202f: clair, le son coule le long du bord de la langue.',
         nun: 'Nūn\u202f: une partie du son vient du nez.',
+        fa: 'Fāʾ\u202f: l’air frotte à la lèvre.',
+        ba: 'Bāʾ\u202f: les lèvres se ferment complètement, avec voix.',
+        mim: 'Mīm\u202f: les lèvres sont fermées, le son passe par le nez.',
+        waw: 'Wāw\u202f: lèvres arrondies, pas fermées.',
         sin: 'Sīn\u202f: léger, net et sourd.',
         zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
         sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',

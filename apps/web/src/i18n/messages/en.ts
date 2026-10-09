@@ -710,8 +710,12 @@ export const en: Messages = {
         title: 'The teeth, Lām and Nūn: Thāʾ, Dhāl, Ẓāʾ, Lām and Nūn',
         hint: 'Three sounds with the tip of the tongue at the upper front teeth – German speakers easily turn them into s and z –, and Lām and Nūn from the gum ridge.',
       },
+      lips: {
+        title: 'The lips: Fāʾ, Bāʾ, Mīm and Wāw',
+        hint: 'Four sounds from the lips, almost all familiar. Here it is about the details: qalqala, ghunna and rounded lips.',
+      },
     },
-    more: 'The other letters follow once your sheikh has checked the drawing.',
+    more: 'All 28 letters are here. Your sheikh is still checking the drawing and the texts.',
     draft: 'Draft – the sheikh is still checking',
     back: 'To the lab',
     diagram: {
@@ -742,6 +746,8 @@ export const en: Messages = {
       teeth: { line1: 'Tip of tongue', line2: 'incisor edges' },
       lam: { line1: 'Front edges', line2: 'gum ridge' },
       nun: { line1: 'Tip of tongue', line2: 'before Lām' },
+      lipTeeth: { line1: 'Lower lip', line2: 'upper teeth' },
+      lips: { line1: 'Both', line2: 'lips' },
     },
     letters: {
       sin: {
@@ -1009,6 +1015,48 @@ export const en: Messages = {
           'Do not confuse it with Lām: for Nūn part of the air goes through the nose – otherwise إِنَّا (“we”) becomes إِلَّآ (“except”).',
         ],
       },
+      fa: {
+        name: 'Fāʾ',
+        short: 'light, voiceless, like f',
+        makhraj:
+          'The inside of the lower lip against the edges of the upper front teeth.',
+        mistakes: [
+          'Like an ordinary f – but never let it become v: Fāʾ is always voiceless (Hams).',
+          'Do not confuse it with Thāʾ: for Fāʾ the air rubs at the lip, for Thāʾ at the tongue between the teeth – يُنفِقُ (“he spends”), not يُوثِقُ (“he binds”).',
+          'Stay light (Istifāl): the vowel after it sounds bright.',
+        ],
+      },
+      ba: {
+        name: 'Bāʾ',
+        short: 'voiced, firm, with qalqala',
+        makhraj: 'Both lips close firmly and open with a jolt.',
+        mistakes: [
+          'Do not let it turn into p at the end of a word or before sukūn, as German does (“ab”): Bāʾ stays voiced and bounces (qalqala).',
+          'Firm (Shidda): the lips close completely and the sound stops.',
+          'Do not confuse it with Wāw: for Bāʾ the lips close – بَلَدًا (“a land”), not وَلَدًا (“a child”).',
+        ],
+      },
+      mim: {
+        name: 'Mīm',
+        short: 'lips closed, with ghunna',
+        makhraj:
+          'Both lips close, more lightly than for Bāʾ; the sound goes through the nose (ghunna).',
+        mistakes: [
+          'With shadda, hold the nasal sound clearly, about two beats – ثُمَّ.',
+          'A mīm sākin is hidden before Bāʾ and merged before Mīm; before every other letter it stays clear.',
+          'Do not confuse it with Wāw: for Mīm the lips close completely – لَمْ (“not”), not لَوْ (“if”).',
+        ],
+      },
+      waw: {
+        name: 'Wāw',
+        short: 'soft, voiced, rounded lips',
+        makhraj: 'Both lips round forward without closing.',
+        mistakes: [
+          'Not like the German w, where the teeth touch the lower lip: for Wāw only the lips round, as for the w in “water”.',
+          'Do not let it become Bāʾ: the lips do not close – وَلَدًا (“a child”), not بَلَدًا (“a land”).',
+          'A Wāw with a vowel is a consonant, not a long vowel: وُجُوهٌ begins with w, not with u.',
+        ],
+      },
     },
     makhraj: 'Makhraj · where it is made',
     sifat: 'Ṣifāt · its qualities',
@@ -1175,6 +1223,18 @@ export const en: Messages = {
           'Ten words, by ear only: does the sound flow along the edge of the tongue (Lām) or through the nose (Nūn)?',
         question: 'Which letter do you hear?',
       },
+      faTha: {
+        title: 'Fāʾ or Thāʾ?',
+        intro:
+          'Ten words, by ear only: does the air rub at the lip (Fāʾ) or at the tongue between the teeth (Thāʾ)?',
+        question: 'Which letter do you hear?',
+      },
+      lips: {
+        title: 'Bāʾ, Mīm or Wāw?',
+        intro:
+          'Ten words, by ear only: closed with a jolt (Bāʾ), closed through the nose (Mīm) or round and open (Wāw)?',
+        question: 'Which letter do you hear?',
+      },
       weight: {
         title: 'Heavy or light?',
         intro: 'Ten words with Rāʾ: does it sound heavy or light?',
@@ -1206,6 +1266,10 @@ export const en: Messages = {
         zza: 'Ẓāʾ: at the teeth, with voice, heavy.',
         lam: 'Lām: bright, the sound flows along the edge of the tongue.',
         nun: 'Nūn: part of the sound comes from the nose.',
+        fa: 'Fāʾ: the air rubs at the lip.',
+        ba: 'Bāʾ: the lips close completely, with voice.',
+        mim: 'Mīm: the lips are closed, the sound goes through the nose.',
+        waw: 'Wāw: rounded lips, not closed.',
         sin: 'Sīn: light, sharp and voiceless.',
         zay: 'Zāy: voiced – it buzzes – but thin.',
         sad: 'Ṣād: heavy, the back of the tongue rises.',

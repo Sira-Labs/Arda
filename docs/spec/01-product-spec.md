@@ -190,8 +190,12 @@ tanwīn: the reciter carries the nūn into it and its clip would start in the gh
 _(Built (2026-10-09): thāʾ, dhāl and ẓāʾ at the edges of the upper incisors, lām and nūn at the
 gum ridge, ten words each; ghunna as a ṣifa. Exact pairs of the three at the teeth do not occur
 in these sūras, so wathāqahu / ʿadhābahu, dhikraka / ẓahraka and athīm / ʿaẓīm are near pairs;
-illā / innā and alā / anā are exact. Heard as thāʾ, dhāl or ẓāʾ, and lām or nūn. The lips
-(ف ب م و) follow.)_
+illā / innā and alā / anā are exact. Heard as thāʾ, dhāl or ẓāʾ, and lām or nūn.)_
+_(Built (2026-10-09): the lips – fāʾ with the lower lip at the upper incisors, bāʾ, mīm and wāw
+with both lips – ten words each, the exact pairs baladan / waladan, lam / law, am / aw and the
+near pairs yunfiqu / yūthiqu, balā / matā; heard as fāʾ or thāʾ, and bāʾ, mīm or wāw. No lab
+word follows a mīm sākin before bāʾ or mīm either. With these, all 28 letters are in the lab,
+each marked draft until the sheikh has checked it.)_
 
 ### F6 — Games _(Must)_
 

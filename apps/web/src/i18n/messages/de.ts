@@ -760,8 +760,12 @@ export const de = {
         title: 'Zähne, Lām und Nūn: Thāʾ, Dhāl, Ẓāʾ, Lām und Nūn',
         hint: 'Drei Laute mit der Zungenspitze an den oberen Schneidezähnen – im Deutschen werden sie leicht zu s und z –, dazu Lām und Nūn vom Zahndamm.',
       },
+      lips: {
+        title: 'Die Lippen: Fāʾ, Bāʾ, Mīm und Wāw',
+        hint: 'Vier Laute von den Lippen, im Deutschen fast alle vertraut. Hier geht es um die Feinheiten: Qalqala, Ghunna und runde Lippen.',
+      },
     } as Record<LabSet, { title: string; hint: string }>,
-    more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
+    more: 'Alle 28 Buchstaben sind da. Zeichnung und Texte prüft dein Sheikh noch.',
     draft: 'Entwurf – der Sheikh prüft noch',
     back: 'Zum Labor',
     diagram: {
@@ -792,6 +796,8 @@ export const de = {
       teeth: { line1: 'Zungenspitze', line2: 'Zahnkanten' },
       lam: { line1: 'Zungenrand vorn', line2: 'Zahndamm' },
       nun: { line1: 'Zungenspitze', line2: 'vor dem Lām' },
+      lipTeeth: { line1: 'Unterlippe', line2: 'obere Zähne' },
+      lips: { line1: 'Beide', line2: 'Lippen' },
     } as Record<Point, { line1: string; line2: string }>,
     letters: {
       sin: {
@@ -1059,6 +1065,47 @@ export const de = {
           'Nicht mit Lām verwechseln: Bei Nūn geht ein Teil der Luft durch die Nase – sonst wird aus إِنَّا („wir“) إِلَّآ („außer“).',
         ],
       },
+      fa: {
+        name: 'Fāʾ',
+        short: 'leicht, stimmlos, wie f',
+        makhraj: 'Die Innenseite der Unterlippe an den Kanten der oberen Schneidezähne.',
+        mistakes: [
+          'Wie das deutsche f – nur nie zu v werden lassen: Fāʾ ist immer stimmlos (Hams).',
+          'Nicht mit Thāʾ verwechseln: Bei Fāʾ reibt die Luft an der Lippe, bei Thāʾ an der Zunge zwischen den Zähnen – يُنفِقُ („er spendet“), nicht يُوثِقُ („er fesselt“).',
+          'Leicht bleiben (Istifāl): Der Vokal danach klingt hell.',
+        ],
+      },
+      ba: {
+        name: 'Bāʾ',
+        short: 'stimmhaft, fest, mit Qalqala',
+        makhraj: 'Beide Lippen schließen sich fest und öffnen sich mit einem Ruck.',
+        mistakes: [
+          'Am Wortende und vor Sukūn nicht zu p werden lassen wie im Deutschen („ab“): Bāʾ bleibt stimmhaft und federt nach (Qalqala).',
+          'Fest (Shidda): Die Lippen schließen ganz, der Laut bricht ab.',
+          'Nicht mit Wāw verwechseln: Bei Bāʾ schließen sich die Lippen – بَلَدًا („ein Land“), nicht وَلَدًا („ein Kind“).',
+        ],
+      },
+      mim: {
+        name: 'Mīm',
+        short: 'die Lippen geschlossen, mit Ghunna',
+        makhraj:
+          'Beide Lippen schließen sich, leichter als bei Bāʾ; der Klang geht durch die Nase (Ghunna).',
+        mistakes: [
+          'Mit Shadda deutlich genäselt halten, etwa zwei Schläge lang – ثُمَّ.',
+          'Mīm sākin wird vor Bāʾ verborgen und vor Mīm verschmolzen; vor allen anderen Buchstaben bleibt es deutlich.',
+          'Nicht mit Wāw verwechseln: Bei Mīm schließen sich die Lippen ganz – لَمْ („nicht“), nicht لَوْ („wenn“).',
+        ],
+      },
+      waw: {
+        name: 'Wāw',
+        short: 'weich, stimmhaft, runde Lippen',
+        makhraj: 'Beide Lippen runden sich nach vorn, ohne sich zu schließen.',
+        mistakes: [
+          'Nicht wie das deutsche w: Dort berühren die Zähne die Unterlippe. Bei Wāw runden sich nur die Lippen, wie bei w im englischen „water“.',
+          'Nicht zu Bāʾ werden lassen: Die Lippen schließen sich nicht – وَلَدًا („ein Kind“), nicht بَلَدًا („ein Land“).',
+          'Ein Wāw mit Vokal ist ein Konsonant, kein Dehnungslaut: وُجُوهٌ beginnt mit w, nicht mit u.',
+        ],
+      },
     } as Record<LabLetterId, LetterTexts>,
     makhraj: 'Makhraj · wo er entsteht',
     sifat: 'Ṣifāt · seine Eigenschaften',
@@ -1223,6 +1270,18 @@ export const de = {
           'Zehn Wörter, nur zum Hören: Fließt der Laut am Zungenrand (Lām) oder durch die Nase (Nūn)?',
         question: 'Welchen Buchstaben hörst du?',
       },
+      faTha: {
+        title: 'Fāʾ oder Thāʾ?',
+        intro:
+          'Zehn Wörter, nur zum Hören: Reibt die Luft an der Lippe (Fāʾ) oder an der Zunge zwischen den Zähnen (Thāʾ)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      lips: {
+        title: 'Bāʾ, Mīm oder Wāw?',
+        intro:
+          'Zehn Wörter, nur zum Hören: geschlossen mit einem Ruck (Bāʾ), geschlossen durch die Nase (Mīm) oder rund und offen (Wāw)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
       weight: {
         title: 'Schwer oder leicht?',
         intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
@@ -1254,6 +1313,10 @@ export const de = {
         zza: 'Ẓāʾ: an den Zähnen, mit Stimme, schwer.',
         lam: 'Lām: hell, der Laut fließt am Zungenrand.',
         nun: 'Nūn: ein Teil des Klangs kommt aus der Nase.',
+        fa: 'Fāʾ: Die Luft reibt an der Lippe.',
+        ba: 'Bāʾ: Die Lippen schließen ganz, mit Stimme.',
+        mim: 'Mīm: Die Lippen sind geschlossen, der Klang geht durch die Nase.',
+        waw: 'Wāw: runde Lippen, nicht geschlossen.',
         sin: 'Sīn: leicht, scharf und stimmlos.',
         zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
         sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',

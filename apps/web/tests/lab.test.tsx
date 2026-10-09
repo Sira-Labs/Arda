@@ -172,6 +172,11 @@ describe('the lab’s words (generated from the packs)', () => {
     expect([count('tha', zza), count('dha', zza), count('zza', zza)]).toEqual([3, 3, 4]);
     const nun = labRound('nun', () => 0.3);
     expect([count('lam', nun), count('nun', nun)]).toEqual([5, 5]);
+    // Fāʾ against thāʾ; bāʾ, mīm and wāw, all from both lips, against each other.
+    const fa = labRound('fa', () => 0.3);
+    expect([count('fa', fa), count('tha', fa)]).toEqual([5, 5]);
+    const mim = labRound('mim', () => 0.3);
+    expect([count('ba', mim), count('mim', mim), count('waw', mim)]).toEqual([3, 4, 3]);
     // A word holds no other letter of its quiz, so every question has one answer.
     const forms: Record<string, string> = { hamza: 'أإءؤئ' };
     const signs: Record<string, string> = {
@@ -196,6 +201,10 @@ describe('the lab’s words (generated from the packs)', () => {
       zza: 'ظ',
       lam: 'ل',
       nun: 'ن',
+      fa: 'ف',
+      ba: 'ب',
+      mim: 'م',
+      waw: 'و',
     };
     for (const letters of Object.values(QUIZ_LETTERS)) {
       for (const word of LAB_WORDS.filter((w) => letters.includes(w.letter as never))) {
@@ -281,6 +290,29 @@ describe('the letter lab (F5)', () => {
         .getAllByRole('link')
         .map((a) => a.getAttribute('href'))
     ).toEqual(['/labor/tha', '/labor/dha', '/labor/zza', '/labor/lam', '/labor/nun']);
+    // The lips, the last set: all 28 letters.
+    const lips = screen.getByRole('region', { name: /Die Lippen/ });
+    expect(
+      within(lips)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('href'))
+    ).toEqual(['/labor/fa', '/labor/ba', '/labor/mim', '/labor/waw']);
+    expect(document.querySelectorAll('.lab-card')).toHaveLength(28);
+    expect(screen.getByText(/Alle 28 Buchstaben sind da/)).toBeInTheDocument();
+  });
+
+  it('shows wāw on the lips, heard against bāʾ and mīm', () => {
+    renderAt('/labor/waw');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Wāw');
+    expect(screen.getByRole('img', { name: /Beide – Lippen/ })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: 'Bāʾ, Mīm oder Wāw?' })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: 'Typische Fehler' })).toHaveTextContent(
+      'Nicht wie das deutsche w'
+    );
+    // baladan / waladan, lam / law and am / aw differ in that one letter only.
+    expect(screen.getAllByText('Nur dieser Laut ist anders.').length).toBe(3);
   });
 
   it('shows nūn with its ghunna, heard against lām', () => {

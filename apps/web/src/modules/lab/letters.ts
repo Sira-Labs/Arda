@@ -12,8 +12,8 @@ import {
  * the three whistling letters a German speaker easily mixes up, and rāʾ – and the six of the
  * throat (2026-10-07), which German lacks but for hāʾ and the glottal stop, and five of the tongue
  * (2026-10-09): qāf and kāf at its back, jīm, shīn and yāʾ at its middle, then ḍād at its edge
- * and ṭāʾ, dāl and tāʾ at its tip, then thāʾ, dhāl and ẓāʾ at the teeth, lām and nūn. The texts
- * are in the
+ * and ṭāʾ, dāl and tāʾ at its tip, then thāʾ, dhāl and ẓāʾ at the teeth, lām and nūn, and last
+ * the lips: fāʾ, bāʾ, mīm and wāw. The texts are in the
  * i18n catalogs (`lab`); this module says which letter has which point, area and ṣifāt. Every
  * makhraj and its drawing is a draft until the sheikh has reviewed it (spec 03 §6, ADR-0018).
  */
@@ -28,7 +28,8 @@ export type Area = (typeof AREAS)[number];
  * (غ خ) – and the tongue under the palate: its very back (ق), a little before it (ك), its
  * middle (ج ش ي), its edge at the upper molars (ض), its tip at the roots of the upper incisors
  * (ط د ت) and at their edges (ث ذ ظ); lām with the front edges of the tongue at the gum ridge,
- * nūn with its tip a little below.
+ * nūn with its tip a little below; fāʾ with the lower lip at the upper incisors, bāʾ, mīm and
+ * wāw with both lips.
  */
 export type Point =
   | 'whistle'
@@ -43,7 +44,9 @@ export type Point =
   | 'tongueTip'
   | 'teeth'
   | 'lam'
-  | 'nun';
+  | 'nun'
+  | 'lipTeeth'
+  | 'lips';
 
 /** The ṣifāt of the lab's letters; each has a name and a one-line meaning in the catalogs. */
 export const SIFAT = [
@@ -71,7 +74,8 @@ export type Sifa = (typeof SIFAT)[number];
 /**
  * What a listening quiz asks: which of the letters heard against each other (the whistling
  * three; hamza or ʿayn; hāʾ, ḥāʾ or khāʾ; khāʾ or ghayn; qāf or kāf; jīm, shīn or yāʾ; ḍād
- * or dāl; ṭāʾ, dāl or tāʾ; thāʾ, dhāl or ẓāʾ; lām or nūn), or whether the rāʾ is heavy.
+ * or dāl; ṭāʾ, dāl or tāʾ; thāʾ, dhāl or ẓāʾ; lām or nūn; fāʾ or thāʾ; bāʾ, mīm or wāw), or
+ * whether the rāʾ is heavy.
  */
 export type QuizKind =
   | 'whistling'
@@ -84,6 +88,8 @@ export type QuizKind =
   | 'tip'
   | 'teeth'
   | 'lamNun'
+  | 'faTha'
+  | 'lips'
   | 'weight';
 
 /** The letters each quiz offers, in a fixed order; `weight` offers heavy and light. */
@@ -98,6 +104,8 @@ export const QUIZ_LETTERS: Record<Exclude<QuizKind, 'weight'>, readonly HeardId[
   tip: ['tta', 'dal', 'ta'],
   teeth: ['tha', 'dha', 'zza'],
   lamNun: ['lam', 'nun'],
+  faTha: ['fa', 'tha'],
+  lips: ['ba', 'mim', 'waw'],
 };
 
 export interface LetterContent {
@@ -352,6 +360,46 @@ export const LETTERS: Readonly<Record<LabLetterId, LetterContent>> = {
     point: 'nun',
     sifat: ['jahr', 'tawassut', 'istifal', 'infitah', 'idhlaq', 'ghunna'],
     quiz: 'lamNun',
+    review: { status: 'draft' },
+  },
+  fa: {
+    id: 'fa',
+    letter: 'ف',
+    arabicName: 'فَاء',
+    area: 'shafatan',
+    point: 'lipTeeth',
+    sifat: ['hams', 'rakhawa', 'istifal', 'infitah', 'idhlaq'],
+    quiz: 'faTha',
+    review: { status: 'draft' },
+  },
+  ba: {
+    id: 'ba',
+    letter: 'ب',
+    arabicName: 'بَاء',
+    area: 'shafatan',
+    point: 'lips',
+    sifat: ['jahr', 'shidda', 'istifal', 'infitah', 'idhlaq', 'qalqala'],
+    quiz: 'lips',
+    review: { status: 'draft' },
+  },
+  mim: {
+    id: 'mim',
+    letter: 'م',
+    arabicName: 'مِيم',
+    area: 'shafatan',
+    point: 'lips',
+    sifat: ['jahr', 'tawassut', 'istifal', 'infitah', 'idhlaq', 'ghunna'],
+    quiz: 'lips',
+    review: { status: 'draft' },
+  },
+  waw: {
+    id: 'waw',
+    letter: 'و',
+    arabicName: 'وَاو',
+    area: 'shafatan',
+    point: 'lips',
+    sifat: ['jahr', 'rakhawa', 'istifal', 'infitah', 'ismat'],
+    quiz: 'lips',
     review: { status: 'draft' },
   },
 };

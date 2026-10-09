@@ -4,7 +4,7 @@ import type { LabClips } from './labClips';
 /**
  * The words of the letter lab (spec F5; first set س ز ص ر, the throat ء ه ع ح غ خ, the back
  * and middle of the tongue ق ك ج ش ي, ḍād and the tip of the tongue ض ط د ت, the teeth ث ذ ظ
- * with lām and nūn), taken from the shipped packs rather than typed by hand. The picks below are only word keys; the text in both
+ * with lām and nūn, the lips ف ب م و), taken from the shipped packs rather than typed by hand. The picks below are only word keys; the text in both
  * scripts, the letter to mark and, for rāʾ, whether it is heavy or light are read from the words
  * and checked here, so a pick that does not show what it is meant to show fails the build.
  */
@@ -33,7 +33,11 @@ export type LabLetter =
   | 'dha'
   | 'zza'
   | 'lam'
-  | 'nun';
+  | 'nun'
+  | 'fa'
+  | 'ba'
+  | 'mim'
+  | 'waw';
 export type Weight = 'heavy' | 'light';
 
 /** How each letter is written; hamza has its seats (أ إ ؤ ئ) and stands alone (ء). */
@@ -62,6 +66,10 @@ const LETTER: Record<LabLetter, string> = {
   zza: 'ظ',
   lam: 'ل',
   nun: 'ن',
+  fa: 'ف',
+  ba: 'ب',
+  mim: 'م',
+  waw: 'و',
 };
 
 /** IndoPak writes a hamza that opens a word as a bare alif with its vowel (اَحَدٌ). */
@@ -71,7 +79,7 @@ const INDOPAK_LETTER: Partial<Record<LabLetter, string>> = { hamza: `ا${LETTER.
  * The letters a word of a letter must not also hold, so that its listening quiz has one answer:
  * the letters it is heard against (the whistling three; hamza and ʿayn; hāʾ, ḥāʾ and khāʾ;
  * khāʾ and ghayn; qāf and kāf; jīm, shīn and yāʾ; ḍād and dāl; ṭāʾ, dāl and tāʾ; thāʾ, dhāl
- * and ẓāʾ; lām and nūn). Rāʾ is
+ * and ẓāʾ; lām and nūn; fāʾ and thāʾ; bāʾ, mīm and wāw). Rāʾ is
  * asked heavy or light instead. Yāʾ has its dotless form too (ى, as in شَىْءٍ, where it is
  * heard as a yāʾ), and tāʾ its tied form (ة, a t when the reciter goes on). Ḍād keeps clear of
  * ẓāʾ too, the letter it is most often mixed up with in Arabic, and ẓāʾ of ḍād.
@@ -95,11 +103,15 @@ const RIVALS: Record<Exclude<LabLetter, 'ra'>, string> = {
   tta: 'طدتة',
   dal: 'طدتةض',
   ta: 'طدتة',
-  tha: 'ثذظ',
+  tha: 'ثذظف',
   dha: 'ثذظ',
   zza: 'ثذظض',
   lam: 'لن',
   nun: 'لن',
+  fa: 'فث',
+  ba: 'بمو',
+  mim: 'بمو',
+  waw: 'بمو',
 };
 
 /** The other forms of a letter, counted as that letter: dotless yāʾ, tied tāʾ. */
@@ -348,7 +360,7 @@ export const LAB_PICKS: Record<LabLetter, readonly string[]> = {
     '89:26:3', // wathāqahu
     '2:155:10', // wa-th-thamarāti
     '86:3:2', // ath-thāqibu
-    '2:191:3', // thaqiftumūhum
+    '85:18:2', // wa-thamūda
   ],
   dha: [
     '2:2:1', // dhālika
@@ -398,6 +410,54 @@ export const LAB_PICKS: Record<LabLetter, readonly string[]> = {
     '91:13:5', // nāqata
     '2:30:19', // nusabbiḥu
   ],
+  fa: [
+    '90:13:1', // fakku
+    '105:1:4', // faʿala
+    '2:243:21', // faḍlin
+    '2:100:5', // farīqun
+    '2:102:32', // fitnatun
+    '2:184:17', // fidyatun
+    '2:197:11', // fusūqa
+    '2:22:5', // firāshan
+    '94:7:2', // faraghta
+    '82:3:3', // fujjirat
+  ],
+  ba: [
+    '2:116:6', // bal
+    '113:1:3', // bi-rabbi
+    '2:102:40', // bayna
+    '2:247:7', // baʿatha
+    '2:68:17', // bikrun
+    '85:12:2', // baṭsha
+    '2:110:17', // baṣīrun
+    '2:67:10', // baqaratan
+    '78:24:4', // bardan
+    '100:9:4', // buʿthira
+  ],
+  mim: [
+    '1:4:1', // māliki
+    '114:2:1', // maliki
+    '2:102:6', // mulki
+    '2:153:9', // maʿa
+    '2:22:11', // māʾan
+    '104:2:3', // mālan
+    '2:61:32', // miṣran
+    '2:135:9', // millata
+    '84:3:3', // muddat
+    '2:253:17', // maryama
+  ],
+  waw: [
+    '2:109:1', // wadda
+    '104:1:1', // waylun
+    '2:115:7', // wajhu
+    '2:255:41', // wasiʿa
+    '90:3:3', // walada
+    '2:101:18', // warāʾa
+    '2:116:4', // waladan
+    '80:38:1', // wujūhun
+    '2:233:24', // wālidatun
+    '84:17:3', // wasaqa
+  ],
   ra: [
     '1:2:3', // rabbi (heavy)
     '1:1:3', // ar-raḥmāni (heavy)
@@ -440,7 +500,7 @@ export const LAB_PAIR_PICKS: readonly {
   { letters: ['qaf', 'kaf'], keys: ['83:13:5', '78:17:4'] }, // qāla / kāna
   { letters: ['jim', 'shin'], keys: ['110:1:2', '2:20:15'] }, // jāʾa / shāʾa
   { letters: ['jim', 'ya'], keys: ['81:6:3', '81:3:3'] }, // sujjirat / suyyirat
-  { letters: ['dad', 'dal'], keys: ['2:259:30', '2:120:19'] }, // baʿḍa / baʿda
+  { letters: ['dad', 'dal'], keys: ['2:259:30', '2:164:27'] }, // baʿḍa / baʿda
   { letters: ['tta', 'dal'], keys: ['91:6:3', '79:30:4'] }, // ṭaḥāhā / daḥāhā
   { letters: ['tta', 'ta'], keys: ['91:6:3', '91:2:3'] }, // ṭaḥāhā / talāhā
   { letters: ['ta', 'dal'], keys: ['2:111:14', '2:62:5'] }, // hātū / hādū
@@ -449,6 +509,11 @@ export const LAB_PAIR_PICKS: readonly {
   { letters: ['tha', 'zza'], keys: ['2:276:11', '83:5:2'] }, // athīmin / ʿaẓīmin
   { letters: ['lam', 'nun'], keys: ['2:9:7', '2:14:12'] }, // illā / innā
   { letters: ['lam', 'nun'], keys: ['2:12:1', '2:258:21'] }, // alā / anā
+  { letters: ['fa', 'tha'], keys: ['2:264:10', '89:26:2'] }, // yunfiqu / yūthiqu
+  { letters: ['ba', 'mim'], keys: ['2:81:1', '2:214:23'] }, // balā / matā
+  { letters: ['ba', 'waw'], keys: ['2:126:7', '2:116:4'] }, // baladan / waladan
+  { letters: ['mim', 'waw'], keys: ['2:6:8', '2:96:11'] }, // lam / law
+  { letters: ['mim', 'waw'], keys: ['2:6:7', '2:19:1'] }, // am / aw
 ];
 
 /** One word of the lab, in both scripts, with the letter to mark as UTF-16 offsets. */
@@ -531,7 +596,8 @@ const TRAILING = /[\u06D6-\u06ED]+$/u;
  * Whether the reciter carries a nūn sākin or tanwīn from the word before into this one: hidden
  * in its first letter (ikhfāʾ) or merged into it (idghām). Then the word is not heard on its
  * own; its clip starts in the ghunna. Not before a throat letter (iẓhār), not at the start of
- * an āya, not before a hamzat al-waṣl (the reciter adds a vowel to the nūn).
+ * an āya, not before a hamzat al-waṣl (the reciter adds a vowel to the nūn). A mīm sākin does
+ * the same before bāʾ and mīm (ikhfāʾ and idghām shafawī).
  */
 export function nasalBefore(packs: readonly Pack[], key: string): boolean {
   const [sura, aya, n] = key.split(':').map(Number);
@@ -542,7 +608,9 @@ export function nasalBefore(packs: readonly Pack[], key: string): boolean {
   // A fatḥatān sits before the alif (or yāʾ) that carries it: سَبْعًا, هُدًى.
   const end = 'اى'.includes(before.at(-1)!) ? before.slice(0, -1) : before;
   const last = end.at(-1)!;
-  return TANWIN.test(last) || last === 'ن' || (last === '\u0652' && end.at(-2) === 'ن');
+  const sakin = (letter: string) =>
+    last === letter || (last === '\u0652' && end.at(-2) === letter);
+  return TANWIN.test(last) || sakin('ن') || ('بم'.includes(first) && sakin('م'));
 }
 
 function timed(timings: ShippedTimings, key: string): boolean {
@@ -589,7 +657,9 @@ function labWord(
   if (!clip)
     throw new Error(`${key}: not measured; run npm run lab-clips -w @arda/tools`);
   if (nasalBefore(packs.uthmani, key)) {
-    throw new Error(`${key}: follows a nūn sākin or tanwīn, so it starts in the ghunna`);
+    throw new Error(
+      `${key}: follows a nūn sākin, tanwīn or mīm sākin, so it starts in the ghunna`
+    );
   }
   const uthmani = wordIn(packs.uthmani, key);
   const indopak = wordIn(packs.indopak, key).replace(PAUSE_SIGNS, '');
