@@ -146,6 +146,14 @@ cases where they exist (inside a word, across words, after tanwīn), "Ask al-Mu�
 from the card only, and **"where sources differ, we say so"** (iqlāb with ghunna; the sheikh
 can add his note). **Acceptance:** every example on the sheet appears on a card with audio;
 the rule taxonomy test passes (03 §3).
+_(Built (owner, 2026-10-09): each example is heard in al-Ḥuṣarī's teaching recitation where
+the Qurʾān says it – found by its letters in the whole Tanzil text, kept only where the engine
+reads the card's rule there and no nūn or mīm sākin runs into it, timed with quran-align and
+measured in the sound like the lab's words (`npm run card-audio`). The āya's file streams from
+EveryAyah, also for sūras the app does not ship. Where the reciter's vowels differ from the
+sheet's spelling, the card shows the Qurʾān's wording under the example (مِنْ تَابَ is مَن تَابَ in
+Maryam 60). 40 of 41 examples are heard; the sheet's عَلَيْهِمْ سَلَامٌ is a phrase the Qurʾān
+does not have as written and stays silent – a question for the sheikh.)_
 
 ### F3 — The muṣḥaf with tajwīd colours _(Must)_
 
