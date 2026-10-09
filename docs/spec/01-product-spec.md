@@ -186,8 +186,12 @@ and the near pair qāla / kāna; heard as qāf or kāf, and jīm, shīn or yāʾ
 _(Built (2026-10-09): ḍād on the edge of the tongue at the molars and ṭāʾ, dāl, tāʾ at its tip,
 ten words each, the exact pairs baʿḍa / baʿda, ṭaḥāhā / daḥāhā, hātū / hādū and the near pair
 ṭaḥāhā / talāhā; heard as ḍād or dāl, and ṭāʾ, dāl or tāʾ. No lab word follows a nūn sākin or
-tanwīn: the reciter carries the nūn into it and its clip would start in the ghunna. The other 9
-letters follow, set by set.)_
+tanwīn: the reciter carries the nūn into it and its clip would start in the ghunna.)_
+_(Built (2026-10-09): thāʾ, dhāl and ẓāʾ at the edges of the upper incisors, lām and nūn at the
+gum ridge, ten words each; ghunna as a ṣifa. Exact pairs of the three at the teeth do not occur
+in these sūras, so wathāqahu / ʿadhābahu, dhikraka / ẓahraka and athīm / ʿaẓīm are near pairs;
+illā / innā and alā / anā are exact. Heard as thāʾ, dhāl or ẓāʾ, and lām or nūn. The lips
+(ف ب م و) follow.)_
 
 ### F6 — Games _(Must)_
 
