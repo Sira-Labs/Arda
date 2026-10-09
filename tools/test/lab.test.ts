@@ -80,6 +80,11 @@ describe('the letter lab’s words', () => {
       tta: ['ط'],
       dal: ['د'],
       ta: ['ت'],
+      tha: ['ث'],
+      dha: ['ذ'],
+      zza: ['ظ'],
+      lam: ['ل'],
+      nun: ['ن'],
     };
     for (const word of [...lab.words, ...lab.pairs.flatMap((p) => p.words)]) {
       expect(signs[word.letter], word.key).toContain(
@@ -166,12 +171,36 @@ describe('the letter lab’s words', () => {
     ]);
   });
 
+  it('give the teeth, lām and nūn ten words each, one answer to every quiz', () => {
+    // Ẓāʾ keeps clear of ḍād, the letter it is mixed up with in Arabic.
+    const rivals = { tha: 'ثذظ', dha: 'ثذظ', zza: 'ثذظض', lam: 'لن', nun: 'لن' };
+    for (const [letter, chars] of Object.entries(rivals)) {
+      const words = lab.words.filter((w) => w.letter === letter);
+      expect(words, letter).toHaveLength(10);
+      for (const word of words) {
+        const kinds = new Set([...word.uthmani].filter((c) => chars.includes(c)));
+        expect(kinds.size, word.key).toBe(1);
+      }
+    }
+    // Exact pairs of these three are not in these sūras; illā / innā and alā / anā are.
+    const teeth = lab.pairs.filter((p) => ['tha', 'dha', 'lam'].includes(p.letters[0]));
+    expect(teeth.map((p) => [...p.letters, p.exact])).toEqual([
+      ['tha', 'dha', false],
+      ['dha', 'zza', false],
+      ['tha', 'zza', false],
+      ['lam', 'nun', true],
+      ['lam', 'nun', true],
+    ]);
+  });
+
   it('leave out a word the reciter joins to a nūn sākin or tanwīn before it', () => {
     // min sijjīl: the nūn is hidden in the sīn, the word starts in the ghunna.
     expect(nasalBefore(shipped.uthmani, '105:4:4')).toBe(true);
     // fa-man shāʾa; sabʿan shidādan: the same before shīn, after nūn and after tanwīn.
     expect(nasalBefore(shipped.uthmani, '78:39:5')).toBe(true);
     expect(nasalBefore(shipped.uthmani, '78:12:4')).toBe(true);
+    // ṣabran wa-thabbit: a tanwīn merged into the wāw before the letter.
+    expect(nasalBefore(shipped.uthmani, '2:250:10')).toBe(true);
     // min ʿalaqin: said plainly before a throat letter; mālik yawmi: no nūn; the āya's first.
     expect(nasalBefore(shipped.uthmani, '96:2:4')).toBe(false);
     expect(nasalBefore(shipped.uthmani, '1:4:2')).toBe(false);
