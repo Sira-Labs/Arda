@@ -506,6 +506,34 @@ a {
 .example figcaption {
   font-size: 0.8rem;
 }
+/* An example the Qurʾān has: tap it and the reciter says it (spec F2). */
+.example-play {
+  display: grid;
+  justify-items: center;
+  width: 100%;
+  padding: 2px 6px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.example-play:hover:not(:disabled) {
+  border-color: var(--border);
+}
+.example-play[data-playing='true'] {
+  background: var(--playing-bg);
+  border-color: var(--accent-2);
+}
+.example-where {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.example-quran {
+  display: block;
+  font-size: 0.8rem;
+}
 .steps {
   margin: 0;
   padding-inline-start: 22px;

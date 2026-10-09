@@ -137,6 +137,8 @@ export const ar: Messages = {
     next: 'تأتي الوحدات من ٥ (المد) إلى ٧ (الوقف) بعد التجربة الأولى.',
   },
   ruleCard: {
+    play: (sura, aya) => `استمع: سورة ${sura}، آية ${aya}`,
+    inQuran: 'في القرآن:',
     eyebrow: (unit) => `الوحدة ${num(unit)} · الفهم`,
     close: 'إغلاق',
     progress: (index, total) =>

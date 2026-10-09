@@ -1,9 +1,12 @@
 import { IZHAR_EXCEPTIONS, RULES, SHEET_EXAMPLES, detect } from '@arda/tajweed';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { CARD_AUDIO } from '@/content/cardAudio';
 import { UNIT2, UNIT2_CARDS } from '@/content/units';
+import type { Timings } from '@/modules/mushaf/timings';
+import { PlayerContext, type PlayerDeps } from '@/modules/mushaf/usePlayer';
 import { Path } from '@/modules/path/Path';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { ReviewProvider } from '@/review/ReviewProvider';
@@ -19,18 +22,52 @@ const NUN_RULES = new Set([
   'ikhfa',
 ]);
 
-function renderAt(path: string, store = new MemoryReviewStore()) {
+/** An audio element that records what it is asked to play. */
+class FakeAudio extends EventTarget {
+  src = '';
+  currentTime = 0;
+  readyState = 4;
+  playbackRate = 1;
+  defaultPlaybackRate = 1;
+  paused = true;
+  played: string[] = [];
+  play() {
+    this.paused = false;
+    this.played.push(this.src);
+    return Promise.resolve();
+  }
+  pause() {
+    this.paused = true;
+  }
+}
+
+function fakePlayer() {
+  const audio = new FakeAudio();
+  const deps: PlayerDeps = {
+    createAudio: () => audio as unknown as HTMLAudioElement,
+    fetchTimings: async () => ({ ayat: {} }) as unknown as Timings,
+  };
+  return { audio, deps };
+}
+
+function renderAt(
+  path: string,
+  store = new MemoryReviewStore(),
+  player: PlayerDeps = fakePlayer().deps
+) {
   const { client } = fakeApi({});
   return render(
     <Providers client={client}>
-      <ReviewProvider store={store}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/pfad" element={<Path />} />
-            <Route path="/pfad/:unit/:rule" element={<RuleCardPage />} />
-          </Routes>
-        </MemoryRouter>
-      </ReviewProvider>
+      <PlayerContext.Provider value={player}>
+        <ReviewProvider store={store}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route path="/pfad" element={<Path />} />
+              <Route path="/pfad/:unit/:rule" element={<RuleCardPage />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </PlayerContext.Provider>
     </Providers>
   );
 }
@@ -265,5 +302,51 @@ describe('accessible names', () => {
     expect(
       screen.getByRole('region', { name: 'Idghām · ohne Ghunna' })
     ).toBeInTheDocument();
+  });
+});
+
+describe('the examples heard (F2)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('plays an example where the Qurʾān says it, in the teaching recitation', async () => {
+    const { audio, deps } = fakePlayer();
+    renderAt('/pfad/2/izhar', new MemoryReviewStore(), deps);
+    const button = await screen.findByRole('button', { name: 'Anhören: Sūra 1, Āya 7' });
+    await act(async () => {
+      await userEvent.click(button);
+    });
+    // anʿamta: al-Fātiḥa 7, from its measured start.
+    const { clip } = CARD_AUDIO['أَنْعَمْتَ']!;
+    expect(audio.played).toEqual([
+      'https://everyayah.com/data/Husary_Muallim_128kbps/001007.mp3',
+    ]);
+    expect(audio.currentTime).toBe(clip[0] / 1000);
+    expect(button).toHaveAttribute('data-playing', 'true');
+    // Outside the shipped sūras too: min hādin is ar-Raʿd 33.
+    expect(
+      screen.getByRole('button', { name: 'Anhören: Sūra 13, Āya 33' })
+    ).toBeEnabled();
+  });
+
+  it('shows the Qurʾān’s wording where the reciter’s vowels differ from the sheet', () => {
+    renderAt('/pfad/2/ikhfa');
+    const example = screen
+      .getByRole('button', { name: 'Anhören: Sūra 19, Āya 60' })
+      .closest('figure')!;
+    expect(example).toHaveTextContent('Im Qurʾān: مَن تَابَ');
+  });
+
+  it('leaves an example silent that the Qurʾān does not have as written', () => {
+    renderAt('/pfad/3/izhar-shafawi');
+    const examples = screen.getByLabelText('Beispiele');
+    const silent = [...examples.querySelectorAll('figure')].find((f) =>
+      f.textContent?.includes('سَلَامٌ')
+    );
+    expect(silent).toBeDefined();
+    expect(silent!.querySelector('button')).toBeNull();
+    // Its partner from the units' examples is heard.
+    expect(
+      within(examples).getByRole('button', { name: 'Anhören: Sūra 105, Āya 1' })
+    ).toBeVisible();
   });
 });
