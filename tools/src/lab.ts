@@ -440,7 +440,7 @@ export const LAB_PAIR_PICKS: readonly {
   { letters: ['qaf', 'kaf'], keys: ['83:13:5', '78:17:4'] }, // qāla / kāna
   { letters: ['jim', 'shin'], keys: ['110:1:2', '2:20:15'] }, // jāʾa / shāʾa
   { letters: ['jim', 'ya'], keys: ['81:6:3', '81:3:3'] }, // sujjirat / suyyirat
-  { letters: ['dad', 'dal'], keys: ['2:259:30', '2:120:19'] }, // baʿḍa / baʿda
+  { letters: ['dad', 'dal'], keys: ['2:259:30', '2:164:27'] }, // baʿḍa / baʿda
   { letters: ['tta', 'dal'], keys: ['91:6:3', '79:30:4'] }, // ṭaḥāhā / daḥāhā
   { letters: ['tta', 'ta'], keys: ['91:6:3', '91:2:3'] }, // ṭaḥāhā / talāhā
   { letters: ['ta', 'dal'], keys: ['2:111:14', '2:62:5'] }, // hātū / hādū
@@ -531,7 +531,8 @@ const TRAILING = /[\u06D6-\u06ED]+$/u;
  * Whether the reciter carries a nūn sākin or tanwīn from the word before into this one: hidden
  * in its first letter (ikhfāʾ) or merged into it (idghām). Then the word is not heard on its
  * own; its clip starts in the ghunna. Not before a throat letter (iẓhār), not at the start of
- * an āya, not before a hamzat al-waṣl (the reciter adds a vowel to the nūn).
+ * an āya, not before a hamzat al-waṣl (the reciter adds a vowel to the nūn). A mīm sākin does
+ * the same before bāʾ and mīm (ikhfāʾ and idghām shafawī).
  */
 export function nasalBefore(packs: readonly Pack[], key: string): boolean {
   const [sura, aya, n] = key.split(':').map(Number);
@@ -542,7 +543,9 @@ export function nasalBefore(packs: readonly Pack[], key: string): boolean {
   // A fatḥatān sits before the alif (or yāʾ) that carries it: سَبْعًا, هُدًى.
   const end = 'اى'.includes(before.at(-1)!) ? before.slice(0, -1) : before;
   const last = end.at(-1)!;
-  return TANWIN.test(last) || last === 'ن' || (last === '\u0652' && end.at(-2) === 'ن');
+  const sakin = (letter: string) =>
+    last === letter || (last === '\u0652' && end.at(-2) === letter);
+  return TANWIN.test(last) || sakin('ن') || ('بم'.includes(first) && sakin('م'));
 }
 
 function timed(timings: ShippedTimings, key: string): boolean {
@@ -589,7 +592,9 @@ function labWord(
   if (!clip)
     throw new Error(`${key}: not measured; run npm run lab-clips -w @arda/tools`);
   if (nasalBefore(packs.uthmani, key)) {
-    throw new Error(`${key}: follows a nūn sākin or tanwīn, so it starts in the ghunna`);
+    throw new Error(
+      `${key}: follows a nūn sākin, tanwīn or mīm sākin, so it starts in the ghunna`
+    );
   }
   const uthmani = wordIn(packs.uthmani, key);
   const indopak = wordIn(packs.indopak, key).replace(PAUSE_SIGNS, '');

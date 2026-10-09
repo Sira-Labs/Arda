@@ -201,6 +201,9 @@ describe('the letter lab’s words', () => {
     expect(nasalBefore(shipped.uthmani, '78:12:4')).toBe(true);
     // ṣabran wa-thabbit: a tanwīn merged into the wāw before the letter.
     expect(nasalBefore(shipped.uthmani, '2:250:10')).toBe(true);
+    // minhum bal, ahwāʾahum baʿda: a mīm sākin hidden in the bāʾ (ikhfāʾ shafawī).
+    expect(nasalBefore(shipped.uthmani, '2:100:7')).toBe(true);
+    expect(nasalBefore(shipped.uthmani, '2:120:19')).toBe(true);
     // min ʿalaqin: said plainly before a throat letter; mālik yawmi: no nūn; the āya's first.
     expect(nasalBefore(shipped.uthmani, '96:2:4')).toBe(false);
     expect(nasalBefore(shipped.uthmani, '1:4:2')).toBe(false);
