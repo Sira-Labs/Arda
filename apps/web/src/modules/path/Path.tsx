@@ -1,7 +1,14 @@
 import { passedUnits } from '@arda/engagement';
 import { RULES } from '@arda/tajweed';
 import { Link } from 'react-router-dom';
-import { CARDS, CARD_UNITS, UNIT_CARDS, cardName, type CardUnit } from '@/content/units';
+import {
+  CARDS,
+  CARD_UNITS,
+  TEST_UNITS,
+  UNIT_CARDS,
+  cardName,
+  type CardUnit,
+} from '@/content/units';
 import { useI18n } from '@/i18n/I18nProvider';
 import { SaveProgressHint } from '@/modules/account/SaveProgressHint';
 import { useReview } from '@/review/ReviewProvider';
@@ -34,15 +41,29 @@ export function Path() {
       <h1>{m.path.eyebrow}</h1>
 
       <section className="stack" style={{ gap: 12 }} aria-labelledby="unit-1">
-        <h2 id="unit-1">{m.path.units[1].title}</h2>
+        <h2 id="unit-1">
+          {m.path.units[1].title}
+          {passed.has(1) && (
+            <span className="chip chip-done" style={{ marginInlineStart: 8 }}>
+              ✓ {m.games.test.passed}
+            </span>
+          )}
+        </h2>
         <p className="muted">{m.path.units[1].intro}</p>
-        <Link className="card path-card" to="/labor">
-          <strong>{m.path.lab}</strong>
-        </Link>
+        <ul className="stack path-cards" style={{ gap: 12 }}>
+          <li>
+            <Link className="card path-card" to="/labor">
+              <strong>{m.path.lab}</strong>
+            </Link>
+          </li>
+          <li>
+            <TestCard unit={1} passed={passed.has(1)} />
+          </li>
+        </ul>
       </section>
 
       {CARD_UNITS.map((unit) => {
-        const before = CARD_UNITS.filter((u) => u < unit).at(-1);
+        const before = TEST_UNITS.filter((u) => u < unit).at(-1);
         return (
           <section
             key={unit}
@@ -133,19 +154,27 @@ function Unit({ unit, passed }: { unit: CardUnit; passed: boolean }) {
           </li>
         ))}
         <li>
-          <Link className="card path-card" to={`/pfad/${unit}/test`}>
-            <span className="stack" style={{ gap: 4 }}>
-              <strong>{m.games.test.title}</strong>
-              <span className="muted">{m.games.test.intro}</span>
-            </span>
-            {passed ? (
-              <span className="chip chip-done">✓ {m.games.test.passed}</span>
-            ) : (
-              <span className="chip">{m.games.test.open}</span>
-            )}
-          </Link>
+          <TestCard unit={unit} passed={passed} />
         </li>
       </ul>
     </>
+  );
+}
+
+/** A unit's test card: ten questions, eight to pass, and whether it is passed (ADR-0024). */
+function TestCard({ unit, passed }: { unit: number; passed: boolean }) {
+  const { m } = useI18n();
+  return (
+    <Link className="card path-card" to={`/pfad/${unit}/test`}>
+      <span className="stack" style={{ gap: 4 }}>
+        <strong>{m.games.test.title}</strong>
+        <span className="muted">{m.games.test.intro}</span>
+      </span>
+      {passed ? (
+        <span className="chip chip-done">✓ {m.games.test.passed}</span>
+      ) : (
+        <span className="chip">{m.games.test.open}</span>
+      )}
+    </Link>
   );
 }

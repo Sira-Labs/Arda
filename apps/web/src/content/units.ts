@@ -23,6 +23,13 @@ export const UNIT_CARDS = {
 export type CardUnit = keyof typeof UNIT_CARDS;
 export const CARD_UNITS = [2, 3, 4] as const satisfies readonly CardUnit[];
 
+/**
+ * The units with a test (ADR-0024): unit 1, the letter lab, since it has all 28 letters
+ * (2026-10-09), and the units with rule cards.
+ */
+export const TEST_UNITS = [1, ...CARD_UNITS] as const;
+export type TestUnit = (typeof TEST_UNITS)[number];
+
 export const UNIT2_CARDS = UNIT_CARDS[2];
 export type Unit2Card = (typeof UNIT_CARDS)[2][number];
 export type Unit3Card = (typeof UNIT_CARDS)[3][number];

@@ -1,14 +1,22 @@
-import { useState } from 'react';
+import { passedUnits } from '@arda/engagement';
+import { useState, type ReactNode } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import type { Random } from '@/games/questions';
 import { useI18n } from '@/i18n/I18nProvider';
+import { testVerdict } from '@/modules/games/testVerdict';
 import { Soon } from '@/modules/Soon';
 import { useReview } from '@/review/ReviewProvider';
 import { PlayIcon } from '../mushaf/PlayerBar';
 import { LETTERS, isLabLetter } from './letters';
 import { SpeedChoice, Status } from './LetterPage';
-import { answersOf, labRound, type LabAnswer, type LabQuestion } from './quiz';
+import {
+  answersOf,
+  labRound,
+  labUnitTest,
+  type LabAnswer,
+  type LabQuestion,
+} from './quiz';
 import type { LabLetterId } from './types';
 import { useWordPlayer, type WordPlayer } from './useWordPlayer';
 import { WordText } from './WordText';
@@ -33,10 +41,82 @@ export function LabQuiz({
   random?: Random;
 }) {
   const { m } = useI18n();
+  const t = m.lab.quiz[LETTERS[letter].quiz];
+  return (
+    <ListeningRound
+      makeRound={() => labRound(letter, random)}
+      eyebrow={`${m.lab.eyebrow} · ${m.lab.letters[letter].name}`}
+      title={t.title}
+      prompt={() => t.question}
+      closeTo={`/labor/${letter}`}
+      activity={{ kind: 'lab-quiz', ref: letter }}
+      back={
+        <Link className="btn" to={`/labor/${letter}`}>
+          {m.lab.quiz.back}
+        </Link>
+      }
+    />
+  );
+}
+
+/** `/pfad/1/test`: unit 1's test, ten words across the whole lab (ADR-0024). */
+export function LabUnitTest({ random = Math.random }: { random?: Random }) {
+  const { m } = useI18n();
+  const review = useReview();
+  return (
+    <ListeningRound
+      makeRound={() => labUnitTest(random)}
+      eyebrow={m.games.eyebrow(1)}
+      title={m.games.test.title}
+      intro={m.lab.unitTest}
+      // Each word says which letters it is heard against: "Qāf oder Kāf?".
+      prompt={(question) => m.lab.quiz[question.kind].title}
+      closeTo="/pfad"
+      activity={{ kind: 'unit-test', ref: 'unit-1' }}
+      verdict={(right, total) =>
+        testVerdict(
+          m,
+          1,
+          right,
+          total,
+          passedUnits(Object.values(review.deck.activity ?? {}))
+        )
+      }
+      back={
+        <Link className="btn" to="/pfad">
+          {m.games.back}
+        </Link>
+      }
+    />
+  );
+}
+
+/** A listening round: words heard one after the other, an answer each, then the score. */
+function ListeningRound({
+  makeRound,
+  eyebrow,
+  title,
+  intro,
+  prompt,
+  closeTo,
+  activity,
+  verdict,
+  back,
+}: {
+  makeRound: () => LabQuestion[];
+  eyebrow: string;
+  title: string;
+  intro?: string;
+  prompt: (question: LabQuestion) => string;
+  closeTo: string;
+  activity: { kind: 'lab-quiz' | 'unit-test'; ref: string };
+  /** What the score means, for a unit test. */
+  verdict?: (right: number, total: number) => string;
+  back: ReactNode;
+}) {
+  const { m } = useI18n();
   const player = useWordPlayer();
-  const kind = LETTERS[letter].quiz;
-  const t = m.lab.quiz[kind];
-  const [round, setRound] = useState(() => labRound(letter, random));
+  const [round, setRound] = useState(makeRound);
   const [index, setIndex] = useState(0);
   const [chosen, setChosen] = useState<LabAnswer | null>(null);
   const [right, setRight] = useState(0);
@@ -55,9 +135,7 @@ export function LabQuiz({
     setChosen(null);
     if (index + 1 >= round.length) {
       player.stop();
-      setXp(
-        review.logActivity({ kind: 'lab-quiz', ref: letter, right, total: round.length })
-      );
+      setXp(review.logActivity({ ...activity, right, total: round.length }));
       setDone(true);
       return;
     }
@@ -67,7 +145,7 @@ export function LabQuiz({
     if (word) player.play(word.key);
   };
   const again = () => {
-    setRound(labRound(letter, random));
+    setRound(makeRound());
     setIndex(0);
     setChosen(null);
     setRight(0);
@@ -76,19 +154,18 @@ export function LabQuiz({
 
   return (
     <LearningShell
-      closeTo={`/labor/${letter}`}
+      closeTo={closeTo}
       progress={done ? 1 : index / Math.max(1, round.length)}
     >
       <div className="stack" style={{ gap: 20 }}>
         <div className="row" style={{ justifyContent: 'space-between' }}>
-          <p className="eyebrow">
-            {m.lab.eyebrow} · {m.lab.letters[letter].name}
-          </p>
+          <p className="eyebrow">{eyebrow}</p>
           {!done && (
             <span className="muted">{m.games.progress(index + 1, round.length)}</span>
           )}
         </div>
-        <h1 className="rule-title">{t.title}</h1>
+        <h1 className="rule-title">{title}</h1>
+        {intro && index === 0 && !chosen && !done && <p className="muted">{intro}</p>}
 
         {done ? (
           <section className="card stack" style={{ gap: 12 }} role="status">
@@ -100,22 +177,25 @@ export function LabQuiz({
                 </span>
               )}
             </div>
+            {verdict && (
+              <p>
+                <strong>{verdict(right, round.length)}</strong>
+              </p>
+            )}
             <div className="row">
               {/* The quiz's end takes the focus the last answer's button had. */}
               <button type="button" className="btn btn-primary" onClick={again} autoFocus>
                 {m.games.again}
               </button>
-              <Link className="btn" to={`/labor/${letter}`}>
-                {m.lab.quiz.back}
-              </Link>
+              {back}
             </div>
           </section>
         ) : question ? (
           <QuestionView
-            key={question.word.key}
+            key={`${index}:${question.word.key}`}
             question={question}
-            options={answersOf(kind)}
-            prompt={t.question}
+            options={answersOf(question.kind)}
+            prompt={prompt(question)}
             chosen={chosen}
             player={player}
             onChoose={choose}

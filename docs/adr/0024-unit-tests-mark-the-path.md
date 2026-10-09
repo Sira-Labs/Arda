@@ -28,7 +28,7 @@ The owner was offered a soft and a hard variant and did not object to the soft o
 - **Soft, not locked.** A passed test puts "✓ Bestanden" on the unit and its test card. Until the
   unit before is passed, a unit says "Empfohlen nach dem Test von Einheit N" — and stays open.
 - Unit 1 (the letter lab) has no unit test yet: its four letters have their own quizzes; a test
-  follows when the lab has all 28 letters.
+  follows when the lab has all 28 letters (done: see the update below).
 
 ## Alternatives
 
@@ -43,3 +43,20 @@ The owner was offered a soft and a hard variant and did not object to the soft o
   of "unlocks".
 - Changing the pass mark changes who has passed, since it is computed from the scores; the
   scores themselves are kept.
+
+## Update 2026-10-09: unit 1's test
+
+The lab has all 28 letters (spec 01 F5), so unit 1 has its test at `/pfad/1/test` (the owner
+asked for it the same day). It tests what the lab trains, the ear:
+
+- **Ten words, each from a different listening quiz** of the lab, drawn from all thirteen
+  (the whistling three, the throat, the tongue, the teeth, the lips, rāʾ heavy or light). Each
+  is answered against the letters it is heard against, and says so ("Qāf oder Kāf?"), so a
+  test covers the lab from the throat to the lips without asking one letter twice.
+- **The same rules as units 2–4:** eight right pass it; the round is logged as `unit-test` with
+  ref `unit-1`; the pass marks unit 1 on the path and unit 2 is "Empfohlen nach dem Test von
+  Einheit 1" until then. Nothing is locked.
+- **Where it is played:** in the lab's listening round, heard and not seen, with its speeds.
+  Its mistakes do not become review cards, as in the lab's own quizzes: a review card asks a
+  rule, and the lab's words are no rules.
+- "Every unit done" now needs unit 1's test too.

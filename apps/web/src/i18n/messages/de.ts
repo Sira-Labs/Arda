@@ -95,7 +95,7 @@ export const de = {
       1: {
         title: 'Einheit 1 · Makhārij und Ṣifāt',
         intro:
-          'Wo jeder Buchstabe entsteht: fünf Bereiche, siebzehn Stellen. Im Labor beginnst du mit Sīn, Zāy, Ṣād und Rāʾ – die übrigen Buchstaben folgen.',
+          'Wo jeder Buchstabe entsteht: fünf Bereiche, siebzehn Stellen, alle 28 Buchstaben im Labor. Am Ende hörst du zehn Wörter quer durch das Labor.',
       },
       2: {
         title: 'Einheit 2 · Nūn sākina und Tanwīn',
@@ -768,6 +768,9 @@ export const de = {
     more: 'Alle 28 Buchstaben sind da. Zeichnung und Texte prüft dein Sheikh noch.',
     draft: 'Entwurf – der Sheikh prüft noch',
     back: 'Zum Labor',
+    /** Unit 1's test, heard across the whole lab (ADR-0024). */
+    unitTest:
+      'Zehn Wörter quer durch das Labor, nur zum Hören. Bei jedem steht, welche Buchstaben in Frage kommen.',
     diagram: {
       title: 'Der Kopf von der Seite',
       description:

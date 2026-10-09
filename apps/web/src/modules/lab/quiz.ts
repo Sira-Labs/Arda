@@ -7,6 +7,8 @@ import { LAB_WORDS } from './words';
 export type LabAnswer = HeardId | Weight;
 
 export interface LabQuestion {
+  /** The quiz the question comes from: which answers it offers. */
+  kind: QuizKind;
   word: LabWord;
   answer: LabAnswer;
 }
@@ -47,7 +49,37 @@ export function labRound(
   return shuffle(words, random)
     .slice(0, ROUNDS)
     .map((word) => ({
+      kind,
       word,
       answer: kind === 'weight' ? (word.weight ?? 'heavy') : (word.letter as HeardId),
     }));
+}
+
+/** Every listening quiz of the lab, rāʾ's heavy or light among them. */
+export const QUIZ_KINDS = [
+  ...(Object.keys(QUIZ_LETTERS) as Exclude<QuizKind, 'weight'>[]),
+  'weight',
+] as const satisfies readonly QuizKind[];
+
+/**
+ * Unit 1's test (ADR-0024): one word from each of ten listening quizzes, drawn from all of
+ * them, so the test runs through the whole lab – throat, tongue and lips – and every question
+ * is asked against the letters it is mixed up with. Eight right answers pass it.
+ */
+export function labUnitTest(random: Random = Math.random): LabQuestion[] {
+  const pick = <T>(items: readonly T[]) => shuffle(items, random)[0]!;
+  return shuffle(QUIZ_KINDS, random)
+    .slice(0, ROUNDS)
+    .map((kind): LabQuestion => {
+      if (kind === 'weight') {
+        const word = pick(LAB_WORDS.filter((w) => w.letter === 'ra'));
+        return { kind, word, answer: word.weight ?? 'heavy' };
+      }
+      const letter = pick(QUIZ_LETTERS[kind]);
+      return {
+        kind,
+        word: pick(LAB_WORDS.filter((w) => w.letter === letter)),
+        answer: letter,
+      };
+    });
 }

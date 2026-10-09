@@ -63,7 +63,7 @@ export const en: Messages = {
       1: {
         title: 'Unit 1 · Makhārij and ṣifāt',
         intro:
-          'Where each letter is made: five areas, seventeen points. In the lab you start with sīn, zāy, ṣād and rāʾ; the other letters follow.',
+          'Where each letter is made: five areas, seventeen points, all 28 letters in the lab. At the end you hear ten words from across the lab.',
       },
       2: {
         title: 'Unit 2 · Nūn sākina and tanwīn',
@@ -718,6 +718,9 @@ export const en: Messages = {
     more: 'All 28 letters are here. Your sheikh is still checking the drawing and the texts.',
     draft: 'Draft – the sheikh is still checking',
     back: 'To the lab',
+    /** Unit 1's test, heard across the whole lab (ADR-0024). */
+    unitTest:
+      'Ten words from across the lab, by ear only. Each one says which letters it could be.',
     diagram: {
       title: 'The head from the side',
       description:
