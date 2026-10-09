@@ -748,6 +748,10 @@ export const de = {
         title: 'Die Kehle: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn und Khāʾ',
         hint: 'Sechs Laute aus der Kehle, von tief nach oben. Im Deutschen gibt es nur das h und den Knacklaut – die anderen lernst du hier neu.',
       },
+      tongueBack: {
+        title: 'Hinterzunge und Zungenmitte: Qāf, Kāf, Jīm, Shīn und Yāʾ',
+        hint: 'Fünf Laute vom Zungenrücken. Qāf und Kāf liegen dicht beieinander – hier lernst du, sie zu trennen.',
+      },
     } as Record<LabSet, { title: string; hint: string }>,
     more: 'Die übrigen Buchstaben folgen, sobald dein Sheikh die Zeichnung geprüft hat.',
     draft: 'Entwurf – der Sheikh prüft noch',
@@ -772,6 +776,9 @@ export const de = {
       halqDeep: { line1: 'Tiefster Teil', line2: 'der Kehle' },
       halqMid: { line1: 'Mitte', line2: 'der Kehle' },
       halqNear: { line1: 'Oberer Teil', line2: 'der Kehle' },
+      tongueFar: { line1: 'Hinterste Zunge', line2: 'weicher Gaumen' },
+      tongueBack: { line1: 'Hinterzunge,', line2: 'etwas vor Qāf' },
+      tongueMid: { line1: 'Zungenmitte', line2: 'harter Gaumen' },
     } as Record<Point, { line1: string; line2: string }>,
     letters: {
       sin: {
@@ -885,6 +892,61 @@ export const de = {
           'Nicht mit Ḥāʾ verwechseln: Bei Khāʾ reibt es oben, bei Ḥāʾ ist nur die Kehle eng.',
         ],
       },
+      qaf: {
+        name: 'Qāf',
+        short: 'schwer, tief hinten, mit Qalqala',
+        makhraj:
+          'Der hinterste Teil der Zunge hebt sich an den weichen Gaumen darüber und schließt kurz ab – weiter hinten als Kāf.',
+        mistakes: [
+          'Nicht wie das deutsche k: Qāf entsteht weiter hinten, am weichen Gaumen – sonst wird aus قَدْحًا („Funken schlagend“) كَدْحًا („Mühe“).',
+          'Schwer (Istiʿlāʾ): Der Zungenrücken hebt sich, der Vokal danach klingt voll und dunkel.',
+          'Kein Hauch danach: Qāf ist stimmhaft und fest. Mit Sukūn federt es kurz nach (Qalqala) – ٱلْقَدْرِ.',
+        ],
+      },
+      kaf: {
+        name: 'Kāf',
+        short: 'leicht, mit einem Hauch',
+        makhraj:
+          'Der hintere Teil der Zunge am Gaumen, ein wenig weiter vorn und tiefer als bei Qāf.',
+        mistakes: [
+          'Leicht bleiben (Istifāl): Der Vokal danach klingt hell. Ein dunkles Kāf klingt wie Qāf.',
+          'Mit einem leisen Hauch (Hams), vor allem mit Sukūn – hörbar, aber nicht übertrieben.',
+          'Nicht nach hinten zum Qāf ziehen: Sonst wird aus كَدْحًا („Mühe“) قَدْحًا („Funken schlagend“).',
+        ],
+      },
+      jim: {
+        name: 'Jīm',
+        short: 'fest, stimmhaft, mit Qalqala',
+        makhraj:
+          'Die Mitte der Zunge legt sich an den harten Gaumen darüber – dieselbe Stelle wie Shīn und Yāʾ.',
+        mistakes: [
+          'Fest (Shidda): Die Zunge schließt ganz ab, wie dsch in „Dschungel“ – nicht weich wie das j in „Journal“.',
+          'Stimmhaft: Ohne Stimme und ohne den Abschluss wird es Shīn – aus جَآءَ („er kam“) wird شَآءَ („er wollte“).',
+          'Mit Sukūn federt Jīm kurz nach (Qalqala), ohne einen Vokal anzuhängen.',
+        ],
+      },
+      shin: {
+        name: 'Shīn',
+        short: 'stimmlos, die Luft breitet sich aus',
+        makhraj:
+          'Die Mitte der Zunge zum harten Gaumen, wie bei Jīm und Yāʾ – aber ohne Abschluss: Die Luft strömt hindurch und breitet sich im Mund aus (Tafashshī).',
+        mistakes: [
+          'Wie sch in „Schule“, aber ohne die Lippen vorzuschieben: Sie bleiben locker.',
+          'Nicht wie Sīn: Bei Shīn liegt die Zungenmitte am Gaumen, nicht die Spitze an den Zähnen; es pfeift nicht.',
+          'Leicht (Istifāl) und stimmlos (Hams): kein Summen wie das j in „Journal“.',
+        ],
+      },
+      ya: {
+        name: 'Yāʾ',
+        short: 'weich, stimmhaft, wie j in „ja“',
+        makhraj:
+          'Die Mitte der Zunge zum harten Gaumen, wie bei Jīm und Shīn – mit Raum dazwischen, der Laut fließt weiter.',
+        mistakes: [
+          'Wie das deutsche j in „ja“: weich, ohne Reiben und ohne Stoß.',
+          'Nicht zu Jīm werden lassen: Die Zunge legt sich nicht fest an den Gaumen – sonst wird aus سُيِّرَتْ („in Bewegung gesetzt“) سُجِّرَتْ („entflammt“).',
+          'Ein Yāʾ mit Vokal ist ein Konsonant, kein Dehnungslaut: يَوْمِ beginnt mit j, nicht mit i.',
+        ],
+      },
     } as Record<LabLetterId, LetterTexts>,
     makhraj: 'Makhraj · wo er entsteht',
     sifat: 'Ṣifāt · seine Eigenschaften',
@@ -949,6 +1011,15 @@ export const de = {
         meaning:
           'Wiederholen: Die Zunge neigt zum Zittern – du kennst es, um es zu vermeiden.',
       },
+      qalqala: {
+        name: 'Qalqala',
+        meaning:
+          'Nachfedern: Mit Sukūn springt der Laut kurz nach, wie ein kleines Echo (ق ط ب ج د).',
+      },
+      tafashshi: {
+        name: 'Tafashshī',
+        meaning: 'Ausbreiten: Die Luft verteilt sich im ganzen Mund (nur Shīn).',
+      },
     } as Record<Sifa, { name: string; meaning: string }>,
     mistakesTitle: 'Typische Fehler',
     raRules: {
@@ -995,6 +1066,18 @@ export const de = {
           'Zehn Wörter, nur zum Hören: Reibt es ohne Stimme (Khāʾ) oder mit Stimme (Ghayn)?',
         question: 'Welchen Buchstaben hörst du?',
       },
+      qafKaf: {
+        title: 'Qāf oder Kāf?',
+        intro:
+          'Zehn Wörter, nur zum Hören: tief und schwer (Qāf) oder weiter vorn und leicht (Kāf)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
+      middle: {
+        title: 'Jīm, Shīn oder Yāʾ?',
+        intro:
+          'Zehn Wörter, nur zum Hören: fest mit Stimme (Jīm), ein breites Rauschen (Shīn) oder weich wie j in „ja“ (Yāʾ)?',
+        question: 'Welchen Buchstaben hörst du?',
+      },
       weight: {
         title: 'Schwer oder leicht?',
         intro: 'Zehn Wörter mit Rāʾ: Klingt es schwer oder leicht?',
@@ -1012,6 +1095,11 @@ export const de = {
         hha: 'Ḥāʾ: ein kräftiger Hauch aus der engen Kehle, ohne Reiben oben.',
         ghayn: 'Ghayn: ein weiches Reiben mit Stimme.',
         kha: 'Khāʾ: ein Reiben ohne Stimme, wie in „Bach“.',
+        qaf: 'Qāf: tief hinten und schwer, der Vokal klingt dunkel.',
+        kaf: 'Kāf: weiter vorn, leicht, mit leisem Hauch.',
+        jim: 'Jīm: fest und stimmhaft, wie dsch.',
+        shin: 'Shīn: ein breites Rauschen ohne Stimme.',
+        ya: 'Yāʾ: weich, wie j in „ja“.',
         sin: 'Sīn: leicht, scharf und stimmlos.',
         zay: 'Zāy: stimmhaft – es summt –, aber dünn.',
         sad: 'Ṣād: schwer, der Zungenrücken hebt sich.',

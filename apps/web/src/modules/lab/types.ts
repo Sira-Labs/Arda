@@ -1,14 +1,21 @@
 /**
  * The lab's sets of letters, in the order they are taught: first the three whistling letters
- * and rāʾ (owner, 2026-10-06), then the six of the throat, from the deepest out (2026-10-07).
+ * and rāʾ (owner, 2026-10-06), then the six of the throat, from the deepest out (2026-10-07),
+ * then the back and the middle of the tongue (2026-10-09). Ḍād, planned with these, waits for
+ * the next set, where it is heard against dāl, the sound German speakers put in its place.
  */
 export const LAB_SETS = {
   first: ['sin', 'zay', 'sad', 'ra'],
   throat: ['hamza', 'ha', 'ayn', 'hha', 'ghayn', 'kha'],
+  tongueBack: ['qaf', 'kaf', 'jim', 'shin', 'ya'],
 } as const;
 export type LabSet = keyof typeof LAB_SETS;
 
-export const LAB_LETTERS = [...LAB_SETS.first, ...LAB_SETS.throat] as const;
+export const LAB_LETTERS = [
+  ...LAB_SETS.first,
+  ...LAB_SETS.throat,
+  ...LAB_SETS.tongueBack,
+] as const;
 export type LabLetterId = (typeof LAB_LETTERS)[number];
 /** The letters a listening quiz can answer with: every letter of the lab but rāʾ. */
 export type HeardId = Exclude<LabLetterId, 'ra'>;

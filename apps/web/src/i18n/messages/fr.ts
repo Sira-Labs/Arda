@@ -719,6 +719,10 @@ export const fr: Messages = {
         title: 'La gorge\u202f: Hamza, Hāʾ, ʿAyn, Ḥāʾ, Ghayn et Khāʾ',
         hint: 'Six sons de la gorge, du plus profond vers le haut. L’allemand n’a que le h et le coup de glotte – les autres sont nouveaux.',
       },
+      tongueBack: {
+        title: 'Arrière et milieu de la langue\u202f: Qāf, Kāf, Jīm, Shīn et Yāʾ',
+        hint: 'Cinq sons du dos de la langue. Le Qāf et le Kāf sont tout proches – ici tu apprends à les distinguer.',
+      },
     },
     more: 'Les autres lettres suivront dès que ton cheikh aura vérifié le dessin.',
     draft: 'Brouillon – le cheikh vérifie encore',
@@ -747,6 +751,9 @@ export const fr: Messages = {
       halqDeep: { line1: 'Fond', line2: 'de la gorge' },
       halqMid: { line1: 'Milieu', line2: 'de la gorge' },
       halqNear: { line1: 'Haut', line2: 'de la gorge' },
+      tongueFar: { line1: 'Fond de langue', line2: 'voile du palais' },
+      tongueBack: { line1: 'Fond de langue', line2: 'devant le Qāf' },
+      tongueMid: { line1: 'Milieu', line2: 'de la langue' },
     },
     letters: {
       sin: {
@@ -860,6 +867,61 @@ export const fr: Messages = {
           'Ne pas le confondre avec le Ḥāʾ\u202f: le Khāʾ frotte plus haut\u202f; pour le Ḥāʾ, seule la gorge se resserre.',
         ],
       },
+      qaf: {
+        name: 'Qāf',
+        short: 'emphatique, profond, avec qalqala',
+        makhraj:
+          'L’arrière extrême de la langue se lève contre le voile du palais au-dessus et le ferme brièvement – plus en arrière que le Kāf.',
+        mistakes: [
+          'Pas comme le k allemand\u202f: le Qāf naît plus en arrière, au voile du palais – sinon قَدْحًا («\u202fen faisant jaillir des étincelles\u202f») devient كَدْحًا («\u202fpeine\u202f»).',
+          'Emphatique (Istiʿlāʾ)\u202f: l’arrière de la langue se lève, la voyelle suivante sonne pleine et sombre.',
+          'Pas de souffle après\u202f: le Qāf est sonore et ferme. Avec sukūn, il rebondit brièvement (qalqala) – ٱلْقَدْرِ.',
+        ],
+      },
+      kaf: {
+        name: 'Kāf',
+        short: 'léger, avec un souffle',
+        makhraj:
+          'L’arrière de la langue contre le palais, un peu plus en avant et plus bas que pour le Qāf.',
+        mistakes: [
+          'Rester léger (Istifāl)\u202f: la voyelle suivante sonne claire. Un Kāf sombre ressemble au Qāf.',
+          'Avec un léger souffle (Hams), surtout avec sukūn – audible, mais sans exagérer.',
+          'Ne pas le reculer vers le Qāf\u202f: sinon كَدْحًا («\u202fpeine\u202f») devient قَدْحًا («\u202fen faisant jaillir des étincelles\u202f»).',
+        ],
+      },
+      jim: {
+        name: 'Jīm',
+        short: 'ferme, sonore, avec qalqala',
+        makhraj:
+          'Le milieu de la langue contre le palais dur au-dessus – au même endroit que le Shīn et le Yāʾ.',
+        mistakes: [
+          'Ferme (Shidda)\u202f: la langue ferme complètement, comme dj dans «\u202fdjinn\u202f» – pas doux comme le j de «\u202fjour\u202f».',
+          'Sonore\u202f: sans voix et sans fermeture, il devient Shīn – جَآءَ («\u202fil est venu\u202f») devient شَآءَ («\u202fil a voulu\u202f»).',
+          'Avec sukūn, le Jīm rebondit brièvement (qalqala), sans ajouter de voyelle.',
+        ],
+      },
+      shin: {
+        name: 'Shīn',
+        short: 'sourd, l’air se répand',
+        makhraj:
+          'Le milieu de la langue vers le palais dur, comme le Jīm et le Yāʾ – mais sans fermer\u202f: l’air passe et se répand dans la bouche (Tafashshī).',
+        mistakes: [
+          'Comme le ch de «\u202fchat\u202f», mais sans avancer les lèvres\u202f: elles restent détendues.',
+          'Pas comme le Sīn\u202f: pour le Shīn, c’est le milieu de la langue contre le palais, pas la pointe contre les dents\u202f; il ne siffle pas.',
+          'Léger (Istifāl) et sourd (Hams)\u202f: pas de vibration comme le j de «\u202fjour\u202f».',
+        ],
+      },
+      ya: {
+        name: 'Yāʾ',
+        short: 'doux, sonore, comme le y de «\u202fyeux\u202f»',
+        makhraj:
+          'Le milieu de la langue vers le palais dur, comme le Jīm et le Shīn – avec un espace, le son continue.',
+        mistakes: [
+          'Comme le y de «\u202fyeux\u202f»\u202f: doux, sans frottement ni coup.',
+          'Ne pas en faire un Jīm\u202f: la langue ne se colle pas au palais – sinon سُيِّرَتْ («\u202fmises en marche\u202f») devient سُجِّرَتْ («\u202fembrasées\u202f»).',
+          'Un Yāʾ avec voyelle est une consonne, pas une voyelle longue\u202f: يَوْمِ commence par y, pas par i.',
+        ],
+      },
     },
     makhraj: 'Makhraj · où il naît',
     sifat: 'Ṣifāt · ses qualités',
@@ -926,6 +988,16 @@ export const fr: Messages = {
         meaning:
           'Répétition\u202f: la langue a tendance à vibrer – tu le connais pour l’éviter.',
       },
+      qalqala: {
+        name: 'Qalqala',
+        meaning:
+          'Rebond\u202f: avec sukūn, le son rebondit brièvement, comme un petit écho (ق ط ب ج د).',
+      },
+      tafashshi: {
+        name: 'Tafashshī',
+        meaning:
+          'Diffusion\u202f: l’air se répand dans toute la bouche (seulement le Shīn).',
+      },
     },
     mistakesTitle: 'Erreurs fréquentes',
     raRules: {
@@ -972,6 +1044,18 @@ export const fr: Messages = {
           'Dix mots, à l’oreille seulement\u202f: le frottement est-il sans voix (Khāʾ) ou avec voix (Ghayn)\u202f?',
         question: 'Quelle lettre entends-tu\u202f?',
       },
+      qafKaf: {
+        title: 'Qāf ou Kāf\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: profond et emphatique (Qāf) ou plus en avant et léger (Kāf)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
+      middle: {
+        title: 'Jīm, Shīn ou Yāʾ\u202f?',
+        intro:
+          'Dix mots, à l’oreille seulement\u202f: ferme avec voix (Jīm), un souffle large (Shīn) ou doux comme le y de «\u202fyeux\u202f» (Yāʾ)\u202f?',
+        question: 'Quelle lettre entends-tu\u202f?',
+      },
       weight: {
         title: 'Lourd ou léger\u202f?',
         intro: 'Dix mots avec Rāʾ\u202f: sonne-t-il lourd ou léger\u202f?',
@@ -989,6 +1073,11 @@ export const fr: Messages = {
         hha: 'Ḥāʾ\u202f: un souffle fort de la gorge resserrée, sans frottement en haut.',
         ghayn: 'Ghayn\u202f: un frottement doux avec voix.',
         kha: 'Khāʾ\u202f: un frottement sans voix, comme dans «\u202fBach\u202f».',
+        qaf: 'Qāf\u202f: profond et emphatique, la voyelle sonne sombre.',
+        kaf: 'Kāf\u202f: plus en avant, léger, avec un léger souffle.',
+        jim: 'Jīm\u202f: ferme et sonore, comme dj.',
+        shin: 'Shīn\u202f: un souffle large sans voix.',
+        ya: 'Yāʾ\u202f: doux, comme le y de «\u202fyeux\u202f».',
         sin: 'Sīn\u202f: léger, net et sourd.',
         zay: 'Zāy\u202f: sonore – il vibre –, mais fin.',
         sad: 'Ṣād\u202f: lourd, l’arrière de la langue se lève.',
