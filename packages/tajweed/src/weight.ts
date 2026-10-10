@@ -149,7 +149,12 @@ function sakinRa(gs: readonly Grapheme[], i: number): Occurrence {
   const g = gs[i] as Grapheme;
   for (let j = i - 1; j >= 0; j--) {
     const before = gs[j] as Grapheme;
-    if (before.char === ALIF_WASLA) return occurrence('ra-heavy', g, 'after-wasla');
+    // Alif waṣla (وَٱرْكَعُوا۟), or the bare alif that spells it at the start of a word
+    // without ٱ (ارْجِعِي).
+    const bareAlif = before.wordStart && before.char === 'ا' && before.marks === '';
+    if (before.char === ALIF_WASLA || bareAlif) {
+      return occurrence('ra-heavy', g, 'after-wasla');
+    }
     const vowel = vowelOf(before);
     if (vowel === 'kasra') {
       const after = gs[i + 1];
