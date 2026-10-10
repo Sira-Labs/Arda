@@ -611,6 +611,10 @@ export const ar: Messages = {
     failed: 'لم ينجح ذلك. حاول مجددًا أو استخدم رابطًا أو رمزًا.',
   },
   recite: {
+    voiceNote: 'ملاحظة صوتية (اختيارية، حتى دقيقتين)',
+    voiceRecord: 'سجّل ملاحظة صوتية',
+    voiceRemove: 'احذف الملاحظة الصوتية',
+    voiceFrom: (name) => (name ? `ملاحظة صوتية من ${name}` : 'ملاحظة صوتية من شيخك'),
     marksHint: 'أثناء الاستماع، اضغط على الكلمات التي تحتاج إلى تصحيح.',
     marked: 'مُعلَّمة',
     marksCount: (count) =>
@@ -695,6 +699,7 @@ export const ar: Messages = {
     too_many_recordings: 'بلغت الحد الأقصى لعدد التسجيلات. احذف الأقدم منها.',
     too_large: 'التسجيل طويل جدًا.',
     unsupported_media_type: 'صيغة التسجيل هذه غير مدعومة.',
+    not_reviewed: 'أجب عن التسجيل أولًا، ثم سجّل الملاحظة الصوتية.',
     generic: (status) => `خطأ في الخادم (${status}).`,
   },
   remarks: {

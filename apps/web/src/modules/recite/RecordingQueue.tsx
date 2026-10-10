@@ -3,17 +3,18 @@ import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import type { RemarkId } from '@/i18n/messages';
 import { formatMoment } from '@/modules/assignments/format';
 import type { ApiResult } from '@/services/api/request';
-import type { QueuedRecitation, Verdict, WordMark } from '@/services/auth';
+import type { QueuedRecitation, Verdict, VoiceNoteInfo, WordMark } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { RecitedWords, toggleMark } from './RecitedWords';
 import { REMARKS } from './remarks';
+import { VoiceNoteRecorder, type VoiceDraft } from './VoiceNoteRecorder';
 
 type Failure = Extract<ApiResult<unknown>, { ok: false }>;
 
 /**
  * "Zum Abhören" on the ḥalaqa page (spec F7, S4.2): what the students sent, those waiting
  * first and oldest first; the teacher listens and answers with a verdict, a quick remark in
- * the student's language and/or their own words.
+ * the student's language, their own words, marked words and/or a voice note.
  */
 export function RecordingQueue({ halaqaId }: { halaqaId: string }) {
   const { m } = useI18n();
@@ -118,6 +119,7 @@ function QueueItem({
   const [remark, setRemark] = useState<RemarkId | null>(review?.remark ?? null);
   const [note, setNote] = useState(review?.note ?? '');
   const [marks, setMarks] = useState<WordMark[]>(review?.marks ?? []);
+  const [voice, setVoice] = useState<VoiceDraft>({ kind: 'keep' });
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const who = recording.studentName ?? recording.studentEmail ?? '';
@@ -133,10 +135,35 @@ function QueueItem({
         setFailure(result);
         return;
       }
+      // The voice note goes with the answer, so after it; when it fails, the answer stays
+      // open to send again.
+      let voiceNote: VoiceNoteInfo | null = review?.voiceNote ?? null;
+      if (voice.kind === 'new') {
+        const { take } = voice;
+        const saved = await client.saveVoiceNote(halaqaId, recording.id, take);
+        if (!saved.ok) {
+          setFailure(saved);
+          return;
+        }
+        voiceNote = {
+          mime: take.mime,
+          bytes: take.blob.size,
+          durationMs: take.durationMs,
+        };
+      } else if (voice.kind === 'none' && voiceNote) {
+        const removed = await client.removeVoiceNote(halaqaId, recording.id);
+        if (!removed.ok) {
+          setFailure(removed);
+          return;
+        }
+        voiceNote = null;
+      }
       setFailure(null);
       setEditing(false);
+      setVoice({ kind: 'keep' });
       onAnswered(recording.id, {
         ...input,
+        voiceNote,
         reviewerName: me?.name ?? null,
         reviewedAt: new Date().toISOString(),
       });
@@ -162,23 +189,35 @@ function QueueItem({
         aria-label={`${who} · ${m.recite.range(sura, from, to)}`}
       />
       {!editing && review ? (
-        <span className="row" style={{ gap: 8 }}>
-          <span className="chip" data-verdict={review.verdict}>
-            {m.recite.verdicts[review.verdict]}
+        <>
+          <span className="row" style={{ gap: 8 }}>
+            <span className="chip" data-verdict={review.verdict}>
+              {m.recite.verdicts[review.verdict]}
+            </span>
+            {review.remark && <span className="muted">{m.remarks[review.remark]}</span>}
+            {review.note && <span>{review.note}</span>}
+            {review.marks.length > 0 && (
+              <span className="muted">{m.recite.marksCount(review.marks.length)}</span>
+            )}
+            <button
+              className="btn btn-quiet"
+              type="button"
+              onClick={() => setEditing(true)}
+            >
+              {m.recite.change}
+            </button>
           </span>
-          {review.remark && <span className="muted">{m.remarks[review.remark]}</span>}
-          {review.note && <span>{review.note}</span>}
-          {review.marks.length > 0 && (
-            <span className="muted">{m.recite.marksCount(review.marks.length)}</span>
+          {review.voiceNote && (
+            <audio
+              // A note recorded again is heard anew.
+              key={review.reviewedAt}
+              controls
+              preload="none"
+              src={client.queuedVoiceNote(halaqaId, recording.id)}
+              aria-label={m.recite.voiceFrom(review.reviewerName)}
+            />
           )}
-          <button
-            className="btn btn-quiet"
-            type="button"
-            onClick={() => setEditing(true)}
-          >
-            {m.recite.change}
-          </button>
-        </span>
+        </>
       ) : (
         <div className="stack" style={{ gap: 8 }}>
           {/* While listening: tap the words that need work. */}
@@ -233,6 +272,13 @@ function QueueItem({
               onChange={(event) => setNote(event.target.value)}
             />
           </label>
+          <VoiceNoteRecorder
+            saved={
+              review?.voiceNote ? client.queuedVoiceNote(halaqaId, recording.id) : null
+            }
+            draft={voice}
+            onDraft={setVoice}
+          />
           <button
             className="btn btn-primary"
             type="button"

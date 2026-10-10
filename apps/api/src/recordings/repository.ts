@@ -1,8 +1,8 @@
 /**
- * Recitations in Postgres (spec F7, T3; ADR-0012; migration 0006). Who may call what is decided
+ * Recitations in Postgres (spec F7, T3; ADR-0012; migrations 0006, 0011, 0012). Who may call what is decided
  * by the routes' policies; the queries here additionally keep a student to their own
  * recordings and a teacher to the ḥalaqa in the path. The sound is kept in `recording_audio`
- * until the RustFS bucket exists (ADR-0012 update 2026-10-06).
+ * until the RustFS bucket exists (ADR-0012 update 2026-10-06), and so is the teacher's voice note.
  */
 import type pg from 'pg';
 import { wordCount } from '@arda/quran';
@@ -63,12 +63,27 @@ export interface ReviewInput {
   marks: readonly Mark[];
 }
 
+/** The teacher's spoken answer, without its sound (served by its own route). */
+export interface VoiceNote {
+  mime: RecordingMime;
+  bytes: number;
+  durationMs: number;
+}
+
+/** A voice note to keep with an answer. */
+export interface NewVoiceNote {
+  mime: RecordingMime;
+  durationMs: number;
+  audio: Buffer;
+}
+
 export interface Review {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
   /** In reading order. */
   marks: Mark[];
+  voiceNote: VoiceNote | null;
   reviewerName: string | null;
   reviewedAt: string;
 }
@@ -91,6 +106,12 @@ export function marksFit(
 export const byPlace = (a: Mark, b: Mark): number => a.aya - b.aya || a.word - b.word;
 
 export type ReviewOutcome = 'reviewed' | 'not_found' | 'marks';
+
+/**
+ * `not_reviewed`: a voice note belongs to an answer, so the teacher answers the recording
+ * first (or again, when another teacher answered it).
+ */
+export type VoiceNoteOutcome = 'saved' | 'not_found' | 'not_reviewed';
 
 interface RecordingBase {
   id: string;
@@ -157,6 +178,22 @@ export interface RecordingRepository {
     input: ReviewInput,
     reviewerId: string
   ): Promise<ReviewOutcome>;
+  /**
+   * Keeps the voice note with the teacher's own answer, replacing an earlier one. A later
+   * answer by another teacher drops it (`review`): the voice heard is always the answerer's.
+   */
+  saveVoiceNote(
+    halaqaId: string,
+    recordingId: string,
+    note: NewVoiceNote,
+    teacherId: string
+  ): Promise<VoiceNoteOutcome>;
+  /** Removes the voice note, if any; false when the recording is not in this ḥalaqa. */
+  removeVoiceNote(halaqaId: string, recordingId: string): Promise<boolean>;
+  /** The voice note on one of the student's own recordings. */
+  ownVoiceNote(studentId: string, recordingId: string): Promise<Audio | null>;
+  /** The voice note on a recording sent to this ḥalaqa. */
+  halaqaVoiceNote(halaqaId: string, recordingId: string): Promise<Audio | null>;
   /** Deletes one of the student's own recordings with its sound. */
   remove(studentId: string, recordingId: string): Promise<boolean>;
 }
@@ -180,6 +217,7 @@ interface Row {
   reviewer_name: string | null;
   reviewed_at: Date | null;
   marks: Mark[];
+  voice_note: VoiceNote | null;
 }
 
 const COLUMNS = `r.id, r.halaqa_id, r.assignment_id, r.sura, r.aya_from, r.aya_to, r.mime,
@@ -187,7 +225,9 @@ const COLUMNS = `r.id, r.halaqa_id, r.assignment_id, r.sura, r.aya_from, r.aya_t
   nullif(btrim(t.name), '') as reviewer_name, r.reviewed_at,
   coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word)
                             order by m.aya, m.word)
-              from recording_marks m where m.recording_id = r.id), '[]') as marks`;
+              from recording_marks m where m.recording_id = r.id), '[]') as marks,
+  (select json_build_object('mime', v.mime, 'bytes', v.bytes, 'durationMs', v.duration_ms)
+     from recording_voice_notes v where v.recording_id = r.id) as voice_note`;
 
 const base = (row: Row): RecordingBase => ({
   id: row.id,
@@ -205,6 +245,7 @@ const base = (row: Row): RecordingBase => ({
           remark: row.remark,
           note: row.note,
           marks: row.marks,
+          voiceNote: row.voice_note,
           reviewerName: row.reviewer_name,
           reviewedAt: iso(row.reviewed_at),
         }
@@ -428,6 +469,11 @@ export class PgRecordingRepository implements RecordingRepository {
       await client.query('delete from recording_marks where recording_id = $1', [
         recordingId,
       ]);
+      // Another teacher's voice does not speak for this answer.
+      await client.query(
+        'delete from recording_voice_notes where recording_id = $1 and recorded_by <> $2',
+        [recordingId, reviewerId]
+      );
       if (input.marks.length > 0) {
         await client.query(
           `insert into recording_marks (recording_id, aya, word)
@@ -443,6 +489,69 @@ export class PgRecordingRepository implements RecordingRepository {
     } finally {
       client.release();
     }
+  }
+
+  async saveVoiceNote(
+    halaqaId: string,
+    recordingId: string,
+    note: NewVoiceNote,
+    teacherId: string
+  ): Promise<VoiceNoteOutcome> {
+    const { rowCount } = await this.pool.query(
+      `insert into recording_voice_notes (recording_id, recorded_by, mime, bytes, duration_ms,
+                                          data)
+       select r.id, $3, $4, $5, $6, $7 from recordings r
+        where r.id = $2 and r.halaqa_id = $1 and r.reviewed_by = $3
+       on conflict (recording_id) do update
+         set recorded_by = excluded.recorded_by, mime = excluded.mime,
+             bytes = excluded.bytes, duration_ms = excluded.duration_ms,
+             data = excluded.data, created_at = now()`,
+      [
+        halaqaId,
+        recordingId,
+        teacherId,
+        note.mime,
+        note.audio.length,
+        note.durationMs,
+        note.audio,
+      ]
+    );
+    if ((rowCount ?? 0) > 0) return 'saved';
+    const exists = await this.pool.query(
+      'select 1 from recordings where id = $2 and halaqa_id = $1',
+      [halaqaId, recordingId]
+    );
+    return exists.rowCount ? 'not_reviewed' : 'not_found';
+  }
+
+  async removeVoiceNote(halaqaId: string, recordingId: string): Promise<boolean> {
+    const { rows } = await this.pool.query<{ found: boolean }>(
+      `with r as (select id from recordings where id = $2 and halaqa_id = $1),
+            gone as (delete from recording_voice_notes v using r where v.recording_id = r.id)
+       select exists (select 1 from r) as found`,
+      [halaqaId, recordingId]
+    );
+    return rows[0]?.found ?? false;
+  }
+
+  async ownVoiceNote(studentId: string, recordingId: string): Promise<Audio | null> {
+    const { rows } = await this.pool.query<{ mime: RecordingMime; data: Buffer }>(
+      `select v.mime, v.data from recordings r
+         join recording_voice_notes v on v.recording_id = r.id
+        where r.id = $2 and r.student_id = $1`,
+      [studentId, recordingId]
+    );
+    return rows[0] ?? null;
+  }
+
+  async halaqaVoiceNote(halaqaId: string, recordingId: string): Promise<Audio | null> {
+    const { rows } = await this.pool.query<{ mime: RecordingMime; data: Buffer }>(
+      `select v.mime, v.data from recordings r
+         join recording_voice_notes v on v.recording_id = r.id
+        where r.id = $2 and r.halaqa_id = $1`,
+      [halaqaId, recordingId]
+    );
+    return rows[0] ?? null;
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

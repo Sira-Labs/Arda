@@ -1613,6 +1613,95 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await repo.halaqaAudio(halaqaId, ids[1]!)).not.toBeNull();
     });
 
+    it('keeps a voice note with its own answer, drops it with another, deletes it with the teacher', async () => {
+      const ADMIN = '50000000-0000-4000-8000-000000000004';
+      await pool.query(
+        `insert into users (id, email, name, role) values ($1, 'admin@example.org', 'Admin', 'admin')`,
+        [ADMIN]
+      );
+      const { id } = (await repo.save(take(AMINA), 10)) as { id: string };
+      const VOICE = Buffer.from('sheikh says');
+      const note = { mime: 'audio/ogg' as const, durationMs: 3000, audio: VOICE };
+      const answer = (by: string) =>
+        repo.review(
+          halaqaId,
+          id,
+          { verdict: 'again', remark: null, note: null, marks: [] },
+          by
+        );
+      expect(await repo.saveVoiceNote(halaqaId, id, note, TEACHER)).toBe('not_reviewed');
+      await answer(TEACHER);
+      expect(await repo.saveVoiceNote(halaqaId, id, note, ADMIN)).toBe('not_reviewed');
+      expect(
+        await repo.saveVoiceNote(
+          '70000000-0000-4000-8000-000000000001',
+          id,
+          note,
+          TEACHER
+        )
+      ).toBe('not_found');
+      expect(await repo.saveVoiceNote(halaqaId, id, note, TEACHER)).toBe('saved');
+      expect(
+        await repo.saveVoiceNote(
+          halaqaId,
+          id,
+          { mime: 'audio/mp4', durationMs: 1500, audio: Buffer.from('again') },
+          TEACHER
+        )
+      ).toBe('saved');
+      expect(await repo.ownVoiceNote(AMINA, id)).toEqual({
+        mime: 'audio/mp4',
+        data: Buffer.from('again'),
+      });
+      expect(await repo.ownVoiceNote(YUSUF, id)).toBeNull();
+      expect((await repo.own(AMINA, page)).recordings[0]!.review?.voiceNote).toEqual({
+        mime: 'audio/mp4',
+        bytes: 5,
+        durationMs: 1500,
+      });
+      // Answering again keeps one's own note; another teacher's answer drops it.
+      await answer(TEACHER);
+      expect(await repo.halaqaVoiceNote(halaqaId, id)).not.toBeNull();
+      await answer(ADMIN);
+      expect(await repo.halaqaVoiceNote(halaqaId, id)).toBeNull();
+      expect(
+        (await repo.queue(halaqaId, page)).recordings[0]!.review?.voiceNote
+      ).toBeNull();
+
+      await answer(TEACHER);
+      expect(await repo.saveVoiceNote(halaqaId, id, note, TEACHER)).toBe('saved');
+      const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
+      expect(teacherExport.recordings).toEqual([
+        expect.objectContaining({
+          id,
+          voice_note: expect.objectContaining({
+            mime: 'audio/ogg',
+            duration_ms: 3000,
+            recorded_by_you: true,
+          }),
+        }),
+      ]);
+      expect(JSON.stringify(teacherExport.recordings)).not.toContain('sheikh says');
+      expect(await repo.removeVoiceNote(halaqaId, id)).toBe(true);
+      expect(await repo.removeVoiceNote(halaqaId, id)).toBe(true);
+      expect(await repo.ownVoiceNote(AMINA, id)).toBeNull();
+      expect(await repo.removeVoiceNote('70000000-0000-4000-8000-000000000001', id)).toBe(
+        false
+      );
+
+      // A voice goes with its speaker's account; the answer stays (the owner's account would
+      // take the ḥalaqa with it).
+      await answer(ADMIN);
+      expect(await repo.saveVoiceNote(halaqaId, id, note, ADMIN)).toBe('saved');
+      await pool.query('delete from users where id = $1', [ADMIN]);
+      expect(await repo.ownVoiceNote(AMINA, id)).toBeNull();
+      expect((await repo.own(AMINA, page)).recordings[0]!.review).toMatchObject({
+        verdict: 'again',
+        reviewerName: null,
+        voiceNote: null,
+      });
+    });
+
     it('deletes on request, when the student leaves, and with the account; exports the rest', async () => {
       const kept = (await repo.save(take(AMINA), 10)) as { id: string };
       const removed = (await repo.save(take(AMINA), 10)) as { id: string };
@@ -1621,6 +1710,12 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         halaqaId,
         kept.id,
         { verdict: 'good', remark: null, note: null, marks: [{ aya: 2, word: 1 }] },
+        TEACHER
+      );
+      await repo.saveVoiceNote(
+        halaqaId,
+        kept.id,
+        { mime: 'audio/webm', durationMs: 2000, audio: Buffer.from('teacher voice') },
         TEACHER
       );
       expect(await repo.remove(YUSUF, removed.id)).toBe(false);
@@ -1636,9 +1731,11 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           sent_by_you: true,
           verdict: 'good',
           marks: [{ aya: 2, word: 1 }],
+          voice_note: expect.objectContaining({ bytes: 13, recorded_by_you: false }),
         }),
       ]);
       expect(JSON.stringify(aminaExport.recordings)).not.toContain('fake opus');
+      expect(JSON.stringify(aminaExport.recordings)).not.toContain('teacher voice');
       const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
       expect(teacherExport.recordings).toEqual([
         expect.objectContaining({ id: kept.id, answered_by_you: true }),
@@ -1651,6 +1748,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await count('recordings')).toBe(0);
       expect(await count('recording_audio')).toBe(0);
       expect(await count('recording_marks')).toBe(0);
+      expect(await count('recording_voice_notes')).toBe(0);
     });
   });
 

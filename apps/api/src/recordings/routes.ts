@@ -5,12 +5,16 @@
  *   GET    /halaqat/:id/recordings                the teacher's queue         halaqa:review
  *   GET    /halaqat/:id/recordings/:rid/audio     hear it                     halaqa:review
  *   PUT    /halaqat/:id/recordings/:rid/review    answer it                   halaqa:review
+ *   PUT    /halaqat/:id/recordings/:rid/voice-note   answer it aloud          halaqa:review
+ *   GET    /halaqat/:id/recordings/:rid/voice-note   hear the answer          halaqa:review
+ *   DELETE /halaqat/:id/recordings/:rid/voice-note   take it back             halaqa:review
  *   GET    /recordings                            my recordings and answers   recitation:own
  *   GET    /recordings/:rid/audio                 hear my own                 recitation:own
+ *   GET    /recordings/:rid/voice-note            hear the teacher's answer   recitation:own
  *   DELETE /recordings/:rid                       delete my own               recitation:own
  *
  * The take is the request body itself (its Content-Type the format), what it recites in the
- * query. Sound is served with byte ranges: Safari plays media only from servers that answer
+ * query; so is the teacher's voice note, its length in the query. Sound is served with byte ranges: Safari plays media only from servers that answer
  * them. Every answer is private and never cached.
  */
 import type { Context, MiddlewareHandler } from 'hono';
@@ -47,6 +51,10 @@ export const MAX_BYTES = 6_000_000;
 export const MAX_DURATION_MS = 600_000;
 /** Recordings one student may keep; they can delete old ones. */
 export const MAX_RECORDINGS_PER_STUDENT = 500;
+/** The longest voice note: a spoken answer, not a lesson. */
+export const MAX_VOICE_NOTE_MS = 120_000;
+/** Two minutes at the bitrates browsers record with, Safari's AAC included. */
+export const MAX_VOICE_NOTE_BYTES = 2_500_000;
 /** One page of a list. */
 export const PAGE_SIZE = 50;
 
@@ -65,6 +73,10 @@ const Meta = z
   .refine((meta) => isAyaRange({ sura: meta.sura, from: meta.from, to: meta.to }), {
     message: 'range',
   });
+
+const VoiceNoteMeta = z
+  .object({ durationMs: z.coerce.number().int().min(1).max(MAX_VOICE_NOTE_MS) })
+  .strict();
 
 const ReviewBody = z
   .object({
@@ -163,6 +175,26 @@ async function readJson(c: Context): Promise<unknown | undefined> {
 const invalid = (c: Context, issues: string[]) =>
   c.json({ error: 'invalid_body', issues }, 400);
 const notFound = (c: Context) => c.json({ error: 'not_found' }, 404);
+const tooLarge = (c: Context) => c.json({ error: 'too_large' }, 413);
+
+/**
+ * The sound in the request body, or the answer refusing it: a format the api does not keep,
+ * more than `maxBytes` (declared or read), or nothing.
+ */
+async function bodyAudio(
+  c: Context,
+  maxBytes: number
+): Promise<{ mime: RecordingMime; audio: Buffer } | Response> {
+  const mime = mimeOf(c.req.header('content-type'));
+  if (!mime) return c.json({ error: 'unsupported_media_type' }, 415);
+  // Refuse a declared oversize body before reading it.
+  const declared = Number(c.req.header('content-length') ?? '0');
+  if (declared > maxBytes) return tooLarge(c);
+  const audio = Buffer.from(await c.req.arrayBuffer());
+  if (audio.length > maxBytes) return tooLarge(c);
+  if (audio.length === 0) return invalid(c, ['audio']);
+  return { mime, audio };
+}
 
 export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> {
   const app = new Hono<ActorEnv>();
@@ -194,10 +226,8 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
   };
 
   // Stops reading a body past the limit, whatever Content-Length claims (or when absent).
-  const sizeLimit = bodyLimit({
-    maxSize: MAX_BYTES,
-    onError: (c) => c.json({ error: 'too_large' }, 413),
-  });
+  const sizeLimit = bodyLimit({ maxSize: MAX_BYTES, onError: tooLarge });
+  const voiceNoteLimit = bodyLimit({ maxSize: MAX_VOICE_NOTE_BYTES, onError: tooLarge });
 
   app.post('/halaqat/:id/recordings', study, sizeLimit, async (c) => {
     const halaqaId = Id.safeParse(c.req.param('id'));
@@ -208,14 +238,9 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
         c,
         meta.error.issues.map((i) => i.message)
       );
-    const mime = mimeOf(c.req.header('content-type'));
-    if (!mime) return c.json({ error: 'unsupported_media_type' }, 415);
-    // Refuse a declared oversize body before reading it.
-    const declared = Number(c.req.header('content-length') ?? '0');
-    if (declared > MAX_BYTES) return c.json({ error: 'too_large' }, 413);
-    const audio = Buffer.from(await c.req.arrayBuffer());
-    if (audio.length > MAX_BYTES) return c.json({ error: 'too_large' }, 413);
-    if (audio.length === 0) return invalid(c, ['audio']);
+    const sound = await bodyAudio(c, MAX_BYTES);
+    if (sound instanceof Response) return sound;
+    const { mime, audio } = sound;
     const actor = c.get('actor');
     const outcome = await deps.repo.save(
       {
@@ -301,6 +326,69 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
     return c.body(null, 204);
   });
 
+  app.put(
+    '/halaqat/:id/recordings/:rid/voice-note',
+    review,
+    voiceNoteLimit,
+    async (c) => {
+      const halaqaId = Id.safeParse(c.req.param('id'));
+      const recordingId = Id.safeParse(c.req.param('rid'));
+      if (!halaqaId.success || !recordingId.success) return notFound(c);
+      const meta = VoiceNoteMeta.safeParse(c.req.query());
+      if (!meta.success)
+        return invalid(
+          c,
+          meta.error.issues.map((i) => String(i.path[0] ?? 'query'))
+        );
+      const sound = await bodyAudio(c, MAX_VOICE_NOTE_BYTES);
+      if (sound instanceof Response) return sound;
+      const actor = c.get('actor');
+      const outcome = await deps.repo.saveVoiceNote(
+        halaqaId.data,
+        recordingId.data,
+        { mime: sound.mime, durationMs: meta.data.durationMs, audio: sound.audio },
+        actor.id
+      );
+      if (outcome === 'not_found') return notFound(c);
+      if (outcome === 'not_reviewed') return c.json({ error: 'not_reviewed' }, 409);
+      deps.log.info(
+        {
+          userId: actor.id,
+          halaqaId: halaqaId.data,
+          recordingId: recordingId.data,
+          bytes: sound.audio.length,
+        },
+        'recording.voice_note_saved'
+      );
+      return c.body(null, 204);
+    }
+  );
+
+  app.get('/halaqat/:id/recordings/:rid/voice-note', review, async (c) => {
+    const halaqaId = Id.safeParse(c.req.param('id'));
+    const recordingId = Id.safeParse(c.req.param('rid'));
+    if (!halaqaId.success || !recordingId.success) return notFound(c);
+    const audio = await deps.repo.halaqaVoiceNote(halaqaId.data, recordingId.data);
+    return audio ? audioResponse(c, audio) : notFound(c);
+  });
+
+  app.delete('/halaqat/:id/recordings/:rid/voice-note', review, async (c) => {
+    const halaqaId = Id.safeParse(c.req.param('id'));
+    const recordingId = Id.safeParse(c.req.param('rid'));
+    if (!halaqaId.success || !recordingId.success) return notFound(c);
+    if (!(await deps.repo.removeVoiceNote(halaqaId.data, recordingId.data)))
+      return notFound(c);
+    deps.log.info(
+      {
+        userId: c.get('actor').id,
+        halaqaId: halaqaId.data,
+        recordingId: recordingId.data,
+      },
+      'recording.voice_note_removed'
+    );
+    return c.body(null, 204);
+  });
+
   app.get('/recordings', own, async (c) => {
     const before = cursor(c);
     if (before === null) return invalid(c, ['before']);
@@ -311,6 +399,13 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
     const recordingId = Id.safeParse(c.req.param('rid'));
     if (!recordingId.success) return notFound(c);
     const audio = await deps.repo.ownAudio(c.get('actor').id, recordingId.data);
+    return audio ? audioResponse(c, audio) : notFound(c);
+  });
+
+  app.get('/recordings/:rid/voice-note', own, async (c) => {
+    const recordingId = Id.safeParse(c.req.param('rid'));
+    if (!recordingId.success) return notFound(c);
+    const audio = await deps.repo.ownVoiceNote(c.get('actor').id, recordingId.data);
     return audio ? audioResponse(c, audio) : notFound(c);
   });
 
