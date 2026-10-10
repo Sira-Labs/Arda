@@ -256,6 +256,15 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   another student's recordings; a student reading German, French or Arabic understands a
   remark written in English, and can always see the original.
 
+### P — Mein Lernplan _(Should, built, owner 2026-10-10, ADR-0022 update)_
+
+The student's own notes: what to learn next ("zwei Seiten al-Baqara"), what to revise, and what
+was hard, each optionally with āyāt or pages that open in the muṣḥaf, ticked off when done.
+Today shows the open plans. Only the student reads them; they work offline and without an
+account and follow the account to every device. **Acceptance:** a note written on the phone is
+on the laptop after signing in; a note deleted on one device stays deleted on all; nobody else
+can read them.
+
 ### L — Languages _(Must, built, ADR-0020)_
 
 German (default), English, French and Arabic for the interface and the sign-in mail; Arabic
