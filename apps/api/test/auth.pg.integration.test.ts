@@ -28,6 +28,7 @@ import { SoftAuthenticator } from './softAuthenticator.js';
 import type { Language } from '../src/i18n/languages.js';
 import { PgTranslationRepository, sourceHash } from '../src/translation/repository.js';
 import { PgHalaqaRepository } from '../src/halaqat/repository.js';
+import { PgArdaLogRepository } from '../src/ardaLog/repository.js';
 import {
   PgAssignmentRepository,
   type NewAssignment,
@@ -1749,6 +1750,129 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await count('recording_audio')).toBe(0);
       expect(await count('recording_marks')).toBe(0);
       expect(await count('recording_voice_notes')).toBe(0);
+    });
+
+    it('keeps the ʿarḍ log: answers and hand entries, per student and sūra (T4, ADR-0025)', async () => {
+      const ADMIN = '50000000-0000-4000-8000-000000000004';
+      await pool.query(
+        `insert into users (id, email, name, role) values ($1, 'admin@example.org', 'Admin', 'admin')`,
+        [ADMIN]
+      );
+      await pool.query(`update users set time_zone = 'Asia/Tokyo' where id = $1`, [
+        YUSUF,
+      ]);
+      const log = new PgArdaLogRepository(pool);
+      const amina = (await repo.save(take(AMINA), 10)) as { id: string };
+      const yusuf = (await repo.save(take(YUSUF), 10)) as { id: string };
+      // Both recited at 23:30 Berlin time: the 9th for Amina (no zone set), the 10th in Tokyo.
+      await pool.query(
+        `update recordings set created_at = '2026-10-09T21:30:00Z' where id = any($1)`,
+        [[amina.id, yusuf.id]]
+      );
+      const answer = (
+        id: string,
+        verdict: 'good' | 'again',
+        marks = [] as { aya: number; word: number }[]
+      ) =>
+        repo.review(
+          halaqaId,
+          id,
+          { verdict, remark: null, note: 'Gut.', marks },
+          TEACHER
+        );
+      await answer(amina.id, 'again');
+      await answer(amina.id, 'good', [{ aya: 3, word: 1 }]);
+      await answer(yusuf.id, 'again');
+
+      const hand = (studentId: string, recitedOn: string, sura = 112) =>
+        log.add(
+          {
+            halaqaId,
+            studentId,
+            range: { sura, from: 1, to: sura === 112 ? 4 : 5 },
+            recitedOn,
+            verdict: 'again',
+            remark: 'maddShort',
+            note: null,
+            writtenBy: ADMIN,
+          },
+          2
+        );
+      expect((await hand(AMINA, '2026-10-01')).status).toBe('added');
+      expect((await hand(AMINA, '2026-10-02', 113)).status).toBe('added');
+      expect((await hand(AMINA, '2026-10-03')).status).toBe('limit');
+      expect((await hand(TEACHER, '2026-10-03')).status).toBe('not_member');
+
+      const all = await log.entries(halaqaId, { limit: 50 });
+      expect(all.entries.map((e) => [e.studentName, e.recitedOn, e.source])).toEqual([
+        ['Yusuf', '2026-10-10', 'recording'],
+        ['Amina', '2026-10-09', 'recording'],
+        ['Amina', '2026-10-02', 'in_person'],
+        ['Amina', '2026-10-01', 'in_person'],
+      ]);
+      expect(all.entries[1]).toMatchObject({
+        verdict: 'good',
+        note: 'Gut.',
+        marks: [{ aya: 3, word: 1 }],
+        recordingId: amina.id,
+        writtenByName: 'Sheikh Ahmad',
+      });
+      const firstPage = await log.entries(halaqaId, { studentId: AMINA, limit: 2 });
+      expect(firstPage.more).toBe(true);
+      const rest = await log.entries(halaqaId, {
+        studentId: AMINA,
+        limit: 2,
+        before: firstPage.entries[1]!.id,
+      });
+      expect(rest.entries.map((e) => e.recitedOn)).toEqual(['2026-10-01']);
+
+      expect(await log.summary(halaqaId)).toEqual([
+        {
+          studentId: AMINA,
+          studentName: 'Amina',
+          sura: 112,
+          times: 2,
+          lastOn: '2026-10-09',
+          lastVerdict: 'good',
+        },
+        expect.objectContaining({ studentId: AMINA, sura: 113, times: 1 }),
+        expect.objectContaining({ studentId: YUSUF, sura: 112, lastVerdict: 'again' }),
+      ]);
+      expect(await log.ownSummary(YUSUF)).toEqual([
+        {
+          halaqaId,
+          halaqaName: 'Juzʾ ʿAmma',
+          sura: 112,
+          times: 1,
+          lastOn: '2026-10-10',
+          lastVerdict: 'again',
+        },
+      ]);
+
+      // The take goes, its entry stays; the writer's account goes, the entry stays unnamed.
+      expect(await repo.remove(AMINA, amina.id)).toBe(true);
+      await pool.query('delete from users where id = $1', [ADMIN]);
+      const kept = await log.entries(halaqaId, { studentId: AMINA, limit: 50 });
+      expect(kept.entries).toHaveLength(3);
+      expect(kept.entries[0]).toMatchObject({ source: 'recording', recordingId: null });
+      expect(kept.entries[1]).toMatchObject({ source: 'in_person', writtenByName: null });
+
+      const aminaExport = await new PgPrivacyRepository(pool).export(AMINA);
+      expect(aminaExport.ardaLog).toHaveLength(3);
+      expect(aminaExport.ardaLog[0]).toMatchObject({
+        about_you: true,
+        recited_on: '2026-10-01',
+      });
+      const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
+      expect(teacherExport.ardaLog).toHaveLength(2);
+
+      expect(
+        await log.remove('70000000-0000-4000-8000-000000000001', kept.entries[1]!.id)
+      ).toBe(false);
+      expect(await log.remove(halaqaId, kept.entries[1]!.id)).toBe(true);
+      expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
+      expect(await log.ownSummary(AMINA)).toEqual([]);
+      expect((await log.summary(halaqaId)).map((s) => s.studentId)).toEqual([YUSUF]);
     });
   });
 

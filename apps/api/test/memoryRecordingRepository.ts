@@ -5,6 +5,8 @@
  * foreign keys make them do in Postgres.
  */
 import { randomUUID } from 'node:crypto';
+import { dayIn } from '../src/ardaLog/repository.js';
+import type { MemoryArdaLogRepository } from './memoryArdaLogRepository.js';
 import type { MemoryAssignmentRepository } from './memoryAssignmentRepository.js';
 import type { MemoryHalaqaRepository } from './memoryHalaqaRepository.js';
 import type {
@@ -48,7 +50,9 @@ export class MemoryRecordingRepository implements RecordingRepository {
   constructor(
     private readonly halaqat: MemoryHalaqaRepository,
     private readonly assignments: MemoryAssignmentRepository,
-    private readonly names: Record<string, string> = {}
+    private readonly names: Record<string, string> = {},
+    /** Where answers are written, as the Postgres repository writes `arda_log`. */
+    private readonly log?: MemoryArdaLogRepository
   ) {}
 
   /** Rows whose student still belongs to the ḥalaqa. */
@@ -188,6 +192,18 @@ export class MemoryRecordingRepository implements RecordingRepository {
       reviewerId,
       reviewedAt: '2026-10-06T12:00:00.000Z',
     };
+    this.log?.recordAnswer({
+      recordingId,
+      halaqaId,
+      studentId: row.studentId,
+      range: row.range,
+      recitedOn: dayIn(new Date(row.createdAt), null),
+      verdict: input.verdict,
+      remark: input.remark,
+      note: input.note,
+      marks: input.marks,
+      writtenBy: reviewerId,
+    });
     return 'reviewed';
   }
 
@@ -230,6 +246,8 @@ export class MemoryRecordingRepository implements RecordingRepository {
     this.rows = this.rows.filter(
       (r) => !(r.id === recordingId && r.studentId === studentId)
     );
-    return this.rows.length < before;
+    if (this.rows.length === before) return false;
+    this.log?.forgetRecording(recordingId);
+    return true;
   }
 }

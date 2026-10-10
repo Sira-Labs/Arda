@@ -3,9 +3,11 @@
  * by the routes' policies; the queries here additionally keep a student to their own
  * recordings and a teacher to the ḥalaqa in the path. The sound is kept in `recording_audio`
  * until the RustFS bucket exists (ADR-0012 update 2026-10-06), and so is the teacher's voice note.
+ * An answer is also written to the ʿarḍ log (ADR-0025) in the same transaction.
  */
 import type pg from 'pg';
 import { wordCount } from '@arda/quran';
+import { dayIn, writeAnswerEntry } from '../ardaLog/repository.js';
 
 export const RECORDING_MIMES = [
   'audio/webm',
@@ -169,8 +171,9 @@ export interface RecordingRepository {
   /** The sound of a recording sent to this ḥalaqa. */
   halaqaAudio(halaqaId: string, recordingId: string): Promise<Audio | null>;
   /**
-   * The teacher's answer, replacing an earlier one with its marks: `not_found` when the
-   * recording is not in this ḥalaqa, `marks` when a mark is no word of the recited āyāt.
+   * The teacher's answer, replacing an earlier one with its marks and its ʿarḍ log entry:
+   * `not_found` when the recording is not in this ḥalaqa, `marks` when a mark is no word of
+   * the recited āyāt.
    */
   review(
     halaqaId: string,
@@ -445,11 +448,16 @@ export class PgRecordingRepository implements RecordingRepository {
         sura: number;
         aya_from: number;
         aya_to: number;
+        student_id: string;
+        created_at: Date;
+        time_zone: string | null;
       }>(
         `update recordings
             set verdict = $3, remark = $4, note = $5, reviewed_by = $6, reviewed_at = now()
           where id = $2 and halaqa_id = $1
-          returning sura, aya_from, aya_to`,
+          returning sura, aya_from, aya_to, student_id, created_at,
+                    (select time_zone from users where id = recordings.student_id)
+                      as time_zone`,
         [halaqaId, recordingId, input.verdict, input.remark, input.note, reviewerId]
       );
       const range = rows[0];
@@ -474,6 +482,19 @@ export class PgRecordingRepository implements RecordingRepository {
         'delete from recording_voice_notes where recording_id = $1 and recorded_by <> $2',
         [recordingId, reviewerId]
       );
+      await writeAnswerEntry(client, {
+        recordingId,
+        halaqaId,
+        studentId: range.student_id,
+        range: { sura: range.sura, from: range.aya_from, to: range.aya_to },
+        // The day the student recited it, on their calendar.
+        recitedOn: dayIn(new Date(range.created_at), range.time_zone),
+        verdict: input.verdict,
+        remark: input.remark,
+        note: input.note,
+        marks: input.marks,
+        writtenBy: reviewerId,
+      });
       if (input.marks.length > 0) {
         await client.query(
           `insert into recording_marks (recording_id, aya, word)
