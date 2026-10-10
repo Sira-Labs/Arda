@@ -23,9 +23,11 @@ import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware
 import type { Actor, HalaqaScope } from '../authz/policies.js';
 import type { HalaqaRepository } from '../halaqat/repository.js';
 import {
+  MAX_MARKS,
   RECORDING_MIMES,
   REMARK_IDS,
   VERDICTS,
+  byPlace,
   type Audio,
   type RecordingMime,
   type RecordingRepository,
@@ -75,6 +77,18 @@ const ReviewBody = z
       .nullable()
       .default(null)
       .transform((note) => (note ? note : null)),
+    // Words of the recited āyāt that need work; each once, kept in reading order.
+    marks: z
+      .array(
+        z.object({ aya: z.number().int().min(1), word: z.number().int().min(1) }).strict()
+      )
+      .max(MAX_MARKS)
+      .default([])
+      .refine(
+        (marks) => new Set(marks.map((m) => `${m.aya}:${m.word}`)).size === marks.length,
+        { message: 'duplicate' }
+      )
+      .transform((marks) => [...marks].sort(byPlace)),
   })
   .strict();
 
@@ -266,15 +280,21 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
         body.error.issues.map((i) => String(i.path[0]))
       );
     const actor = c.get('actor');
-    if (!(await deps.repo.review(halaqaId.data, recordingId.data, body.data, actor.id))) {
-      return notFound(c);
-    }
+    const outcome = await deps.repo.review(
+      halaqaId.data,
+      recordingId.data,
+      body.data,
+      actor.id
+    );
+    if (outcome === 'not_found') return notFound(c);
+    if (outcome === 'marks') return invalid(c, ['marks']);
     deps.log.info(
       {
         userId: actor.id,
         halaqaId: halaqaId.data,
         recordingId: recordingId.data,
         verdict: body.data.verdict,
+        marks: body.data.marks.length,
       },
       'recording.reviewed'
     );

@@ -177,11 +177,19 @@ export interface RecitedRange {
 
 export type Verdict = 'good' | 'again';
 
+/** A word the teacher marked: the `word`-th word of āya `aya` of the recited sūra. */
+export interface WordMark {
+  aya: number;
+  word: number;
+}
+
 /** The teacher's answer to a recitation (apps/api/src/recordings/repository.ts). */
 export interface RecitationReview {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
+  /** Words that need work, in reading order. */
+  marks: WordMark[];
   reviewerName: string | null;
   reviewedAt: string;
 }
@@ -514,7 +522,12 @@ export class AuthClient {
   reviewRecitation(
     halaqaId: string,
     id: string,
-    review: { verdict: Verdict; remark: RemarkId | null; note: string | null }
+    review: {
+      verdict: Verdict;
+      remark: RemarkId | null;
+      note: string | null;
+      marks: readonly WordMark[];
+    }
   ): Promise<ApiResult<unknown>> {
     return apiRequest(
       this.fetchImpl,

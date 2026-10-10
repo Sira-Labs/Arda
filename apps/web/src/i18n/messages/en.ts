@@ -574,6 +574,9 @@ export const en: Messages = {
     failed: 'That did not work. Try again, or use a link or code.',
   },
   recite: {
+    marksHint: 'While you listen, tap the words that are not right yet.',
+    marked: 'marked',
+    marksCount: (count) => (count === 1 ? '1 word marked' : `${count} words marked`),
     record: 'Record',
     title: (sura, from, to) =>
       from === to

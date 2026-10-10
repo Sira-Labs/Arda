@@ -3,8 +3,9 @@ import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import type { RemarkId } from '@/i18n/messages';
 import { formatMoment } from '@/modules/assignments/format';
 import type { ApiResult } from '@/services/api/request';
-import type { QueuedRecitation, Verdict } from '@/services/auth';
+import type { QueuedRecitation, Verdict, WordMark } from '@/services/auth';
 import { useSession } from '@/state/session';
+import { RecitedWords, toggleMark } from './RecitedWords';
 import { REMARKS } from './remarks';
 
 type Failure = Extract<ApiResult<unknown>, { ok: false }>;
@@ -116,6 +117,7 @@ function QueueItem({
   const [verdict, setVerdict] = useState<Verdict | null>(review?.verdict ?? null);
   const [remark, setRemark] = useState<RemarkId | null>(review?.remark ?? null);
   const [note, setNote] = useState(review?.note ?? '');
+  const [marks, setMarks] = useState<WordMark[]>(review?.marks ?? []);
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const who = recording.studentName ?? recording.studentEmail ?? '';
@@ -124,7 +126,7 @@ function QueueItem({
   const answer = async () => {
     if (!verdict) return;
     setBusy(true);
-    const input = { verdict, remark, note: note.trim() || null };
+    const input = { verdict, remark, note: note.trim() || null, marks };
     try {
       const result = await client.reviewRecitation(halaqaId, recording.id, input);
       if (!result.ok) {
@@ -166,6 +168,9 @@ function QueueItem({
           </span>
           {review.remark && <span className="muted">{m.remarks[review.remark]}</span>}
           {review.note && <span>{review.note}</span>}
+          {review.marks.length > 0 && (
+            <span className="muted">{m.recite.marksCount(review.marks.length)}</span>
+          )}
           <button
             className="btn btn-quiet"
             type="button"
@@ -176,6 +181,13 @@ function QueueItem({
         </span>
       ) : (
         <div className="stack" style={{ gap: 8 }}>
+          {/* While listening: tap the words that need work. */}
+          <span className="muted">{m.recite.marksHint}</span>
+          <RecitedWords
+            range={recording.range}
+            marks={marks}
+            onToggle={(mark) => setMarks((current) => toggleMark(current, mark))}
+          />
           <span className="row" style={{ gap: 8 }} role="group">
             <button
               type="button"

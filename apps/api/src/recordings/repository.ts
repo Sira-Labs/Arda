@@ -5,6 +5,7 @@
  * until the RustFS bucket exists (ADR-0012 update 2026-10-06).
  */
 import type pg from 'pg';
+import { wordCount } from '@arda/quran';
 
 export const RECORDING_MIMES = [
   'audio/webm',
@@ -45,13 +46,51 @@ export interface NewRecording {
   audio: Buffer;
 }
 
+/** A word the teacher marked: the `word`-th word of āya `aya` of the recited sūra. */
+export interface Mark {
+  aya: number;
+  word: number;
+}
+
+/** The most words one answer marks. */
+export const MAX_MARKS = 100;
+
+/** What the teacher answers: a verdict, a quick remark, their own words, marked words. */
+export interface ReviewInput {
+  verdict: Verdict;
+  remark: RemarkId | null;
+  note: string | null;
+  marks: readonly Mark[];
+}
+
 export interface Review {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
+  /** In reading order. */
+  marks: Mark[];
   reviewerName: string | null;
   reviewedAt: string;
 }
+
+/** Whether every mark is a word of the recited āyāt (the packs' word counts). */
+export function marksFit(
+  range: { sura: number; from: number; to: number },
+  marks: readonly Mark[]
+): boolean {
+  return marks.every(
+    ({ aya, word }) =>
+      aya >= range.from &&
+      aya <= range.to &&
+      word >= 1 &&
+      word <= (wordCount(range.sura, aya) ?? 0)
+  );
+}
+
+/** Marks in reading order. */
+export const byPlace = (a: Mark, b: Mark): number => a.aya - b.aya || a.word - b.word;
+
+export type ReviewOutcome = 'reviewed' | 'not_found' | 'marks';
 
 interface RecordingBase {
   id: string;
@@ -108,13 +147,16 @@ export interface RecordingRepository {
   ownAudio(studentId: string, recordingId: string): Promise<Audio | null>;
   /** The sound of a recording sent to this ḥalaqa. */
   halaqaAudio(halaqaId: string, recordingId: string): Promise<Audio | null>;
-  /** The teacher's answer (replaces an earlier one); `false` when not in this ḥalaqa. */
+  /**
+   * The teacher's answer, replacing an earlier one with its marks: `not_found` when the
+   * recording is not in this ḥalaqa, `marks` when a mark is no word of the recited āyāt.
+   */
   review(
     halaqaId: string,
     recordingId: string,
-    input: { verdict: Verdict; remark: RemarkId | null; note: string | null },
+    input: ReviewInput,
     reviewerId: string
-  ): Promise<boolean>;
+  ): Promise<ReviewOutcome>;
   /** Deletes one of the student's own recordings with its sound. */
   remove(studentId: string, recordingId: string): Promise<boolean>;
 }
@@ -137,11 +179,15 @@ interface Row {
   note: string | null;
   reviewer_name: string | null;
   reviewed_at: Date | null;
+  marks: Mark[];
 }
 
 const COLUMNS = `r.id, r.halaqa_id, r.assignment_id, r.sura, r.aya_from, r.aya_to, r.mime,
   r.bytes, r.duration_ms, r.created_at, r.verdict, r.remark, r.note,
-  nullif(btrim(t.name), '') as reviewer_name, r.reviewed_at`;
+  nullif(btrim(t.name), '') as reviewer_name, r.reviewed_at,
+  coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word)
+                            order by m.aya, m.word)
+              from recording_marks m where m.recording_id = r.id), '[]') as marks`;
 
 const base = (row: Row): RecordingBase => ({
   id: row.id,
@@ -158,6 +204,7 @@ const base = (row: Row): RecordingBase => ({
           verdict: row.verdict,
           remark: row.remark,
           note: row.note,
+          marks: row.marks,
           reviewerName: row.reviewer_name,
           reviewedAt: iso(row.reviewed_at),
         }
@@ -347,16 +394,55 @@ export class PgRecordingRepository implements RecordingRepository {
   async review(
     halaqaId: string,
     recordingId: string,
-    input: { verdict: Verdict; remark: RemarkId | null; note: string | null },
+    input: ReviewInput,
     reviewerId: string
-  ): Promise<boolean> {
-    const { rowCount } = await this.pool.query(
-      `update recordings
-          set verdict = $3, remark = $4, note = $5, reviewed_by = $6, reviewed_at = now()
-        where id = $2 and halaqa_id = $1`,
-      [halaqaId, recordingId, input.verdict, input.remark, input.note, reviewerId]
-    );
-    return (rowCount ?? 0) > 0;
+  ): Promise<ReviewOutcome> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      const { rows } = await client.query<{
+        sura: number;
+        aya_from: number;
+        aya_to: number;
+      }>(
+        `update recordings
+            set verdict = $3, remark = $4, note = $5, reviewed_by = $6, reviewed_at = now()
+          where id = $2 and halaqa_id = $1
+          returning sura, aya_from, aya_to`,
+        [halaqaId, recordingId, input.verdict, input.remark, input.note, reviewerId]
+      );
+      const range = rows[0];
+      if (!range) {
+        await client.query('rollback');
+        return 'not_found';
+      }
+      if (
+        !marksFit(
+          { sura: range.sura, from: range.aya_from, to: range.aya_to },
+          input.marks
+        )
+      ) {
+        await client.query('rollback');
+        return 'marks';
+      }
+      await client.query('delete from recording_marks where recording_id = $1', [
+        recordingId,
+      ]);
+      if (input.marks.length > 0) {
+        await client.query(
+          `insert into recording_marks (recording_id, aya, word)
+           select $1, aya, word from unnest($2::smallint[], $3::smallint[]) as m(aya, word)`,
+          [recordingId, input.marks.map((m) => m.aya), input.marks.map((m) => m.word)]
+        );
+      }
+      await client.query('commit');
+      return 'reviewed';
+    } catch (error) {
+      await client.query('rollback').catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

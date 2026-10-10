@@ -336,6 +336,11 @@ describe('the teacher listens and answers (T3)', () => {
           verdict: 'again',
           remark: 'sinVoiced',
           note: '  Das sīn stimmlos.  ',
+          // Al-Ikhlāṣ 1–4: kept in reading order.
+          marks: [
+            { aya: 4, word: 2 },
+            { aya: 1, word: 3 },
+          ],
         }),
         type: 'application/json',
       }
@@ -356,9 +361,40 @@ describe('the teacher listens and answers (T3)', () => {
         verdict: 'again',
         remark: 'sinVoiced',
         note: 'Das sīn stimmlos.',
+        marks: [
+          { aya: 1, word: 3 },
+          { aya: 4, word: 2 },
+        ],
         reviewerName: 'Sheikh Ahmad',
       },
     });
+  });
+
+  it('refuses a mark that is no word of the recited āyāt', async () => {
+    const { call, sent, halaqaId } = await setup();
+    const id = await sent();
+    const answer = (marks: unknown) =>
+      call('owner', 'PUT', `/halaqat/${halaqaId}/recordings/${id}/review`, {
+        body: JSON.stringify({ verdict: 'again', marks }),
+        type: 'application/json',
+      });
+    // Al-Ikhlāṣ 1–4: āya 5 does not exist, āya 4 has five words, and a word counts once.
+    for (const marks of [
+      [{ aya: 5, word: 1 }],
+      [{ aya: 4, word: 6 }],
+      [{ aya: 0, word: 1 }],
+      [
+        { aya: 1, word: 1 },
+        { aya: 1, word: 1 },
+      ],
+      [{ aya: 1, word: 1, rule: 'ghunna' }],
+      Array.from({ length: 101 }, (_, i) => ({ aya: 1, word: i + 1 })),
+    ]) {
+      const response = await answer(marks);
+      expect(response.status, JSON.stringify(marks).slice(0, 60)).toBe(400);
+      expect(await json(response)).toEqual({ error: 'invalid_body', issues: ['marks'] });
+    }
+    expect((await answer([{ aya: 4, word: 5 }])).status).toBe(204);
   });
 
   it('refuses an answer that is not one of the verdicts or remarks', async () => {

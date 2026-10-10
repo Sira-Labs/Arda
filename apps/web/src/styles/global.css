@@ -1023,6 +1023,39 @@ article[data-docked='sheet'] {
   background: var(--bg-elev-2);
   color: var(--check);
 }
+/* The recited āyāt, word by word: tap to mark (teacher), marked words underlined (student). */
+.recited-words {
+  margin: 0;
+  font-size: calc(1.6rem * var(--quran-scale));
+  line-height: 2.2;
+  text-align: start;
+}
+.recited-word {
+  padding: 0 0.12em;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+button.recited-word {
+  cursor: pointer;
+}
+button.recited-word:hover {
+  background: var(--bg-elev-2);
+}
+.recited-word[aria-pressed='true'],
+.recited-mark {
+  background: var(--bg-elev-2);
+  text-decoration: underline wavy var(--check);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.35em;
+  text-decoration-skip-ink: none;
+}
+.recited-end {
+  color: var(--text-muted);
+  margin-inline: 0.15em;
+}
 .recitation-answer {
   padding: 8px 12px;
   border-inline-start: 3px solid var(--accent-2);

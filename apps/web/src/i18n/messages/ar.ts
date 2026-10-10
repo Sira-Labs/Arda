@@ -611,6 +611,14 @@ export const ar: Messages = {
     failed: 'لم ينجح ذلك. حاول مجددًا أو استخدم رابطًا أو رمزًا.',
   },
   recite: {
+    marksHint: 'أثناء الاستماع، اضغط على الكلمات التي تحتاج إلى تصحيح.',
+    marked: 'مُعلَّمة',
+    marksCount: (count) =>
+      count === 1
+        ? 'كلمة واحدة مُعلَّمة'
+        : count === 2
+          ? 'كلمتان مُعلَّمتان'
+          : `${count} كلمات مُعلَّمة`,
     record: 'تسجيل',
     title: (sura, from, to) =>
       from === to
