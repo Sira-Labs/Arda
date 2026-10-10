@@ -3,8 +3,8 @@
  *
  *   GET /halaqat/:id/rules   who still struggles with which rule   halaqa:rules
  *
- * Per active student and topic: open practice mistakes and the teachers' remarks of the last
- * REMARK_WINDOW_DAYS days. Never cached.
+ * Per active student and topic: open practice mistakes, and the teachers' remarks and marked
+ * words of the last REMARK_WINDOW_DAYS days. Never cached.
  */
 import type { Context } from 'hono';
 import { Hono } from 'hono';

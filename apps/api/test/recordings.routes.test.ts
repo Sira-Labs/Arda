@@ -427,7 +427,7 @@ describe('the teacher listens and answers (T3)', () => {
           note: '  Das sīn stimmlos.  ',
           // Al-Ikhlāṣ 1–4: kept in reading order.
           marks: [
-            { aya: 4, word: 2 },
+            { aya: 4, word: 2, topic: 'qalqala' },
             { aya: 1, word: 3 },
           ],
         }),
@@ -451,8 +451,8 @@ describe('the teacher listens and answers (T3)', () => {
         remark: 'sinVoiced',
         note: 'Das sīn stimmlos.',
         marks: [
-          { aya: 1, word: 3 },
-          { aya: 4, word: 2 },
+          { aya: 1, word: 3, topic: null },
+          { aya: 4, word: 2, topic: 'qalqala' },
         ],
         reviewerName: 'Sheikh Ahmad',
       },
@@ -477,6 +477,7 @@ describe('the teacher listens and answers (T3)', () => {
         { aya: 1, word: 1 },
       ],
       [{ aya: 1, word: 1, rule: 'ghunna' }],
+      [{ aya: 1, word: 1, topic: 'idgham-ghunna' }],
       Array.from({ length: 101 }, (_, i) => ({ aya: 1, word: i + 1 })),
     ]) {
       const response = await answer(marks);

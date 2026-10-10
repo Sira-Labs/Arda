@@ -8,6 +8,7 @@
 import type pg from 'pg';
 import { wordCount } from '@arda/quran';
 import { dayIn, writeAnswerEntry } from '../ardaLog/repository.js';
+import type { Topic } from '../rules/repository.js';
 
 export const RECORDING_MIMES = [
   'audio/webm',
@@ -48,10 +49,15 @@ export interface NewRecording {
   audio: Buffer;
 }
 
-/** A word the teacher marked: the `word`-th word of āya `aya` of the recited sūra. */
+/**
+ * A word the teacher marked: the `word`-th word of āya `aya` of the recited sūra, and the rule
+ * it was about if he said (ADR-0026 update).
+ */
 export interface Mark {
   aya: number;
   word: number;
+  /** Always present on what is read back; `null` when he named no rule. */
+  topic?: Topic | null;
 }
 
 /** The most words one answer marks. */
@@ -226,7 +232,7 @@ interface Row {
 const COLUMNS = `r.id, r.halaqa_id, r.assignment_id, r.sura, r.aya_from, r.aya_to, r.mime,
   r.bytes, r.duration_ms, r.created_at, r.verdict, r.remark, r.note,
   nullif(btrim(t.name), '') as reviewer_name, r.reviewed_at,
-  coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word)
+  coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word, 'topic', m.topic)
                             order by m.aya, m.word)
               from recording_marks m where m.recording_id = r.id), '[]') as marks,
   (select json_build_object('mime', v.mime, 'bytes', v.bytes, 'durationMs', v.duration_ms)
@@ -492,14 +498,20 @@ export class PgRecordingRepository implements RecordingRepository {
         verdict: input.verdict,
         remark: input.remark,
         note: input.note,
-        marks: input.marks,
+        marks: input.marks.map((m) => ({ ...m, topic: m.topic ?? null })),
         writtenBy: reviewerId,
       });
       if (input.marks.length > 0) {
         await client.query(
-          `insert into recording_marks (recording_id, aya, word)
-           select $1, aya, word from unnest($2::smallint[], $3::smallint[]) as m(aya, word)`,
-          [recordingId, input.marks.map((m) => m.aya), input.marks.map((m) => m.word)]
+          `insert into recording_marks (recording_id, aya, word, topic)
+           select $1, aya, word, topic
+             from unnest($2::smallint[], $3::smallint[], $4::text[]) as m(aya, word, topic)`,
+          [
+            recordingId,
+            input.marks.map((m) => m.aya),
+            input.marks.map((m) => m.word),
+            input.marks.map((m) => m.topic ?? null),
+          ]
         );
       }
       await client.query('commit');

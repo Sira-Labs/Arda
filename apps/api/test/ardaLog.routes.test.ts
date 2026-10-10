@@ -244,7 +244,7 @@ describe('answers enter the log (T4)', () => {
         verdict: 'good',
         remark: 'good',
         note: null,
-        marks: [{ aya: 2, word: 2 }],
+        marks: [{ aya: 2, word: 2, topic: null }],
         source: 'recording',
         recordingId: id,
         writtenByName: 'Sheikh Ahmad',

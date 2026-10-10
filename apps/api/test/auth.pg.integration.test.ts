@@ -1763,6 +1763,32 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await write(AMINA, '2026-06-01', 'again', 'ghunnaShort');
       await write(AMINA, '2026-10-02', 'good', 'good');
       await write(YUSUF, '2026-10-05', 'again', 'raRolled');
+      // A recording answered with two marked words, one named for qalqala (ADR-0026 update).
+      const answered = (await repo.save(take(YUSUF), 10)) as { id: string };
+      await pool.query(
+        `update recordings set created_at = '2026-10-09T10:00:00Z' where id = $1`,
+        [answered.id]
+      );
+      expect(
+        await repo.review(
+          halaqaId,
+          answered.id,
+          {
+            verdict: 'again',
+            remark: null,
+            note: null,
+            marks: [
+              { aya: 1, word: 1, topic: 'qalqala' },
+              { aya: 2, word: 1, topic: null },
+            ],
+          },
+          TEACHER
+        )
+      ).toBe('reviewed');
+      expect((await repo.queue(halaqaId, page)).recordings[0]!.review?.marks).toEqual([
+        { aya: 1, word: 1, topic: 'qalqala' },
+        { aya: 2, word: 1, topic: null },
+      ]);
 
       const rules = new PgRuleRepository(pool);
       expect(await rules.struggles(halaqaId, '2026-07-12')).toEqual([
@@ -1773,7 +1799,18 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           openCards: 2,
           lapses: 7,
           remarks: 2,
-          lastRemarkOn: '2026-10-01',
+          marks: 0,
+          lastNotedOn: '2026-10-01',
+        },
+        {
+          studentId: YUSUF,
+          studentName: 'Yusuf',
+          topic: 'qalqala',
+          openCards: 0,
+          lapses: 0,
+          remarks: 0,
+          marks: 1,
+          lastNotedOn: '2026-10-09',
         },
         {
           studentId: YUSUF,
@@ -1782,13 +1819,14 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           openCards: 0,
           lapses: 0,
           remarks: 1,
-          lastRemarkOn: '2026-10-05',
+          marks: 0,
+          lastNotedOn: '2026-10-05',
         },
       ]);
       expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
       expect(
         (await rules.struggles(halaqaId, '2026-07-12')).map((s) => s.studentId)
-      ).toEqual([YUSUF]);
+      ).toEqual([YUSUF, YUSUF]);
     });
 
     it('deletes on request, when the student leaves, and with the account; exports the rest', async () => {
@@ -1819,7 +1857,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           id: kept.id,
           sent_by_you: true,
           verdict: 'good',
-          marks: [{ aya: 2, word: 1 }],
+          marks: [{ aya: 2, word: 1, topic: null }],
           voice_note: expect.objectContaining({ bytes: 13, recorded_by_you: false }),
         }),
       ]);

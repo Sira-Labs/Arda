@@ -49,3 +49,18 @@ be "a separate, ḥalaqa-scoped action". Two signals exist today:
 The view is computed on request from `review_cards` and `arda_log`; no new table. When the
 speech check (ADR-0013) or confirmed flags (ADR-0016) exist, they can add a third signal per
 topic.
+
+## Update 2026-10-10: the rule of a marked word
+
+The owner asked for the alternative above: when the sheikh marks a word, he can say which rule
+it was about.
+
+- **A mark has an optional topic** (`recording_marks.topic`, migration `0015_mark_topics`;
+  the same topics as above). A mark without one stays a mark.
+- **Chosen for him when the word says it:** the app looks up the word's rules in the content
+  pack (cpfair's names mapped to the sheet's rules, every madd to madd; followers and silent
+  letters left out); a word with exactly one is marked for it, and he can change or clear it.
+- **Counted in rule by rule:** named marks of the last 90 days (from the answer's ʿarḍ log
+  entry, so they stay when the take is deleted) count beside the remarks; the view shows "n
+  words marked by you" and the day of the last remark or mark.
+- **The student sees the rule** of each marked word under the answer.

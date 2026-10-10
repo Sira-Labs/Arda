@@ -610,11 +610,14 @@ export const en: Messages = {
   struggles: {
     title: 'Rule by rule',
     intro:
-      'Who still struggles with which rule: mistakes in the games that have not stuck yet, and your quick remarks of the last 90 days.',
+      'Who still struggles with which rule: mistakes in the games that have not stuck yet, and your quick remarks and marked words of the last 90 days.',
     none: 'Nobody is struggling with a rule right now, or nothing has been practised yet.',
     open: (count) =>
       count === 1 ? '1 game mistake open' : `${count} game mistakes open`,
-    remarks: (count, day) => `noted by you ${count}×, last ${day}`,
+    remarks: (count) => `noted by you ${count}×`,
+    marks: (count) =>
+      count === 1 ? '1 word marked by you' : `${count} words marked by you`,
+    last: (day) => `last ${day}`,
     topics: { madd: 'Madd (lengthening)', makhraj: 'Pronouncing the letters (makhārij)' },
     card: 'Rule card',
     unnamed: 'no name',
@@ -649,6 +652,9 @@ export const en: Messages = {
     voiceRemove: 'Remove voice note',
     voiceFrom: (name) =>
       name ? `Voice note from ${name}` : 'Voice note from your sheikh',
+    markedWords: 'Marked words',
+    topicFor: (word) => `Rule for ${word}`,
+    noTopic: '– no rule –',
     marksHint: 'While you listen, tap the words that are not right yet.',
     marked: 'marked',
     marksCount: (count) => (count === 1 ? '1 word marked' : `${count} words marked`),

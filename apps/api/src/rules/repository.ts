@@ -1,9 +1,9 @@
 /**
  * Rule by rule (spec T5, ADR-0026): which rules the active students of a ḥalaqa still struggle
- * with, from two sources: their own practice (review cards on the account, ADR-0022: a card
- * still in box 1 or 2 is a mistake not yet mastered) and the teachers' quick remarks on what
- * they recited (the ʿarḍ log, ADR-0025, `again` with a remark). Only counts leave the
- * database: no answers, no prompts.
+ * with, from their own practice (review cards on the account, ADR-0022: a card still in box 1
+ * or 2 is a mistake not yet mastered) and from what the teachers said of their recitations in
+ * the ʿarḍ log (ADR-0025): quick remarks with `again`, and marked words he named a rule for.
+ * Only counts leave the database: no answers, no prompts, no words.
  */
 import type pg from 'pg';
 import type { RemarkId } from '../recordings/repository.js';
@@ -52,9 +52,12 @@ export interface Struggle {
   openCards: number;
   /** How often those and the other cards on it were missed again. */
   lapses: number;
-  /** The teachers' remarks on it since `since`, and the day of the last. */
+  /** The teachers' remarks on it since `since`. */
   remarks: number;
-  lastRemarkOn: string | null;
+  /** The words they marked for it since `since`. */
+  marks: number;
+  /** The day of the last remark or mark. */
+  lastNotedOn: string | null;
 }
 
 export interface RuleRepository {
@@ -66,7 +69,7 @@ export class PgRuleRepository implements RuleRepository {
   constructor(private readonly pool: pg.Pool) {}
 
   async struggles(halaqaId: string, since: string): Promise<Struggle[]> {
-    const [practice, remarks] = await Promise.all([
+    const [practice, remarks, marks] = await Promise.all([
       this.pool.query<{
         student_id: string;
         student_name: string | null;
@@ -103,6 +106,24 @@ export class PgRuleRepository implements RuleRepository {
           group by l.student_id, u.name, l.remark`,
         [halaqaId, since]
       ),
+      this.pool.query<{
+        student_id: string;
+        student_name: string | null;
+        topic: Topic;
+        n: number;
+        last_on: string;
+      }>(
+        `select l.student_id, nullif(btrim(u.name), '') as student_name,
+                m.mark->>'topic' as topic, count(*)::int as n,
+                to_char(max(l.recited_on), 'YYYY-MM-DD') as last_on
+           from arda_log l
+           join users u on u.id = l.student_id
+           cross join lateral jsonb_array_elements(l.marks) as m(mark)
+          where l.halaqa_id = $1 and l.recited_on >= $2::date
+            and m.mark->>'topic' = any($3::text[])
+          group by l.student_id, u.name, m.mark->>'topic'`,
+        [halaqaId, since, TOPICS]
+      ),
     ]);
     const byKey = new Map<string, Struggle>();
     const entry = (studentId: string, studentName: string | null, topic: Topic) => {
@@ -116,7 +137,8 @@ export class PgRuleRepository implements RuleRepository {
           openCards: 0,
           lapses: 0,
           remarks: 0,
-          lastRemarkOn: null,
+          marks: 0,
+          lastNotedOn: null,
         };
         byKey.set(key, struggle);
       }
@@ -127,22 +149,28 @@ export class PgRuleRepository implements RuleRepository {
       struggle.openCards = row.open_cards;
       struggle.lapses = row.lapses;
     }
+    const noted = (struggle: Struggle, day: string) => {
+      if (!struggle.lastNotedOn || day > struggle.lastNotedOn) struggle.lastNotedOn = day;
+    };
     for (const row of remarks.rows) {
       const topic = REMARK_TOPIC[row.remark];
       if (!topic) continue;
       const struggle = entry(row.student_id, row.student_name, topic);
       struggle.remarks += row.n;
-      if (!struggle.lastRemarkOn || row.last_on > struggle.lastRemarkOn) {
-        struggle.lastRemarkOn = row.last_on;
-      }
+      noted(struggle, row.last_on);
+    }
+    for (const row of marks.rows) {
+      const struggle = entry(row.student_id, row.student_name, row.topic);
+      struggle.marks += row.n;
+      noted(struggle, row.last_on);
     }
     return sortStruggles([...byKey.values()]);
   }
 }
 
-/** The heaviest first: open mistakes and remarks together, then by topic and student. */
+/** The heaviest first: open mistakes, remarks and marks together, then topic and student. */
 export function sortStruggles(struggles: Struggle[]): Struggle[] {
-  const weight = (s: Struggle) => s.openCards + s.remarks;
+  const weight = (s: Struggle) => s.openCards + s.remarks + s.marks;
   return struggles.sort(
     (a, b) =>
       weight(b) - weight(a) ||
