@@ -1,4 +1,4 @@
-import type { RuleFamily, RuleId } from './rules';
+import { RULE_FAMILIES, type RuleFamily, type RuleId } from './rules';
 
 /**
  * The rule names in the content packs: cpfair/quran-tajweed's 18 categories as the data spells them (CC BY 4.0,
@@ -82,3 +82,11 @@ export function isPackRuleId(value: unknown): value is PackRuleId {
     typeof value === 'string' && (PACK_RULE_IDS as readonly string[]).includes(value)
   );
 }
+
+/**
+ * The colour families the muṣḥaf shows: those of the pack's rules. Tafkhīm is taught on the
+ * cards of unit 6 but is not in the pack, so the muṣḥaf's legend leaves it out.
+ */
+export const MUSHAF_FAMILIES: readonly RuleFamily[] = RULE_FAMILIES.filter((family) =>
+  Object.values(PACK_RULES).some((rule) => rule.family === family)
+);

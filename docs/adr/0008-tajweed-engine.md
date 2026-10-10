@@ -74,3 +74,12 @@ our own rules or another source (ADR-0017).
   cpfair agree on every long madd except the munfaṣil ḥukmī (يَٰٓـَٔادَمُ, هَٰٓؤُلَآءِ: the engine
   follows the usual teaching, cpfair says muttaṣil) and the opening letters الٓمٓ; the engine
   finds every natural madd cpfair marks. The muṣḥaf still colours from the pack.
+
+## Update 2026-10-11: heavy and light letters (unit 6)
+
+- `detect(text, { tafkhim: true })` finds the seven heavy letters, the lām of Allāh and every
+  rāʾ, heavy or light, with the reason (spec 03 §4c). Opt-in like the madd.
+- No open data marks tafkhīm, so there is no cross-check against cpfair. The rules are checked
+  on the packs (every lām of Allāh and every rāʾ read), in unit tests on the known cases
+  (ٱرْجِعِىٓ, مِرْصَادًا, قَالُوا۟ ٱللَّهُ, أَحَدٌ ٱللَّهُ) and against the letter lab's rāʾ words,
+  whose weights were read from their vowels before.

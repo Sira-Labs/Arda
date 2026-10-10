@@ -5,6 +5,7 @@ import {
   PACK_RULES,
   isPackRuleId,
   NUN_SAKINA_RULES,
+  MUSHAF_FAMILIES,
   RULE_FAMILIES,
   RULE_IDS,
   RULES,
@@ -50,6 +51,12 @@ describe('the taxonomy', () => {
       const family = RULES[id].family;
       if (family !== null) expect(RULE_FAMILIES).toContain(family);
     }
+  });
+
+  it('shows in the muṣḥaf every family but tafkhīm, which only the cards of unit 6 colour', () => {
+    expect(MUSHAF_FAMILIES).toEqual(
+      RULE_FAMILIES.filter((family) => family !== 'tafkhim')
+    );
   });
 
   it('leaves the clear rules uncoloured', () => {

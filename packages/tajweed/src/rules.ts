@@ -11,6 +11,7 @@ export const RULE_FAMILIES = [
   'madd-2',
   'madd-4',
   'madd-6',
+  'tafkhim',
 ] as const;
 export type RuleFamily = (typeof RULE_FAMILIES)[number];
 
@@ -30,6 +31,11 @@ export const RULE_IDS = [
   'madd-muttasil',
   'madd-munfasil',
   'madd-lazim',
+  'tafkhim',
+  'lam-heavy',
+  'lam-light',
+  'ra-heavy',
+  'ra-light',
 ] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
@@ -42,9 +48,22 @@ export const MADD_RULES = [
 ] as const;
 export type MaddRule = (typeof MADD_RULES)[number];
 
+/**
+ * The heavy and light letters of unit 6 (spec 03 §4c): found by `detect` only when asked
+ * (`tafkhim: true`).
+ */
+export const WEIGHT_RULES = [
+  'tafkhim',
+  'lam-heavy',
+  'lam-light',
+  'ra-heavy',
+  'ra-light',
+] as const;
+export type WeightRule = (typeof WEIGHT_RULES)[number];
+
 /** Which sound the rule is about. */
 export type RuleSubject =
-  'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala' | 'madd';
+  'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala' | 'madd' | 'tafkhim';
 
 export interface Rule {
   id: RuleId;
@@ -64,6 +83,8 @@ export interface Rule {
    * ash-Shāṭibiyya, the reading of the sheikh's muṣḥaf. Absent for the other rules.
    */
   counts?: readonly [number, number];
+  /** Whether the letter is heavy (tafkhīm) or light (tarqīq), for the rules of unit 6. */
+  weight?: 'heavy' | 'light';
 }
 
 const rule = (r: Rule): Rule => r;
@@ -211,10 +232,67 @@ export const RULES: Readonly<Record<RuleId, Rule>> = {
     letters: [],
     counts: [6, 6],
   }),
+  // The seven letters of istiʿlāʾ, as the mnemonic orders them: خُصَّ ضَغْطٍ قِظْ. The back of
+  // the tongue rises, so they are always heavy; every other letter is light but for the lām of
+  // Allāh, the rāʾ and the alif after a heavy letter.
+  tafkhim: rule({
+    id: 'tafkhim',
+    subject: 'tafkhim',
+    arabic: 'تَفْخِيم',
+    term: 'Tafkhīm',
+    family: 'tafkhim',
+    ghunna: false,
+    letters: ['خ', 'ص', 'ض', 'غ', 'ط', 'ق', 'ظ'],
+    weight: 'heavy',
+  }),
+  // The lām of the name Allāh: heavy after fatḥa or ḍamma, light after kasra.
+  'lam-heavy': rule({
+    id: 'lam-heavy',
+    subject: 'tafkhim',
+    arabic: 'تَفْخِيم اللَّام',
+    term: 'Tafkhīm al-lām',
+    family: 'tafkhim',
+    ghunna: false,
+    letters: [],
+    weight: 'heavy',
+  }),
+  'lam-light': rule({
+    id: 'lam-light',
+    subject: 'tafkhim',
+    arabic: 'تَرْقِيق اللَّام',
+    term: 'Tarqīq al-lām',
+    family: null,
+    ghunna: false,
+    letters: [],
+    weight: 'light',
+  }),
+  'ra-heavy': rule({
+    id: 'ra-heavy',
+    subject: 'tafkhim',
+    arabic: 'تَفْخِيم الرَّاء',
+    term: 'Tafkhīm ar-rāʾ',
+    family: 'tafkhim',
+    ghunna: false,
+    letters: [],
+    weight: 'heavy',
+  }),
+  'ra-light': rule({
+    id: 'ra-light',
+    subject: 'tafkhim',
+    arabic: 'تَرْقِيق الرَّاء',
+    term: 'Tarqīq ar-rāʾ',
+    family: null,
+    ghunna: false,
+    letters: [],
+    weight: 'light',
+  }),
 };
 
 export const isMaddRule = (rule: RuleId): rule is MaddRule =>
   (MADD_RULES as readonly RuleId[]).includes(rule);
+
+export const isWeightRule = (rule: RuleId): rule is WeightRule =>
+  (WEIGHT_RULES as readonly RuleId[]).includes(rule);
 
 /** The four rules of nūn sākina and tanwīn: together they cover every letter exactly once. */
 export const NUN_SAKINA_RULES = [

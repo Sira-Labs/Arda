@@ -104,6 +104,7 @@ export const ar: Messages = {
     'madd-2': { name: 'مد ٢', hint: 'المد الطبيعي، حركتان' },
     'madd-4': { name: 'مد ٤–٥', hint: 'المد المتصل أو المنفصل' },
     'madd-6': { name: 'مد ٦', hint: 'المد اللازم، ست حركات' },
+    tafkhim: { name: 'تفخيم', hint: 'حرف مفخَّم، يرتفع فيه أقصى اللسان' },
   },
   path: {
     eyebrow: 'المسار',
@@ -166,6 +167,7 @@ export const ar: Messages = {
       'madd-2': 'الأحمر الفاتح',
       'madd-4': 'الأحمر',
       'madd-6': 'الأحمر الداكن',
+      tafkhim: 'البنفسجي',
     },
     cases: { inside: 'في كلمة واحدة', across: 'بين كلمتين', tanwin: 'بعد التنوين' },
     withGhunna: 'بغنة',

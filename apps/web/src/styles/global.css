@@ -396,6 +396,9 @@ a {
 .tj[data-rule='madd-6'] {
   color: var(--tj-madd-6);
 }
+.tj[data-rule='tafkhim'] {
+  color: var(--tj-tafkhim);
+}
 .legend {
   display: flex;
   flex-wrap: wrap;

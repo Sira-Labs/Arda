@@ -89,6 +89,7 @@ export const de = {
     'madd-2': { name: 'Madd 2', hint: 'natürliche Dehnung, 2 Zählzeiten' },
     'madd-4': { name: 'Madd 4–5', hint: 'verbundene oder getrennte Dehnung' },
     'madd-6': { name: 'Madd 6', hint: 'notwendige Dehnung, 6 Zählzeiten' },
+    tafkhim: { name: 'Tafkhīm', hint: 'schwer, mit gehobener Zunge' },
   } as Record<RuleFamily, { name: string; hint: string }>,
   path: {
     eyebrow: 'Pfad',
@@ -147,6 +148,7 @@ export const de = {
       'madd-2': 'hellrot',
       'madd-4': 'rot',
       'madd-6': 'dunkelrot',
+      tafkhim: 'violett',
     } as Record<RuleFamily, string>,
     cases: {
       inside: 'in einem Wort',

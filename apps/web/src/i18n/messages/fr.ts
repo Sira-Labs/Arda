@@ -58,6 +58,7 @@ export const fr: Messages = {
     'madd-2': { name: 'Madd 2', hint: 'allongement naturel, 2 temps' },
     'madd-4': { name: 'Madd 4–5', hint: 'allongement joint ou séparé' },
     'madd-6': { name: 'Madd 6', hint: 'allongement obligatoire, 6 temps' },
+    tafkhim: { name: 'Tafkhīm', hint: 'lourd, la langue relevée' },
   },
   path: {
     eyebrow: 'Parcours',
@@ -116,6 +117,7 @@ export const fr: Messages = {
       'madd-2': 'rouge clair',
       'madd-4': 'rouge',
       'madd-6': 'rouge foncé',
+      tafkhim: 'violet',
     },
     cases: {
       inside: 'dans un mot',

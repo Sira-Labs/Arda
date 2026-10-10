@@ -46,6 +46,7 @@
   --tj-madd-2: #c85e52;
   --tj-madd-4: #a32b22;
   --tj-madd-6: #6e1813; /* darker = longer */
+  --tj-tafkhim: #6b3fa0; /* heavy letters (unit 6): 7.3:1 */
   /* The printed page (S3.5): paper, its blue frame and the rules between its lines */
   --mushaf-paper: #fffdf8;
   --mushaf-frame: #3b6f8c;
@@ -107,6 +108,7 @@
   --tj-madd-2: #e98a7a;
   --tj-madd-4: #e0604e;
   --tj-madd-6: #d4513f; /* at night: longer = deeper, still ≥ 3:1 */
+  --tj-tafkhim: #c3a6f0;
   --mushaf-paper: #17221e;
   --mushaf-frame: #6fa3c0;
   --mushaf-rule: rgb(111 163 192 / 0.3);

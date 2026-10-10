@@ -58,14 +58,15 @@ Follows the common tajwīd-muṣḥaf convention. Each colour has ≥ 3:1 contra
 (Qurʾān text is large text); green ghunna also differs in **lightness** from the madd reds, the
 pair colour-blind readers confuse most.
 
-| Family   | Paper              | Night     | Label (German UI)                     | Rules                                                         |
-| -------- | ------------------ | --------- | ------------------------------------- | ------------------------------------------------------------- |
-| ghunna   | `#1f7a35` (4.8:1)  | `#8fdc9b` | Ghunna · Nasenklang, 2 Zählzeiten     | ikhfāʾ, idghām with ghunna, iqlāb, shafawī, mushaddad nūn/mīm |
-| qalqala  | `#2464b0` (5.3:1)  | `#6aa6e6` | Qalqala · Rückprall                   | qalqala                                                       |
-| silent   | `#86867f` (3.3:1)  | `#8e9893` | Stumm · geschrieben, nicht gesprochen | hamzat al-waṣl, lām shamsiyya, idghām without ghunna          |
-| madd 2   | `#c85e52` (3.6:1)  | `#e98a7a` | Madd 2 · natürliche Dehnung           | ṭabīʿī                                                        |
-| madd 4–5 | `#a32b22` (6.4:1)  | `#e0604e` | Madd 4–5 · verbunden / getrennt       | muttaṣil, munfaṣil                                            |
-| madd 6   | `#6e1813` (10.4:1) | `#d4513f` | Madd 6 · notwendig                    | lāzim                                                         |
+| Family   | Paper              | Night     | Label (German UI)                     | Rules                                                                                                     |
+| -------- | ------------------ | --------- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| ghunna   | `#1f7a35` (4.8:1)  | `#8fdc9b` | Ghunna · Nasenklang, 2 Zählzeiten     | ikhfāʾ, idghām with ghunna, iqlāb, shafawī, mushaddad nūn/mīm                                             |
+| qalqala  | `#2464b0` (5.3:1)  | `#6aa6e6` | Qalqala · Rückprall                   | qalqala                                                                                                   |
+| silent   | `#86867f` (3.3:1)  | `#8e9893` | Stumm · geschrieben, nicht gesprochen | hamzat al-waṣl, lām shamsiyya, idghām without ghunna                                                      |
+| madd 2   | `#c85e52` (3.6:1)  | `#e98a7a` | Madd 2 · natürliche Dehnung           | ṭabīʿī                                                                                                    |
+| madd 4–5 | `#a32b22` (6.4:1)  | `#e0604e` | Madd 4–5 · verbunden / getrennt       | muttaṣil, munfaṣil                                                                                        |
+| madd 6   | `#6e1813` (10.4:1) | `#d4513f` | Madd 6 · notwendig                    | lāzim                                                                                                     |
+| tafkhīm  | `#6b3fa0` (7.3:1)  | `#c3a6f0` | Tafkhīm · schwer, mit gehobener Zunge | the seven heavy letters, lām of Allāh and rāʾ when heavy; on the cards of unit 6 only (not in the muṣḥaf) |
 
 Rules for using it:
 
