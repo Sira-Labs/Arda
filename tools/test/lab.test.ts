@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Pack, PackIndex } from '@arda/quran';
+import { RULES, detect } from '@arda/tajweed';
 import {
   LAB_KEYS,
   LAB_PICKS,
@@ -245,6 +246,16 @@ describe('the letter lab’s words', () => {
     const weight = (key: string) => lab.words.find((w) => w.key === key)?.weight;
     expect(weight('hafs:1:2:3')).toBe('heavy'); // rabbi
     expect(weight('hafs:2:22:16')).toBe('light'); // rizqan
+  });
+
+  it('agree with the tajweed engine on every rāʾ (unit 6)', () => {
+    const ra = lab.words.filter((w) => w.letter === 'ra');
+    for (const word of ra) {
+      const found = detect(word.uthmani, { tafkhim: true }).find(
+        (o) => o.start === word.focus.uthmani[0] && o.rule.startsWith('ra-')
+      );
+      expect(found && RULES[found.rule].weight, word.key).toBe(word.weight);
+    }
   });
 
   it('say which pair differs in one letter only', () => {

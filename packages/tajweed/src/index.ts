@@ -15,6 +15,9 @@ export {
   MADD_RULES,
   type MaddRule,
   isMaddRule,
+  WEIGHT_RULES,
+  type WeightRule,
+  isWeightRule,
   type NunSakinaRule,
   nunSakinaRule,
   type MimSakinaRule,
@@ -22,6 +25,7 @@ export {
   isQalqalaLetter,
 } from './rules';
 export { detect, type Occurrence } from './detect';
+export type { WeightReason } from './weight';
 export { SHEET_EXAMPLES, IZHAR_EXCEPTIONS, type SheetExample } from './sheet';
 export { UNIT_EXAMPLES } from './examples';
 export {
@@ -29,5 +33,6 @@ export {
   type PackRuleId,
   type PackRule,
   PACK_RULES,
+  MUSHAF_FAMILIES,
   isPackRuleId,
 } from './content';
