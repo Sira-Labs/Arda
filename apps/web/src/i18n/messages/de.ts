@@ -657,12 +657,14 @@ export const de = {
   struggles: {
     title: 'Regel für Regel',
     intro:
-      'Wer mit welcher Regel noch kämpft: Fehler aus den Spielen, die noch nicht sitzen, und deine Kurz-Bemerkungen der letzten 90 Tage.',
+      'Wer mit welcher Regel noch kämpft: Fehler aus den Spielen, die noch nicht sitzen, und deine Kurz-Bemerkungen und markierten Wörter der letzten 90 Tage.',
     none: 'Gerade kämpft niemand mit einer Regel – oder es wurde noch nicht geübt.',
     open: (count: number) =>
       count === 1 ? '1 Fehler im Spiel offen' : `${count} Fehler im Spiel offen`,
-    remarks: (count: number, day: string) =>
-      `${count}× von dir angemerkt, zuletzt ${day}`,
+    remarks: (count: number) => `${count}× von dir angemerkt`,
+    marks: (count: number) =>
+      count === 1 ? '1 Wort von dir markiert' : `${count} Wörter von dir markiert`,
+    last: (day: string) => `zuletzt ${day}`,
     topics: { madd: 'Madd (Dehnung)', makhraj: 'Aussprache der Buchstaben (Makhārij)' },
     card: 'Regelkarte',
     unnamed: 'ohne Namen',
@@ -697,6 +699,9 @@ export const de = {
     voiceRemove: 'Sprachnotiz entfernen',
     voiceFrom: (name: string | null) =>
       name ? `Sprachnotiz von ${name}` : 'Sprachnotiz deines Sheikhs',
+    markedWords: 'Markierte Wörter',
+    topicFor: (word: string) => `Regel für ${word}`,
+    noTopic: '– keine Regel –',
     marksHint: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
     marked: 'markiert',
     marksCount: (count: number) =>

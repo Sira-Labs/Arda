@@ -1,26 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { cardName, unitOf, type CardId } from '@/content/units';
+import { unitOf, type CardId } from '@/content/units';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
-import type { Messages } from '@/i18n/messages';
-import type { Language } from '@/i18n/languages';
 import { formatDay } from '@/modules/assignments/format';
 import type { RuleTopic, Struggle } from '@/services/auth';
 import { useSession } from '@/state/session';
+import { topicName } from './topics';
 
 /** The topics that are not rule cards. */
 const OTHER_TOPICS = new Set<RuleTopic>(['madd', 'makhraj']);
 
-/** A topic's name: the rule card's (Arabic in the Arabic interface), or madd or makhārij. */
-export function topicName(topic: RuleTopic, m: Messages, language: Language): string {
-  if (topic === 'madd' || topic === 'makhraj') return m.struggles.topics[topic];
-  return cardName(topic, language);
-}
-
 /**
  * "Regel für Regel" on the ḥalaqa page (spec T5, ADR-0026): per rule, which students still
  * struggle with it, from their practice (mistakes not yet mastered) and the teacher's own
- * quick remarks of the last 90 days. The rule most students struggle with comes first.
+ * quick remarks and marked words of the last 90 days. The rule most students struggle with comes first.
  */
 export function RuleByRule({ halaqaId }: { halaqaId: string }) {
   const { m, language } = useI18n();
@@ -44,13 +37,15 @@ export function RuleByRule({ halaqaId }: { halaqaId: string }) {
     };
   }, [client, halaqaId, m]);
 
-  // Topic by topic, in the order the api weighed them (heaviest first).
-  const topics: RuleTopic[] = [];
-  for (const s of struggles ?? []) if (!topics.includes(s.topic)) topics.push(s.topic);
-  topics.sort(
-    (a, b) =>
-      (struggles ?? []).filter((s) => s.topic === b).length -
-      (struggles ?? []).filter((s) => s.topic === a).length
+  // Topic by topic: the one most students struggle with first, then the heaviest.
+  const all = struggles ?? [];
+  const students = (topic: RuleTopic) => all.filter((s) => s.topic === topic).length;
+  const weight = (topic: RuleTopic) =>
+    all
+      .filter((s) => s.topic === topic)
+      .reduce((sum, s) => sum + s.openCards + s.remarks + s.marks, 0);
+  const topics = [...new Set(all.map((s) => s.topic))].sort(
+    (a, b) => students(b) - students(a) || weight(b) - weight(a)
   );
 
   return (
@@ -84,11 +79,10 @@ export function RuleByRule({ halaqaId }: { halaqaId: string }) {
                     <span className="muted">
                       {[
                         s.openCards > 0 ? m.struggles.open(s.openCards) : null,
-                        s.remarks > 0 && s.lastRemarkOn
-                          ? m.struggles.remarks(
-                              s.remarks,
-                              formatDay(s.lastRemarkOn, language)
-                            )
+                        s.remarks > 0 ? m.struggles.remarks(s.remarks) : null,
+                        s.marks > 0 ? m.struggles.marks(s.marks) : null,
+                        s.lastNotedOn
+                          ? m.struggles.last(formatDay(s.lastNotedOn, language))
                           : null,
                       ]
                         .filter(Boolean)

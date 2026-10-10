@@ -22,7 +22,8 @@ const struggle = (over: Partial<Struggle>): Struggle => ({
   openCards: 0,
   lapses: 0,
   remarks: 0,
-  lastRemarkOn: null,
+  marks: 0,
+  lastNotedOn: null,
   ...over,
 });
 
@@ -49,21 +50,28 @@ beforeEach(() => {
 describe('rule by rule for the sheikh (T5)', () => {
   it('lists per rule who struggles, the rule most students struggle with first', async () => {
     renderWith([
-      struggle({ topic: 'qalqala', openCards: 3 }),
-      struggle({ topic: 'ikhfa', openCards: 2, remarks: 2, lastRemarkOn: '2026-10-01' }),
+      struggle({ topic: 'qalqala', openCards: 2 }),
+      struggle({
+        studentId: 'y',
+        studentName: 'Yusuf',
+        topic: 'qalqala',
+        marks: 2,
+        lastNotedOn: '2026-10-08',
+      }),
+      struggle({ topic: 'ikhfa', openCards: 2, remarks: 2, lastNotedOn: '2026-10-01' }),
       struggle({
         studentId: 'y',
         studentName: 'Yusuf',
         topic: 'ikhfa',
         remarks: 1,
-        lastRemarkOn: '2026-10-05',
+        lastNotedOn: '2026-10-05',
       }),
       struggle({
         studentId: 'y',
         studentName: null,
         topic: 'makhraj',
         remarks: 1,
-        lastRemarkOn: '2026-10-05',
+        lastNotedOn: '2026-10-05',
       }),
     ]);
     const section = (
@@ -73,14 +81,18 @@ describe('rule by rule for the sheikh (T5)', () => {
     expect(names).toEqual(['Ikhfāʾ', 'Qalqala', 'Aussprache der Buchstaben (Makhārij)']);
     const ikhfa = within(section).getByText('Ikhfāʾ').closest('li')!;
     expect(within(ikhfa).getByText('Amina').closest('li')).toHaveTextContent(
-      /2 Fehler im Spiel offen · 2× von dir angemerkt, zuletzt .*1\. Okt/
+      /2 Fehler im Spiel offen · 2× von dir angemerkt · zuletzt .*1\. Okt/
     );
     expect(within(ikhfa).getByText('Yusuf').closest('li')).toHaveTextContent(
-      /^Yusuf1× von dir angemerkt/
+      /^Yusuf1× von dir angemerkt · zuletzt/
     );
     expect(within(ikhfa).getByRole('link', { name: 'Regelkarte' })).toHaveAttribute(
       'href',
       '/pfad/2/ikhfa'
+    );
+    const qalqala = within(section).getByText('Qalqala').closest('li')!;
+    expect(within(qalqala).getByText('Yusuf').closest('li')).toHaveTextContent(
+      /2 Wörter von dir markiert · zuletzt/
     );
     const makhraj = within(section)
       .getByText('Aussprache der Buchstaben (Makhārij)')

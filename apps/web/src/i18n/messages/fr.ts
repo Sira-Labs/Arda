@@ -626,11 +626,14 @@ export const fr: Messages = {
   struggles: {
     title: 'Règle par règle',
     intro:
-      'Qui a encore du mal avec quelle règle\u202f: les erreurs des jeux pas encore acquises et tes remarques rapides des 90 derniers jours.',
+      'Qui a encore du mal avec quelle règle\u202f: les erreurs des jeux pas encore acquises, et tes remarques rapides et mots marqués des 90 derniers jours.',
     none: 'Personne n’a de difficulté avec une règle en ce moment, ou rien n’a encore été pratiqué.',
     open: (count) =>
       count === 1 ? '1 erreur de jeu en cours' : `${count} erreurs de jeu en cours`,
-    remarks: (count, day) => `noté ${count}× par toi, dernière fois le ${day}`,
+    remarks: (count) => `noté ${count}× par toi`,
+    marks: (count) =>
+      count === 1 ? '1 mot marqué par toi' : `${count} mots marqués par toi`,
+    last: (day) => `dernière fois le ${day}`,
     topics: {
       madd: 'Madd (allongement)',
       makhraj: 'Prononciation des lettres (makhārij)',
@@ -667,6 +670,9 @@ export const fr: Messages = {
     voiceRecord: 'Enregistrer une note vocale',
     voiceRemove: 'Supprimer la note vocale',
     voiceFrom: (name) => (name ? `Note vocale de ${name}` : 'Note vocale de ton cheikh'),
+    markedWords: 'Mots marqués',
+    topicFor: (word) => `Règle pour ${word}`,
+    noTopic: '– aucune règle –',
     marksHint: 'Pendant l’écoute, touche les mots qui ne sont pas encore justes.',
     marked: 'marqué',
     marksCount: (count) => (count === 1 ? '1 mot marqué' : `${count} mots marqués`),

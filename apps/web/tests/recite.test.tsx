@@ -526,6 +526,15 @@ describe('listening and answering (S4.2)', () => {
     await user.click(word(3, 1));
     expect(word(2, 2)).toHaveAttribute('aria-pressed', 'true');
     expect(word(3, 1)).toHaveAttribute('aria-pressed', 'false');
+    // Each word carries one rule in the pack, so a mark on it is named for it: the qalqala of
+    // aḥad and aṣ-ṣamad, the madd of lahū (4:3; its idghām belongs to yakun).
+    await user.click(word(4, 3));
+    const marked = within(row).getByRole('list', { name: 'Markierte Wörter' });
+    const pickers = within(marked).getAllByRole('combobox') as HTMLSelectElement[];
+    expect(pickers.map((p) => p.value)).toEqual(['qalqala', 'qalqala', 'madd']);
+    // He knows better: aḥad's mark was about something else, aṣ-ṣamad's about its letters.
+    await user.selectOptions(pickers[0]!, '');
+    await user.selectOptions(pickers[1]!, 'makhraj');
     await user.click(within(row).getByRole('button', { name: 'Antwort senden' }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
@@ -533,12 +542,13 @@ describe('listening and answering (S4.2)', () => {
         remark: 'raRolled',
         note: 'Achte auf das Rāʾ in al-ṣamad.',
         marks: [
-          { aya: 1, word: 4 },
-          { aya: 2, word: 2 },
+          { aya: 1, word: 4, topic: null },
+          { aya: 2, word: 2, topic: 'makhraj' },
+          { aya: 4, word: 3, topic: 'madd' },
         ],
       })
     );
-    expect(screen.getByText('2 Wörter markiert')).toBeInTheDocument();
+    expect(screen.getByText('3 Wörter markiert')).toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: 'Beantwortet' })
     ).toBeInTheDocument();
@@ -713,7 +723,7 @@ describe('the student’s recitations on Today', () => {
                 verdict: 'again',
                 remark: 'sinVoiced',
                 note: 'Noch einmal Āya 2.',
-                marks: [{ aya: 2, word: 2 }],
+                marks: [{ aya: 2, word: 2, topic: 'qalqala' }],
                 voiceNote: null,
                 reviewerName: 'Sheikh Ahmad',
                 reviewedAt: '2026-10-06T12:00:00Z',
@@ -741,6 +751,14 @@ describe('the student’s recitations on Today', () => {
       return found[0]!;
     });
     expect(marked).toHaveTextContent('(markiert)');
+    // And which rule the sheikh said it was about.
+    const named = within(answered).getByRole('list', { name: 'Markierte Wörter' });
+    expect(within(named).getByText('Qalqala')).toBeInTheDocument();
+    expect(named.querySelector('bdi')).toHaveAttribute('lang', 'ar');
+    // Its letters, whatever order the muṣḥaf script writes the marks in.
+    expect(named.querySelector('bdi')?.textContent?.replace(/[\u064B-\u0670]/g, '')).toBe(
+      'الصمد'
+    );
     expect(marked.closest('[lang="ar"]')).toHaveAttribute('dir', 'rtl');
     expect(answered.querySelector('audio')).toHaveAttribute(
       'src',

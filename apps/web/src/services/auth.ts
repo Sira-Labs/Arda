@@ -182,6 +182,8 @@ export type Verdict = 'good' | 'again';
 export interface WordMark {
   aya: number;
   word: number;
+  /** The rule it was about, if the teacher said (ADR-0026 update). */
+  topic?: RuleTopic | null;
 }
 
 /** The teacher's spoken answer; its sound is served by its own route. */
@@ -311,9 +313,12 @@ export interface Struggle {
   /** Practice cards on it still in box 1 or 2. */
   openCards: number;
   lapses: number;
-  /** The teachers' remarks on it in the window, and the day of the last. */
+  /** The teachers' remarks on it in the window. */
   remarks: number;
-  lastRemarkOn: string | null;
+  /** The words they marked for it in the window. */
+  marks: number;
+  /** The day of the last remark or mark. */
+  lastNotedOn: string | null;
 }
 
 /** The review deck as the account stores it (ADR-0022): cards as a list. */

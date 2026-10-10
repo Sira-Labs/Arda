@@ -1023,6 +1023,28 @@ article[data-docked='sheet'] {
   background: var(--bg-elev-2);
   color: var(--check);
 }
+/* The marked words with their rule: the word in muṣḥaf script, then the rule (or its picker). */
+.mark-topics {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mark-topics li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.mark-topics .quran {
+  font-size: calc(1.4rem * var(--quran-scale));
+}
+.mark-topics select {
+  flex: 1 1 12rem;
+  max-inline-size: 20rem;
+}
 /* Mein Lernplan: the student's own words; what is done stays readable, struck through. */
 .plan-note {
   white-space: pre-wrap;

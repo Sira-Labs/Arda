@@ -5,7 +5,7 @@ import { formatMoment } from '@/modules/assignments/format';
 import type { ApiResult } from '@/services/api/request';
 import type { QueuedRecitation, Verdict, VoiceNoteInfo, WordMark } from '@/services/auth';
 import { useSession } from '@/state/session';
-import { RecitedWords, toggleMark } from './RecitedWords';
+import { RecitedWords, setMarkTopic, toggleMark } from './RecitedWords';
 import { REMARKS } from './remarks';
 import { VoiceNoteRecorder, type VoiceDraft } from './VoiceNoteRecorder';
 
@@ -226,6 +226,9 @@ function QueueItem({
             range={recording.range}
             marks={marks}
             onToggle={(mark) => setMarks((current) => toggleMark(current, mark))}
+            onTopic={(mark, topic) =>
+              setMarks((current) => setMarkTopic(current, mark, topic))
+            }
           />
           <span className="row" style={{ gap: 8 }} role="group">
             <button
