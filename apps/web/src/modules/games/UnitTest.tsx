@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Navigate, useParams } from 'react-router-dom';
-import { isCardUnit } from '@/content/units';
+import { isCardUnit, type CardUnit } from '@/content/units';
 import { unitTest, type Random } from '@/games/questions';
 import { useI18n } from '@/i18n/I18nProvider';
 import { LabUnitTest } from '@/modules/lab/LabQuiz';
@@ -15,13 +15,13 @@ export function UnitTest({ random = Math.random }: { random?: Random }) {
   const { unit: param } = useParams();
   if (param === '1') return <LabUnitTest random={random} />;
   return isCardUnit(param) ? (
-    <Test key={param} unit={Number(param) as 2 | 3 | 4} random={random} />
+    <Test key={param} unit={Number(param) as CardUnit} random={random} />
   ) : (
     <Navigate to="/pfad" replace />
   );
 }
 
-function Test({ unit, random }: { unit: 2 | 3 | 4; random: Random }) {
+function Test({ unit, random }: { unit: CardUnit; random: Random }) {
   const { m } = useI18n();
   const [round, setRound] = useState(0);
   const [questions, setQuestions] = useState(() => unitTest(unit, random));

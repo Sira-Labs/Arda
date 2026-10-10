@@ -253,8 +253,51 @@ describe('units 3 and 4 (S5.1)', () => {
   });
 });
 
+describe('unit 5 (madd)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('teaches madd muttaṣil: its length, the hamza after it, four real words coloured', () => {
+    renderAt('/pfad/5/madd-muttasil');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Madd muttaṣil – Hamza im selben Wort: 4–5 Zählzeiten'
+    );
+    expect(screen.getByText('Einheit 5 · Verstehen')).toBeInTheDocument();
+    expect(screen.getByText('Karte 2 von 4')).toBeInTheDocument();
+    expect(screen.getByText('4–5 Zählzeiten')).toBeInTheDocument();
+    expect(screen.queryByText('ohne Ghunna')).toBeNull();
+    expect(screen.getByText(/Danach folgt ein Hamza:/)).toBeInTheDocument();
+    // The hamza decides the length, and is underlined as the letter that decides.
+    expect(screen.getByText(/der Buchstabe, der entscheidet/)).toBeInTheDocument();
+    expect(
+      within(screen.getByLabelText('Beispiele')).getAllByTitle(/Madd muttaṣil/)
+    ).toHaveLength(4);
+    // Each example is heard where the Qurʾān says it.
+    expect(
+      screen.getByRole('button', { name: 'Anhören: Sūra 110, Āya 1' })
+    ).toBeInTheDocument();
+  });
+
+  it('holds the natural madd two counts, with nothing after it that decides', () => {
+    renderAt('/pfad/5/madd-tabii');
+    expect(screen.getByText('2 Zählzeiten')).toBeInTheDocument();
+    expect(screen.queryByText(/der Buchstabe, der entscheidet/)).toBeNull();
+    expect(
+      within(screen.getByLabelText('Beispiele')).getAllByTitle(/Madd ṭabīʿī/)
+    ).toHaveLength(4);
+  });
+
+  it('ends the unit with madd lāzim, six counts', () => {
+    renderAt('/pfad/5/madd-lazim');
+    expect(screen.getByText('6 Zählzeiten')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
+      'href',
+      '/pfad'
+    );
+  });
+});
+
 describe('the path', () => {
-  it('lists units 1–4: the lab, then the cards of each unit in the order of the sheet and its games', () => {
+  it('lists units 1–5: the lab, then the cards of each unit in the order of the sheet and its games', () => {
     localStorage.setItem('arda.language', 'en');
     renderAt('/pfad');
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
@@ -277,6 +320,12 @@ describe('the path', () => {
       '/pfad/4/qalqala',
       '/pfad/4/spiel/buchstaben',
       '/pfad/4/test',
+      '/pfad/5/madd-tabii',
+      '/pfad/5/madd-muttasil',
+      '/pfad/5/madd-munfasil',
+      '/pfad/5/madd-lazim',
+      '/pfad/5/spiel/wie-lang',
+      '/pfad/5/test',
     ]);
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
@@ -285,6 +334,7 @@ describe('the path', () => {
       'Unit 2 · Nūn sākina and tanwīn',
       'Unit 3 · Ghunna and mīm sākina',
       'Unit 4 · Qalqala',
+      'Unit 5 · Madd',
       'Review',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();

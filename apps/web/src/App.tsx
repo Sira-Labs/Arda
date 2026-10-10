@@ -6,6 +6,7 @@ import { Admin } from '@/modules/admin/Admin';
 import { SignIn } from '@/modules/account/SignIn';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
+import { MaddLength } from '@/modules/games/MaddLength';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { UnitTest } from '@/modules/games/UnitTest';
 import { WhichRule } from '@/modules/games/WhichRule';
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
   { path: '/pfad/2/spiel/sortieren', element: <SortLetters /> },
   { path: '/pfad/3/spiel/welche-regel', element: <WhichRule3 /> },
   { path: '/pfad/4/spiel/buchstaben', element: <QalqalaLetters /> },
+  { path: '/pfad/5/spiel/wie-lang', element: <MaddLength /> },
   { path: '/pfad/:unit/test', element: <UnitTest /> },
   { path: '/pfad/wiederholen', element: <ReviewSession /> },
   { path: '/labor/:letter/quiz', element: <LabQuizPage /> },
