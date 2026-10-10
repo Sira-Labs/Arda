@@ -49,6 +49,11 @@ export const RBAC_MATRIX = {
   'halaqa:study': ['student', 'teacher', 'admin'],
   /** Hear students' recitations and mark them; scoped: teacher of that ḥalaqa. */
   'halaqa:review': ['teacher', 'admin'],
+  /**
+   * See which rules the ḥalaqa's students still struggle with: per rule the open mistakes of
+   * their practice and one's own remarks (T5, ADR-0026); scoped: teacher of that ḥalaqa.
+   */
+  'halaqa:rules': ['teacher', 'admin'],
   /** List, hear and delete one's own recitations (ADR-0012); the queries keep to one's own. */
   'recitation:own': ['student', 'teacher', 'admin'],
   /** Sync one's own review deck and best times with the account (ADR-0022). */
@@ -96,6 +101,7 @@ export function can(actor: Actor | null, action: Action, scope?: HalaqaScope): b
   switch (action) {
     case 'halaqa:manage':
     case 'halaqa:review':
+    case 'halaqa:rules':
       // Admins oversee every ḥalaqa; teachers only those they teach.
       return actor.role === 'admin' || scope?.halaqaRole === 'teacher';
     case 'halaqa:read':

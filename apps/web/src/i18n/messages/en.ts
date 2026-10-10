@@ -607,6 +607,20 @@ export const en: Messages = {
     more: (count) => `and ${count} more`,
     open: 'Open study plan',
   },
+  struggles: {
+    title: 'Rule by rule',
+    intro:
+      'Who still struggles with which rule: mistakes in the games that have not stuck yet, and your quick remarks of the last 90 days.',
+    none: 'Nobody is struggling with a rule right now, or nothing has been practised yet.',
+    open: (count) =>
+      count === 1 ? '1 game mistake open' : `${count} game mistakes open`,
+    remarks: (count, day) => `noted by you ${count}×, last ${day}`,
+    topics: { madd: 'Madd (lengthening)', makhraj: 'Pronouncing the letters (makhārij)' },
+    card: 'Rule card',
+    unnamed: 'no name',
+    studentNote:
+      'Your sheikh sees which tajwīd rules you still make mistakes on in the games: only how many, not your answers.',
+  },
   arda: {
     title: 'ʿArḍ notebook',
     intro:

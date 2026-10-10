@@ -244,7 +244,10 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   and sūra how often, when last and with what verdict; each student's entries one by one;
   answered recordings enter it by themselves, what is recited face to face he writes in; the
   student sees "Dein ʿArḍ" on the ḥalaqa page (2026-10-10).)_
-- **T5 Rule by rule.** Who still struggles with which rule.
+- **T5 Rule by rule.** Who still struggles with which rule. _(Built, ADR-0026: "Regel für
+  Regel" on the ḥalaqa page, per rule the students with game mistakes not yet mastered and his
+  own quick remarks of the last 90 days, the rule most students struggle with first; only
+  counts; the student is told on the ḥalaqa page (2026-10-10).)_
 - **T6 In the student's language** (ADR-0020). The sheikh writes or speaks in his language;
   each student reads in theirs. Quick remarks are exact translations from the catalogs;
   written remarks are machine-translated with tajwīd terms and āyāt unchanged, labelled

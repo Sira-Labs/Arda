@@ -49,6 +49,10 @@ export function fakeApi(
     if ((init?.method ?? 'GET') === 'GET' && /\/arda-log\/summary$/.test(path)) {
       return Response.json({ summary: [] });
     }
+    // Nor struggles with a rule (T5).
+    if ((init?.method ?? 'GET') === 'GET' && /\/halaqat\/[^/]+\/rules$/.test(path)) {
+      return Response.json({ since: '2026-07-12', struggles: [] });
+    }
     return Response.json({ error: 'not_found' }, { status: 404 });
   }) as unknown as typeof fetch;
   return { client: new AuthClient(fetchImpl), calls };

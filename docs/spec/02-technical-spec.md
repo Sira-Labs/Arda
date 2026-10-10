@@ -246,6 +246,12 @@ Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.rou
 | `DELETE /halaqat/:id/arda-log/:eid`          | `halaqa:review`  | remove an entry                                                                                                                                             |
 | `GET /arda-log/summary`                      | `recitation:own` | my own, per ḥalaqa and sūra                                                                                                                                 |
 
+Built for T5 (ADR-0026, every kind of caller in `rules.routes.test.ts`):
+
+| Method and path          | Action         | Purpose                                                                                                                                                                               |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /halaqat/:id/rules` | `halaqa:rules` | T5 (ADR-0026): per active student and topic the practice cards still in box 1–2, their lapses, and the teachers' `again` remarks of the last 90 days; only topics with something open |
+
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
 | Method and path                                                                               | Action         | Purpose                                                                                                                                                                                                                                                                                                                                                                                         |

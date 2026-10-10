@@ -33,6 +33,7 @@ import type { Language } from '../src/i18n/languages.js';
 import { PgTranslationRepository, sourceHash } from '../src/translation/repository.js';
 import { PgHalaqaRepository } from '../src/halaqat/repository.js';
 import { PgArdaLogRepository } from '../src/ardaLog/repository.js';
+import { PgRuleRepository } from '../src/rules/repository.js';
 import {
   PgAssignmentRepository,
   type NewAssignment,
@@ -1705,6 +1706,89 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         reviewerName: null,
         voiceNote: null,
       });
+    });
+
+    it('tells who struggles with which rule: open practice and remarks (T5, ADR-0026)', async () => {
+      const OUTSIDER = '50000000-0000-4000-8000-000000000005';
+      await pool.query(
+        `insert into users (id, email, name, role) values ($1, 'out@example.org', 'Out', 'student')`,
+        [OUTSIDER]
+      );
+      const progress = new PgProgressRepository(pool, () => Date.UTC(2026, 9, 10));
+      const card = (prompt: string, answer: string, box: number, lapses: number) => ({
+        id: `which-rule:${prompt}`,
+        kind: 'which-rule',
+        prompt,
+        answer,
+        box,
+        due: 0,
+        lapses,
+        updatedAt: 1,
+      });
+      await progress.sync(AMINA, {
+        bestTimes: {},
+        cards: [
+          card('a', 'ikhfa', 1, 2),
+          card('b', 'ikhfa', 2, 1),
+          card('c', 'ikhfa', 5, 4),
+          card('d', 'qalqala', 4, 1),
+          card('e', 'no-qalqala', 1, 1),
+        ],
+      });
+      // Someone outside the ḥalaqa practises too: not counted.
+      await progress.sync(OUTSIDER, { bestTimes: {}, cards: [card('a', 'izhar', 1, 1)] });
+      const log = new PgArdaLogRepository(pool);
+      const write = (
+        studentId: string,
+        recitedOn: string,
+        verdict: 'good' | 'again',
+        remark: 'nunTooClear' | 'ghunnaShort' | 'raRolled' | 'good'
+      ) =>
+        log.add(
+          {
+            halaqaId,
+            studentId,
+            range: { sura: 112, from: 1, to: 4 },
+            recitedOn,
+            verdict,
+            remark,
+            note: null,
+            writtenBy: TEACHER,
+          },
+          100
+        );
+      await write(AMINA, '2026-10-01', 'again', 'nunTooClear');
+      await write(AMINA, '2026-09-20', 'again', 'nunTooClear');
+      // Too long ago, and a verdict of good: neither counts.
+      await write(AMINA, '2026-06-01', 'again', 'ghunnaShort');
+      await write(AMINA, '2026-10-02', 'good', 'good');
+      await write(YUSUF, '2026-10-05', 'again', 'raRolled');
+
+      const rules = new PgRuleRepository(pool);
+      expect(await rules.struggles(halaqaId, '2026-07-12')).toEqual([
+        {
+          studentId: AMINA,
+          studentName: 'Amina',
+          topic: 'ikhfa',
+          openCards: 2,
+          lapses: 7,
+          remarks: 2,
+          lastRemarkOn: '2026-10-01',
+        },
+        {
+          studentId: YUSUF,
+          studentName: 'Yusuf',
+          topic: 'makhraj',
+          openCards: 0,
+          lapses: 0,
+          remarks: 1,
+          lastRemarkOn: '2026-10-05',
+        },
+      ]);
+      expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
+      expect(
+        (await rules.struggles(halaqaId, '2026-07-12')).map((s) => s.studentId)
+      ).toEqual([YUSUF]);
     });
 
     it('deletes on request, when the student leaves, and with the account; exports the rest', async () => {
