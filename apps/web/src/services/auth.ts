@@ -305,6 +305,8 @@ export interface ProgressPayload {
   bestTimes: Record<string, number>;
   /** The page last read per muṣḥaf script: `{ script, page, at }`. */
   places?: unknown[];
+  /** The study notes of "Mein Lernplan", deleted ones as tombstones. */
+  notes?: unknown[];
   /** Sent: events the account has not confirmed; answered: events after `since` (ADR-0023). */
   events?: unknown[];
   /** The last sequence number this device has seen. */

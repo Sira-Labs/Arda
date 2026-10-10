@@ -19,6 +19,7 @@ import { Mushaf } from '@/modules/mushaf/Mushaf';
 import { MushafPage } from '@/modules/mushaf/MushafPage';
 import { SuraView } from '@/modules/mushaf/SuraView';
 import { Path } from '@/modules/path/Path';
+import { StudyPlan } from '@/modules/plan/StudyPlan';
 import { OutboxSender } from '@/modules/recite/OutboxSender';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
@@ -45,6 +46,7 @@ const router = createBrowserRouter([
       { path: '/anmelden', element: <SignIn /> },
       { path: '/konto', element: <Account /> },
       { path: '/pfad', element: <Path /> },
+      { path: '/lernplan', element: <StudyPlan /> },
       { path: '/mushaf', element: <Mushaf /> },
       { path: '/mushaf/seite/:page', element: <MushafPage /> },
       { path: '/mushaf/:sura', element: <SuraView /> },

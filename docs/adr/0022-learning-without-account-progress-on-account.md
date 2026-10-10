@@ -80,3 +80,22 @@ The owner asked the app to remember where someone last read.
   with its deck.
 - The page, not the āya: the page is what a reader of a printed muṣḥaf comes back to. An āya
   or word can be added later without changing how places merge.
+
+## Update 2026-10-10: Mein Lernplan (the student's own notes)
+
+The owner asked for a place where a student notes what they want to learn next ("two pages of
+al-Baqara"), what to revise, and what was hard. Asked who reads them, the owner chose: only the
+student.
+
+- **A note** has a kind (`learn`, `review`, `difficulty`), up to 500 letters, optionally a place
+  in the Qurʾān (āyāt of one sūra, or pages of the IndoPak or Madīna print, opened in the muṣḥaf
+  from the note), and whether it is done. `/lernplan` lists them by kind; Today shows the open
+  plans to learn and revise.
+- **Part of the progress, like reading places:** on the device with the deck, so it works
+  offline and without an account; once signed in on the account (`study_notes`, migration
+  `0014_study_notes`) and on every device. Per note the later version wins. A deleted note is
+  kept as a tombstone without its text or place, so an older device cannot bring it back; 1,000
+  notes per person, tombstones included.
+- **Private:** no teacher or admin route reads them; they are only in the person's own sync
+  answer and export, and go with the account. Sharing a note with the sheikh can be added later
+  as a per-note choice without changing how notes merge.

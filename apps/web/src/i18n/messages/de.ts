@@ -620,6 +620,40 @@ export const de = {
     offline: 'Keine Verbindung – versuch es gleich noch einmal.',
     failed: 'Das hat nicht geklappt. Versuch es noch einmal oder nimm Link oder Code.',
   } as Record<Exclude<PasskeyFailure, 'cancelled'>, string>,
+  plan: {
+    eyebrow: 'Nur für dich',
+    title: 'Mein Lernplan',
+    intro:
+      'Notiere, was du lernen und wiederholen willst und was dir schwerfiel. Nur du siehst diese Notizen; mit Konto hast du sie auf all deinen Geräten.',
+    newNote: 'Neue Notiz',
+    kind: 'Art der Notiz',
+    kinds: { learn: 'Lernen', review: 'Wiederholen', difficulty: 'Schwierigkeiten' },
+    text: 'Notiz',
+    placeholder: {
+      learn: 'z. B. zwei Seiten al-Baqara auswendig lernen',
+      review: 'z. B. Sūra al-Mulk wiederholen',
+      difficulty: 'z. B. das ḍād klingt bei mir noch wie dāl',
+    },
+    where: 'Wo im Qurʾān (optional)',
+    whereNone: 'keine Stelle',
+    whereAyat: 'Āyāt einer Sūra',
+    wherePages: 'Seiten im Muṣḥaf',
+    add: 'Notieren',
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+    edit: 'Bearbeiten',
+    remove: 'Löschen',
+    done: { learn: 'Gelernt', review: 'Wiederholt', difficulty: 'Gelöst' },
+    empty: {
+      learn: 'Noch nichts geplant. Was willst du als Nächstes lernen?',
+      review: 'Noch nichts zum Wiederholen notiert.',
+      difficulty:
+        'Keine Schwierigkeiten notiert. Schreib auf, was dir schwerfällt, damit du daran denkst.',
+    },
+    todayEmpty: 'Notiere, was du lernen und wiederholen willst und was dir schwerfiel.',
+    more: (count: number) => (count === 1 ? 'und 1 weitere' : `und ${count} weitere`),
+    open: 'Lernplan öffnen',
+  },
   arda: {
     title: 'ʿArḍ-Heft',
     intro:

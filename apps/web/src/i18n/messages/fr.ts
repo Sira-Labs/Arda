@@ -589,6 +589,40 @@ export const fr: Messages = {
     offline: 'Pas de connexion – réessaie dans un instant.',
     failed: 'Cela n’a pas marché. Réessaie, ou utilise un lien ou un code.',
   },
+  plan: {
+    eyebrow: 'Rien que pour toi',
+    title: 'Mon plan d’étude',
+    intro:
+      'Note ce que tu veux apprendre et réviser, et ce qui t’a été difficile. Toi seul vois ces notes\u202f; avec un compte, tu les as sur tous tes appareils.',
+    newNote: 'Nouvelle note',
+    kind: 'Type de note',
+    kinds: { learn: 'Apprendre', review: 'Réviser', difficulty: 'Difficultés' },
+    text: 'Note',
+    placeholder: {
+      learn: 'p. ex. apprendre par cœur deux pages d’al-Baqara',
+      review: 'p. ex. réviser la sourate al-Mulk',
+      difficulty: 'p. ex. mon ḍād ressemble encore au dāl',
+    },
+    where: 'Où dans le Coran (facultatif)',
+    whereNone: 'aucun passage',
+    whereAyat: 'Āyāt d’une sourate',
+    wherePages: 'Pages du muṣḥaf',
+    add: 'Noter',
+    save: 'Enregistrer',
+    cancel: 'Annuler',
+    edit: 'Modifier',
+    remove: 'Supprimer',
+    done: { learn: 'Appris', review: 'Révisé', difficulty: 'Résolu' },
+    empty: {
+      learn: 'Rien de prévu pour l’instant. Que veux-tu apprendre ensuite\u202f?',
+      review: 'Rien à réviser pour l’instant.',
+      difficulty:
+        'Aucune difficulté notée. Écris ce qui te pose problème pour t’en souvenir.',
+    },
+    todayEmpty: 'Note ce que tu veux apprendre et réviser, et ce qui t’a été difficile.',
+    more: (count) => (count === 1 ? 'et 1 autre' : `et ${count} autres`),
+    open: 'Ouvrir le plan d’étude',
+  },
   arda: {
     title: 'Cahier du ʿarḍ',
     intro:

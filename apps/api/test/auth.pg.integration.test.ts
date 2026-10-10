@@ -12,7 +12,11 @@ import { loadMigrations, migrate } from '../src/migrate.js';
 import { PgAdminRepository } from '../src/admin/repository.js';
 import { PgAccountRepository } from '../src/account/repository.js';
 import { PgPrivacyRepository } from '../src/privacy/repository.js';
-import { PgProgressRepository, type ProgressCard } from '../src/progress/repository.js';
+import {
+  PgProgressRepository,
+  type ProgressCard,
+  type StudyNote,
+} from '../src/progress/repository.js';
 import {
   PgRecordingRepository,
   type NewRecording,
@@ -1935,7 +1939,14 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // Yusuf's deck is his own.
       expect(await repo.sync(YUSUF, { cards: [], bestTimes: {} })).toEqual({
         ok: true,
-        progress: { cards: [], bestTimes: {}, places: [], events: [], more: false },
+        progress: {
+          cards: [],
+          bestTimes: {},
+          places: [],
+          notes: [],
+          events: [],
+          more: false,
+        },
       });
     });
 
@@ -1970,6 +1981,65 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await expect(
         pool.query(
           `insert into reading_places (user_id, script, page, at) values ($1, 'warsh', 1, 1)`,
+          [AMINA]
+        )
+      ).rejects.toThrow();
+    });
+
+    it('keeps the later version of each study note, a deleted one as a tombstone', async () => {
+      const none = { cards: [], bestTimes: {} };
+      const learn: StudyNote = {
+        id: '90000000-0000-4000-8000-000000000001',
+        kind: 'learn',
+        text: 'Zwei Seiten al-Baqara',
+        range: null,
+        pages: { layout: 'indopak-15', from: 8, to: 9 },
+        done: false,
+        deleted: false,
+        createdAt: NOW - 9000,
+        updatedAt: NOW - 9000,
+      };
+      const hard: StudyNote = {
+        ...learn,
+        id: '90000000-0000-4000-8000-000000000002',
+        kind: 'difficulty',
+        text: 'Ghunna zu kurz',
+        range: { sura: 2, from: 1, to: 5 },
+        pages: null,
+      };
+      await repo.sync(AMINA, { ...none, notes: [learn, hard] });
+      const outcome = await repo.sync(AMINA, {
+        ...none,
+        notes: [
+          { ...learn, text: 'älter', updatedAt: NOW - 20_000 },
+          { ...learn, done: true, updatedAt: NOW - 1000 },
+          { ...hard, deleted: true, text: '', range: null, updatedAt: NOW - 1000 },
+          {
+            ...learn,
+            id: '90000000-0000-4000-8000-000000000003',
+            kind: 'review',
+            text: 'al-Mulk',
+            pages: null,
+            createdAt: NOW + 60_000,
+            updatedAt: NOW + 60_000,
+          },
+        ],
+      });
+      expect(outcome.ok && outcome.progress.notes).toEqual([
+        { ...learn, done: true, updatedAt: NOW - 1000 },
+        { ...hard, deleted: true, text: '', range: null, updatedAt: NOW - 1000 },
+        expect.objectContaining({ kind: 'review', createdAt: NOW, updatedAt: NOW }),
+      ]);
+      // The tombstone wins over the device that still has the note.
+      const stale = await repo.sync(AMINA, { ...none, notes: [hard] });
+      expect(stale.ok && stale.progress.notes?.[1]).toMatchObject({ deleted: true });
+      const yusuf = await repo.sync(YUSUF, none);
+      expect(yusuf.ok && yusuf.progress.notes).toEqual([]);
+      // The database keeps the shape: a deleted note keeps no text.
+      await expect(
+        pool.query(
+          `insert into study_notes (user_id, id, kind, text, deleted, created_at, updated_at)
+           values ($1, gen_random_uuid(), 'learn', 'secret', true, 1, 1)`,
           [AMINA]
         )
       ).rejects.toThrow();
@@ -2035,11 +2105,33 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         cards: [card('a', NOW)],
         bestTimes: { 'sort-28': 1234 },
         places: [{ script: 'indopak', page: 9, at: NOW }],
+        notes: [],
       });
+      await repo.sync(AMINA, {
+        cards: [],
+        bestTimes: {},
+        notes: [
+          {
+            id: '90000000-0000-4000-8000-000000000009',
+            kind: 'difficulty',
+            text: 'Qalqala',
+            range: null,
+            pages: null,
+            done: false,
+            deleted: false,
+            createdAt: NOW,
+            updatedAt: NOW,
+          },
+        ],
+      });
+      expect((await new PgPrivacyRepository(pool).export(AMINA)).progress.notes).toEqual([
+        expect.objectContaining({ text: 'Qalqala' }),
+      ]);
       await new PgPrivacyRepository(pool).delete(AMINA, null);
       const left = await pool.query(
         `select (select count(*) from review_cards) + (select count(*) from best_times)
-                + (select count(*) from reading_places) as n`
+                + (select count(*) from reading_places) + (select count(*) from study_notes)
+                  as n`
       );
       expect(Number(left.rows[0].n)).toBe(0);
     });

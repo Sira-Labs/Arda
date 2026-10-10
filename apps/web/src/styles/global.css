@@ -1023,6 +1023,15 @@ article[data-docked='sheet'] {
   background: var(--bg-elev-2);
   color: var(--check);
 }
+/* Mein Lernplan: the student's own words; what is done stays readable, struck through. */
+.plan-note {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.plan-done {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
 /* The ʿarḍ log: a student per block, a sūra per line (name, how often and when, verdict). */
 .arda-student {
   padding-block-start: 12px;

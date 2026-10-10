@@ -17,6 +17,7 @@ import {
   type ReadingScript,
   type ReviewState,
   type ReviewStore,
+  type StudyNote,
 } from './store';
 
 export interface Review {
@@ -47,7 +48,18 @@ export interface Review {
   places: NonNullable<ReviewState['places']>;
   /** Remembers the page being read in a script ("Weiterlesen"). */
   markPlace(script: ReadingScript, page: number): void;
+  /** The study notes of "Mein Lernplan", oldest first, deleted ones left out. */
+  notes: readonly StudyNote[];
+  /** Writes a new note or a new version of one; returns its id. */
+  saveNote(note: NoteInput): string;
+  /** Deletes a note: it stays as a tombstone without its text, so it syncs as deleted. */
+  removeNote(id: string): void;
 }
+
+/** What a screen writes; the provider adds the id (for a new note) and the times. */
+export type NoteInput = Pick<StudyNote, 'kind' | 'text' | 'range' | 'pages' | 'done'> & {
+  id?: string;
+};
 
 /** What a screen reports; the provider adds the id and the time. */
 export type ActivityEntry = Pick<ActivityEvent, 'kind' | 'ref' | 'right' | 'total'>;
@@ -174,6 +186,50 @@ export function ReviewProvider({
     [update, now]
   );
 
+  const saveNote = useCallback(
+    (input: NoteInput) => {
+      const id = input.id ?? crypto.randomUUID();
+      const at = now();
+      update((current) => {
+        const existing = current.notes?.[id];
+        const note: StudyNote = {
+          id,
+          kind: input.kind,
+          text: input.text,
+          range: input.range,
+          pages: input.pages,
+          done: input.done,
+          deleted: false,
+          createdAt: existing?.createdAt ?? at,
+          // Later than the version it replaces, even on a clock that went back.
+          updatedAt: Math.max(at, (existing?.updatedAt ?? 0) + 1),
+        };
+        return { ...current, notes: { ...current.notes, [id]: note } };
+      });
+      return id;
+    },
+    [update, now]
+  );
+
+  const removeNote = useCallback(
+    (id: string) => {
+      update((current) => {
+        const existing = current.notes?.[id];
+        if (!existing || existing.deleted) return current;
+        const tombstone: StudyNote = {
+          ...existing,
+          text: '',
+          range: null,
+          pages: null,
+          deleted: true,
+          updatedAt: Math.max(now(), existing.updatedAt + 1),
+        };
+        return { ...current, notes: { ...current.notes, [id]: tombstone } };
+      });
+    },
+    [update, now]
+  );
+
   const offerTime = useCallback(
     (game: string, ms: number) => {
       const best = state.bestTimes[game];
@@ -203,6 +259,11 @@ export function ReviewProvider({
       logActivity,
       places: state.places ?? {},
       markPlace,
+      notes: Object.values(state.notes ?? {})
+        .filter((note) => !note.deleted)
+        .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id)),
+      saveNote,
+      removeNote,
     };
   }, [
     state,
@@ -213,6 +274,8 @@ export function ReviewProvider({
     owns,
     logActivity,
     markPlace,
+    saveNote,
+    removeNote,
     now,
     clockAt,
   ]);

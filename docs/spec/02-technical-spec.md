@@ -158,6 +158,12 @@ Migration `0010_reading_places` adds `reading_places`: per person and muṣḥaf
 last read and when ("Weiterlesen", ADR-0022 update 2026-10-07); the later one wins, it cascades
 with the account and is in the export (`progress.places`).
 
+Migration `0014_study_notes` adds `study_notes` ("Mein Lernplan", ADR-0022 update 2026-10-10): per
+person and note id the kind (`learn`, `review`, `difficulty`), the text, optionally āyāt or
+printed pages, done, deleted (a tombstone without text or place) and when it was written and
+changed; the later version wins. Private to the person: synced and exported only to them, it
+cascades with the account (`progress.notes`).
+
 Next (one migration per story, each cascading on user deletion and added to the export):
 
 | Table              | Story    | Key fields                                                                                  |
@@ -242,9 +248,9 @@ Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.rou
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
-| Method and path                                                                       | Action         | Purpose                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes, places?, events?, since? }` | `progress:own` | merge this device's deck and reading places into the account's and answer with the result; store the activity events it sends (once per id) and answer with the events after `since`, 1,000 at a time (`more`); 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 500 events per request, 100,000 events per person, 2 MB (413) |
+| Method and path                                                                               | Action         | Purpose                                                                                                                                                                                                                                                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /api/v1/progress/sync` `{ userId, cards, bestTimes, places?, notes?, events?, since? }` | `progress:own` | merge this device's deck, reading places and study notes into the account's and answer with the result; store the activity events it sends (once per id) and answer with the events after `since`, 1,000 at a time (`more`); 409 `other_account` when the session is no longer `userId`'s; ≤ 5,000 cards, 100 games, 1,000 notes, 500 events per request, 100,000 events per person, 2 MB (413) |
 
 Next: `/api/v1/arda-log/*` (T4). Every route names one policy action (ADR-0005) and is
 added to the route-by-role matrix test.
