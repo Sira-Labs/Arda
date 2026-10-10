@@ -573,6 +573,40 @@ export const en: Messages = {
     offline: 'No connection – try again in a moment.',
     failed: 'That did not work. Try again, or use a link or code.',
   },
+  plan: {
+    eyebrow: 'Just for you',
+    title: 'My study plan',
+    intro:
+      'Note what you want to learn and revise, and what you found hard. Only you see these notes; with an account you have them on all your devices.',
+    newNote: 'New note',
+    kind: 'Kind of note',
+    kinds: { learn: 'Learn', review: 'Revise', difficulty: 'Difficulties' },
+    text: 'Note',
+    placeholder: {
+      learn: 'e.g. memorise two pages of al-Baqara',
+      review: 'e.g. revise Sūra al-Mulk',
+      difficulty: 'e.g. my ḍād still sounds like dāl',
+    },
+    where: 'Where in the Qurʾān (optional)',
+    whereNone: 'no place',
+    whereAyat: 'Āyāt of a sūra',
+    wherePages: 'Pages of the muṣḥaf',
+    add: 'Add note',
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    remove: 'Delete',
+    done: { learn: 'Learnt', review: 'Revised', difficulty: 'Solved' },
+    empty: {
+      learn: 'Nothing planned yet. What do you want to learn next?',
+      review: 'Nothing to revise noted yet.',
+      difficulty:
+        'No difficulties noted. Write down what you find hard so you remember it.',
+    },
+    todayEmpty: 'Note what you want to learn and revise, and what you found hard.',
+    more: (count) => `and ${count} more`,
+    open: 'Open study plan',
+  },
   arda: {
     title: 'ʿArḍ notebook',
     intro:

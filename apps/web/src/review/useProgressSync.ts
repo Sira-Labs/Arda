@@ -47,6 +47,7 @@ function fromPayload(payload: ProgressPayload): ReviewState | undefined {
     cards: byId(payload.cards),
     bestTimes: payload.bestTimes,
     activity: byId(payload.events),
+    notes: byId(payload.notes),
     places: Object.fromEntries(
       (Array.isArray(payload.places) ? payload.places : []).map((place) => [
         (place as { script?: unknown })?.script,
@@ -111,6 +112,7 @@ export function useProgressSync(
           script,
           ...place,
         })),
+        notes: Object.values(deck.notes ?? {}),
         events: waiting.slice(0, EVENTS_PER_REQUEST),
         since: Math.max(deck.cursor ?? 0, seen),
       };

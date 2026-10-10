@@ -6,7 +6,7 @@ import { Today } from '@/modules/today/Today';
 import type { ReviewCard } from '@/review/leitner';
 import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider, useReview, type Review } from '@/review/ReviewProvider';
-import { MemoryReviewStore, type ReviewState } from '@/review/store';
+import { MemoryReviewStore, type ReviewState, type StudyNote } from '@/review/store';
 import { SYNC_DELAY_MS, useProgressSync } from '@/review/useProgressSync';
 import { AuthClient, type Me } from '@/services/auth';
 import { fakeApi, Providers } from './render';
@@ -39,12 +39,14 @@ function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = 
     cards: new Map(stored.map((c) => [c.id, c])),
     times: { ...times },
     places: new Map<string, { script: string; page: number; at: number }>(),
+    notes: new Map<string, StudyNote>(),
   };
   const sent: {
     userId: string;
     cards: ReviewCard[];
     bestTimes: Record<string, number>;
     places?: { script: string; page: number; at: number }[];
+    notes?: StudyNote[];
   }[] = [];
   let offline = false;
   // Whose session cookie the browser holds; the API refuses another account's deck.
@@ -68,10 +70,15 @@ function fakeAccount(stored: ReviewCard[] = [], times: Record<string, number> = 
       const other = account.places.get(place.script);
       if (!other || place.at >= other.at) account.places.set(place.script, place);
     }
+    for (const note of body.notes ?? []) {
+      const other = account.notes.get(note.id);
+      if (!other || note.updatedAt >= other.updatedAt) account.notes.set(note.id, note);
+    }
     return Response.json({
       cards: [...account.cards.values()],
       bestTimes: account.times,
       places: [...account.places.values()],
+      notes: [...account.notes.values()],
     });
   }) as unknown as typeof fetch;
   return {
@@ -313,6 +320,52 @@ function Probe({ onReview }: { onReview: (review: Review) => void }) {
   onReview(useReview());
   return null;
 }
+
+describe('the study notes (Mein Lernplan)', () => {
+  const note = (id: string, at: number, over: Partial<StudyNote> = {}): StudyNote => ({
+    id,
+    kind: 'learn',
+    text: id,
+    range: null,
+    pages: null,
+    done: false,
+    deleted: false,
+    createdAt: at,
+    updatedAt: at,
+    ...over,
+  });
+
+  it('go to the account and come back, the later version winning, a deletion too', async () => {
+    const mine = note('n-1', NOW - 5000, { text: 'Zwei Seiten al-Baqara' });
+    const store = new MemoryReviewStore({ ...deckOf(), notes: { [mine.id]: mine } });
+    const server = fakeAccount();
+    // From another device: a newer version of the same note, and one deleted there.
+    server.account.notes.set('n-1', { ...mine, done: true, updatedAt: NOW - 1000 });
+    server.account.notes.set(
+      'n-2',
+      note('n-2', NOW - 9000, { text: '', deleted: true, updatedAt: NOW - 2000 })
+    );
+    server.account.notes.set('n-3', note('n-3', NOW - 3000, { kind: 'difficulty' }));
+    const { client } = fakeApi({}, ME);
+    vi.spyOn(client, 'syncProgress').mockImplementation((deck, userId) =>
+      server.client.syncProgress(deck, userId)
+    );
+    let review: Review | undefined;
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={store}>
+          <ProgressSync />
+          <Probe onReview={(r) => (review = r)} />
+        </ReviewProvider>
+      </Providers>
+    );
+    await waitFor(() => expect(review?.notes.map((n) => n.id)).toEqual(['n-1', 'n-3']));
+    expect(review!.notes[0]).toMatchObject({ text: 'Zwei Seiten al-Baqara', done: true });
+    expect(server.sent[0]!.notes).toEqual([mine]);
+    // The tombstone is kept on the device too, so it is never sent back as a live note.
+    expect(store.load().notes?.['n-2']).toMatchObject({ deleted: true, text: '' });
+  });
+});
 
 describe('the reading place (Weiterlesen)', () => {
   it('goes to the account and comes back from it, the later page per script', async () => {

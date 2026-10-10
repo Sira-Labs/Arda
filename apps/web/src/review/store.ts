@@ -1,4 +1,5 @@
 import { isActivityEvent, type ActivityEvent } from '@arda/engagement';
+import { PAGE_LAYOUTS, isAyaRange, isPageRun, type PageLayout } from '@arda/quran';
 import { logger } from '@/services/logger';
 import { BOXES, type ReviewCard } from './leitner';
 
@@ -18,6 +19,33 @@ export interface ReadingPlace {
   at: number;
 }
 
+/** What a study note is about: something to learn, to revise, or something that was hard. */
+export const NOTE_KINDS = ['learn', 'review', 'difficulty'] as const;
+export type NoteKind = (typeof NOTE_KINDS)[number];
+
+/** The longest note: a plan or a difficulty, not a diary. */
+export const NOTE_MAX_LENGTH = 500;
+
+/**
+ * A note in "Mein Lernplan" (ADR-0022 update 2026-10-10), only ever its writer's. A deleted
+ * note stays as a tombstone without its text, so an older device cannot bring it back.
+ */
+export interface StudyNote {
+  id: string;
+  kind: NoteKind;
+  text: string;
+  /** Āyāt of one sūra it is about, if any. */
+  range: { sura: number; from: number; to: number } | null;
+  /** Or pages of a printed muṣḥaf. */
+  pages: { layout: PageLayout; from: number; to: number } | null;
+  done: boolean;
+  deleted: boolean;
+  /** Epoch milliseconds. */
+  createdAt: number;
+  /** Epoch milliseconds; the later one wins. */
+  updatedAt: number;
+}
+
 /**
  * The review deck and the best times of the timed games (ADR-0021), and the activity log that
  * XP and the streak come from (ADR-0023). A deck saved before the log existed has neither
@@ -33,6 +61,8 @@ export interface ReviewState {
   cursor?: number;
   /** The page last read per muṣḥaf script ("Weiterlesen", ADR-0022 update 2026-10-07). */
   places?: Partial<Record<ReadingScript, ReadingPlace>>;
+  /** The student's own study notes by id, deleted ones as tombstones ("Mein Lernplan"). */
+  notes?: Record<string, StudyNote>;
 }
 
 /** Where the deck lives on the device; `useProgressSync` keeps it in step with the account. */
@@ -96,6 +126,14 @@ export function mergeStates(a: ReviewState, b: ReviewState): ReviewState {
     }
     merged.places = places;
   }
+  if (a.notes || b.notes) {
+    const notes = { ...a.notes };
+    for (const [id, note] of Object.entries(b.notes ?? {})) {
+      const other = notes[id];
+      if (!other || note.updatedAt >= other.updatedAt) notes[id] = note;
+    }
+    merged.notes = notes;
+  }
   return merged;
 }
 
@@ -143,11 +181,21 @@ export function sameDeck(a: ReviewState, b: ReviewState): boolean {
       );
     }) &&
     games.every((game) => a.bestTimes[game] === b.bestTimes[game]) &&
+    sameNotes(a.notes ?? {}, b.notes ?? {}) &&
     READING_SCRIPTS.every(
       (script) =>
         a.places?.[script]?.page === b.places?.[script]?.page &&
         a.places?.[script]?.at === b.places?.[script]?.at
     )
+  );
+}
+
+/** The same notes in the same versions. */
+function sameNotes(a: Record<string, StudyNote>, b: Record<string, StudyNote>): boolean {
+  const ids = Object.keys(a);
+  return (
+    ids.length === Object.keys(b).length &&
+    ids.every((id) => b[id] !== undefined && b[id]!.updatedAt === a[id]!.updatedAt)
   );
 }
 
@@ -251,6 +299,13 @@ export function parseState(value: unknown): ReviewState | undefined {
     }
     state.places = places;
   }
+  if (isRecord(value.notes)) {
+    const entries = Object.entries(value.notes);
+    state.notes = Object.fromEntries(
+      entries.filter(([id, note]) => isNote(id, note))
+    ) as Record<string, StudyNote>;
+    dropped += entries.length - Object.keys(state.notes).length;
+  }
   if (Number.isSafeInteger(value.cursor) && (value.cursor as number) >= 0) {
     // A dropped event may lie behind the cursor: start over, the account sends it again.
     state.cursor = activityDropped > 0 ? 0 : (value.cursor as number);
@@ -267,6 +322,33 @@ function isPlace(value: unknown): value is ReadingPlace {
     (value.page as number) <= 1000 &&
     Number.isSafeInteger(value.at) &&
     (value.at as number) >= 0
+  );
+}
+
+const NOTE_KIND_SET: ReadonlySet<unknown> = new Set(NOTE_KINDS);
+const LAYOUTS: ReadonlySet<unknown> = new Set(PAGE_LAYOUTS);
+const isTime = (value: unknown) => Number.isSafeInteger(value) && (value as number) >= 0;
+
+function isNote(id: string, value: unknown): value is StudyNote {
+  if (!isRecord(value) || value.id !== id || !NOTE_KIND_SET.has(value.kind)) return false;
+  const { range, pages } = value;
+  const rangeOk =
+    range === null ||
+    (isRecord(range) && isAyaRange(range as { sura: number; from: number; to: number }));
+  const pagesOk =
+    pages === null ||
+    (isRecord(pages) &&
+      LAYOUTS.has(pages.layout) &&
+      isPageRun(pages as { layout: PageLayout; from: number; to: number }));
+  return (
+    typeof value.text === 'string' &&
+    value.text.length <= NOTE_MAX_LENGTH &&
+    rangeOk &&
+    pagesOk &&
+    typeof value.done === 'boolean' &&
+    typeof value.deleted === 'boolean' &&
+    isTime(value.createdAt) &&
+    isTime(value.updatedAt)
   );
 }
 
