@@ -590,6 +590,10 @@ export const fr: Messages = {
     failed: 'Cela n’a pas marché. Réessaie, ou utilise un lien ou un code.',
   },
   recite: {
+    voiceNote: 'Note vocale (facultative, 2 minutes maximum)',
+    voiceRecord: 'Enregistrer une note vocale',
+    voiceRemove: 'Supprimer la note vocale',
+    voiceFrom: (name) => (name ? `Note vocale de ${name}` : 'Note vocale de ton cheikh'),
     marksHint: 'Pendant l’écoute, touche les mots qui ne sont pas encore justes.',
     marked: 'marqué',
     marksCount: (count) => (count === 1 ? '1 mot marqué' : `${count} mots marqués`),
@@ -674,6 +678,7 @@ export const fr: Messages = {
       'Tu as atteint le nombre maximal d’enregistrements. Supprime les plus anciens.',
     too_large: 'L’enregistrement est trop long.',
     unsupported_media_type: 'Ce format d’enregistrement n’est pas pris en charge.',
+    not_reviewed: 'Réponds d’abord à l’enregistrement, puis enregistre la note vocale.',
     generic: (status) => `Erreur du serveur (${status}).`,
   },
   remarks: {

@@ -183,6 +183,20 @@ export interface WordMark {
   word: number;
 }
 
+/** The teacher's spoken answer; its sound is served by its own route. */
+export interface VoiceNoteInfo {
+  mime: string;
+  bytes: number;
+  durationMs: number;
+}
+
+/** A voice note to send: its sound and its length. */
+export interface VoiceNoteUpload {
+  blob: Blob;
+  mime: string;
+  durationMs: number;
+}
+
 /** The teacher's answer to a recitation (apps/api/src/recordings/repository.ts). */
 export interface RecitationReview {
   verdict: Verdict;
@@ -190,6 +204,7 @@ export interface RecitationReview {
   note: string | null;
   /** Words that need work, in reading order. */
   marks: WordMark[];
+  voiceNote: VoiceNoteInfo | null;
   reviewerName: string | null;
   reviewedAt: string;
 }
@@ -534,6 +549,52 @@ export class AuthClient {
       `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings/${encodeURIComponent(id)}/review`,
       { method: 'PUT', body: JSON.stringify(review) }
     );
+  }
+
+  /** Keeps the teacher's voice note with their answer, replacing an earlier one. */
+  async saveVoiceNote(
+    halaqaId: string,
+    id: string,
+    note: VoiceNoteUpload
+  ): Promise<ApiResult<unknown>> {
+    const durationMs = String(Math.max(1, Math.round(note.durationMs)));
+    let response: Response;
+    try {
+      response = await this.fetchImpl(
+        `${this.voiceNotePath(halaqaId, id)}?durationMs=${durationMs}`,
+        {
+          method: 'PUT',
+          credentials: 'same-origin',
+          headers: { 'content-type': note.mime },
+          body: note.blob,
+        }
+      );
+    } catch {
+      return { ok: false, status: 0, code: 'offline' };
+    }
+    if (response.ok) return { ok: true, value: null };
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    return { ok: false, status: response.status, code: body?.error ?? '' };
+  }
+
+  removeVoiceNote(halaqaId: string, id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, this.voiceNotePath(halaqaId, id), {
+      method: 'DELETE',
+    });
+  }
+
+  /** Where a teacher hears the voice note on a recitation of the ḥalaqa. */
+  queuedVoiceNote(halaqaId: string, id: string): string {
+    return this.voiceNotePath(halaqaId, id);
+  }
+
+  /** Where the student hears the teacher's voice note on their recitation. */
+  ownVoiceNote(id: string): string {
+    return `/api/v1/recordings/${encodeURIComponent(id)}/voice-note`;
+  }
+
+  private voiceNotePath(halaqaId: string, id: string): string {
+    return `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings/${encodeURIComponent(id)}/voice-note`;
   }
 
   devices(): Promise<ApiResult<{ sessions: Device[] }>> {

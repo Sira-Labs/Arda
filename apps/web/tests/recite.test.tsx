@@ -546,6 +546,112 @@ describe('listening and answering (S4.2)', () => {
     expect(screen.getByRole('button', { name: 'Ändern' })).toBeInTheDocument();
   });
 
+  it('answers aloud too: records a voice note, listens back and sends it after the answer', async () => {
+    const { calls, recorder } = renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [queued()],
+          more: false,
+        }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${REC}/review`]: () =>
+          new Response(null, { status: 204 }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${REC}/voice-note`]: () =>
+          new Response(null, { status: 204 }),
+      },
+      TEACHER
+    );
+    const user = userEvent.setup();
+    const row = (await screen.findByText('Amina')).closest('li')!;
+    const voice = within(row).getByRole('group', {
+      name: 'Sprachnotiz (optional, bis 2 Minuten)',
+    });
+    await user.click(
+      within(voice).getByRole('button', { name: 'Sprachnotiz aufnehmen' })
+    );
+    expect(recorder.started).toBe(1);
+    expect(within(voice).getByRole('status')).toHaveTextContent('Aufnahme läuft · 0:00');
+    await user.click(within(voice).getByRole('button', { name: 'Stopp' }));
+    expect(voice.querySelector('audio')).toHaveAttribute('src', 'blob:take');
+    await user.click(within(row).getByRole('button', { name: 'Gut' }));
+    await user.click(within(row).getByRole('button', { name: 'Antwort senden' }));
+    await screen.findByRole('heading', { name: 'Beantwortet' });
+    const puts = calls.filter((c) => c.method === 'PUT');
+    expect(puts.map((c) => c.path)).toEqual([
+      `/api/v1/halaqat/${HALAQA}/recordings/${REC}/review`,
+      `/api/v1/halaqat/${HALAQA}/recordings/${REC}/voice-note?durationMs=4200`,
+    ]);
+    expect(puts[1]!.body).toBeInstanceOf(Blob);
+    const answered = screen.getByText('Amina').closest('li')!;
+    expect(
+      answered.querySelector('audio[aria-label="Sprachnotiz von Sheikh Ahmad"]')
+    ).toHaveAttribute('src', `/api/v1/halaqat/${HALAQA}/recordings/${REC}/voice-note`);
+  });
+
+  it('removes a voice note, and keeps the answer open when the note is refused', async () => {
+    const answered = queued({
+      review: {
+        verdict: 'again',
+        remark: null,
+        note: null,
+        marks: [],
+        voiceNote: { mime: 'audio/webm', bytes: 9000, durationMs: 12_000 },
+        reviewerName: 'Sheikh Ahmad',
+        reviewedAt: '2026-10-06T12:00:00Z',
+      },
+    });
+    const { calls } = renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [queued({ id: OTHER, studentName: 'Yusuf' }), answered],
+          more: false,
+        }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${REC}/review`]: () =>
+          new Response(null, { status: 204 }),
+        [`DELETE /api/v1/halaqat/${HALAQA}/recordings/${REC}/voice-note`]: () =>
+          new Response(null, { status: 204 }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${OTHER}/review`]: () =>
+          new Response(null, { status: 204 }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${OTHER}/voice-note`]: () =>
+          Response.json({ error: 'too_large' }, { status: 413 }),
+      },
+      TEACHER
+    );
+    const user = userEvent.setup();
+    const amina = (await screen.findByText('Amina')).closest('li')!;
+    await user.click(within(amina).getByRole('button', { name: 'Ändern' }));
+    const voice = within(amina).getByRole('group', {
+      name: 'Sprachnotiz (optional, bis 2 Minuten)',
+    });
+    expect(voice.querySelector('audio')).toHaveAttribute(
+      'src',
+      `/api/v1/halaqat/${HALAQA}/recordings/${REC}/voice-note`
+    );
+    await user.click(
+      within(voice).getByRole('button', { name: 'Sprachnotiz entfernen' })
+    );
+    expect(voice.querySelector('audio')).toBeNull();
+    await user.click(within(amina).getByRole('button', { name: 'Antwort senden' }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
+    await waitFor(() =>
+      expect(within(amina).getByRole('button', { name: 'Ändern' })).toBeInTheDocument()
+    );
+    expect(amina.querySelector('audio[aria-label^="Sprachnotiz"]')).toBeNull();
+
+    const yusuf = screen.getByText('Yusuf').closest('li')!;
+    await user.click(
+      within(yusuf).getByRole('button', { name: 'Sprachnotiz aufnehmen' })
+    );
+    await user.click(within(yusuf).getByRole('button', { name: 'Stopp' }));
+    await user.click(within(yusuf).getByRole('button', { name: 'Gut' }));
+    await user.click(within(yusuf).getByRole('button', { name: 'Antwort senden' }));
+    expect(await within(yusuf).findByRole('alert')).toHaveTextContent(
+      'Die Aufnahme ist zu lang.'
+    );
+    expect(within(yusuf).getByRole('button', { name: 'Antwort senden' })).toBeEnabled();
+  });
+
   it('offers the remarks for sīn, zāy and rāʾ', async () => {
     renderWith(
       <RecordingQueue halaqaId={HALAQA} />,
@@ -608,6 +714,7 @@ describe('the student’s recitations on Today', () => {
                 remark: 'sinVoiced',
                 note: 'Noch einmal Āya 2.',
                 marks: [{ aya: 2, word: 2 }],
+                voiceNote: null,
                 reviewerName: 'Sheikh Ahmad',
                 reviewedAt: '2026-10-06T12:00:00Z',
               },
@@ -644,6 +751,38 @@ describe('the student’s recitations on Today', () => {
     await user.click(within(waiting).getByRole('button', { name: 'Löschen' }));
     await waitFor(() => expect(screen.queryByText('Sūra 113 · Āya 1')).toBeNull());
     expect(calls.some((c) => c.method === 'DELETE')).toBe(true);
+  });
+
+  it('plays the sheikh’s voice note under his answer', async () => {
+    renderWith(
+      <MyRecitations />,
+      {
+        'GET /api/v1/recordings': Response.json({
+          recordings: [
+            own({
+              review: {
+                verdict: 'good',
+                remark: null,
+                note: null,
+                marks: [],
+                voiceNote: { mime: 'audio/ogg', bytes: 9000, durationMs: 12_000 },
+                reviewerName: 'Sheikh Ahmad',
+                reviewedAt: '2026-10-06T12:00:00Z',
+              },
+            }),
+          ],
+          more: false,
+        }),
+      },
+      STUDENT
+    );
+    const answered = (await screen.findByText('Sūra 112 · Āyāt 1–4')).closest('li')!;
+    expect(
+      within(answered).getByText('Sprachnotiz von Sheikh Ahmad')
+    ).toBeInTheDocument();
+    expect(
+      answered.querySelector('audio[aria-label="Sprachnotiz von Sheikh Ahmad"]')
+    ).toHaveAttribute('src', `/api/v1/recordings/${REC}/voice-note`);
   });
 
   it('shows nothing before the first recitation', async () => {

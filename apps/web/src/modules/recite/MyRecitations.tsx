@@ -14,7 +14,7 @@ const SHOWN = 5;
 
 /**
  * "Deine Rezitationen" on Today (spec F7): what the student sent, whether the sheikh has
- * answered and what he said, to hear again or delete; and how many takes still wait for a
+ * answered and what he said, in writing or aloud, to hear again or delete; and how many takes still wait for a
  * connection. Nothing is shown before the first recitation.
  */
 export function MyRecitations() {
@@ -83,7 +83,10 @@ export function MyRecitations() {
                 {formatMoment(r.createdAt, language)} · {r.halaqaName}
               </span>
               {r.review &&
-                (r.review.remark || r.review.note || r.review.marks.length > 0) && (
+                (r.review.remark ||
+                  r.review.note ||
+                  r.review.marks.length > 0 ||
+                  r.review.voiceNote) && (
                   <div className="stack recitation-answer" style={{ gap: 4 }}>
                     <span className="muted">{m.recite.from(r.review.reviewerName)}</span>
                     {r.review.remark && <span>{m.remarks[r.review.remark]}</span>}
@@ -93,6 +96,18 @@ export function MyRecitations() {
                       <>
                         <span>{m.recite.marksCount(r.review.marks.length)}</span>
                         <RecitedWords range={r.range} marks={r.review.marks} />
+                      </>
+                    )}
+                    {r.review.voiceNote && (
+                      <>
+                        <span>{m.recite.voiceFrom(r.review.reviewerName)}</span>
+                        <audio
+                          key={r.review.reviewedAt}
+                          controls
+                          preload="none"
+                          src={client.ownVoiceNote(r.id)}
+                          aria-label={m.recite.voiceFrom(r.review.reviewerName)}
+                        />
                       </>
                     )}
                   </div>

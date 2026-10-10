@@ -574,6 +574,11 @@ export const en: Messages = {
     failed: 'That did not work. Try again, or use a link or code.',
   },
   recite: {
+    voiceNote: 'Voice note (optional, up to 2 minutes)',
+    voiceRecord: 'Record a voice note',
+    voiceRemove: 'Remove voice note',
+    voiceFrom: (name) =>
+      name ? `Voice note from ${name}` : 'Voice note from your sheikh',
     marksHint: 'While you listen, tap the words that are not right yet.',
     marked: 'marked',
     marksCount: (count) => (count === 1 ? '1 word marked' : `${count} words marked`),
@@ -654,6 +659,7 @@ export const en: Messages = {
       'You have reached the maximum number of recordings. Delete older ones.',
     too_large: 'The recording is too long.',
     unsupported_media_type: 'This recording format is not supported.',
+    not_reviewed: 'Answer the recording first, then record the voice note.',
     generic: (status) => `Server error (${status}).`,
   },
   remarks: {

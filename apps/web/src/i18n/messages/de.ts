@@ -621,6 +621,11 @@ export const de = {
     failed: 'Das hat nicht geklappt. Versuch es noch einmal oder nimm Link oder Code.',
   } as Record<Exclude<PasskeyFailure, 'cancelled'>, string>,
   recite: {
+    voiceNote: 'Sprachnotiz (optional, bis 2 Minuten)',
+    voiceRecord: 'Sprachnotiz aufnehmen',
+    voiceRemove: 'Sprachnotiz entfernen',
+    voiceFrom: (name: string | null) =>
+      name ? `Sprachnotiz von ${name}` : 'Sprachnotiz deines Sheikhs',
     marksHint: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
     marked: 'markiert',
     marksCount: (count: number) =>
@@ -703,6 +708,7 @@ export const de = {
     too_many_recordings: 'Du hast die Höchstzahl an Aufnahmen erreicht. Lösche ältere.',
     too_large: 'Die Aufnahme ist zu lang.',
     unsupported_media_type: 'Dieses Aufnahmeformat wird nicht unterstützt.',
+    not_reviewed: 'Beantworte die Aufnahme zuerst, dann nimm die Sprachnotiz auf.',
     generic: (status: number) => `Serverfehler (${status}).`,
   },
   remarks: {
