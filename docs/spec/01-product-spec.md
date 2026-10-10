@@ -85,7 +85,7 @@ card, so the rule returns until it holds.
 | 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
 
 Every unit has stations and ends with a unit test (Suffa's structure). A passed test marks the
-unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–4 test
+unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–5 test
 their rules; unit 1, the letter lab, tests the ear with ten words from across the lab. Every
 text is
 a draft until the sheikh has reviewed it.
@@ -138,6 +138,12 @@ pass it, which marks the unit on the path and recommends the next one, without l
 _(Built (owner, 2026-10-09, ADR-0024 update): unit 1's test, once the lab had all 28 letters –
 ten words, each from a different listening quiz of the lab, answered against the letters it is
 heard against ("Qāf oder Kāf?"), rāʾ's heavy or light among them.)_
+_(Built (owner, 2026-10-10): unit 5, madd, ahead of the pilot. Four cards (ṭabīʿī 2 counts,
+muttaṣil and munfaṣil 4–5, lāzim 6), each with four real words of the Qurʾān heard in the
+teaching recitation, the madd letter coloured and the hamza or shadda that decides underlined;
+the game "Wie lang?" (2, 4–5 or 6 counts?) and a test of three, four and three words of each
+length, so no single answer passes it. Ḥafṣ by way of ash-Shāṭibiyya; the ʿāriḍ at a stop and
+the opening letters of sūras are mentioned, not asked (spec 03 §4b).)_
 
 ### F2 — Rule cards _(Must)_
 

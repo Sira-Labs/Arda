@@ -95,12 +95,13 @@ rule in the example, in reading order) or, when it is absent, only `expectedRule
 | مِنْ تَابَ, مِنْ ثَمَرَةٍ, مَنْ جَاءَ, مِنْ دِيَارِهِمْ, نَفْسٍ ذَائِقَةٍ, مِنْكُمْ    | ikhfāʾ                          |
 | تَرْمِيهِمْ بِحِجَارَةٍ / لَكُمْ مَا / عَلَيْهِمْ سَلَامٌ                              | ikhfāʾ / idghām / iẓhār shafawī |
 
-## 4a. Examples beyond the sheet (units 3 and 4, draft)
+## 4a. Examples beyond the sheet (units 3–5, draft)
 
-The sheet gives one example per mīm sākina rule and none for the ghunna of a shadda or for
-qalqala. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet (every
-sukūn written); `tools/test/examples.test.ts` checks every word key against the Tanzil text in
-the packs, and the engine test checks the rule. Drafts until the sheikh has reviewed them.
+The sheet gives one example per mīm sākina rule and none for the ghunna of a shadda, for
+qalqala or for madd. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet
+(every sukūn written, and the madda where the muṣḥaf writes it); `tools/test/examples.test.ts`
+checks every word key against the Tanzil text in the packs, and the engine test checks the
+rule. Drafts until the sheikh has reviewed them.
 
 | Rule                | Examples (word key of the first word)                                                                               |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -109,6 +110,10 @@ the packs, and the engine test checks the rule. Drafts until the sheikh has revi
 | Idghām shafawī      | كَمْ مِنْ فِئَةٍ (2:249:49)                                                                                         |
 | Iẓhār shafawī       | أَلَمْ تَرَ (105:1:1)                                                                                               |
 | Qalqala (ق ط ب ج د) | قَدْ أَفْلَحَ (87:14:1), أَطْعَمَهُمْ (106:4:2), الْأَبْتَرُ (108:3:4), النَّجْدَيْنِ (90:10:2), خَلَقْنَا (90:4:2) |
+| Madd ṭabīʿī         | الرَّحْمَٰنِ (1:1:3), الدِّينِ (1:4:3), سَيَعْلَمُونَ (78:4:2), سِرَاجًا (78:13:2)                                  |
+| Madd muttaṣil       | جَآءَ (110:1:2), السَّمَآءُ (82:1:2), جَزَآءً (78:26:1), حَدَآئِقَ (78:32:1)                                        |
+| Madd munfaṣil       | إِنَّآ أَعْطَيْنَاكَ (108:1:1), بِمَآ أُنْزِلَ (2:4:3), لَآ أُقْسِمُ (90:1:1), فِيٓ أَيِّ (82:8:1)                  |
+| Madd lāzim          | الضَّآلِّينَ (1:7:9), الطَّآمَّةُ (79:34:3), الصَّآخَّةُ (80:33:3), دَآبَّةٍ (2:164:33)                             |
 
 ## 4b. Madd (unit 5, engine)
 
