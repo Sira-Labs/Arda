@@ -10,6 +10,7 @@ import type { MemoryHalaqaRepository } from './memoryHalaqaRepository.js';
 import type {
   Audio,
   NewRecording,
+  NewVoiceNote,
   OwnRecording,
   Page,
   PageRequest,
@@ -20,6 +21,7 @@ import type {
   ReviewOutcome,
   SaveOutcome,
   Verdict,
+  VoiceNoteOutcome,
 } from '../src/recordings/repository.js';
 import { marksFit, type Mark } from '../src/recordings/repository.js';
 
@@ -36,6 +38,7 @@ interface Row extends Omit<NewRecording, 'audio'> {
     reviewerId: string;
     reviewedAt: string;
   } | null;
+  voiceNote: (NewVoiceNote & { recordedBy: string }) | null;
 }
 
 export class MemoryRecordingRepository implements RecordingRepository {
@@ -71,6 +74,13 @@ export class MemoryRecordingRepository implements RecordingRepository {
             remark: row.review.remark,
             note: row.review.note,
             marks: row.review.marks,
+            voiceNote: row.voiceNote
+              ? {
+                  mime: row.voiceNote.mime,
+                  bytes: row.voiceNote.audio.length,
+                  durationMs: row.voiceNote.durationMs,
+                }
+              : null,
             reviewerName: this.names[row.review.reviewerId] ?? null,
             reviewedAt: row.review.reviewedAt,
           }
@@ -115,6 +125,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
       createdAt: new Date(Date.UTC(2026, 9, 6, 10, 0, this.seq)).toISOString(),
       seq: this.seq++,
       review: null,
+      voiceNote: null,
     });
     return { status: 'created', id };
   }
@@ -170,6 +181,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
     const row = this.live().find((r) => r.id === recordingId && r.halaqaId === halaqaId);
     if (!row) return 'not_found';
     if (!marksFit(row.range, input.marks)) return 'marks';
+    if (row.voiceNote && row.voiceNote.recordedBy !== reviewerId) row.voiceNote = null;
     row.review = {
       ...input,
       marks: [...input.marks],
@@ -177,6 +189,40 @@ export class MemoryRecordingRepository implements RecordingRepository {
       reviewedAt: '2026-10-06T12:00:00.000Z',
     };
     return 'reviewed';
+  }
+
+  async saveVoiceNote(
+    halaqaId: string,
+    recordingId: string,
+    note: NewVoiceNote,
+    teacherId: string
+  ): Promise<VoiceNoteOutcome> {
+    const row = this.live().find((r) => r.id === recordingId && r.halaqaId === halaqaId);
+    if (!row) return 'not_found';
+    if (row.review?.reviewerId !== teacherId) return 'not_reviewed';
+    row.voiceNote = { ...note, recordedBy: teacherId };
+    return 'saved';
+  }
+
+  async removeVoiceNote(halaqaId: string, recordingId: string): Promise<boolean> {
+    const row = this.live().find((r) => r.id === recordingId && r.halaqaId === halaqaId);
+    if (!row) return false;
+    row.voiceNote = null;
+    return true;
+  }
+
+  async ownVoiceNote(studentId: string, recordingId: string): Promise<Audio | null> {
+    const note = this.live().find(
+      (r) => r.id === recordingId && r.studentId === studentId
+    )?.voiceNote;
+    return note ? { mime: note.mime, data: note.audio } : null;
+  }
+
+  async halaqaVoiceNote(halaqaId: string, recordingId: string): Promise<Audio | null> {
+    const note = this.live().find(
+      (r) => r.id === recordingId && r.halaqaId === halaqaId
+    )?.voiceNote;
+    return note ? { mime: note.mime, data: note.audio } : null;
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

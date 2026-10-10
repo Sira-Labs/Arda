@@ -4,6 +4,7 @@ import type { Actor } from '../src/authz/policies.js';
 import {
   MAX_BYTES,
   MAX_RECORDINGS_PER_STUDENT,
+  MAX_VOICE_NOTE_BYTES,
   mimeOf,
   rangeOf,
 } from '../src/recordings/routes.js';
@@ -42,6 +43,8 @@ const json = async (response: Response): Promise<Json> => response.json();
 
 /** Ten bytes of "sound", enough to test ranges with. */
 const SOUND = Buffer.from('0123456789');
+/** The teacher's "voice". */
+const VOICE = Buffer.from('sheikh says');
 let takes = 0;
 const clientId = () => `30000000-0000-4000-8000-${String(++takes).padStart(12, '0')}`;
 const QUERY = (id = clientId(), extra = '') =>
@@ -94,7 +97,26 @@ async function setup() {
     type = 'audio/webm;codecs=opus'
   ) => call(actor, 'POST', `/halaqat/${halaqaId}/recordings${query}`, { body, type });
   const sent = async (actor = 'member') => (await json(await send(actor))).id as string;
-  return { halaqat, assignments, repo, halaqaId, call, send, sent };
+  /** `teacher` answers the recording, and with `aloud` records a voice note on it too. */
+  const answer = async (recordingId: string, aloud = false, teacher = 'owner') => {
+    const base = `/halaqat/${halaqaId}/recordings/${recordingId}`;
+    expect(
+      (
+        await call(teacher, 'PUT', `${base}/review`, {
+          body: JSON.stringify({ verdict: 'again' }),
+          type: 'application/json',
+        })
+      ).status
+    ).toBe(204);
+    if (aloud) {
+      const voiced = await call(teacher, 'PUT', `${base}/voice-note?durationMs=3000`, {
+        body: VOICE,
+        type: 'audio/ogg;codecs=opus',
+      });
+      expect(voiced.status).toBe(204);
+    }
+  };
+  return { halaqat, assignments, repo, halaqaId, call, send, sent, answer };
 }
 
 const WHO = [
@@ -107,6 +129,9 @@ const WHO = [
   'admin',
 ] as const;
 
+/** What `owner` has said before a matrix row's call: answered it, or answered it aloud too. */
+type Before = 'answered' | 'aloud';
+
 /**
  * Route × role (threat T14): every route against every kind of caller, each on a fresh ḥalaqa
  * with one recording by `member`. Written out by hand, so widening access is a visible change.
@@ -116,6 +141,7 @@ const MATRIX: {
   method: string;
   path: (halaqaId: string, recordingId: string) => string;
   send?: boolean;
+  before?: Before;
   expect: Record<(typeof WHO)[number], number>;
 }[] = [
   {
@@ -176,6 +202,53 @@ const MATRIX: {
     },
   },
   {
+    // The admin passes the policy, but a voice note goes only with one's own answer.
+    route: 'answer it aloud',
+    method: 'PUT',
+    path: (h, r) => `/halaqat/${h}/recordings/${r}/voice-note?durationMs=3000`,
+    send: true,
+    before: 'answered',
+    expect: {
+      '': 401,
+      outsider: 403,
+      pending: 403,
+      member: 403,
+      owner: 204,
+      otherTeacher: 403,
+      admin: 409,
+    },
+  },
+  {
+    route: 'hear the answer as the teacher',
+    method: 'GET',
+    path: (h, r) => `/halaqat/${h}/recordings/${r}/voice-note`,
+    before: 'aloud',
+    expect: {
+      '': 401,
+      outsider: 403,
+      pending: 403,
+      member: 403,
+      owner: 200,
+      otherTeacher: 403,
+      admin: 200,
+    },
+  },
+  {
+    route: 'take the voice note back',
+    method: 'DELETE',
+    path: (h, r) => `/halaqat/${h}/recordings/${r}/voice-note`,
+    before: 'aloud',
+    expect: {
+      '': 401,
+      outsider: 403,
+      pending: 403,
+      member: 403,
+      owner: 204,
+      otherTeacher: 403,
+      admin: 204,
+    },
+  },
+  {
     route: 'my recordings',
     method: 'GET',
     path: () => '/recordings',
@@ -193,6 +266,21 @@ const MATRIX: {
     route: 'hear my own',
     method: 'GET',
     path: (_h, r) => `/recordings/${r}/audio`,
+    expect: {
+      '': 401,
+      outsider: 404,
+      pending: 404,
+      member: 200,
+      owner: 404,
+      otherTeacher: 404,
+      admin: 404,
+    },
+  },
+  {
+    route: "hear my teacher's answer",
+    method: 'GET',
+    path: (_h, r) => `/recordings/${r}/voice-note`,
+    before: 'aloud',
     expect: {
       '': 401,
       outsider: 404,
@@ -223,11 +311,12 @@ describe('recordings: who may do what', () => {
   for (const row of MATRIX) {
     for (const who of WHO) {
       it(`${row.route} as ${who || 'nobody'} → ${row.expect[who]}`, async () => {
-        const { call, sent, halaqaId } = await setup();
+        const { call, sent, halaqaId, answer } = await setup();
         const recordingId = await sent();
+        if (row.before) await answer(recordingId, row.before === 'aloud');
         const response = await call(who, row.method, row.path(halaqaId, recordingId), {
           ...(row.send ? { body: SOUND, type: 'audio/webm' } : {}),
-          ...(row.method === 'PUT'
+          ...(row.method === 'PUT' && !row.send
             ? { body: JSON.stringify({ verdict: 'good' }), type: 'application/json' }
             : {}),
         });
@@ -416,6 +505,131 @@ describe('the teacher listens and answers (T3)', () => {
       );
       expect(response.status).toBe(400);
     }
+  });
+});
+
+describe('the teacher answers aloud (T3)', () => {
+  it('keeps one voice note with the answer, which the student hears under it', async () => {
+    const { call, sent, halaqaId, answer } = await setup();
+    const id = await sent();
+    await answer(id, true);
+    const mine = await json(await call('member', 'GET', '/recordings'));
+    expect(mine.recordings[0].review.voiceNote).toEqual({
+      mime: 'audio/ogg',
+      bytes: VOICE.length,
+      durationMs: 3000,
+    });
+    const heard = await call('member', 'GET', `/recordings/${id}/voice-note`);
+    expect(heard.status).toBe(200);
+    expect(heard.headers.get('content-type')).toBe('audio/ogg');
+    expect(heard.headers.get('cache-control')).toBe('private, no-store');
+    expect(Buffer.from(await heard.arrayBuffer()).toString()).toBe('sheikh says');
+    const part = await call(
+      'owner',
+      'GET',
+      `/halaqat/${halaqaId}/recordings/${id}/voice-note`,
+      {
+        range: 'bytes=0-5',
+      }
+    );
+    expect(part.status).toBe(206);
+    expect(Buffer.from(await part.arrayBuffer()).toString()).toBe('sheikh');
+
+    // Recorded again, it replaces the first; taken back, the answer stays without it.
+    const base = `/halaqat/${halaqaId}/recordings/${id}/voice-note`;
+    expect(
+      (
+        await call('owner', 'PUT', `${base}?durationMs=1500`, {
+          body: Buffer.from('again'),
+          type: 'audio/mp4',
+        })
+      ).status
+    ).toBe(204);
+    expect(
+      Buffer.from(
+        await (await call('member', 'GET', `/recordings/${id}/voice-note`)).arrayBuffer()
+      ).toString()
+    ).toBe('again');
+    expect((await call('owner', 'DELETE', base)).status).toBe(204);
+    expect((await call('owner', 'DELETE', base)).status).toBe(204);
+    expect((await call('member', 'GET', `/recordings/${id}/voice-note`)).status).toBe(
+      404
+    );
+    const after = await json(await call('member', 'GET', '/recordings'));
+    expect(after.recordings[0].review).toMatchObject({
+      verdict: 'again',
+      voiceNote: null,
+    });
+  });
+
+  it('refuses a voice note without an answer, too long, too large or not sound', async () => {
+    const { call, sent, halaqaId, answer } = await setup();
+    const id = await sent();
+    const speak = (
+      query: string,
+      body: Buffer = VOICE,
+      type = 'audio/webm',
+      recordingId = id
+    ) =>
+      call(
+        'owner',
+        'PUT',
+        `/halaqat/${halaqaId}/recordings/${recordingId}/voice-note${query}`,
+        {
+          body,
+          type,
+        }
+      );
+    const unanswered = await speak('?durationMs=3000');
+    expect(unanswered.status).toBe(409);
+    expect(await json(unanswered)).toEqual({ error: 'not_reviewed' });
+    await answer(id);
+    expect((await speak('')).status).toBe(400);
+    expect((await speak('?durationMs=0')).status).toBe(400);
+    expect((await speak('?durationMs=120001')).status).toBe(400);
+    expect((await speak('?durationMs=3000&extra=1')).status).toBe(400);
+    expect((await speak('?durationMs=3000', VOICE, 'text/plain')).status).toBe(415);
+    expect((await speak('?durationMs=3000', Buffer.alloc(0))).status).toBe(400);
+    expect(
+      (await speak('?durationMs=3000', Buffer.alloc(MAX_VOICE_NOTE_BYTES + 1))).status
+    ).toBe(413);
+    expect(
+      (
+        await speak(
+          '?durationMs=3000',
+          VOICE,
+          'audio/webm',
+          '30000000-0000-4000-8000-999999999999'
+        )
+      ).status
+    ).toBe(404);
+    expect((await speak('?durationMs=120000')).status).toBe(204);
+  });
+
+  it('drops the voice note when another teacher answers, and goes with the recording', async () => {
+    const { call, sent, halaqaId, answer } = await setup();
+    const id = await sent();
+    await answer(id, true);
+    // The admin answers anew: the owner's voice no longer speaks for this answer.
+    await answer(id, false, 'admin');
+    expect(
+      (await call('owner', 'GET', `/halaqat/${halaqaId}/recordings/${id}/voice-note`))
+        .status
+    ).toBe(404);
+    // The owner answering again keeps his own note.
+    await answer(id, true);
+    await answer(id);
+    expect((await call('member', 'GET', `/recordings/${id}/voice-note`)).status).toBe(
+      200
+    );
+    expect((await call('classmate', 'GET', `/recordings/${id}/voice-note`)).status).toBe(
+      404
+    );
+    expect((await call('member', 'DELETE', `/recordings/${id}`)).status).toBe(204);
+    expect(
+      (await call('owner', 'GET', `/halaqat/${halaqaId}/recordings/${id}/voice-note`))
+        .status
+    ).toBe(404);
   });
 });
 

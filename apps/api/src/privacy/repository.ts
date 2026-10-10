@@ -118,7 +118,14 @@ export class PgPrivacyRepository implements PrivacyRepository {
                 coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word)
                                           order by m.aya, m.word)
                             from recording_marks m where m.recording_id = recordings.id),
-                         '[]') as marks
+                         '[]') as marks,
+                -- The voice note's facts; its sound is served by the recordings routes.
+                (select json_build_object('mime', v.mime, 'bytes', v.bytes,
+                                          'duration_ms', v.duration_ms,
+                                          'recorded_by_you', v.recorded_by = $1,
+                                          'created_at', v.created_at)
+                   from recording_voice_notes v where v.recording_id = recordings.id)
+                  as voice_note
            from recordings
           where student_id = $1 or reviewed_by = $1
           order by created_at, id`,
