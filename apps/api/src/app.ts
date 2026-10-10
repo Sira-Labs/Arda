@@ -23,6 +23,7 @@ import { createHalaqaRoutes, type HalaqaRouteDeps } from './halaqat/routes.js';
 import { createProgressRoutes, type ProgressRouteDeps } from './progress/routes.js';
 import { createRecordingRoutes, type RecordingRouteDeps } from './recordings/routes.js';
 import { createArdaLogRoutes, type ArdaLogRouteDeps } from './ardaLog/routes.js';
+import { createRuleRoutes, type RuleRouteDeps } from './rules/routes.js';
 import { authorize, type AuthorizeLog } from './authz/middleware.js';
 import { appCors } from './http/appCors.js';
 import { sameOriginOnly } from './http/sameOrigin.js';
@@ -71,6 +72,8 @@ export interface AppDeps {
   recordings?: RecordingRouteDeps;
   /** The ʿarḍ log: what each student recited, when, and the verdict (spec T4, ADR-0025). */
   ardaLog?: ArdaLogRouteDeps;
+  /** Rule by rule: who still struggles with which rule (spec T5, ADR-0026). */
+  rules?: RuleRouteDeps;
   /** The review deck and best times on the account (ADR-0022). */
   progress?: ProgressRouteDeps;
   /**
@@ -169,6 +172,7 @@ export function createApp(deps: AppDeps): Hono {
   if (deps.assignments) app.route('/api/v1', createAssignmentRoutes(deps.assignments));
   if (deps.recordings) app.route('/api/v1', createRecordingRoutes(deps.recordings));
   if (deps.ardaLog) app.route('/api/v1', createArdaLogRoutes(deps.ardaLog));
+  if (deps.rules) app.route('/api/v1', createRuleRoutes(deps.rules));
   if (deps.progress) app.route('/api/v1', createProgressRoutes(deps.progress));
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));

@@ -21,6 +21,7 @@ const EXPECTED: Record<Action, readonly Role[]> = {
   'halaqa:read': ['admin'], // without a ḥalaqa scope only admins
   'halaqa:study': [], // without a ḥalaqa scope nobody, admins included
   'halaqa:review': ['admin'], // without a ḥalaqa scope only admins
+  'halaqa:rules': ['admin'], // without a ḥalaqa scope only admins
   'recitation:own': ['student', 'teacher', 'admin'], // one's own; the queries keep to it
   'progress:own': ['student', 'teacher', 'admin'], // one's own deck; the queries keep to it
   'feedback:translate': ['teacher', 'admin'],
@@ -52,6 +53,17 @@ describe('authz policies', () => {
     expect(can(teacher, 'halaqa:review', { halaqaRole: 'teacher' })).toBe(true);
     expect(can(teacher, 'halaqa:review', { halaqaRole: 'student' })).toBe(false);
     expect(can(teacher, 'halaqa:review', { halaqaRole: null })).toBe(false);
+  });
+
+  it("shows a sheikh his students' weak rules only in ḥalaqāt he teaches (T5)", () => {
+    const teacher = { id: 't', role: 'teacher' } as const;
+    const student = { id: 's', role: 'student' } as const;
+    expect(can(teacher, 'halaqa:rules', { halaqaRole: 'teacher' })).toBe(true);
+    expect(can(teacher, 'halaqa:rules', { halaqaRole: 'student' })).toBe(false);
+    expect(can(teacher, 'halaqa:rules', { halaqaRole: null })).toBe(false);
+    // A classmate never sees another student's weak rules.
+    expect(can(student, 'halaqa:rules', { halaqaRole: 'student' })).toBe(false);
+    expect(can(student, 'halaqa:rules', { halaqaRole: 'teacher' })).toBe(false);
   });
 
   it('never lets a student review, even with a stale teacher row', () => {
