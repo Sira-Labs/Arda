@@ -589,6 +589,28 @@ export const fr: Messages = {
     offline: 'Pas de connexion – réessaie dans un instant.',
     failed: 'Cela n’a pas marché. Réessaie, ou utilise un lien ou un code.',
   },
+  arda: {
+    title: 'Cahier du ʿarḍ',
+    intro:
+      'Qui a récité quelle sourate, quand, et ton avis. Les enregistrements auxquels tu as répondu y figurent d’eux-mêmes ; ajoute ici ce qui a été récité en cours.',
+    none: 'Rien d’inscrit pour l’instant.',
+    sura: (n) => `Sourate ${n}`,
+    times: (count) => (count === 1 ? 'une fois' : `${count} fois`),
+    last: (day) => `dernière fois\u202f: ${day}`,
+    history: 'Historique',
+    hideHistory: 'Fermer l’historique',
+    fromRecording: 'Enregistrement',
+    inPerson: 'En cours',
+    formTitle: 'Inscrire une récitation faite en cours',
+    student: 'Élève',
+    day: 'Jour',
+    verdict: 'Avis',
+    submit: 'Inscrire',
+    written: 'Inscrit.',
+    remove: 'Supprimer',
+    mine: 'Ton ʿarḍ',
+    mineIntro: 'Les sourates que tu as récitées à ton cheikh et ce qu’il en a pensé.',
+  },
   recite: {
     voiceNote: 'Note vocale (facultative, 2 minutes maximum)',
     voiceRecord: 'Enregistrer une note vocale',
@@ -676,6 +698,8 @@ export const fr: Messages = {
     too_many_assignments: 'Cette ḥalaqa a atteint le nombre maximal de devoirs.',
     too_many_recordings:
       'Tu as atteint le nombre maximal d’enregistrements. Supprime les plus anciens.',
+    too_many_entries:
+      'Cet élève a déjà un très grand nombre d’inscriptions dans le cahier.',
     too_large: 'L’enregistrement est trop long.',
     unsupported_media_type: 'Ce format d’enregistrement n’est pas pris en charge.',
     not_reviewed: 'Réponds d’abord à l’enregistrement, puis enregistre la note vocale.',

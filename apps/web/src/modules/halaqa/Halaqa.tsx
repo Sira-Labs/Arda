@@ -5,12 +5,15 @@ import type { ApiResult } from '@/services/api/request';
 import type { HalaqaMember, HalaqaView } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { HalaqaAssignments } from '@/modules/assignments/HalaqaAssignments';
+import { ArdaLog } from '@/modules/arda/ArdaLog';
+import { MyArda } from '@/modules/arda/MyArda';
 import { RecordingQueue } from '@/modules/recite/RecordingQueue';
 import { InviteBox } from './InviteBox';
 
 /**
- * `/halaqa/:id` (screen 7, spec T1). The teacher invites, approves and removes; a student
- * sees whose ḥalaqa it is and can leave. What each sees is decided by the API.
+ * `/halaqa/:id` (screen 7, spec T1). The teacher listens, keeps the ʿarḍ log (T4), assigns,
+ * invites, approves and removes; a student sees whose ḥalaqa it is, their work and their ʿarḍ,
+ * and can leave. What each sees is decided by the API.
  */
 export function Halaqa() {
   const { id = '' } = useParams();
@@ -88,6 +91,12 @@ export function Halaqa() {
         <>
           {/* What the students recited comes first: it waits for the teacher's ear. */}
           <RecordingQueue halaqaId={halaqa.id} />
+          <ArdaLog
+            halaqaId={halaqa.id}
+            students={view.members.filter(
+              (x) => x.role === 'student' && x.status === 'active'
+            )}
+          />
           <HalaqaAssignments
             halaqaId={halaqa.id}
             students={view.members.filter(
@@ -152,6 +161,7 @@ export function Halaqa() {
       ) : (
         <>
           <HalaqaAssignments halaqaId={halaqa.id} />
+          <MyArda halaqaId={halaqa.id} />
           <button
             className="btn"
             type="button"

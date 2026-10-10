@@ -249,6 +249,56 @@ export interface RecitationUpload {
   blob: Blob;
 }
 
+/** Where an ʿarḍ log entry came from: an answered recording, or the ḥalaqa itself. */
+export type ArdaSource = 'recording' | 'in_person';
+
+/** One recitation in the ʿarḍ log (spec T4, ADR-0025; apps/api/src/ardaLog). */
+export interface ArdaEntry {
+  id: string;
+  halaqaId: string;
+  studentId: string;
+  studentName: string | null;
+  range: RecitedRange;
+  /** `YYYY-MM-DD`. */
+  recitedOn: string;
+  verdict: Verdict;
+  remark: RemarkId | null;
+  note: string | null;
+  marks: WordMark[];
+  source: ArdaSource;
+  recordingId: string | null;
+  writtenByName: string | null;
+  createdAt: string;
+}
+
+/** How often a sūra was recited, when last and with what verdict. */
+export interface ArdaSuraSummary {
+  sura: number;
+  times: number;
+  lastOn: string;
+  lastVerdict: Verdict;
+}
+
+export interface StudentArdaSummary extends ArdaSuraSummary {
+  studentId: string;
+  studentName: string | null;
+}
+
+export interface OwnArdaSummary extends ArdaSuraSummary {
+  halaqaId: string;
+  halaqaName: string;
+}
+
+/** A recitation the sheikh heard face to face. */
+export interface NewArdaEntry {
+  studentId: string;
+  range: RecitedRange;
+  recitedOn: string;
+  verdict: Verdict;
+  remark: RemarkId | null;
+  note: string | null;
+}
+
 /** The review deck as the account stores it (ADR-0022): cards as a list. */
 export interface ProgressPayload {
   cards: unknown[];
@@ -595,6 +645,57 @@ export class AuthClient {
 
   private voiceNotePath(halaqaId: string, id: string): string {
     return `${HALAQAT}/${encodeURIComponent(halaqaId)}/recordings/${encodeURIComponent(id)}/voice-note`;
+  }
+
+  /** The ḥalaqa's ʿarḍ log per student and sūra. */
+  ardaSummary(halaqaId: string): Promise<ApiResult<{ summary: StudentArdaSummary[] }>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/arda-log/summary`
+    );
+  }
+
+  /** One student's ʿarḍ log entries, newest first. */
+  ardaEntries(
+    halaqaId: string,
+    studentId: string,
+    before?: string
+  ): Promise<ApiResult<{ entries: ArdaEntry[]; more: boolean }>> {
+    const query = new URLSearchParams({
+      student: studentId,
+      ...(before ? { before } : {}),
+    });
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/arda-log?${query.toString()}`
+    );
+  }
+
+  writeArdaEntry(
+    halaqaId: string,
+    entry: NewArdaEntry
+  ): Promise<ApiResult<{ id: string }>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/arda-log`,
+      {
+        method: 'POST',
+        body: JSON.stringify(entry),
+      }
+    );
+  }
+
+  removeArdaEntry(halaqaId: string, id: string): Promise<ApiResult<unknown>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/arda-log/${encodeURIComponent(id)}`,
+      { method: 'DELETE' }
+    );
+  }
+
+  /** The signed-in student's own ʿarḍ log per ḥalaqa and sūra. */
+  myArdaSummary(): Promise<ApiResult<{ summary: OwnArdaSummary[] }>> {
+    return apiRequest(this.fetchImpl, '/api/v1/arda-log/summary');
   }
 
   devices(): Promise<ApiResult<{ sessions: Device[] }>> {
