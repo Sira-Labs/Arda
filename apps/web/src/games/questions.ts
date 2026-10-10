@@ -4,6 +4,7 @@ import {
   SHEET_EXAMPLES,
   UNIT_EXAMPLES,
   detect,
+  isMaddRule,
   isQalqalaLetter,
   nunSakinaRule,
   type Letter,
@@ -11,11 +12,15 @@ import {
   type RuleId,
 } from '@arda/tajweed';
 import {
+  LENGTH_OF_CARD,
+  MADD_LENGTHS,
   NO_QALQALA,
   UNIT_CARDS,
   type AnswerId,
   type CardId,
   type CardUnit,
+  type MaddCard,
+  type MaddLength,
   type Unit2Card,
 } from '@/content/units';
 import type { NewCard } from '@/review/leitner';
@@ -38,6 +43,10 @@ export function cardOfRule(rule: RuleId): CardId | undefined {
     case 'idgham-shafawi':
     case 'izhar-shafawi':
     case 'qalqala':
+    case 'madd-tabii':
+    case 'madd-muttasil':
+    case 'madd-munfasil':
+    case 'madd-lazim':
       return rule;
     default:
       return undefined;
@@ -69,9 +78,19 @@ export interface QalqalaQuestion extends NewCard {
   prompt: Letter;
 }
 
-export type Question = WordQuestion | LetterQuestion | QalqalaQuestion;
+/** One question of "How long?" (unit 5): a real word, one madd letter in focus. */
+export interface MaddQuestion extends NewCard {
+  kind: 'madd-length';
+  answer: MaddLength;
+  /** The madd the word shows, which says why it is that long. */
+  card: MaddCard;
+  /** The occurrence the question is about (the first of the example's madd). */
+  focus: Occurrence;
+}
 
-/** The answers a question offers: its unit's rule cards, or qalqala and "no qalqala". */
+export type Question = WordQuestion | LetterQuestion | QalqalaQuestion | MaddQuestion;
+
+/** The answers a question offers: its unit's rule cards, qalqala or not, or three lengths. */
 export function optionsOf(question: Question): readonly AnswerId[] {
   switch (question.kind) {
     case 'which-rule':
@@ -80,6 +99,8 @@ export function optionsOf(question: Question): readonly AnswerId[] {
       return UNIT_CARDS[2];
     case 'qalqala-letter':
       return ['qalqala', NO_QALQALA];
+    case 'madd-length':
+      return MADD_LENGTHS;
   }
 }
 
@@ -171,13 +192,39 @@ export function qalqalaRound(random: Random): QalqalaQuestion[] {
   return shuffle(LETTERS, random).map(qalqalaQuestion);
 }
 
+/** A "How long?" question for an example of unit 5, or `undefined` for any other rule. */
+export function maddQuestion(text: string, rule: RuleId): MaddQuestion | undefined {
+  if (!isMaddRule(rule)) return undefined;
+  const focus = detect(text, { madd: true }).find((o) => o.rule === rule);
+  if (!focus) return undefined;
+  return {
+    id: `madd-length:${text}`,
+    kind: 'madd-length',
+    prompt: text,
+    answer: LENGTH_OF_CARD[rule],
+    card: rule,
+    focus,
+  };
+}
+
+/** Every word of unit 5: four for each madd. */
+export const MADD_POOL: readonly MaddQuestion[] = UNIT_EXAMPLES.map((example) =>
+  maddQuestion(example.text, example.expectedRule)
+).filter((question): question is MaddQuestion => question !== undefined);
+
+/** Ten (or `count`) different words of unit 5 in random order. */
+export function maddRound(random: Random, count = 10): MaddQuestion[] {
+  return shuffle(MADD_POOL, random).slice(0, count);
+}
+
 /** Questions in a unit test (ADR-0024); 8 right of them pass it. */
 export const UNIT_TEST_SIZE = 10;
 
 /**
  * A unit's test: ten questions from what the unit taught, in random order. Unit 2 mixes six
  * words with four letters to sort; unit 3 asks ten words; unit 4 the five qalqala letters among
- * five others, so guessing "qalqala" every time cannot pass it.
+ * five others, so guessing "qalqala" every time cannot pass it; unit 5 three words of two counts,
+ * four of four to five and three of six, so no single length passes it either.
  */
 export function unitTest(unit: CardUnit, random: Random): Question[] {
   switch (unit) {
@@ -199,6 +246,22 @@ export function unitTest(unit: CardUnit, random: Random): Question[] {
       ).slice(0, UNIT_TEST_SIZE - bouncing.length);
       return shuffle([...bouncing, ...others], random).map(qalqalaQuestion);
     }
+    case 5: {
+      const of = (card: MaddCard, count: number) =>
+        shuffle(
+          MADD_POOL.filter((question) => question.card === card),
+          random
+        ).slice(0, count);
+      return shuffle(
+        [
+          ...of('madd-tabii', 3),
+          ...of('madd-muttasil', 2),
+          ...of('madd-munfasil', 2),
+          ...of('madd-lazim', 3),
+        ],
+        random
+      );
+    }
   }
 }
 
@@ -212,6 +275,9 @@ export function questionOf(card: NewCard): Question | undefined {
   }
   if (card.kind === 'qalqala-letter') {
     return isLetter(card.prompt) ? qalqalaQuestion(card.prompt) : undefined;
+  }
+  if (card.kind === 'madd-length') {
+    return MADD_POOL.find((question) => question.id === card.id);
   }
   return [...WORD_POOL, ...UNIT3_POOL].find((question) => question.id === card.id);
 }

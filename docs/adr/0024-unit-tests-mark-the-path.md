@@ -60,3 +60,12 @@ asked for it the same day). It tests what the lab trains, the ear:
   Its mistakes do not become review cards, as in the lab's own quizzes: a review card asks a
   rule, and the lab's words are no rules.
 - "Every unit done" now needs unit 1's test too.
+
+## Update 2026-10-10: unit 5 (madd)
+
+- Unit 5's test asks "How long?" of ten words: three of two counts (ṭabīʿī), four of four to
+  five (two muttaṣil, two munfaṣil) and three of six (lāzim). As with unit 4's letters, no single
+  answer reaches eight, so guessing cannot pass it.
+- The same rules otherwise: eight right pass it, ref `unit-5`, mistakes become review cards
+  (kind `madd-length`). "Every unit done" now needs unit 5's test too; unit 4's pass says "weiter
+  mit Einheit 5".

@@ -4,7 +4,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
-import { NO_QALQALA, cardName, type AnswerId, type CardUnit } from '@/content/units';
+import {
+  MADD_LENGTHS,
+  NO_QALQALA,
+  cardName,
+  type AnswerId,
+  type CardUnit,
+  type MaddLength,
+} from '@/content/units';
 import { optionsOf, type Question } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
 import type { Messages } from '@/i18n/messages';
@@ -44,7 +51,13 @@ export function RuleQuiz({
   /** The game, as the activity log names it (ADR-0023). */
   activity: Extract<
     ActivityKind,
-    'which-rule' | 'sort-28' | 'review' | 'which-rule-3' | 'qalqala-letters' | 'unit-test'
+    | 'which-rule'
+    | 'sort-28'
+    | 'review'
+    | 'which-rule-3'
+    | 'qalqala-letters'
+    | 'unit-test'
+    | 'madd-length'
   >;
   questions: readonly Question[];
   eyebrow: string;
@@ -177,7 +190,7 @@ function QuestionView({
   return (
     <section className="stack" style={{ gap: 16 }} aria-live="polite">
       <div className="paper stack" style={{ gap: 4, alignItems: 'center' }}>
-        {question.kind === 'which-rule' ? (
+        {question.kind === 'which-rule' || question.kind === 'madd-length' ? (
           <TajweedText
             large
             segments={
@@ -194,11 +207,13 @@ function QuestionView({
         <p className="muted" style={{ textAlign: 'center' }}>
           {question.kind === 'qalqala-letter'
             ? m.games.qalqala.question
-            : question.kind === 'sort-letter'
-              ? m.games.sort.question
-              : question.unit === 3
-                ? m.games.unit3.question
-                : m.games.whichRule.question}
+            : question.kind === 'madd-length'
+              ? m.games.maddLength.question
+              : question.kind === 'sort-letter'
+                ? m.games.sort.question
+                : question.unit === 3
+                  ? m.games.unit3.question
+                  : m.games.whichRule.question}
         </p>
       </div>
 
@@ -237,17 +252,30 @@ function QuestionView({
   );
 }
 
-/** An answer's name: the rule card's, or "no qalqala". */
+const isLength = (id: AnswerId): id is MaddLength =>
+  (MADD_LENGTHS as readonly string[]).includes(id);
+
+/** An answer's name: the rule card's, "no qalqala", or a madd's length. */
 function answerName(id: AnswerId, language: Language, m: Messages): string {
-  return id === NO_QALQALA ? m.games.qalqala.no : cardName(id, language);
+  if (id === NO_QALQALA) return m.games.qalqala.no;
+  if (isLength(id)) return m.games.maddLength.lengths[id];
+  return cardName(id, language);
 }
 
 /**
  * Why: the letter that follows, and for the four exceptions that it is inside one word; the
- * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters.
+ * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters; the madd and what comes
+ * after its letter for "How long?".
  */
 function Reason({ question }: { question: Question }) {
-  const { m } = useI18n();
+  const { m, language } = useI18n();
+  if (question.kind === 'madd-length') {
+    return (
+      <>
+        {cardName(question.card, language)}: {m.games.maddLength.why[question.card]}
+      </>
+    );
+  }
   if (question.kind === 'qalqala-letter') {
     return (
       <>

@@ -3,7 +3,7 @@
  * this one, so a missing message fails the typecheck. Learners are addressed with "du".
  */
 import type { PasskeyFailure } from '@/services/passkeys';
-import type { CardId, RuleCase } from '@/content/units';
+import type { CardId, MaddCard, MaddLength, RuleCase } from '@/content/units';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { PageLayout } from '@arda/quran';
@@ -112,10 +112,15 @@ export const de = {
         title: 'Einheit 4 · Qalqala',
         intro: 'Fünf Buchstaben prallen zurück, wenn sie ruhen: ق ط ب ج د – quṭbu jadd.',
       },
-    } as Record<1 | 2 | 3 | 4, { title: string; intro: string }>,
+      5: {
+        title: 'Einheit 5 · Madd',
+        intro:
+          'Wie lange ein langer Vokal klingt: 2 Zählzeiten von Natur aus, 4–5 vor einem Hamza, 6 vor Shadda oder Sukūn.',
+      },
+    } as Record<1 | 2 | 3 | 4 | 5, { title: string; intro: string }>,
     lab: 'Zum Buchstaben-Labor',
     letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
-    next: 'Einheit 5 (Madd) bis 7 (Waqf) folgen nach dem Pilot.',
+    next: 'Einheit 6 (Tafkhīm und Tarqīq) und 7 (Waqf) folgen nach dem Pilot.',
   },
   ruleCard: {
     play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
@@ -157,6 +162,10 @@ export const de = {
         'Eine Quelle lehrt Iqlāb ohne Ghunna. Wir lehren es mit Ghunna, wie dein Blatt.',
     },
     teacherNote: 'Notiz deines Sheikhs: noch keine.',
+    counts: (min: number, max: number) =>
+      min === max ? `${min} Zählzeiten` : `${min}–${max} Zählzeiten`,
+    maddLetters: 'Die Madd-Buchstaben: Alif nach Fatḥa, Wāw nach Ḍamma, Yāʾ nach Kasra',
+    thenHamza: 'Danach folgt ein Hamza:',
     previous: 'Zurück',
     next: 'Weiter',
     done: 'Zur Einheit',
@@ -250,6 +259,43 @@ export const de = {
       ],
       tip: 'Merkwort: quṭbu jadd (قُطْبُ جَدٍّ) – seine Buchstaben sind die fünf.',
     },
+    'madd-tabii': {
+      title: 'Die natürliche Dehnung: 2 Zählzeiten',
+      steps: [
+        'Erkenne einen Madd-Buchstaben: Alif nach Fatḥa, Wāw sākina nach Ḍamma, Yāʾ sākina nach Kasra – oder das kleine Alif.',
+        'Folgt kein Hamza und keine Shadda oder Sukūn, ist es Madd ṭabīʿī.',
+        'Dehne den Vokal genau 2 Zählzeiten – nicht kürzer, nicht länger.',
+      ],
+      tip: 'Eine Zählzeit (Ḥaraka) ist etwa so lang, wie du einen Finger beugst. Alle längeren Madds bauen auf diesen 2 auf.',
+    },
+    'madd-muttasil': {
+      title: 'Hamza im selben Wort: 4–5 Zählzeiten',
+      steps: [
+        'Erkenne einen Madd-Buchstaben mit dem Madda-Zeichen ( ٓ ).',
+        'Steht das Hamza im selben Wort, ist es Madd muttaṣil (verbunden) – es ist Pflicht (wājib).',
+        'Dehne 4 oder 5 Zählzeiten und bleib in einer Lesung bei derselben Länge.',
+      ],
+      tip: 'Typische Wörter: جَآءَ, السَّمَآءُ, شَآءَ – das Hamza folgt direkt im Wort.',
+    },
+    'madd-munfasil': {
+      title: 'Hamza im nächsten Wort: 4–5 Zählzeiten',
+      steps: [
+        'Erkenne einen Madd-Buchstaben am Ende eines Wortes.',
+        'Beginnt das nächste Wort mit Hamza, ist es Madd munfaṣil (getrennt).',
+        'Dehne 4 oder 5 Zählzeiten, so lang wie den Madd muttaṣil in derselben Lesung.',
+        'Hältst du nach dem ersten Wort an, bleibt es bei 2 Zählzeiten.',
+      ],
+      tip: 'Auch يَٰٓأَيُّهَا und هَٰٓؤُلَآءِ gehören dazu: „yā“ und „hā“ sind eigene Wörter, nur zusammen geschrieben.',
+    },
+    'madd-lazim': {
+      title: 'Shadda oder Sukūn danach: 6 Zählzeiten',
+      steps: [
+        'Erkenne einen Madd-Buchstaben mit dem Madda-Zeichen.',
+        'Folgt im selben Wort ein Buchstabe mit Shadda (oder Sukūn), ist es Madd lāzim (notwendig).',
+        'Dehne immer volle 6 Zählzeiten, auch wenn du schnell liest.',
+      ],
+      tip: 'Auch die Buchstaben am Anfang mancher Sūren werden so gedehnt, z. B. الٓمٓ: „Lām“ und „Mīm“ je 6 Zählzeiten.',
+    },
   } as Record<CardId, { title: string; steps: string[]; tip: string }>,
   games: {
     eyebrow: (unit: number) => `Einheit ${unit} · Üben`,
@@ -302,7 +348,7 @@ export const de = {
       open: 'Test machen',
       passed: 'Bestanden',
       passedNext: (unit: number) => `Bestanden – weiter mit Einheit ${unit}.`,
-      passedLast: 'Bestanden – alle Einheiten des Blatts geschafft.',
+      passedLast: 'Bestanden – alle Einheiten geschafft.',
       passedOpen: (unit: number) =>
         `Bestanden – offen ist noch der Test von Einheit ${unit}.`,
       notYet: (need: number, total: number) =>
@@ -323,6 +369,22 @@ export const de = {
       no: 'keine Qalqala',
       isOne: 'gehört zu quṭbu jadd',
       isNot: 'gehört nicht zu quṭbu jadd',
+    },
+    maddLength: {
+      title: 'Wie lang?',
+      intro: 'Zehn echte Wörter, ein Madd markiert: 2, 4–5 oder 6 Zählzeiten?',
+      question: 'Wie lange dehnst du den markierten Buchstaben?',
+      lengths: {
+        'two-counts': '2 Zählzeiten',
+        'four-counts': '4–5 Zählzeiten',
+        'six-counts': '6 Zählzeiten',
+      } as Record<MaddLength, string>,
+      why: {
+        'madd-tabii': 'danach kein Hamza, keine Shadda, kein Sukūn',
+        'madd-muttasil': 'Hamza im selben Wort',
+        'madd-munfasil': 'Hamza am Anfang des nächsten Wortes',
+        'madd-lazim': 'Shadda oder Sukūn im selben Wort',
+      } as Record<MaddCard, string>,
     },
     shadda: 'Nūn oder Mīm mit Shadda',
   },

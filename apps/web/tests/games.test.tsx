@@ -6,9 +6,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UNIT2_CARDS, cardName } from '@/content/units';
 import {
+  MADD_POOL,
   UNIT3_POOL,
   WORD_POOL,
   letterQuestion,
+  maddRound,
   optionsOf,
   qalqalaQuestion,
   qalqalaRound,
@@ -19,6 +21,7 @@ import {
   unitTest,
   whichRuleRound,
 } from '@/games/questions';
+import { MaddLength } from '@/modules/games/MaddLength';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { WhichRule3 } from '@/modules/games/WhichRule3';
 import { ReviewSession } from '@/modules/games/ReviewSession';
@@ -297,6 +300,67 @@ describe('the qalqala letters', () => {
   });
 });
 
+describe('How long? (unit 5)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('asks four words of each madd, with three lengths to choose from', () => {
+    expect(MADD_POOL).toHaveLength(16);
+    for (const card of ['madd-tabii', 'madd-muttasil', 'madd-munfasil', 'madd-lazim']) {
+      expect(
+        MADD_POOL.filter((q) => q.card === card),
+        card
+      ).toHaveLength(4);
+    }
+    expect(optionsOf(MADD_POOL[0]!)).toEqual(['two-counts', 'four-counts', 'six-counts']);
+    const round = maddRound(seeded());
+    expect(round).toHaveLength(10);
+    expect(new Set(round.map((q) => q.id)).size).toBe(10);
+    // The question marks the madd letter itself.
+    const lazim = MADD_POOL.find((q) => q.card === 'madd-lazim')!;
+    expect(lazim.prompt.slice(lazim.focus.start, lazim.focus.carrierEnd)).toBe('ا\u0653');
+    expect(questionOf(lazim)).toEqual(lazim);
+  });
+
+  it('says why after an answer and turns a mistake into a review card', async () => {
+    const store = new MemoryReviewStore();
+    renderGame('/pfad/5/spiel/wie-lang', store, <MaddLength random={seeded(4)} />);
+    expect(screen.getByRole('heading', { name: 'Wie lang?' })).toBeInTheDocument();
+    expect(
+      screen.getByText('Wie lange dehnst du den markierten Buchstaben?')
+    ).toBeInTheDocument();
+    const round = maddRound(seeded(4));
+    const names = {
+      'two-counts': '2 Zählzeiten',
+      'four-counts': '4–5 Zählzeiten',
+      'six-counts': '6 Zählzeiten',
+    } as const;
+    const why = {
+      'madd-tabii': 'Madd ṭabīʿī: danach kein Hamza, keine Shadda, kein Sukūn',
+      'madd-muttasil': 'Madd muttaṣil: Hamza im selben Wort',
+      'madd-munfasil': 'Madd munfaṣil: Hamza am Anfang des nächsten Wortes',
+      'madd-lazim': 'Madd lāzim: Shadda oder Sukūn im selben Wort',
+    } as const;
+    for (const [i, question] of round.entries()) {
+      // The first word is answered wrongly on purpose.
+      const wrong = question.answer === 'six-counts' ? 'two-counts' : 'six-counts';
+      await userEvent.click(
+        screen.getByRole('button', { name: names[i === 0 ? wrong : question.answer] })
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(why[question.card]);
+      await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+    }
+    expect(screen.getByRole('heading', { name: '9 von 10 richtig' })).toBeInTheDocument();
+    expect(store.load().cards[round[0]!.id]).toMatchObject({
+      kind: 'madd-length',
+      answer: round[0]!.answer,
+      box: 1,
+    });
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'madd-length', right: 9, total: 10 }),
+    ]);
+  });
+});
+
 describe('unit tests (ADR-0024)', () => {
   beforeEach(() => localStorage.setItem('arda.language', 'de'));
 
@@ -314,6 +378,14 @@ describe('unit tests (ADR-0024)', () => {
     // All five quṭbu jadd letters, among five others: "qalqala" every time cannot pass.
     expect(four.filter((q) => q.answer === 'qalqala')).toHaveLength(5);
     expect(new Set(four.map((q) => q.prompt)).size).toBe(10);
+    const five = unitTest(5, seeded());
+    expect(five).toHaveLength(10);
+    expect(new Set(five.map((q) => q.id)).size).toBe(10);
+    // Three of two counts, four of four to five, three of six: no single length passes.
+    const lengths = five.map((q) => q.answer);
+    expect(lengths.filter((a) => a === 'two-counts')).toHaveLength(3);
+    expect(lengths.filter((a) => a === 'four-counts')).toHaveLength(4);
+    expect(lengths.filter((a) => a === 'six-counts')).toHaveLength(3);
   });
 
   /** Answers the current letter question, rightly or not. */
@@ -351,10 +423,8 @@ describe('unit tests (ADR-0024)', () => {
     ).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
     for (let i = 0; i < 10; i++) await answerLetter(i >= 2);
-    // Unit 4 passed, but units 1 to 3 are still open: not "every unit done".
-    expect(
-      screen.getByText('Bestanden – offen ist noch der Test von Einheit 1.')
-    ).toBeInTheDocument();
+    // Unit 4 passed: unit 5 comes next.
+    expect(screen.getByText('Bestanden – weiter mit Einheit 5.')).toBeInTheDocument();
     expect(
       Object.values(store.load().activity ?? {}).map((e) => [e.kind, e.ref, e.right])
     ).toEqual([
@@ -372,7 +442,18 @@ describe('unit tests (ADR-0024)', () => {
     expect(document.querySelector('a[href="/pfad/3/ghunna"]')).not.toBeNull();
   });
 
-  it('says the sheet is done only when the other tests are passed too', async () => {
+  /** Answers the current "How long?" question rightly, from the word it shows. */
+  const answerMadd = async () => {
+    const word = document.querySelector('.paper .quran')!.textContent;
+    const question = MADD_POOL.find((q) => q.prompt === word)!;
+    const name = { 'two-counts': '2', 'four-counts': '4–5', 'six-counts': '6' }[
+      question.answer
+    ];
+    await userEvent.click(screen.getByRole('button', { name: `${name} Zählzeiten` }));
+    await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+  };
+
+  it('says every unit is done only when the other tests are passed too', async () => {
     const passed = (unit: number, n: number) => ({
       id: `00000000-0000-4000-8000-00000000000${n}`,
       kind: 'unit-test' as const,
@@ -388,13 +469,14 @@ describe('unit tests (ADR-0024)', () => {
         [passed(1, 3).id]: passed(1, 3),
         [passed(2, 1).id]: passed(2, 1),
         [passed(3, 2).id]: passed(3, 2),
+        [passed(4, 4).id]: passed(4, 4),
       },
     });
     const { client } = fakeApi({});
     render(
       <Providers client={client}>
         <ReviewProvider store={store}>
-          <MemoryRouter initialEntries={['/pfad/4/test']}>
+          <MemoryRouter initialEntries={['/pfad/5/test']}>
             <Routes>
               <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
             </Routes>
@@ -402,10 +484,8 @@ describe('unit tests (ADR-0024)', () => {
         </ReviewProvider>
       </Providers>
     );
-    for (let i = 0; i < 10; i++) await answerLetter(true);
-    expect(
-      screen.getByText('Bestanden – alle Einheiten des Blatts geschafft.')
-    ).toBeInTheDocument();
+    for (let i = 0; i < 10; i++) await answerMadd();
+    expect(screen.getByText('Bestanden – alle Einheiten geschafft.')).toBeInTheDocument();
   });
 
   it('sends an unknown unit back to the path', () => {

@@ -12,6 +12,7 @@ export const ACTIVITY_KINDS = [
   'which-rule-3',
   'qalqala-letters',
   'unit-test',
+  'madd-length',
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -24,6 +25,7 @@ export const ROUND_KINDS: ReadonlySet<ActivityKind> = new Set([
   'which-rule-3',
   'qalqala-letters',
   'unit-test',
+  'madd-length',
 ]);
 
 /** The most questions one round has (Sort the 28 asks 28). */

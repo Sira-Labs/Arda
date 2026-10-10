@@ -16,7 +16,10 @@ import { useReview } from '@/review/ReviewProvider';
 /** The games of each unit: where they live, and their title and intro in the catalog. */
 const GAMES: Record<
   CardUnit,
-  readonly { path: string; game: 'whichRule' | 'sort' | 'unit3' | 'qalqala' }[]
+  readonly {
+    path: string;
+    game: 'whichRule' | 'sort' | 'unit3' | 'qalqala' | 'maddLength';
+  }[]
 > = {
   2: [
     { path: '/pfad/2/spiel/welche-regel', game: 'whichRule' },
@@ -24,12 +27,13 @@ const GAMES: Record<
   ],
   3: [{ path: '/pfad/3/spiel/welche-regel', game: 'unit3' }],
   4: [{ path: '/pfad/4/spiel/buchstaben', game: 'qalqala' }],
+  5: [{ path: '/pfad/5/spiel/wie-lang', game: 'maddLength' }],
 };
 
 /**
  * The path (spec F1, spec 01 §4): unit 1 in the letter lab, then units 2–4 from the sheikh's
- * sheet, each with its rule cards in the order of the sheet and its games; the review of every
- * unit at the end.
+ * sheet and unit 5 (madd), each with its rule cards in the order of the sheet and its games; the
+ * review of every unit at the end.
  */
 export function Path() {
   const { m } = useI18n();
@@ -120,8 +124,12 @@ function Unit({ unit, passed }: { unit: CardUnit; passed: boolean }) {
       <ol className="stack path-cards" style={{ gap: 12 }}>
         {UNIT_CARDS[unit].map((id) => {
           const card = CARDS[id];
+          // A madd is about its length, not about letters to learn.
           const letters = card.groups.reduce(
-            (count, group) => count + RULES[group.rule].letters.length,
+            (count, group) =>
+              RULES[group.rule].subject === 'madd'
+                ? count
+                : count + RULES[group.rule].letters.length,
             0
           );
           return (

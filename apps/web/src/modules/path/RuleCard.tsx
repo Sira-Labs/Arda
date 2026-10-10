@@ -13,6 +13,7 @@ import {
   isCardUnit,
   unitOf,
   type CardId,
+  type CardUnit,
   type ExampleGroup,
 } from '@/content/units';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -23,10 +24,10 @@ import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
-/** `/pfad/:unit/:rule`: a rule card of units 2–4, or "not found" for anything else. */
+/** `/pfad/:unit/:rule`: a rule card of units 2–5, or "not found" for anything else. */
 export function RuleCardPage() {
   const { unit, rule } = useParams();
-  if (!isCardUnit(unit) || !isCardOf(Number(unit) as 2 | 3 | 4, rule)) {
+  if (!isCardUnit(unit) || !isCardOf(Number(unit) as CardUnit, rule)) {
     return <Soon page="notFound" />;
   }
   return <RuleCard id={rule} />;
@@ -48,9 +49,12 @@ export function RuleCard({ id }: { id: CardId }) {
   const index = cards.indexOf(id);
   const previous = cards[index - 1];
   const next = cards[index + 1];
-  // Nūn and mīm sākina are decided by the next letter; a shadda or a sukūn is not.
-  const decided = card.groups.some((group) =>
-    ['nun-sakina-tanwin', 'mim-sakina'].includes(RULES[group.rule].subject)
+  // Nūn and mīm sākina are decided by the next letter, a long madd by the hamza, shadda or
+  // sukūn after it; a shadda or a sukūn on the letter itself is not.
+  const decided = card.groups.some(
+    (group) =>
+      ['nun-sakina-tanwin', 'mim-sakina'].includes(RULES[group.rule].subject) ||
+      (RULES[group.rule].subject === 'madd' && group.rule !== 'madd-tabii')
   );
   const families = [
     ...new Set(card.groups.map((group) => RULES[group.rule].family)),
@@ -187,6 +191,9 @@ function CardName({ id }: { id: CardId }) {
 
 const IZHAR = new Set(['izhar'] as const);
 
+/** The madd letters (alif after fatḥa, wāw after ḍamma, yāʾ after kasra, as the label says). */
+const MADD_LETTERS = 'ا و ي';
+
 /**
  * An example as the sheet writes it, coloured by the engine; where the Qurʾān has it, a button
  * that plays it in al-Ḥuṣarī's teaching recitation, with where it is and, if the reciter's
@@ -246,9 +253,10 @@ function Group({
   const { m, language } = useI18n();
   const rule = RULES[group.rule];
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
-  // Qalqala is no question of ghunna; every other rule says whether it holds one.
-  const ghunna =
-    rule.subject === 'qalqala'
+  // Qalqala and madd are no question of ghunna; a madd says how long it is held instead.
+  const quality = rule.counts
+    ? m.ruleCard.counts(...rule.counts)
+    : rule.subject === 'qalqala'
       ? null
       : rule.ghunna
         ? m.ruleCard.withGhunna
@@ -261,23 +269,38 @@ function Group({
         ? m.ruleCard.lettersSukun
         : m.ruleCard.letters;
   return (
-    // Both idghām groups share the term, so the label names the ghunna too.
+    // Both idghām groups share the term, so the label names the ghunna (or the length) too.
     <section
       className="stack"
       aria-label={
-        ghunna
-          ? `${ruleName(group.rule, language)} · ${ghunna}`
+        quality
+          ? `${ruleName(group.rule, language)} · ${quality}`
           : ruleName(group.rule, language)
       }
     >
-      {(titled || ghunna) && (
+      {(titled || quality) && (
         <div className="row" style={{ gap: 8 }}>
           {titled && <h2 className="h-small">{ruleName(group.rule, language)}</h2>}
-          {ghunna && <span className="chip chip-quiet">{ghunna}</span>}
+          {quality && <span className="chip chip-quiet">{quality}</span>}
         </div>
       )}
       <div className="stack" style={{ gap: 6 }}>
-        {rule.letters.length > 0 ? (
+        {rule.subject === 'madd' ? (
+          <>
+            <p className="muted">{m.ruleCard.maddLetters}</p>
+            <p className="letters arabic" lang="ar" dir="rtl">
+              {MADD_LETTERS}
+            </p>
+            {rule.letters.length > 0 && (
+              <p className="muted">
+                {m.ruleCard.thenHamza}{' '}
+                <span className="arabic" lang="ar" dir="rtl">
+                  {rule.letters.join(' ')}
+                </span>
+              </p>
+            )}
+          </>
+        ) : rule.letters.length > 0 ? (
           <>
             <p className="muted">{lettersLabel}</p>
             <p className="letters arabic" lang="ar" dir="rtl">

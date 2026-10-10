@@ -8,9 +8,10 @@ import {
 import type { Language } from '@/i18n/languages';
 
 /**
- * The rule cards of units 2–4 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
- * sākina and tanwīn, unit 3 ghunna and mīm sākina, unit 4 qalqala. The examples are the
- * sheet's own and, where the sheet has too few, real words chosen for it (`UNIT_EXAMPLES`);
+ * The rule cards of units 2–5 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
+ * sākina and tanwīn, unit 3 ghunna and mīm sākina, unit 4 qalqala, and beyond the sheet unit 5
+ * madd. The examples are the sheet's own and, where the sheet has too few, real words chosen
+ * for it (`UNIT_EXAMPLES`);
  * `@arda/tajweed` keeps them and the engine is tested against them. The texts are in the i18n
  * catalogs (`cards`). Until the content pack exists (ADR-0010), this module is the units.
  */
@@ -19,9 +20,10 @@ export const UNIT_CARDS = {
   2: ['izhar', 'idgham', 'iqlab', 'ikhfa'],
   3: ['ghunna', 'ikhfa-shafawi', 'idgham-shafawi', 'izhar-shafawi'],
   4: ['qalqala'],
+  5: ['madd-tabii', 'madd-muttasil', 'madd-munfasil', 'madd-lazim'],
 } as const;
 export type CardUnit = keyof typeof UNIT_CARDS;
-export const CARD_UNITS = [2, 3, 4] as const satisfies readonly CardUnit[];
+export const CARD_UNITS = [2, 3, 4, 5] as const satisfies readonly CardUnit[];
 
 /**
  * The units with a test (ADR-0024): unit 1, the letter lab, since it has all 28 letters
@@ -33,12 +35,27 @@ export type TestUnit = (typeof TEST_UNITS)[number];
 export const UNIT2_CARDS = UNIT_CARDS[2];
 export type Unit2Card = (typeof UNIT_CARDS)[2][number];
 export type Unit3Card = (typeof UNIT_CARDS)[3][number];
+export type MaddCard = (typeof UNIT_CARDS)[5][number];
 export type CardId = (typeof UNIT_CARDS)[CardUnit][number];
 
 /** The second answer of the qalqala game: the letter does not bounce. */
 export const NO_QALQALA = 'no-qalqala';
-/** What a game question can be answered with: a rule card, or "no qalqala". */
-export type AnswerId = CardId | typeof NO_QALQALA;
+/**
+ * The answers of "How long?" (unit 5): two, four to five, or six counts. Letters only, as the
+ * synced review cards store their answer (migration 0007).
+ */
+export const MADD_LENGTHS = ['two-counts', 'four-counts', 'six-counts'] as const;
+export type MaddLength = (typeof MADD_LENGTHS)[number];
+/** What a game question can be answered with: a rule card, "no qalqala", or a madd's length. */
+export type AnswerId = CardId | typeof NO_QALQALA | MaddLength;
+
+/** How long a madd card's madd is held. */
+export const LENGTH_OF_CARD: Readonly<Record<MaddCard, MaddLength>> = {
+  'madd-tabii': 'two-counts',
+  'madd-muttasil': 'four-counts',
+  'madd-munfasil': 'four-counts',
+  'madd-lazim': 'six-counts',
+};
 
 /** The card's name: Arabic in the Arabic interface, the transliterated term elsewhere. */
 const CARD_NAMES: Record<CardId, { term: string; arabic: string }> = {
@@ -51,6 +68,10 @@ const CARD_NAMES: Record<CardId, { term: string; arabic: string }> = {
   'idgham-shafawi': { term: 'Idghām shafawī', arabic: 'إِدْغَام شَفَوِيّ' },
   'izhar-shafawi': { term: 'Iẓhār shafawī', arabic: 'إِظْهَار شَفَوِيّ' },
   qalqala: { term: 'Qalqala', arabic: 'قَلْقَلَة' },
+  'madd-tabii': { term: 'Madd ṭabīʿī', arabic: 'مَدّ طَبِيعِيّ' },
+  'madd-muttasil': { term: 'Madd muttaṣil', arabic: 'مَدّ مُتَّصِل' },
+  'madd-munfasil': { term: 'Madd munfaṣil', arabic: 'مَدّ مُنْفَصِل' },
+  'madd-lazim': { term: 'Madd lāzim', arabic: 'مَدّ لَازِم' },
 };
 
 export function cardName(id: CardId, language: Language): string {
@@ -106,14 +127,18 @@ const RULES_OF_CARD: Record<CardId, readonly RuleId[]> = {
   'idgham-shafawi': ['idgham-shafawi'],
   'izhar-shafawi': ['izhar-shafawi'],
   qalqala: ['qalqala'],
+  'madd-tabii': ['madd-tabii'],
+  'madd-muttasil': ['madd-muttasil'],
+  'madd-munfasil': ['madd-munfasil'],
+  'madd-lazim': ['madd-lazim'],
 };
 
-/** The sheet's examples first, then the ones chosen for units 3 and 4. */
+/** The sheet's examples first, then the ones chosen for units 3–5. */
 const EXAMPLES = [...SHEET_EXAMPLES, ...UNIT_EXAMPLES];
 
 /** The case of the example's first occurrence of `rule`. */
 export function caseOf(text: string, rule: RuleId): RuleCase {
-  const occurrence = detect(text).find((o) => o.rule === rule);
+  const occurrence = detect(text, { madd: true }).find((o) => o.rule === rule);
   if (!occurrence) throw new Error(`the sheet example ${text} does not show ${rule}`);
   if (occurrence.tanwin) return 'tanwin';
   return occurrence.acrossWords ? 'across' : 'inside';

@@ -114,18 +114,27 @@ function previousRead(gs: readonly Grapheme[], i: number): Grapheme | undefined 
   return undefined;
 }
 
+interface Read {
+  grapheme: Grapheme;
+  /** Whether a word starts between the madd letter and it. */
+  acrossWords: boolean;
+}
+
 /** The next grapheme that is read, skipping silent letters and the plural alif after a wāw. */
-function nextRead(gs: readonly Grapheme[], i: number): number | undefined {
+function nextRead(gs: readonly Grapheme[], i: number): Read | undefined {
+  // A skipped letter may be the one that starts the next word.
+  let acrossWords = false;
   for (let j = i + 1; j < gs.length; j++) {
     const g = gs[j] as Grapheme;
     if (!isArabicLetter(g.char)) return undefined;
+    acrossWords ||= g.wordStart;
     if (isSilent(g)) continue;
     // قَالُوا in spelling without the small zero: the alif after a final wāw is not read.
     if (g.char === 'ا' && g.marks === '' && gs[j - 1]?.char === 'و') {
       const after = gs[j + 1];
       if (!after || after.wordStart || !isArabicLetter(after.char)) continue;
     }
-    return j;
+    return { grapheme: g, acrossWords };
   }
   return undefined;
 }
@@ -145,16 +154,16 @@ function decide(gs: readonly Grapheme[], i: number): Decision | undefined {
   // هَٰٓؤُلَآءِ, يَٰٓـَٔادَمُ.
   const hamzaRule: MaddRule = g.wordStart ? 'madd-munfasil' : 'madd-muttasil';
   if (hasHamzaSeat(g)) return { rule: hamzaRule, decider: g, follower: 'ء' };
-  const j = nextRead(gs, i);
-  const next = j === undefined ? undefined : (gs[j] as Grapheme);
-  if (!next) return { rule: 'madd-tabii' };
+  const read = nextRead(gs, i);
+  if (!read) return { rule: 'madd-tabii' };
+  const { grapheme: next, acrossWords } = read;
   // Before alif waṣla the madd letter is not read long at all: فِى ٱلْأَرْضِ.
-  if (next.char === ALIF_WASLA || (next.wordStart && isBareAlif(next))) return undefined;
+  if (next.char === ALIF_WASLA || (acrossWords && isBareAlif(next))) return undefined;
   if (isHamza(next)) {
-    const rule = next.wordStart ? 'madd-munfasil' : hamzaRule;
+    const rule = acrossWords ? 'madd-munfasil' : hamzaRule;
     return { rule, decider: next, follower: 'ء' };
   }
-  if (!next.wordStart && (hasShadda(next) || (hasSukun(next) && !hasVowel(next)))) {
+  if (!acrossWords && (hasShadda(next) || (hasSukun(next) && !hasVowel(next)))) {
     // The muṣḥaf writes the madda on every madd lāzim (ٱلضَّآلِّينَ); a bare alif before a
     // sākin letter is the alif waṣla of spellings without ٱ (وَالْأَرْضِ), and not read.
     if (hasMadda(g))

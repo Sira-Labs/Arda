@@ -82,10 +82,15 @@ export const fr: Messages = {
         intro:
           'Cinq lettres rebondissent quand elles portent un sukūn : ق ط ب ج د – quṭbu jadd.',
       },
+      5: {
+        title: 'Unité 5 · Madd',
+        intro:
+          'Combien de temps dure une voyelle longue : 2 temps par nature, 4–5 avant une hamza, 6 avant une shadda ou un sukūn.',
+      },
     },
     lab: 'Ouvrir le labo des lettres',
     letters: (count) => (count === 1 ? '1 lettre' : `${count} lettres`),
-    next: 'Les unités 5 (madd) à 7 (waqf) suivent après le pilote.',
+    next: 'Les unités 6 (tafkhīm et tarqīq) et 7 (waqf) suivent après le pilote.',
   },
   ruleCard: {
     play: (sura, aya) => `Écouter\u202f: sourate ${sura}, āya ${aya}`,
@@ -126,6 +131,10 @@ export const fr: Messages = {
         'Une source enseigne l’iqlāb sans ghunna. Nous l’enseignons avec ghunna, comme ta feuille.',
     },
     teacherNote: 'Note de ton cheikh : aucune pour l’instant.',
+    counts: (min, max) => (min === max ? `${min} temps` : `${min}–${max} temps`),
+    maddLetters:
+      'Les lettres de madd : alif après fatḥa, wāw après ḍamma, yāʾ après kasra',
+    thenHamza: 'Puis vient une hamza :',
     previous: 'Retour',
     next: 'Suite',
     done: 'Vers l’unité',
@@ -219,6 +228,43 @@ export const fr: Messages = {
       ],
       tip: 'Mot-repère : quṭbu jadd (قُطْبُ جَدٍّ) – ses lettres sont les cinq.',
     },
+    'madd-tabii': {
+      title: 'L’allongement naturel : 2 temps',
+      steps: [
+        'Repère une lettre de madd : alif après fatḥa, wāw sākina après ḍamma, yāʾ sākina après kasra – ou le petit alif.',
+        'Si ni hamza ni shadda ou sukūn ne suit, c’est le madd ṭabīʿī.',
+        'Allonge la voyelle exactement 2 temps – ni moins, ni plus.',
+      ],
+      tip: 'Un temps (ḥaraka) dure à peu près le temps de plier un doigt. Tous les madds plus longs reposent sur ces 2.',
+    },
+    'madd-muttasil': {
+      title: 'Une hamza dans le même mot : 4–5 temps',
+      steps: [
+        'Repère une lettre de madd portant le signe madda ( ٓ ).',
+        'Si la hamza est dans le même mot, c’est le madd muttaṣil (joint) – il est obligatoire (wājib).',
+        'Allonge 4 ou 5 temps et garde la même durée tout au long d’une récitation.',
+      ],
+      tip: 'Mots typiques : جَآءَ, السَّمَآءُ, شَآءَ – la hamza suit dans le mot.',
+    },
+    'madd-munfasil': {
+      title: 'Une hamza dans le mot suivant : 4–5 temps',
+      steps: [
+        'Repère une lettre de madd à la fin d’un mot.',
+        'Si le mot suivant commence par une hamza, c’est le madd munfaṣil (séparé).',
+        'Allonge 4 ou 5 temps, autant que le madd muttaṣil dans la même récitation.',
+        'Si tu t’arrêtes après le premier mot, il reste à 2 temps.',
+      ],
+      tip: 'يَٰٓأَيُّهَا et هَٰٓؤُلَآءِ en font partie aussi : « yā » et « hā » sont des mots à part, seulement écrits ensemble.',
+    },
+    'madd-lazim': {
+      title: 'Une shadda ou un sukūn après : 6 temps',
+      steps: [
+        'Repère une lettre de madd portant le signe madda.',
+        'Si une lettre avec shadda (ou sukūn) suit dans le même mot, c’est le madd lāzim (nécessaire).',
+        'Allonge toujours les 6 temps complets, même en lisant vite.',
+      ],
+      tip: 'Les lettres au début de certaines sourates s’allongent de même, p. ex. الٓمٓ : « lām » et « mīm », 6 temps chacune.',
+    },
   },
   games: {
     eyebrow: (unit) => `Unité ${unit} · S’entraîner`,
@@ -270,7 +316,7 @@ export const fr: Messages = {
       open: 'Passer le test',
       passed: 'Réussi',
       passedNext: (unit) => `Réussi – passe à l'unité ${unit}.`,
-      passedLast: 'Réussi – toutes les unités de la fiche sont faites.',
+      passedLast: 'Réussi – toutes les unités sont faites.',
       passedOpen: (unit) => `Réussi – le test de l'unité ${unit} reste à faire.`,
       notYet: (need, total) =>
         `Pas encore réussi : il faut ${need} sur ${total}. Révise les cartes et réessaie.`,
@@ -290,6 +336,22 @@ export const fr: Messages = {
       no: 'pas de qalqala',
       isOne: 'fait partie de quṭbu jadd',
       isNot: 'ne fait pas partie de quṭbu jadd',
+    },
+    maddLength: {
+      title: 'Combien de temps ?',
+      intro: 'Dix vrais mots, un madd marqué : 2, 4–5 ou 6 temps ?',
+      question: 'Combien de temps allonges-tu la lettre marquée ?',
+      lengths: {
+        'two-counts': '2 temps',
+        'four-counts': '4–5 temps',
+        'six-counts': '6 temps',
+      },
+      why: {
+        'madd-tabii': 'ni hamza, ni shadda, ni sukūn après',
+        'madd-muttasil': 'une hamza dans le même mot',
+        'madd-munfasil': 'une hamza au début du mot suivant',
+        'madd-lazim': 'une shadda ou un sukūn dans le même mot',
+      },
     },
     shadda: 'nūn ou mīm avec shadda',
   },

@@ -80,10 +80,15 @@ export const en: Messages = {
         title: 'Unit 4 · Qalqala',
         intro: 'Five letters bounce back when they rest: ق ط ب ج د – quṭbu jadd.',
       },
+      5: {
+        title: 'Unit 5 · Madd',
+        intro:
+          'How long a long vowel sounds: 2 counts by nature, 4–5 before a hamza, 6 before a shadda or sukūn.',
+      },
     },
     lab: 'Open the letter lab',
     letters: (count) => (count === 1 ? '1 letter' : `${count} letters`),
-    next: 'Units 5 (madd) to 7 (waqf) follow after the pilot.',
+    next: 'Units 6 (tafkhīm and tarqīq) and 7 (waqf) follow after the pilot.',
   },
   ruleCard: {
     play: (sura, aya) => `Listen: sūra ${sura}, āya ${aya}`,
@@ -124,6 +129,9 @@ export const en: Messages = {
         'One source teaches iqlāb without ghunna. We teach it with ghunna, like your sheet.',
     },
     teacherNote: 'Your sheikh’s note: none yet.',
+    counts: (min, max) => (min === max ? `${min} counts` : `${min}–${max} counts`),
+    maddLetters: 'The madd letters: alif after fatḥa, wāw after ḍamma, yāʾ after kasra',
+    thenHamza: 'Then comes a hamza:',
     previous: 'Back',
     next: 'Next',
     done: 'To the unit',
@@ -217,6 +225,43 @@ export const en: Messages = {
       ],
       tip: 'Mnemonic: quṭbu jadd (قُطْبُ جَدٍّ) – its letters are the five.',
     },
+    'madd-tabii': {
+      title: 'The natural madd: 2 counts',
+      steps: [
+        'Spot a madd letter: alif after fatḥa, wāw sākina after ḍamma, yāʾ sākina after kasra – or the small alif.',
+        'If no hamza and no shadda or sukūn follows, it is madd ṭabīʿī.',
+        'Hold the vowel exactly 2 counts – no shorter, no longer.',
+      ],
+      tip: 'One count (ḥaraka) is about as long as bending a finger. Every longer madd builds on these 2.',
+    },
+    'madd-muttasil': {
+      title: 'A hamza in the same word: 4–5 counts',
+      steps: [
+        'Spot a madd letter with the madda sign ( ٓ ).',
+        'If the hamza is in the same word, it is madd muttaṣil (joined) – it is obligatory (wājib).',
+        'Hold it 4 or 5 counts and keep the same length throughout one recitation.',
+      ],
+      tip: 'Typical words: جَآءَ, السَّمَآءُ, شَآءَ – the hamza follows within the word.',
+    },
+    'madd-munfasil': {
+      title: 'A hamza in the next word: 4–5 counts',
+      steps: [
+        'Spot a madd letter at the end of a word.',
+        'If the next word starts with a hamza, it is madd munfaṣil (separated).',
+        'Hold it 4 or 5 counts, as long as madd muttaṣil in the same recitation.',
+        'If you stop after the first word, it stays at 2 counts.',
+      ],
+      tip: 'يَٰٓأَيُّهَا and هَٰٓؤُلَآءِ belong here too: “yā” and “hā” are words of their own, only written together.',
+    },
+    'madd-lazim': {
+      title: 'A shadda or sukūn after it: 6 counts',
+      steps: [
+        'Spot a madd letter with the madda sign.',
+        'If a letter with shadda (or sukūn) follows in the same word, it is madd lāzim (necessary).',
+        'Always hold the full 6 counts, even when reading fast.',
+      ],
+      tip: 'The letters at the start of some sūras are held the same way, e.g. الٓمٓ: “lām” and “mīm” 6 counts each.',
+    },
   },
   games: {
     eyebrow: (unit) => `Unit ${unit} · Practise`,
@@ -266,7 +311,7 @@ export const en: Messages = {
       open: 'Take the test',
       passed: 'Passed',
       passedNext: (unit) => `Passed – on to unit ${unit}.`,
-      passedLast: 'Passed – every unit of the sheet done.',
+      passedLast: 'Passed – every unit done.',
       passedOpen: (unit) => `Passed – the test of unit ${unit} is still open.`,
       notYet: (need, total) =>
         `Not passed yet: it takes ${need} of ${total}. Review the cards and try again.`,
@@ -286,6 +331,22 @@ export const en: Messages = {
       no: 'no qalqala',
       isOne: 'is one of quṭbu jadd',
       isNot: 'is not one of quṭbu jadd',
+    },
+    maddLength: {
+      title: 'How long?',
+      intro: 'Ten real words, one madd marked: 2, 4–5 or 6 counts?',
+      question: 'How long do you hold the marked letter?',
+      lengths: {
+        'two-counts': '2 counts',
+        'four-counts': '4–5 counts',
+        'six-counts': '6 counts',
+      },
+      why: {
+        'madd-tabii': 'no hamza, shadda or sukūn after it',
+        'madd-muttasil': 'a hamza in the same word',
+        'madd-munfasil': 'a hamza at the start of the next word',
+        'madd-lazim': 'a shadda or sukūn in the same word',
+      },
     },
     shadda: 'nūn or mīm with shadda',
   },

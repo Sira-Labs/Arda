@@ -79,6 +79,8 @@ describe('madd (unit 5)', () => {
     });
     expect(text.slice(lazim!.start, lazim!.end)).toBe('آلِّ');
     expect(madd('ٱلْحَآقَّةُ')[0]).toEqual(['madd-lazim', 'آ']);
+    // Not when a silent letter starts the next word and the shadda follows it there.
+    expect(madd('مَآ ا۟لَّ')).toEqual([['madd-tabii', 'آ']]);
   });
 
   it('is not read on a madd letter before alif waṣla', () => {

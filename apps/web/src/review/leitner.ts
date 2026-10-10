@@ -11,7 +11,7 @@ const DAY = 24 * 60 * 60 * 1000;
 const INTERVAL_DAYS = [0, 1, 3, 7, 16] as const;
 const MASTERED_DAYS = 30;
 
-export type CardKind = 'which-rule' | 'sort-letter' | 'qalqala-letter';
+export type CardKind = 'which-rule' | 'sort-letter' | 'qalqala-letter' | 'madd-length';
 
 export interface ReviewCard {
   /** Content-derived and stable (`which-rule:<text>`, `sort:<letter>`), so sync can merge. */
