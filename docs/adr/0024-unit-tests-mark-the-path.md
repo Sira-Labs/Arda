@@ -69,3 +69,10 @@ asked for it the same day). It tests what the lab trains, the ear:
 - The same rules otherwise: eight right pass it, ref `unit-5`, mistakes become review cards
   (kind `madd-length`). "Every unit done" now needs unit 5's test too; unit 4's pass says "weiter
   mit Einheit 5".
+
+## Update 2026-10-11: unit 6 (tafkhīm and tarqīq)
+
+- Unit 6's test asks "Heavy or light?" of ten words: three rāʾ and two lām of Allāh of each
+  weight, five heavy and five light, so answering one weight every time reaches five. Mistakes
+  become review cards (kind `weight`); the game's rounds are logged as `heavy-or-light`.
+- "Every unit done" now needs unit 6's test too; unit 5's pass says "weiter mit Einheit 6".

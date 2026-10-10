@@ -96,25 +96,30 @@ rule in the example, in reading order) or, when it is absent, only `expectedRule
 | مِنْ تَابَ, مِنْ ثَمَرَةٍ, مَنْ جَاءَ, مِنْ دِيَارِهِمْ, نَفْسٍ ذَائِقَةٍ, مِنْكُمْ    | ikhfāʾ                          |
 | تَرْمِيهِمْ بِحِجَارَةٍ / لَكُمْ مَا / عَلَيْهِمْ سَلَامٌ                              | ikhfāʾ / idghām / iẓhār shafawī |
 
-## 4a. Examples beyond the sheet (units 3–5, draft)
+## 4a. Examples beyond the sheet (units 3–6, draft)
 
 The sheet gives one example per mīm sākina rule and none for the ghunna of a shadda, for
-qalqala or for madd. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet
+qalqala, madd or tafkhīm. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet
 (every sukūn written, and the madda where the muṣḥaf writes it); `tools/test/examples.test.ts`
 checks every word key against the Tanzil text in the packs, and the engine test checks the
 rule. Drafts until the sheikh has reviewed them.
 
-| Rule                | Examples (word key of the first word)                                                                               |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| Ghunna (shadda)     | إِنَّ (103:2:1), النَّاسِ (114:1:4), ثُمَّ (102:4:1), عَمَّ (78:1:1)                                                |
-| Ikhfāʾ shafawī      | وَمَا هُمْ بِمُؤْمِنِينَ (2:8:9)                                                                                    |
-| Idghām shafawī      | كَمْ مِنْ فِئَةٍ (2:249:49)                                                                                         |
-| Iẓhār shafawī       | أَلَمْ تَرَ (105:1:1)                                                                                               |
-| Qalqala (ق ط ب ج د) | قَدْ أَفْلَحَ (87:14:1), أَطْعَمَهُمْ (106:4:2), الْأَبْتَرُ (108:3:4), النَّجْدَيْنِ (90:10:2), خَلَقْنَا (90:4:2) |
-| Madd ṭabīʿī         | الرَّحْمَٰنِ (1:1:3), الدِّينِ (1:4:3), سَيَعْلَمُونَ (78:4:2), سِرَاجًا (78:13:2)                                  |
-| Madd muttaṣil       | جَآءَ (110:1:2), السَّمَآءُ (82:1:2), جَزَآءً (78:26:1), حَدَآئِقَ (78:32:1)                                        |
-| Madd munfaṣil       | إِنَّآ أَعْطَيْنَاكَ (108:1:1), بِمَآ أُنْزِلَ (2:4:3), لَآ أُقْسِمُ (90:1:1), فِيٓ أَيِّ (82:8:1)                  |
-| Madd lāzim          | الضَّآلِّينَ (1:7:9), الطَّآمَّةُ (79:34:3), الصَّآخَّةُ (80:33:3), دَآبَّةٍ (2:164:33)                             |
+| Rule                | Examples (word key of the first word)                                                                                                        |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ghunna (shadda)     | إِنَّ (103:2:1), النَّاسِ (114:1:4), ثُمَّ (102:4:1), عَمَّ (78:1:1)                                                                         |
+| Ikhfāʾ shafawī      | وَمَا هُمْ بِمُؤْمِنِينَ (2:8:9)                                                                                                             |
+| Idghām shafawī      | كَمْ مِنْ فِئَةٍ (2:249:49)                                                                                                                  |
+| Iẓhār shafawī       | أَلَمْ تَرَ (105:1:1)                                                                                                                        |
+| Qalqala (ق ط ب ج د) | قَدْ أَفْلَحَ (87:14:1), أَطْعَمَهُمْ (106:4:2), الْأَبْتَرُ (108:3:4), النَّجْدَيْنِ (90:10:2), خَلَقْنَا (90:4:2)                          |
+| Madd ṭabīʿī         | الرَّحْمَٰنِ (1:1:3), الدِّينِ (1:4:3), سَيَعْلَمُونَ (78:4:2), سِرَاجًا (78:13:2)                                                           |
+| Madd muttaṣil       | جَآءَ (110:1:2), السَّمَآءُ (82:1:2), جَزَآءً (78:26:1), حَدَآئِقَ (78:32:1)                                                                 |
+| Madd munfaṣil       | إِنَّآ أَعْطَيْنَاكَ (108:1:1), بِمَآ أُنْزِلَ (2:4:3), لَآ أُقْسِمُ (90:1:1), فِيٓ أَيِّ (82:8:1)                                           |
+| Madd lāzim          | الضَّآلِّينَ (1:7:9), الطَّآمَّةُ (79:34:3), الصَّآخَّةُ (80:33:3), دَآبَّةٍ (2:164:33)                                                      |
+| Tafkhīm (letters)   | خَلَقَ (96:1:5), الصَّمَدُ (112:2:2), وَالضُّحَى (93:1:1), الْغَٰشِيَةِ (88:1:4), وَالطَّارِقِ (86:1:2), قُلْ (112:1:1), الْعَظِيمِ (78:2:3) |
+| Lām of Allāh, heavy | نَصْرُ اللَّهِ (110:1:3), إِنَّ اللَّهَ (2:20:20), رَسُولُ اللَّهِ (91:13:3), اللَّهُ الصَّمَدُ (112:2:1)                                    |
+| Lām of Allāh, light | بِسْمِ اللَّهِ (1:1:1), الْحَمْدُ لِلَّهِ (1:2:1), دِينِ اللَّهِ (110:2:5), بِاللَّهِ (2:8:6)                                                |
+| Rāʾ, heavy          | رَبِّ (1:2:3), مَرْيَمَ (2:87:12), ارْجِعِي (89:28:1), مِرْصَادًا (78:21:4)                                                                  |
+| Rāʾ, light          | رِزْقًا (2:22:16), فِرْعَوْنَ (79:17:3), فَذَكِّرْ (87:9:1), وَالْفَجْرِ (89:1:1)                                                            |
 
 ## 4b. Madd (unit 5, engine)
 
@@ -161,6 +166,8 @@ category), so its legend leaves the family out; the cards of unit 6 do.
 - The vowel before the lām of Allāh is the one heard: letters without a vowel of their own
   (alif waṣla, the lām of "al", madd letters, silent letters) are passed over (قَالُوا۟ ٱللَّهُ is
   heavy, فِى ٱللَّهِ light), and a tanwīn before alif waṣla is read with kasra (أَحَدٌ ٱللَّهُ).
+- Alif waṣla counts also where the spelling writes it as a bare alif at the start of a word
+  (ارْجِعِي, the examples' spelling).
 - Only the doubled lām of the name is the lām of Allāh: ٱللَّهْوِ, لَعَلَّهُمْ and لَّهُمْ are not.
 - A rāʾ merged into the next one (وَٱذْكُر رَّبَّكَ) is read once.
 - Left to waqf (unit 7) and the cards: the rāʾ at a stop, the words where both are allowed

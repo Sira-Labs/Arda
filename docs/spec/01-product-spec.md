@@ -85,7 +85,7 @@ card, so the rule returns until it holds.
 | 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
 
 Every unit has stations and ends with a unit test (Suffa's structure). A passed test marks the
-unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–5 test
+unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–6 test
 their rules; unit 1, the letter lab, tests the ear with ten words from across the lab. Every
 text is
 a draft until the sheikh has reviewed it.
@@ -144,6 +144,12 @@ teaching recitation, the madd letter coloured and the hamza or shadda that decid
 the game "Wie lang?" (2, 4–5 or 6 counts?) and a test of three, four and three words of each
 length, so no single answer passes it. Ḥafṣ by way of ash-Shāṭibiyya; the ʿāriḍ at a stop and
 the opening letters of sūras are mentioned, not asked (spec 03 §4b).)_
+_(Built (owner, 2026-10-11): unit 6, tafkhīm and tarqīq. Three cards: the seven heavy letters
+(one word each), the lām of Allāh (heavy after fatḥa or ḍamma and at the start, light after
+kasra) and the rāʾ (by its vowel; sākina by the vowel before it, heavy after hamzat al-waṣl and
+before a heavy letter), every example heard and its reason under it; heavy in violet, light
+left clear. The game "Schwer oder leicht?" and a test of five heavy and five light words, so
+guessing one answer cannot pass. The rāʾ at a stop is left to unit 7 (spec 03 §4c).)_
 
 ### F2 — Rule cards _(Must)_
 
