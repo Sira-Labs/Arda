@@ -7,10 +7,12 @@ import { TajweedText } from '@/components/TajweedText';
 import {
   MADD_LENGTHS,
   NO_QALQALA,
+  WEIGHTS,
   cardName,
   type AnswerId,
   type CardUnit,
   type MaddLength,
+  type Weight,
 } from '@/content/units';
 import { optionsOf, type Question } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
@@ -58,6 +60,7 @@ export function RuleQuiz({
     | 'qalqala-letters'
     | 'unit-test'
     | 'madd-length'
+    | 'heavy-or-light'
   >;
   questions: readonly Question[];
   eyebrow: string;
@@ -190,7 +193,9 @@ function QuestionView({
   return (
     <section className="stack" style={{ gap: 16 }} aria-live="polite">
       <div className="paper stack" style={{ gap: 4, alignItems: 'center' }}>
-        {question.kind === 'which-rule' || question.kind === 'madd-length' ? (
+        {question.kind === 'which-rule' ||
+        question.kind === 'madd-length' ||
+        question.kind === 'weight' ? (
           <TajweedText
             large
             segments={
@@ -209,11 +214,13 @@ function QuestionView({
             ? m.games.qalqala.question
             : question.kind === 'madd-length'
               ? m.games.maddLength.question
-              : question.kind === 'sort-letter'
-                ? m.games.sort.question
-                : question.unit === 3
-                  ? m.games.unit3.question
-                  : m.games.whichRule.question}
+              : question.kind === 'weight'
+                ? m.games.weight.question
+                : question.kind === 'sort-letter'
+                  ? m.games.sort.question
+                  : question.unit === 3
+                    ? m.games.unit3.question
+                    : m.games.whichRule.question}
         </p>
       </div>
 
@@ -254,18 +261,22 @@ function QuestionView({
 
 const isLength = (id: AnswerId): id is MaddLength =>
   (MADD_LENGTHS as readonly string[]).includes(id);
+const isWeight = (id: AnswerId): id is Weight =>
+  (WEIGHTS as readonly string[]).includes(id);
 
-/** An answer's name: the rule card's, "no qalqala", or a madd's length. */
+/** An answer's name: the rule card's, "no qalqala", a madd's length, heavy or light. */
 function answerName(id: AnswerId, language: Language, m: Messages): string {
   if (id === NO_QALQALA) return m.games.qalqala.no;
   if (isLength(id)) return m.games.maddLength.lengths[id];
+  if (isWeight(id)) return m.games.weight.answers[id];
   return cardName(id, language);
 }
 
 /**
  * Why: the letter that follows, and for the four exceptions that it is inside one word; the
  * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters; the madd and what comes
- * after its letter for "How long?".
+ * after its letter for "How long?"; the vowel that makes a rāʾ or the lām of Allāh heavy or
+ * light.
  */
 function Reason({ question }: { question: Question }) {
   const { m, language } = useI18n();
@@ -275,6 +286,9 @@ function Reason({ question }: { question: Question }) {
         {cardName(question.card, language)}: {m.games.maddLength.why[question.card]}
       </>
     );
+  }
+  if (question.kind === 'weight') {
+    return <>{m.games.weight.why(question.card, question.reason)}</>;
   }
   if (question.kind === 'qalqala-letter') {
     return (

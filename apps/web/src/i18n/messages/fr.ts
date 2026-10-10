@@ -88,10 +88,15 @@ export const fr: Messages = {
         intro:
           'Combien de temps dure une voyelle longue : 2 temps par nature, 4–5 avant une hamza, 6 avant une shadda ou un sukūn.',
       },
+      6: {
+        title: 'Unité 6 · Tafkhīm et tarqīq',
+        intro:
+          'Lourd ou léger : sept lettres sont toujours lourdes ; le lām d’Allāh et le rāʾ suivent la voyelle.',
+      },
     },
     lab: 'Ouvrir le labo des lettres',
     letters: (count) => (count === 1 ? '1 lettre' : `${count} lettres`),
-    next: 'Les unités 6 (tafkhīm et tarqīq) et 7 (waqf) suivent après le pilote.',
+    next: 'L’unité 7 (waqf et ibtidāʾ) suit après le pilote.',
   },
   ruleCard: {
     play: (sura, aya) => `Écouter\u202f: sourate ${sura}, āya ${aya}`,
@@ -137,6 +142,16 @@ export const fr: Messages = {
     maddLetters:
       'Les lettres de madd : alif après fatḥa, wāw après ḍamma, yāʾ après kasra',
     thenHamza: 'Puis vient une hamza :',
+    weights: { heavy: 'lourd (tafkhīm)', light: 'léger (tarqīq)' },
+    lettersAlways: 'Ces sept lettres sont toujours lourdes',
+    when: {
+      'lam-heavy': 'Après fatḥa ou ḍamma – et quand la récitation commence par lui',
+      'lam-light': 'Après kasra, aussi après un tanwīn',
+      'ra-heavy':
+        'Avec fatḥa ou ḍamma ; sākin après fatḥa ou ḍamma, après la hamzat al-waṣl ou devant une lettre lourde',
+      'ra-light': 'Avec kasra ; sākin après kasra',
+    },
+    lightKey: 'sans couleur = léger (tarqīq)',
     previous: 'Retour',
     next: 'Suite',
     done: 'Vers l’unité',
@@ -267,6 +282,36 @@ export const fr: Messages = {
       ],
       tip: 'Les lettres au début de certaines sourates s’allongent de même, p. ex. الٓمٓ : « lām » et « mīm », 6 temps chacune.',
     },
+    tafkhim: {
+      title: 'Les sept lettres lourdes',
+      steps: [
+        'Repère l’une des sept lettres خ ص ض غ ط ق ظ – moyen mnémotechnique : خُصَّ ضَغْطٍ قِظْ.',
+        'Lève l’arrière de la langue vers le palais : le son devient plein et sombre.',
+        'Ces lettres sont toujours lourdes, avec chaque voyelle et avec sukūn.',
+        'Toutes les autres lettres sont légères – sauf le lām d’Allāh et le rāʾ, que les cartes suivantes enseignent.',
+      ],
+      tip: 'Un alif après une lettre lourde sonne lourd avec elle (قَالَ), après une lettre légère, léger (كَانَ).',
+    },
+    'lam-jalala': {
+      title: 'Le lām du nom Allāh',
+      steps: [
+        'Repère le lām doublé du nom Allāh (اللَّه), aussi avec un préfixe : وَاللَّهِ, بِاللَّهِ, لِلَّهِ.',
+        'Regarde la voyelle avant lui : après fatḥa ou ḍamma, le lām est lourd.',
+        'Après kasra, il est léger – aussi après un tanwīn, qui devient « -ni » devant la hamzat al-waṣl.',
+        'Si tu commences ta récitation par Allāh, il est lourd.',
+      ],
+      tip: 'Tout autre lām est léger, aussi dans لَعَلَّهُمْ ou اللَّهْوِ.',
+    },
+    ra: {
+      title: 'Le rāʾ : lourd ou léger',
+      steps: [
+        'Avec fatḥa ou ḍamma, le rāʾ est lourd ; avec kasra, il est léger.',
+        'Quand le rāʾ repose (sukūn), la voyelle avant lui décide : lourd après fatḥa ou ḍamma, léger après kasra.',
+        'Exceptions : après la hamzat al-waṣl (ارْجِعِي) et devant une lettre lourde dans le même mot (مِرْصَادًا), il reste lourd.',
+        'Ne roule pas le rāʾ : un seul battement de la pointe de la langue suffit.',
+      ],
+      tip: 'Comment le rāʾ sonne à l’arrêt, tu l’apprends à l’unité 7.',
+    },
   },
   games: {
     eyebrow: (unit) => `Unité ${unit} · S’entraîner`,
@@ -353,6 +398,30 @@ export const fr: Messages = {
         'madd-muttasil': 'une hamza dans le même mot',
         'madd-munfasil': 'une hamza au début du mot suivant',
         'madd-lazim': 'une shadda ou un sukūn dans le même mot',
+      },
+    },
+    weight: {
+      title: 'Lourd ou léger ?',
+      intro: 'Dix vrais mots : le rāʾ ou le lām d’Allāh marqué est-il lourd ou léger ?',
+      question: 'Prononces-tu la lettre marquée lourde ou légère ?',
+      answers: { heavy: 'lourd', light: 'léger' },
+      /** Why: the rāʾ or the lām of Allāh, sākin where a rāʾ rests, and the vowel. */
+      why: (card, reason) => {
+        const reasons = {
+          fatha: 'avec fatḥa',
+          damma: 'avec ḍamma',
+          kasra: 'avec kasra',
+          'after-fatha': 'après fatḥa',
+          'after-damma': 'après ḍamma',
+          'after-kasra': 'après kasra',
+          'after-wasla': 'après la hamzat al-waṣl',
+          'before-heavy': 'devant une lettre lourde',
+          start: 'au début de la récitation',
+        };
+        // A rāʾ without a vowel of its own rests (sākin).
+        const own = ['fatha', 'damma', 'kasra'].includes(reason);
+        const sakin = card === 'ra' && !own ? 'sākin ' : '';
+        return `${card === 'ra' ? 'Rāʾ' : 'Lām d’Allāh'} ${sakin}${reasons[reason]}`;
       },
     },
     shadda: 'nūn ou mīm avec shadda',

@@ -24,7 +24,7 @@ import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
-/** `/pfad/:unit/:rule`: a rule card of units 2–5, or "not found" for anything else. */
+/** `/pfad/:unit/:rule`: a rule card of units 2–6, or "not found" for anything else. */
 export function RuleCardPage() {
   const { unit, rule } = useParams();
   if (!isCardUnit(unit) || !isCardOf(Number(unit) as CardUnit, rule)) {
@@ -50,11 +50,14 @@ export function RuleCard({ id }: { id: CardId }) {
   const previous = cards[index - 1];
   const next = cards[index + 1];
   // Nūn and mīm sākina are decided by the next letter, a long madd by the hamza, shadda or
-  // sukūn after it; a shadda or a sukūn on the letter itself is not.
+  // sukūn after it, a rāʾ sākina sometimes by a heavy letter; a shadda or a sukūn on the letter
+  // itself is not.
   const decided = card.groups.some(
     (group) =>
       ['nun-sakina-tanwin', 'mim-sakina'].includes(RULES[group.rule].subject) ||
-      (RULES[group.rule].subject === 'madd' && group.rule !== 'madd-tabii')
+      (RULES[group.rule].subject === 'madd' && group.rule !== 'madd-tabii') ||
+      // A heavy letter after a rāʾ sākina keeps it heavy (مِرْصَادًا).
+      group.rule === 'ra-heavy'
   );
   const families = [
     ...new Set(card.groups.map((group) => RULES[group.rule].family)),
@@ -109,7 +112,13 @@ export function RuleCard({ id }: { id: CardId }) {
               )}
             </span>
           ))}
-          {hasClear && <span>{m.ruleCard.clear}</span>}
+          {hasClear && (
+            <span>
+              {card.groups.some((group) => RULES[group.rule].weight)
+                ? m.ruleCard.lightKey
+                : m.ruleCard.clear}
+            </span>
+          )}
           {decided && (
             <span>
               <span className="arabic tj-follower" lang="ar" aria-hidden="true">
@@ -191,6 +200,9 @@ function CardName({ id }: { id: CardId }) {
 
 const IZHAR = new Set(['izhar'] as const);
 
+/** The rules of unit 6 whose card says when they hold. */
+type WhenRule = 'lam-heavy' | 'lam-light' | 'ra-heavy' | 'ra-light';
+
 /** The madd letters (alif after fatḥa, wāw after ḍamma, yāʾ after kasra, as the label says). */
 const MADD_LETTERS = 'ا و ي';
 
@@ -253,21 +265,26 @@ function Group({
   const { m, language } = useI18n();
   const rule = RULES[group.rule];
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
-  // Qalqala and madd are no question of ghunna; a madd says how long it is held instead.
+  // Qalqala, madd and tafkhīm are no question of ghunna: a madd says how long it is held, a
+  // letter of unit 6 whether it is heavy or light.
   const quality = rule.counts
     ? m.ruleCard.counts(...rule.counts)
-    : rule.subject === 'qalqala'
-      ? null
-      : rule.ghunna
-        ? m.ruleCard.withGhunna
-        : m.ruleCard.withoutGhunna;
+    : rule.weight
+      ? m.ruleCard.weights[rule.weight]
+      : rule.subject === 'qalqala'
+        ? null
+        : rule.ghunna
+          ? m.ruleCard.withGhunna
+          : m.ruleCard.withoutGhunna;
   const decided = rule.subject === 'nun-sakina-tanwin' || rule.subject === 'mim-sakina';
   const lettersLabel =
     rule.subject === 'ghunna'
       ? m.ruleCard.lettersShadda
       : rule.subject === 'qalqala'
         ? m.ruleCard.lettersSukun
-        : m.ruleCard.letters;
+        : rule.subject === 'tafkhim'
+          ? m.ruleCard.lettersAlways
+          : m.ruleCard.letters;
   return (
     // Both idghām groups share the term, so the label names the ghunna (or the length) too.
     <section
@@ -300,6 +317,9 @@ function Group({
               </p>
             )}
           </>
+        ) : rule.subject === 'tafkhim' && rule.letters.length === 0 ? (
+          // The lām of Allāh and the rāʾ: when they are heavy or light.
+          <p className="muted">{m.ruleCard.when[group.rule as WhenRule]}</p>
         ) : rule.letters.length > 0 ? (
           <>
             <p className="muted">{lettersLabel}</p>
@@ -321,6 +341,15 @@ function Group({
             {decided && (
               <figcaption className="muted" dir="auto">
                 {m.ruleCard.cases[example.case]}
+              </figcaption>
+            )}
+            {/* A rāʾ or the lām of Allāh: what makes it heavy or light. */}
+            {example.reason && (
+              <figcaption className="muted" dir="auto">
+                {m.games.weight.why(
+                  group.rule.startsWith('ra') ? 'ra' : 'lam-jalala',
+                  example.reason
+                )}
               </figcaption>
             )}
           </figure>

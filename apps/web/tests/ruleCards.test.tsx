@@ -296,8 +296,53 @@ describe('unit 5 (madd)', () => {
   });
 });
 
+describe('unit 6 (tafkhīm and tarqīq)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('teaches the seven heavy letters, always heavy, one word for each, in violet', () => {
+    renderAt('/pfad/6/tafkhim');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Istiʿlāʾ – Die sieben schweren Buchstaben'
+    );
+    expect(screen.getByText('Einheit 6 · Verstehen')).toBeInTheDocument();
+    expect(
+      screen.getByText('Diese sieben Buchstaben sind immer schwer')
+    ).toBeInTheDocument();
+    expect(screen.getByText('schwer (Tafkhīm)')).toBeInTheDocument();
+    const examples = screen.getByLabelText('Beispiele');
+    expect(within(examples).getAllByRole('figure')).toHaveLength(7);
+    expect(within(examples).getAllByTitle('Tafkhīm').length).toBeGreaterThanOrEqual(7);
+    expect(screen.getByText(/violett = Tafkhīm/)).toBeInTheDocument();
+  });
+
+  it('teaches the lām of Allāh heavy and light, each example with its reason', () => {
+    renderAt('/pfad/6/lam-jalala');
+    expect(screen.getByText('Karte 2 von 3')).toBeInTheDocument();
+    expect(screen.getByText('schwer (Tafkhīm)')).toBeInTheDocument();
+    expect(screen.getByText('leicht (Tarqīq)')).toBeInTheDocument();
+    expect(screen.getByText('Nach Kasra, auch nach Tanwīn')).toBeInTheDocument();
+    expect(screen.getAllByText('Lām von Allāh nach Kasra')).toHaveLength(4);
+    expect(screen.getByText('Lām von Allāh am Anfang der Lesung')).toBeInTheDocument();
+    // Light is left clear, and the legend says so.
+    expect(screen.getByText('ohne Farbe = leicht (Tarqīq)')).toBeInTheDocument();
+  });
+
+  it('ends the unit with the rāʾ, the heavy letter after a rāʾ sākina underlined', () => {
+    renderAt('/pfad/6/ra');
+    expect(
+      screen.getByText('Rāʾ sākin vor einem schweren Buchstaben')
+    ).toBeInTheDocument();
+    expect(screen.getByText('Rāʾ sākin nach dem Verbindungs-Hamza')).toBeInTheDocument();
+    expect(screen.getByText(/der Buchstabe, der entscheidet/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
+      'href',
+      '/pfad'
+    );
+  });
+});
+
 describe('the path', () => {
-  it('lists units 1–5: the lab, then the cards of each unit in the order of the sheet and its games', () => {
+  it('lists units 1–6: the lab, then the cards of each unit in the order of the sheet and its games', () => {
     localStorage.setItem('arda.language', 'en');
     renderAt('/pfad');
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
@@ -326,6 +371,11 @@ describe('the path', () => {
       '/pfad/5/madd-lazim',
       '/pfad/5/spiel/wie-lang',
       '/pfad/5/test',
+      '/pfad/6/tafkhim',
+      '/pfad/6/lam-jalala',
+      '/pfad/6/ra',
+      '/pfad/6/spiel/schwer-oder-leicht',
+      '/pfad/6/test',
     ]);
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
@@ -335,6 +385,7 @@ describe('the path', () => {
       'Unit 3 · Ghunna and mīm sākina',
       'Unit 4 · Qalqala',
       'Unit 5 · Madd',
+      'Unit 6 · Tafkhīm and tarqīq',
       'Review',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();

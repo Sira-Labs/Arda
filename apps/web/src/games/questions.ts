@@ -6,10 +6,12 @@ import {
   detect,
   isMaddRule,
   isQalqalaLetter,
+  RULES,
   nunSakinaRule,
   type Letter,
   type Occurrence,
   type RuleId,
+  type WeightReason,
 } from '@arda/tajweed';
 import {
   LENGTH_OF_CARD,
@@ -22,6 +24,9 @@ import {
   type MaddCard,
   type MaddLength,
   type Unit2Card,
+  type Weight,
+  type WeightCard,
+  WEIGHTS,
 } from '@/content/units';
 import type { NewCard } from '@/review/leitner';
 
@@ -47,7 +52,14 @@ export function cardOfRule(rule: RuleId): CardId | undefined {
     case 'madd-muttasil':
     case 'madd-munfasil':
     case 'madd-lazim':
+    case 'tafkhim':
       return rule;
+    case 'lam-heavy':
+    case 'lam-light':
+      return 'lam-jalala';
+    case 'ra-heavy':
+    case 'ra-light':
+      return 'ra';
     default:
       return undefined;
   }
@@ -88,7 +100,19 @@ export interface MaddQuestion extends NewCard {
   focus: Occurrence;
 }
 
-export type Question = WordQuestion | LetterQuestion | QalqalaQuestion | MaddQuestion;
+/** One question of "Heavy or light?" (unit 6): a real word, its rāʾ or lām of Allāh in focus. */
+export interface WeightQuestion extends NewCard {
+  kind: 'weight';
+  answer: Weight;
+  /** The card that teaches the letter: rāʾ or the lām of Allāh. */
+  card: WeightCard;
+  /** Why it is heavy or light. */
+  reason: WeightReason;
+  focus: Occurrence;
+}
+
+export type Question =
+  WordQuestion | LetterQuestion | QalqalaQuestion | MaddQuestion | WeightQuestion;
 
 /** The answers a question offers: its unit's rule cards, qalqala or not, or three lengths. */
 export function optionsOf(question: Question): readonly AnswerId[] {
@@ -101,6 +125,8 @@ export function optionsOf(question: Question): readonly AnswerId[] {
       return ['qalqala', NO_QALQALA];
     case 'madd-length':
       return MADD_LENGTHS;
+    case 'weight':
+      return WEIGHTS;
   }
 }
 
@@ -217,6 +243,34 @@ export function maddRound(random: Random, count = 10): MaddQuestion[] {
   return shuffle(MADD_POOL, random).slice(0, count);
 }
 
+/** A "Heavy or light?" question for an example of a rāʾ or the lām of Allāh. */
+export function weightQuestion(text: string, rule: RuleId): WeightQuestion | undefined {
+  const card = cardOfRule(rule);
+  const weight = RULES[rule].weight;
+  if ((card !== 'ra' && card !== 'lam-jalala') || !weight) return undefined;
+  const focus = detect(text, { tafkhim: true }).find((o) => o.rule === rule);
+  if (!focus?.reason) return undefined;
+  return {
+    id: `weight:${text}`,
+    kind: 'weight',
+    prompt: text,
+    answer: weight,
+    card,
+    reason: focus.reason,
+    focus,
+  };
+}
+
+/** Every word of unit 6 the game asks: four of each weight, for rāʾ and the lām of Allāh. */
+export const WEIGHT_POOL: readonly WeightQuestion[] = UNIT_EXAMPLES.map((example) =>
+  weightQuestion(example.text, example.expectedRule)
+).filter((question): question is WeightQuestion => question !== undefined);
+
+/** Ten (or `count`) different words of unit 6 in random order. */
+export function weightRound(random: Random, count = 10): WeightQuestion[] {
+  return shuffle(WEIGHT_POOL, random).slice(0, count);
+}
+
 /** Questions in a unit test (ADR-0024); 8 right of them pass it. */
 export const UNIT_TEST_SIZE = 10;
 
@@ -224,7 +278,8 @@ export const UNIT_TEST_SIZE = 10;
  * A unit's test: ten questions from what the unit taught, in random order. Unit 2 mixes six
  * words with four letters to sort; unit 3 asks ten words; unit 4 the five qalqala letters among
  * five others, so guessing "qalqala" every time cannot pass it; unit 5 three words of two counts,
- * four of four to five and three of six, so no single length passes it either.
+ * four of four to five and three of six, so no single length passes it either; unit 6 five
+ * heavy and five light (three rāʾ and two lām of Allāh each).
  */
 export function unitTest(unit: CardUnit, random: Random): Question[] {
   switch (unit) {
@@ -262,6 +317,22 @@ export function unitTest(unit: CardUnit, random: Random): Question[] {
         random
       );
     }
+    case 6: {
+      const of = (card: WeightCard, weight: Weight, count: number) =>
+        shuffle(
+          WEIGHT_POOL.filter((q) => q.card === card && q.answer === weight),
+          random
+        ).slice(0, count);
+      return shuffle(
+        [
+          ...of('ra', 'heavy', 3),
+          ...of('ra', 'light', 3),
+          ...of('lam-jalala', 'heavy', 2),
+          ...of('lam-jalala', 'light', 2),
+        ],
+        random
+      );
+    }
   }
 }
 
@@ -278,6 +349,9 @@ export function questionOf(card: NewCard): Question | undefined {
   }
   if (card.kind === 'madd-length') {
     return MADD_POOL.find((question) => question.id === card.id);
+  }
+  if (card.kind === 'weight') {
+    return WEIGHT_POOL.find((question) => question.id === card.id);
   }
   return [...WORD_POOL, ...UNIT3_POOL].find((question) => question.id === card.id);
 }

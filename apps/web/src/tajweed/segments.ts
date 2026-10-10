@@ -3,6 +3,7 @@ import {
   detect,
   graphemes,
   isMaddRule,
+  isWeightRule,
   type Occurrence,
   type RuleId,
 } from '@arda/tajweed';
@@ -18,13 +19,15 @@ interface Mark {
  * Splits vocalised text into segments for `TajweedText`, using the engine's detection: each
  * carrier gets its rule (and colour family), each deciding letter is marked as the follower.
  * `only` limits the marks to some rules, so a card shows just the rule it teaches; the madd of
- * unit 5 is marked only where `only` asks for it, so the cards of units 2–4 stay as they were.
+ * unit 5 and the heavy and light letters of unit 6 are marked only where `only` asks for them,
+ * so the cards of the earlier units stay as they were.
  */
 export function segmentsOf(text: string, only?: ReadonlySet<RuleId>): Segment[] {
   const followerStart = new Map(graphemes(text).map((g) => [g.end, g.start]));
   const marks: Mark[] = [];
   const madd = only !== undefined && [...only].some(isMaddRule);
-  for (const o of detect(text, { madd })) {
+  const tafkhim = only !== undefined && [...only].some(isWeightRule);
+  for (const o of detect(text, { madd, tafkhim })) {
     if (only && !only.has(o.rule)) continue;
     const family = RULES[o.rule].family ?? undefined;
     marks.push({
