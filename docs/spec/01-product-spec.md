@@ -247,7 +247,9 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
 - **T5 Rule by rule.** Who still struggles with which rule. _(Built, ADR-0026: "Regel für
   Regel" on the ḥalaqa page, per rule the students with game mistakes not yet mastered and his
   own quick remarks of the last 90 days, the rule most students struggle with first; only
-  counts; the student is told on the ḥalaqa page (2026-10-10).)_
+  counts; the student is told on the ḥalaqa page (2026-10-10). A marked word can be named for
+  its rule, chosen for him when the word carries one, and counts here too; the student sees the
+  rule under the answer.)_
 - **T6 In the student's language** (ADR-0020). The sheikh writes or speaks in his language;
   each student reads in theirs. Quick remarks are exact translations from the catalogs;
   written remarks are machine-translated with tajwīd terms and āyāt unchanged, labelled

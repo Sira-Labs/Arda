@@ -119,12 +119,12 @@ practise a rule). Word keys replace the sūra and āya columns when the content 
 Built (migrations `0006_recordings`, `0011_recording_marks` and `0012_recording_voice_notes`,
 spec F7 and T3, ADR-0012):
 
-| Table                   | Purpose                                                                                                                                                                                                                     |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `recordings`            | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when |
-| `recording_audio`       | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                             |
-| `recording_marks`       | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words); written and replaced with the answer                                                                               |
-| `recording_voice_notes` | the teacher's spoken answer, one per recording: who recorded it, format, size, length (≤ 2 min, 2.5 MB) and the sound; dropped when another teacher answers anew                                                            |
+| Table                   | Purpose                                                                                                                                                                                                                       |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recordings`            | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when   |
+| `recording_audio`       | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                               |
+| `recording_marks`       | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words), each with the rule it was about if he said (migration `0015`, ADR-0026 update); written and replaced with the answer |
+| `recording_voice_notes` | the teacher's spoken answer, one per recording: who recorded it, format, size, length (≤ 2 min, 2.5 MB) and the sound; dropped when another teacher answers anew                                                              |
 
 All of them cascade with the student's membership, so leaving, being removed or deleting the
 account deletes the student's recordings; a voice note goes with its teacher's account too. The
@@ -224,17 +224,17 @@ Built for F7 and T3 (mounted at `/api/v1`, every route checked against every kin
 in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari needs, and
 `Cache-Control: private, no-store`):
 
-| Method and path                                           | Action                    | Purpose                                                                                                         |
-| --------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| `POST /halaqat/:id/recordings?clientId=…`                 | `halaqa:study` (student)  | send a take: the body is the sound (WebM, Ogg, MP4), the query what it recites; ≤ 6 MB, 10 min, 500 per student |
-| `GET /halaqat/:id/recordings?before=`                     | `halaqa:review` (teacher) | the queue, 50 at a time: waiting first, oldest first, then answered                                             |
-| `GET /halaqat/:id/recordings/:rid/audio`                  | `halaqa:review`           | hear it                                                                                                         |
-| `PUT /halaqat/:id/recordings/:rid/review`                 | `halaqa:review`           | answer `{ verdict, remark?, note?, marks? }`; again replaces it; ≤ 100 marks, each a word of the recited āyāt   |
-| `PUT /halaqat/:id/recordings/:rid/voice-note?durationMs=` | `halaqa:review`           | answer aloud: the body is the sound; only with one's own answer (else 409); ≤ 2.5 MB, 2 min; again replaces it  |
-| `GET`, `DELETE /halaqat/:id/recordings/:rid/voice-note`   | `halaqa:review`           | hear the voice note, or take it back                                                                            |
-| `GET /recordings?before=`                                 | `recitation:own`          | my recordings and their answers, newest first                                                                   |
-| `GET /recordings/:rid/audio`, `DELETE /recordings/:rid`   | `recitation:own`          | hear or delete my own                                                                                           |
-| `GET /recordings/:rid/voice-note`                         | `recitation:own`          | hear the teacher's voice note on my own                                                                         |
+| Method and path                                           | Action                    | Purpose                                                                                                                                |
+| --------------------------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `POST /halaqat/:id/recordings?clientId=…`                 | `halaqa:study` (student)  | send a take: the body is the sound (WebM, Ogg, MP4), the query what it recites; ≤ 6 MB, 10 min, 500 per student                        |
+| `GET /halaqat/:id/recordings?before=`                     | `halaqa:review` (teacher) | the queue, 50 at a time: waiting first, oldest first, then answered                                                                    |
+| `GET /halaqat/:id/recordings/:rid/audio`                  | `halaqa:review`           | hear it                                                                                                                                |
+| `PUT /halaqat/:id/recordings/:rid/review`                 | `halaqa:review`           | answer `{ verdict, remark?, note?, marks? }`; again replaces it; ≤ 100 marks, each a word of the recited āyāt with an optional `topic` |
+| `PUT /halaqat/:id/recordings/:rid/voice-note?durationMs=` | `halaqa:review`           | answer aloud: the body is the sound; only with one's own answer (else 409); ≤ 2.5 MB, 2 min; again replaces it                         |
+| `GET`, `DELETE /halaqat/:id/recordings/:rid/voice-note`   | `halaqa:review`           | hear the voice note, or take it back                                                                                                   |
+| `GET /recordings?before=`                                 | `recitation:own`          | my recordings and their answers, newest first                                                                                          |
+| `GET /recordings/:rid/audio`, `DELETE /recordings/:rid`   | `recitation:own`          | hear or delete my own                                                                                                                  |
+| `GET /recordings/:rid/voice-note`                         | `recitation:own`          | hear the teacher's voice note on my own                                                                                                |
 
 Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.routes.test.ts`):
 
@@ -248,9 +248,9 @@ Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.rou
 
 Built for T5 (ADR-0026, every kind of caller in `rules.routes.test.ts`):
 
-| Method and path          | Action         | Purpose                                                                                                                                                                               |
-| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /halaqat/:id/rules` | `halaqa:rules` | T5 (ADR-0026): per active student and topic the practice cards still in box 1–2, their lapses, and the teachers' `again` remarks of the last 90 days; only topics with something open |
+| Method and path          | Action         | Purpose                                                                                                                                                                                                            |
+| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /halaqat/:id/rules` | `halaqa:rules` | T5 (ADR-0026): per active student and topic the practice cards still in box 1–2, their lapses, the teachers' `again` remarks and the words they marked for it in the last 90 days; only topics with something open |
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
