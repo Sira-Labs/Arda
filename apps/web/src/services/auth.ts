@@ -5,6 +5,7 @@
  */
 import type { PageRun } from '@arda/quran';
 import type { RuleId } from '@arda/tajweed';
+import type { CardId } from '@/content/units';
 import type { Language } from '@/i18n/languages';
 import type { RemarkId } from '@/i18n/messages';
 import { apiRequest, type ApiResult, type Fetch } from './api/request';
@@ -297,6 +298,22 @@ export interface NewArdaEntry {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
+}
+
+/** What a struggle is about: a rule card of the path, madd, or the letters' articulation. */
+export type RuleTopic = CardId | 'madd' | 'makhraj';
+
+/** One student and a topic they still struggle with (spec T5, ADR-0026). */
+export interface Struggle {
+  studentId: string;
+  studentName: string | null;
+  topic: RuleTopic;
+  /** Practice cards on it still in box 1 or 2. */
+  openCards: number;
+  lapses: number;
+  /** The teachers' remarks on it in the window, and the day of the last. */
+  remarks: number;
+  lastRemarkOn: string | null;
 }
 
 /** The review deck as the account stores it (ADR-0022): cards as a list. */
@@ -693,6 +710,13 @@ export class AuthClient {
       `${HALAQAT}/${encodeURIComponent(halaqaId)}/arda-log/${encodeURIComponent(id)}`,
       { method: 'DELETE' }
     );
+  }
+
+  /** Who in the ḥalaqa still struggles with which rule; remarks counted from `since`. */
+  ruleStruggles(
+    halaqaId: string
+  ): Promise<ApiResult<{ since: string; struggles: Struggle[] }>> {
+    return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(halaqaId)}/rules`);
   }
 
   /** The signed-in student's own ʿarḍ log per ḥalaqa and sūra. */

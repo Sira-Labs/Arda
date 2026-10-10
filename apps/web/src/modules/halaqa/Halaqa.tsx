@@ -8,10 +8,12 @@ import { HalaqaAssignments } from '@/modules/assignments/HalaqaAssignments';
 import { ArdaLog } from '@/modules/arda/ArdaLog';
 import { MyArda } from '@/modules/arda/MyArda';
 import { RecordingQueue } from '@/modules/recite/RecordingQueue';
+import { RuleByRule } from '@/modules/rules/RuleByRule';
 import { InviteBox } from './InviteBox';
 
 /**
- * `/halaqa/:id` (screen 7, spec T1). The teacher listens, keeps the ʿarḍ log (T4), assigns,
+ * `/halaqa/:id` (screen 7, spec T1). The teacher listens, keeps the ʿarḍ log (T4), sees who
+ * struggles with which rule (T5), assigns,
  * invites, approves and removes; a student sees whose ḥalaqa it is, their work and their ʿarḍ,
  * and can leave. What each sees is decided by the API.
  */
@@ -97,6 +99,7 @@ export function Halaqa() {
               (x) => x.role === 'student' && x.status === 'active'
             )}
           />
+          <RuleByRule halaqaId={halaqa.id} />
           <HalaqaAssignments
             halaqaId={halaqa.id}
             students={view.members.filter(
@@ -162,6 +165,8 @@ export function Halaqa() {
         <>
           <HalaqaAssignments halaqaId={halaqa.id} />
           <MyArda halaqaId={halaqa.id} />
+          {/* What the sheikh sees of the student's practice (T5, ADR-0026), said where they meet him. */}
+          <p className="muted">{m.struggles.studentNote}</p>
           <button
             className="btn"
             type="button"

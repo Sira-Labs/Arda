@@ -623,6 +623,23 @@ export const fr: Messages = {
     more: (count) => (count === 1 ? 'et 1 autre' : `et ${count} autres`),
     open: 'Ouvrir le plan d’étude',
   },
+  struggles: {
+    title: 'Règle par règle',
+    intro:
+      'Qui a encore du mal avec quelle règle\u202f: les erreurs des jeux pas encore acquises et tes remarques rapides des 90 derniers jours.',
+    none: 'Personne n’a de difficulté avec une règle en ce moment, ou rien n’a encore été pratiqué.',
+    open: (count) =>
+      count === 1 ? '1 erreur de jeu en cours' : `${count} erreurs de jeu en cours`,
+    remarks: (count, day) => `noté ${count}× par toi, dernière fois le ${day}`,
+    topics: {
+      madd: 'Madd (allongement)',
+      makhraj: 'Prononciation des lettres (makhārij)',
+    },
+    card: 'Fiche de la règle',
+    unnamed: 'sans nom',
+    studentNote:
+      'Ton cheikh voit pour quelles règles de tajwīd tu fais encore des erreurs dans les jeux\u202f: seulement combien, pas tes réponses.',
+  },
   arda: {
     title: 'Cahier du ʿarḍ',
     intro:

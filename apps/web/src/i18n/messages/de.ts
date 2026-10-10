@@ -654,6 +654,21 @@ export const de = {
     more: (count: number) => (count === 1 ? 'und 1 weitere' : `und ${count} weitere`),
     open: 'Lernplan öffnen',
   },
+  struggles: {
+    title: 'Regel für Regel',
+    intro:
+      'Wer mit welcher Regel noch kämpft: Fehler aus den Spielen, die noch nicht sitzen, und deine Kurz-Bemerkungen der letzten 90 Tage.',
+    none: 'Gerade kämpft niemand mit einer Regel – oder es wurde noch nicht geübt.',
+    open: (count: number) =>
+      count === 1 ? '1 Fehler im Spiel offen' : `${count} Fehler im Spiel offen`,
+    remarks: (count: number, day: string) =>
+      `${count}× von dir angemerkt, zuletzt ${day}`,
+    topics: { madd: 'Madd (Dehnung)', makhraj: 'Aussprache der Buchstaben (Makhārij)' },
+    card: 'Regelkarte',
+    unnamed: 'ohne Namen',
+    studentNote:
+      'Dein Sheikh sieht, bei welchen Tajwīd-Regeln du in den Spielen noch Fehler machst – nur wie viele, nicht deine Antworten.',
+  },
   arda: {
     title: 'ʿArḍ-Heft',
     intro:
