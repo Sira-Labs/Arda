@@ -35,7 +35,8 @@ const struggle = (over: Partial<Struggle>): Struggle => ({
   openCards: 0,
   lapses: 0,
   remarks: 0,
-  lastRemarkOn: null,
+  marks: 0,
+  lastNotedOn: null,
   ...over,
 });
 

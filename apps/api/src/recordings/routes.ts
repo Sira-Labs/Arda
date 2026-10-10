@@ -26,6 +26,7 @@ import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
 import type { Actor, HalaqaScope } from '../authz/policies.js';
 import type { HalaqaRepository } from '../halaqat/repository.js';
+import { TOPICS } from '../rules/repository.js';
 import {
   MAX_MARKS,
   RECORDING_MIMES,
@@ -89,10 +90,17 @@ const ReviewBody = z
       .nullable()
       .default(null)
       .transform((note) => (note ? note : null)),
-    // Words of the recited āyāt that need work; each once, kept in reading order.
+    // Words of the recited āyāt that need work, each with the rule it was about if he said;
+    // each once, kept in reading order.
     marks: z
       .array(
-        z.object({ aya: z.number().int().min(1), word: z.number().int().min(1) }).strict()
+        z
+          .object({
+            aya: z.number().int().min(1),
+            word: z.number().int().min(1),
+            topic: z.enum(TOPICS).nullable().default(null),
+          })
+          .strict()
       )
       .max(MAX_MARKS)
       .default([])
