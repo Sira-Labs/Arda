@@ -55,3 +55,17 @@ face to face. A log that only knew recordings would miss most of what he hears.
 The recording repository writes into `arda_log` when an answer is given, so the two stay in
 step without a job. The log can later be grouped by juzʾ or page, and the per-rule view (T5)
 can read verdicts and marks from it.
+
+## Update 2026-10-10: the notebook keeps those who left
+
+The owner chose the alternative left open above: a student's entries stay when they leave the
+ḥalaqa or are removed, as in a paper notebook.
+
+- **Foreign key** (migration `0016_arda_log_outlives_membership`): `student_id` now points at
+  the account (`on delete cascade`) instead of the membership. Deleting the account or the
+  ḥalaqa still deletes the entries; the export is unchanged.
+- **Teachers** see former students' entries under "Frühere Schüler·innen" on the ḥalaqa page,
+  with their history, and can remove entries; nothing new can be written for someone who left.
+- **Rule by rule** (ADR-0026) counts only active students, so a former student's remarks and
+  marks no longer show there.
+- A student who joins again finds their entries where they were.

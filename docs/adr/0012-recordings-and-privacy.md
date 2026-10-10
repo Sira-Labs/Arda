@@ -70,3 +70,10 @@ whose voice it is. The export lists its format, size and length, not the sound.
 The verdicts, remarks, notes and marks of answers now also live in the ʿarḍ log (ADR-0025), one
 entry per recording, which stays when the student deletes the take, as this ADR promised. A
 student leaving the ḥalaqa or deleting the account deletes their entries with their recordings.
+
+## Update 2026-10-10: what leaving keeps, and consent of guardians
+
+- A student leaving the ḥalaqa still deletes their recordings, marks and voice notes; the ʿarḍ
+  log entries written from them stay, as text (ADR-0025 update 2026-10-10).
+- Recording a guardian's consent for students under 16 is deferred by the owner (2026-10-10);
+  the per-device consent before the first take stays.

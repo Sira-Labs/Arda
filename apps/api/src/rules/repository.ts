@@ -101,6 +101,10 @@ export class PgRuleRepository implements RuleRepository {
                 count(*)::int as n, to_char(max(l.recited_on), 'YYYY-MM-DD') as last_on
            from arda_log l
            join users u on u.id = l.student_id
+           -- The log outlives the membership (ADR-0025 update); the view is of active students.
+           join halaqa_members hm
+             on hm.halaqa_id = l.halaqa_id and hm.user_id = l.student_id
+            and hm.halaqa_role = 'student' and hm.status = 'active'
           where l.halaqa_id = $1 and l.verdict = 'again' and l.remark is not null
             and l.recited_on >= $2::date
           group by l.student_id, u.name, l.remark`,
@@ -118,6 +122,10 @@ export class PgRuleRepository implements RuleRepository {
                 to_char(max(l.recited_on), 'YYYY-MM-DD') as last_on
            from arda_log l
            join users u on u.id = l.student_id
+           -- The log outlives the membership (ADR-0025 update); the view is of active students.
+           join halaqa_members hm
+             on hm.halaqa_id = l.halaqa_id and hm.user_id = l.student_id
+            and hm.halaqa_role = 'student' and hm.status = 'active'
            cross join lateral jsonb_array_elements(l.marks) as m(mark)
           where l.halaqa_id = $1 and l.recited_on >= $2::date
             and m.mark->>'topic' = any($3::text[])

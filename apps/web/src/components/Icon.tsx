@@ -12,6 +12,8 @@ const PATHS = {
   streak:
     'M12 21c-4 0-7-2.8-7-6.6C5 10 9 8 9 3c3 1.5 5.5 4.5 5.5 7.5c1-.6 1.6-1.6 1.8-2.8C18 9.5 19 12 19 14.4C19 18.2 16 21 12 21z',
   shield: 'M12 3l7 3v5c0 4.5-3 8.3-7 10c-4-1.7-7-5.5-7-10V6z',
+  // A list ticked off: Mein Lernplan.
+  plan: 'M10 6h10M10 12h10M10 18h10M4 6l1.5 1.5L8 5M4 12l1.5 1.5L8 11M4 18l1.5 1.5L8 17',
 } as const;
 
 export type IconName = keyof typeof PATHS;

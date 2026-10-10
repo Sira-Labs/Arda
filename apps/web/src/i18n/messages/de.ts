@@ -37,6 +37,7 @@ export const de = {
     path: 'Pfad',
     mushaf: 'Muṣḥaf',
     lab: 'Labor',
+    plan: 'Lernplan',
     sheikh: 'Sheikh',
   },
   brand: {
@@ -690,6 +691,7 @@ export const de = {
     submit: 'Eintragen',
     written: 'Eingetragen.',
     remove: 'Entfernen',
+    former: 'Frühere Schüler·innen',
     mine: 'Dein ʿArḍ',
     mineIntro: 'Welche Sūren du deinem Sheikh vorgetragen hast und wie er sie fand.',
   },

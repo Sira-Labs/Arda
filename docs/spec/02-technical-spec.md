@@ -151,8 +151,9 @@ app and the API); it cascades with the account and is in the export (`activity`)
 Migration `0013_arda_log` adds `arda_log` (T4, ADR-0025): per ḥalaqa and student the sūra and
 āyāt recited, the day, verdict, quick remark, note, marked words, whether it came from a
 recording (one entry per recording, written with the answer and kept when the take is deleted)
-or face to face, and who wrote it. It cascades with the student's membership and the ḥalaqa;
-the writer's name goes with their account. The export lists the entries about and by a person.
+or face to face, and who wrote it. It outlives the student's membership (migration
+`0016`, ADR-0025 update 2026-10-10) and goes with the student's account and the ḥalaqa; the
+writer's name goes with their account. The export lists the entries about and by a person.
 
 Migration `0010_reading_places` adds `reading_places`: per person and muṣḥaf script the page
 last read and when ("Weiterlesen", ADR-0022 update 2026-10-07); the later one wins, it cascades

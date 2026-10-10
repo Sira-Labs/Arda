@@ -50,6 +50,7 @@ export const ar: Messages = {
     path: 'المسار',
     mushaf: 'المصحف',
     lab: 'المختبر',
+    plan: 'خطتي',
     sheikh: 'الشيخ',
   },
   brand: {
@@ -695,6 +696,7 @@ export const ar: Messages = {
     submit: 'أضف',
     written: 'أُضيفت.',
     remove: 'احذف',
+    former: 'طلاب سابقون',
     mine: 'عَرْضك',
     mineIntro: 'السور التي قرأتها على شيخك وما رآه فيها.',
   },

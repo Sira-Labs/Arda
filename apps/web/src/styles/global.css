@@ -107,7 +107,7 @@ a {
   bottom: calc(12px + env(safe-area-inset-bottom));
   height: var(--nav-height);
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(6, 1fr);
   background: var(--ink);
   color: var(--on-ink);
   border-radius: var(--radius-lg);

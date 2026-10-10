@@ -1,8 +1,8 @@
 /**
  * An in-memory ArdaLogRepository for route tests: the same contract as the Postgres one
- * (checked against it in auth.pg.integration.test.ts). A student's entries disappear with their
- * membership, as the foreign key makes them do in Postgres; the recording repository writes
- * answers here as the Postgres one does in its transaction.
+ * (checked against it in auth.pg.integration.test.ts). A student's entries stay when they
+ * leave the ḥalaqa (ADR-0025 update); the recording repository writes answers here as the
+ * Postgres one does in its transaction.
  */
 import { randomUUID } from 'node:crypto';
 import type { MemoryHalaqaRepository } from './memoryHalaqaRepository.js';
@@ -37,11 +37,9 @@ export class MemoryArdaLogRepository implements ArdaLogRepository {
     private readonly names: Record<string, string> = {}
   ) {}
 
-  /** Rows whose student still belongs to the ḥalaqa. */
+  /** Every row: the log outlives the membership (accounts are not deleted here). */
   private live(): Row[] {
-    return this.rows.filter((r) =>
-      this.halaqat.memberRows.get(r.halaqaId)?.has(r.studentId)
-    );
+    return this.rows;
   }
 
   private view(row: Row): ArdaEntry {

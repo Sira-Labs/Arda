@@ -182,6 +182,40 @@ describe('the ʿarḍ log for the sheikh (T4)', () => {
     ).toHaveLength(2);
   });
 
+  it('keeps the entries of those who left, under former students', async () => {
+    renderWith(
+      <ArdaLog halaqaId={HALAQA} students={[member(AMINA, 'Amina')]} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/arda-log/summary`]: Response.json({
+          summary: [
+            {
+              studentId: YUSUF,
+              studentName: 'Yusuf',
+              sura: 114,
+              times: 2,
+              lastOn: '2026-09-20',
+              lastVerdict: 'good',
+            },
+          ],
+        }),
+      },
+      TEACHER
+    );
+    const heading = await screen.findByRole('heading', { name: 'Frühere Schüler·innen' });
+    const former = heading.nextElementSibling as HTMLElement;
+    expect(within(former).getByText('Yusuf')).toBeInTheDocument();
+    expect(within(former).getByText('Sūra 114')).toBeInTheDocument();
+    // Nothing can be written for him any more: the form lists only active students.
+    const form = screen
+      .getByRole('heading', { name: 'Vortrag aus dem Unterricht eintragen' })
+      .closest('form')!;
+    expect(
+      within(within(form).getByRole('combobox', { name: 'Schüler·in' })).queryByText(
+        'Yusuf'
+      )
+    ).toBeNull();
+  });
+
   it('says why writing failed', async () => {
     renderWith(
       <ArdaLog halaqaId={HALAQA} students={STUDENTS} />,

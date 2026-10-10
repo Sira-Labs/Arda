@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { SURAS, isAyaRange, sura } from '@arda/quran';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import type { RemarkId } from '@/i18n/messages';
@@ -53,6 +53,16 @@ export function ArdaLog({
     void load();
   };
 
+  // Students with entries who are no longer active members.
+  const active = new Set(students.map((s) => s.userId));
+  const former = [
+    ...new Map(
+      (summary ?? [])
+        .filter((s) => !active.has(s.studentId))
+        .map((s) => [s.studentId, s] as const)
+    ).values(),
+  ];
+
   return (
     <section className="card stack" aria-labelledby="arda-title">
       <h2 className="h-small" id="arda-title">
@@ -65,50 +75,103 @@ export function ArdaLog({
           className="stack"
           style={{ margin: 0, padding: 0, listStyle: 'none', gap: 12 }}
         >
-          {students.map((student) => {
-            const rows = summary.filter((s) => s.studentId === student.userId);
-            const name = student.name ?? student.email ?? '';
-            return (
-              <li key={student.userId} className="stack arda-student" style={{ gap: 6 }}>
-                <span className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
-                  <strong>{name}</strong>
-                  {rows.length > 0 && (
-                    <button
-                      className="btn btn-quiet"
-                      type="button"
-                      aria-expanded={open === student.userId}
-                      onClick={() =>
-                        setOpen((current) =>
-                          current === student.userId ? null : student.userId
-                        )
-                      }
-                    >
-                      {open === student.userId ? m.arda.hideHistory : m.arda.history}
-                    </button>
-                  )}
-                </span>
-                {rows.length === 0 ? (
-                  <span className="muted">{m.arda.none}</span>
-                ) : (
-                  <SuraRows rows={rows} />
-                )}
-                {open === student.userId && (
+          {students.map((student) => (
+            <StudentBlock
+              key={student.userId}
+              studentId={student.userId}
+              name={student.name ?? student.email ?? ''}
+              rows={summary.filter((s) => s.studentId === student.userId)}
+              open={open === student.userId}
+              onOpen={setOpen}
+              history={
+                <History
+                  key={version}
+                  halaqaId={halaqaId}
+                  studentId={student.userId}
+                  onRemoved={changed}
+                />
+              }
+            />
+          ))}
+        </ul>
+      )}
+      {/* The notebook keeps those who left (owner, 2026-10-10; ADR-0025 update). */}
+      {former.length > 0 && (
+        <>
+          <h3 className="h-small">{m.arda.former}</h3>
+          <ul
+            className="stack"
+            style={{ margin: 0, padding: 0, listStyle: 'none', gap: 12 }}
+          >
+            {former.map(({ studentId, studentName }) => (
+              <StudentBlock
+                key={studentId}
+                studentId={studentId}
+                name={studentName ?? m.struggles.unnamed}
+                rows={(summary ?? []).filter((s) => s.studentId === studentId)}
+                open={open === studentId}
+                onOpen={setOpen}
+                history={
                   <History
                     key={version}
                     halaqaId={halaqaId}
-                    studentId={student.userId}
+                    studentId={studentId}
                     onRemoved={changed}
                   />
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                }
+              />
+            ))}
+          </ul>
+        </>
       )}
       {students.length > 0 && (
         <EntryForm halaqaId={halaqaId} students={students} onWritten={changed} />
       )}
     </section>
+  );
+}
+
+/** A student in the log: their sūras, and their entries one by one when opened. */
+function StudentBlock({
+  studentId,
+  name,
+  rows,
+  open,
+  onOpen,
+  history,
+}: {
+  studentId: string;
+  name: string;
+  rows: StudentArdaSummary[];
+  open: boolean;
+  onOpen: (update: (current: string | null) => string | null) => void;
+  history: ReactNode;
+}) {
+  const { m } = useI18n();
+  return (
+    <li className="stack arda-student" style={{ gap: 6 }}>
+      <span className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+        <strong>{name}</strong>
+        {rows.length > 0 && (
+          <button
+            className="btn btn-quiet"
+            type="button"
+            aria-expanded={open}
+            onClick={() =>
+              onOpen((current) => (current === studentId ? null : studentId))
+            }
+          >
+            {open ? m.arda.hideHistory : m.arda.history}
+          </button>
+        )}
+      </span>
+      {rows.length === 0 ? (
+        <span className="muted">{m.arda.none}</span>
+      ) : (
+        <SuraRows rows={rows} />
+      )}
+      {open && history}
+    </li>
   );
 }
 

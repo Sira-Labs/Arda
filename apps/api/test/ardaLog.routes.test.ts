@@ -397,7 +397,7 @@ describe('the sheikh writes the log (T4)', () => {
     expect(await json(over)).toEqual({ error: 'too_many_entries' });
   });
 
-  it("removes only this ḥalaqa's entries, and a student's go when they leave", async () => {
+  it("removes only this ḥalaqa's entries, and keeps a student's when they leave", async () => {
     const { call, write, halaqat, halaqaId } = await setup();
     const kept = await write({ studentId: ID.classmate });
     const gone = await write();
@@ -415,14 +415,26 @@ describe('the sheikh writes the log (T4)', () => {
     expect(
       (await call('owner', 'DELETE', `/halaqat/${halaqaId}/arda-log/${gone}`)).status
     ).toBe(404);
+    // The notebook keeps a former student's entries (owner, 2026-10-10; ADR-0025 update).
     await halaqat.leave(halaqaId, ID.classmate);
     const { entries } = await json(
       await call('owner', 'GET', `/halaqat/${halaqaId}/arda-log`)
     );
-    expect(entries.map((e: Json) => e.id)).not.toContain(kept);
+    expect(entries.map((e: Json) => e.id)).toEqual([kept]);
     expect(
       (await json(await call('owner', 'GET', `/halaqat/${halaqaId}/arda-log/summary`)))
         .summary
-    ).toEqual([]);
+    ).toEqual([
+      expect.objectContaining({ studentId: ID.classmate, studentName: 'Yusuf' }),
+    ]);
+    // No new entry for someone who left.
+    expect(
+      (
+        await call('owner', 'POST', `/halaqat/${halaqaId}/arda-log`, {
+          ...entry(),
+          studentId: ID.classmate,
+        })
+      ).status
+    ).toBe(400);
   });
 });
