@@ -39,6 +39,7 @@
 | [0022](adr/0022-learning-without-account-progress-on-account.md) | Learning without an account; progress follows the account | accepted                 |
 | [0023](adr/0023-xp-levels-and-streaks.md)                        | XP, levels and streaks from an activity log               | accepted                 |
 | [0024](adr/0024-unit-tests-mark-the-path.md)                     | Unit tests mark the path; they do not lock it             | accepted                 |
+| [0025](adr/0025-arda-log.md)                                     | The ʿarḍ log: filled by answers and by hand               | accepted                 |
 
 New ADRs use the template of ADR-0002: title, status, date, Context, Decision, Alternatives,
 Consequences; later changes are added as dated "Update" sections.

@@ -31,6 +31,7 @@ import { PgAssignmentRepository } from './assignments/repository.js';
 import { PgHalaqaRepository } from './halaqat/repository.js';
 import { PgProgressRepository } from './progress/repository.js';
 import { PgRecordingRepository } from './recordings/repository.js';
+import { PgArdaLogRepository } from './ardaLog/repository.js';
 import { TranslationService } from './translation/service.js';
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
@@ -159,6 +160,7 @@ async function main(): Promise<void> {
     halaqat: { repo: halaqat, auth, log },
     assignments: { repo: new PgAssignmentRepository(pool), halaqat, auth, log },
     recordings: { repo: new PgRecordingRepository(pool), halaqat, auth, log },
+    ardaLog: { repo: new PgArdaLogRepository(pool), halaqat, auth, log },
     progress: { repo: new PgProgressRepository(pool), auth, log },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,

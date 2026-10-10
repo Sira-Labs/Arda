@@ -35,6 +35,8 @@ export interface AccountExport {
    * file), and those they answered as a teacher, with the answer (F7, T3, ADR-0012).
    */
   recordings: Record<string, unknown>[];
+  /** ʿArḍ log entries about this person, and those they wrote as a teacher (T4, ADR-0025). */
+  ardaLog: Record<string, unknown>[];
   /** The review deck and the best times of the timed games (ADR-0021, ADR-0022). */
   progress: Progress;
   /** Rounds finished and rule cards read, from which XP and the streak come (ADR-0023). */
@@ -62,6 +64,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       halaqat,
       assignments,
       recordings,
+      ardaLog,
       progress,
       activity,
       audit,
@@ -131,6 +134,16 @@ export class PgPrivacyRepository implements PrivacyRepository {
           order by created_at, id`,
         [userId]
       ),
+      this.pool.query(
+        `select id, halaqa_id, sura, aya_from, aya_to,
+                to_char(recited_on, 'YYYY-MM-DD') as recited_on, verdict, remark, note, marks,
+                source, recording_id, student_id = $1 as about_you,
+                written_by = $1 as written_by_you, created_at
+           from arda_log
+          where student_id = $1 or written_by = $1
+          order by recited_on, created_at, id`,
+        [userId]
+      ),
       readProgress(this.pool, userId),
       readActivity(this.pool, userId),
       this.pool.query(
@@ -154,6 +167,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       halaqat: halaqat.rows,
       assignments: assignments.rows,
       recordings: recordings.rows,
+      ardaLog: ardaLog.rows,
       progress,
       activity,
       auditLog: audit.rows,

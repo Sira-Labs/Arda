@@ -1023,6 +1023,27 @@ article[data-docked='sheet'] {
   background: var(--bg-elev-2);
   color: var(--check);
 }
+/* The ʿarḍ log: a student per block, a sūra per line (name, how often and when, verdict). */
+.arda-student {
+  padding-block-start: 12px;
+  border-top: 1px solid var(--border);
+}
+.arda-student:first-child {
+  border-top: none;
+  padding-block-start: 0;
+}
+.arda-suras {
+  gap: 4px;
+}
+.arda-sura {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+}
+.arda-sura > :first-child {
+  flex: 1 1 12rem;
+}
 /* The recited āyāt, word by word: tap to mark (teacher), marked words underlined (student). */
 .recited-words {
   margin: 0;

@@ -45,6 +45,10 @@ export function fakeApi(
     if ((init?.method ?? 'GET') === 'GET' && /\/recordings(\?.*)?$/.test(path)) {
       return Response.json({ recordings: [], more: false });
     }
+    // Nor has anyone recited to a sheikh yet (T4).
+    if ((init?.method ?? 'GET') === 'GET' && /\/arda-log\/summary$/.test(path)) {
+      return Response.json({ summary: [] });
+    }
     return Response.json({ error: 'not_found' }, { status: 404 });
   }) as unknown as typeof fetch;
   return { client: new AuthClient(fetchImpl), calls };

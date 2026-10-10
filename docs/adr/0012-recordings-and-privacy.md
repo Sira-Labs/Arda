@@ -64,3 +64,9 @@ teachers, with byte ranges and `Cache-Control: private, no-store`. A voice note 
 answer of the teacher who recorded it: it is saved only with their own answer, dropped when
 another teacher answers anew, and deleted with the recording and with the account of the teacher
 whose voice it is. The export lists its format, size and length, not the sound.
+
+## Update 2026-10-10: the ʿarḍ log
+
+The verdicts, remarks, notes and marks of answers now also live in the ʿarḍ log (ADR-0025), one
+entry per recording, which stays when the student deletes the take, as this ADR promised. A
+student leaving the ḥalaqa or deleting the account deletes their entries with their recordings.

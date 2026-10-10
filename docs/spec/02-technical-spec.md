@@ -148,18 +148,23 @@ Built (migration `0008_activity`, S5.2, ADR-0023):
 XP, levels and the streak are computed from it by `packages/engagement` (pure, shared by the
 app and the API); it cascades with the account and is in the export (`activity`).
 
+Migration `0013_arda_log` adds `arda_log` (T4, ADR-0025): per ḥalaqa and student the sūra and
+āyāt recited, the day, verdict, quick remark, note, marked words, whether it came from a
+recording (one entry per recording, written with the answer and kept when the take is deleted)
+or face to face, and who wrote it. It cascades with the student's membership and the ḥalaqa;
+the writer's name goes with their account. The export lists the entries about and by a person.
+
 Migration `0010_reading_places` adds `reading_places`: per person and muṣḥaf script the page
 last read and when ("Weiterlesen", ADR-0022 update 2026-10-07); the later one wins, it cascades
 with the account and is in the export (`progress.places`).
 
 Next (one migration per story, each cascading on user deletion and added to the export):
 
-| Table                  | Story    | Key fields                                                                                  |
-| ---------------------- | -------- | ------------------------------------------------------------------------------------------- |
-| `recitation_marks`     | T3       | recording, word key, second, rule, remark, voice note key, by teacher                       |
-| `arḍ_log` (`arda_log`) | T4       | student, sūra/range, date, verdict, note                                                    |
-| `check_results`        | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
-| `flags`                | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
+| Table              | Story    | Key fields                                                                                  |
+| ------------------ | -------- | ------------------------------------------------------------------------------------------- |
+| `recitation_marks` | T3       | recording, word key, second, rule, remark, voice note key, by teacher                       |
+| `check_results`    | ADR-0013 | recitation, word key, rule, `good`/`check`, model version                                   |
+| `flags`            | ADR-0016 | recitation, word key, rule, source (`teacher`/`ai`), status (`open`/`confirmed`/`rejected`) |
 
 Content (Qurʾān text layers, rule spans, timings) lives in **content packs**, not in Postgres
 (ADR-0010); Postgres stores only word keys that point into them.
@@ -224,6 +229,16 @@ in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari ne
 | `GET /recordings?before=`                                 | `recitation:own`          | my recordings and their answers, newest first                                                                   |
 | `GET /recordings/:rid/audio`, `DELETE /recordings/:rid`   | `recitation:own`          | hear or delete my own                                                                                           |
 | `GET /recordings/:rid/voice-note`                         | `recitation:own`          | hear the teacher's voice note on my own                                                                         |
+
+Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.routes.test.ts`):
+
+| Method and path                              | Action           | Purpose                                                                                                                                                     |
+| -------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /halaqat/:id/arda-log/summary`          | `halaqa:review`  | per student and sūra: how often, the last day, the latest verdict                                                                                           |
+| `GET /halaqat/:id/arda-log?student=&before=` | `halaqa:review`  | the entries, 50 at a time, newest recitation first                                                                                                          |
+| `POST /halaqat/:id/arda-log`                 | `halaqa:review`  | write a recitation heard face to face `{ studentId, range, recitedOn, verdict, remark?, note? }`; an active student; not in the future; ≤ 2,000 per student |
+| `DELETE /halaqat/:id/arda-log/:eid`          | `halaqa:review`  | remove an entry                                                                                                                                             |
+| `GET /arda-log/summary`                      | `recitation:own` | my own, per ḥalaqa and sūra                                                                                                                                 |
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 
