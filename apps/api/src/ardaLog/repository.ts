@@ -1,6 +1,6 @@
 /**
- * The ʿarḍ log in Postgres (spec T4, S4.3; ADR-0025; migration 0013): which sūras each student
- * recited to the sheikh, when, and his verdict. Answers to recordings are written by the
+ * The ʿarḍ log in Postgres (spec T4, S4.3; ADR-0025; migrations 0013, 0016): which sūras each
+ * student recited to the sheikh, when, and his verdict, kept after the student leaves the ḥalaqa. Answers to recordings are written by the
  * recording repository in its own transaction (`writeAnswerEntry`); the sheikh writes what was
  * recited face to face. Who may call what is decided by the routes' policies; the queries keep a
  * teacher to the ḥalaqa in the path and a student to their own entries.

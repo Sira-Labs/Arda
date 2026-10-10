@@ -1996,7 +1996,28 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         await log.remove('70000000-0000-4000-8000-000000000001', kept.entries[1]!.id)
       ).toBe(false);
       expect(await log.remove(halaqaId, kept.entries[1]!.id)).toBe(true);
+      // The notebook keeps a former student's entries (ADR-0025 update); the account takes them.
       expect(await halaqat.leave(halaqaId, AMINA)).toBe(true);
+      expect((await log.ownSummary(AMINA)).length).toBeGreaterThan(0);
+      expect((await log.summary(halaqaId)).map((s) => s.studentId)).toContain(AMINA);
+      expect(
+        (
+          await log.add(
+            {
+              halaqaId,
+              studentId: AMINA,
+              range: { sura: 112, from: 1, to: 4 },
+              recitedOn: '2026-10-09',
+              verdict: 'good',
+              remark: null,
+              note: null,
+              writtenBy: TEACHER,
+            },
+            100
+          )
+        ).status
+      ).toBe('not_member');
+      await pool.query('delete from users where id = $1', [AMINA]);
       expect(await log.ownSummary(AMINA)).toEqual([]);
       expect((await log.summary(halaqaId)).map((s) => s.studentId)).toEqual([YUSUF]);
     });
