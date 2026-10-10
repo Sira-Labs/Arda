@@ -2,7 +2,13 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { PACK_RULES, detect, type PackRuleId } from '@arda/tajweed';
+import {
+  PACK_RULES,
+  detect,
+  isMaddRule,
+  type PackRuleId,
+  type RuleId,
+} from '@arda/tajweed';
 import { parseCpfair } from '../src/cpfair';
 import {
   JUZ_STARTS,
@@ -167,6 +173,57 @@ function differences(pack: Pack): Record<string, string[]> {
   return found;
 }
 
+/** cpfair's madd categories the engine names; ʿāriḍ (madd_246) belongs to waqf (unit 7). */
+const PACK_MADD: Partial<Record<PackRuleId, RuleId>> = {
+  madd_2: 'madd-tabii',
+  madd_muttasil: 'madd-muttasil',
+  madd_munfasil: 'madd-munfasil',
+  madd_6: 'madd-lazim',
+};
+
+/**
+ * Where cpfair and `detect(text, { madd: true })` disagree on a madd, keyed "rule side" with
+ * the words (sūra:āya:word). cpfair marks the natural madd only where a sign writes it (the
+ * small alif, wāw or yāʾ), so for it the engine is checked to find at least those.
+ */
+function maddDifferences(pack: Pack): Record<string, string[]> {
+  const found: Record<string, string[]> = {};
+  for (const sura of pack.suras) {
+    for (const aya of sura.ayat) {
+      const text = aya.words.map((w) => w.t).join(' ');
+      const starts: number[] = [];
+      let offset = 0;
+      for (const w of aya.words) {
+        starts.push(offset);
+        offset += w.t.length + 1;
+      }
+      const wordAt = (at: number) => starts.findLastIndex((s) => s <= at);
+      const engine = new Set(
+        detect(text, { madd: true })
+          .filter((o) => isMaddRule(o.rule))
+          .map((o) => `${wordAt(o.start)}|${o.rule}`)
+      );
+      const data = new Set<string>();
+      aya.words.forEach((w, i) => {
+        for (const [, , id] of w.r ?? []) {
+          const rule = PACK_MADD[id as PackRuleId];
+          if (rule) data.add(`${i}|${rule}`);
+        }
+      });
+      for (const key of new Set([...engine, ...data])) {
+        if (engine.has(key) && data.has(key)) continue;
+        const [word, rule] = key.split('|') as [string, string];
+        if (rule === 'madd-tabii' && engine.has(key)) continue;
+        const side = engine.has(key) ? 'engine' : 'cpfair';
+        (found[`${rule} ${side}`] ??= []).push(
+          `${sura.sura}:${aya.aya}:${Number(word) + 1}`
+        );
+      }
+    }
+  }
+  return found;
+}
+
 describe('the packs in the app', () => {
   it('are the files their index names, byte for byte, with the sources credited', () => {
     expect(shipped.map((s) => s.entry.id)).toEqual(PACKS.map((p) => p.id));
@@ -254,6 +311,21 @@ describe('the packs in the app', () => {
       'qalqala cpfair at the end',
     ]);
     expect(baqara['ghunna-mushaddad engine']).toEqual(['2:105', '2:245', '2:261']);
+  });
+
+  it('agree with the engine on every madd but the ʿāriḍ (ADR-0008, unit 5)', () => {
+    // The engine reads the madd of the vocative yā and the hā of attention as separated
+    // (munfaṣil ḥukmī) where cpfair calls it joined (هَٰٓؤُلَآءِ keeps its second, joined madd);
+    // and it leaves the opening letters of al-Baqara (الٓمٓ, six counts) to the cards.
+    // Nothing else differs.
+    const juz30 = maddDifferences(byId('uthmani-hafs-juz30').pack);
+    expect(juz30).toEqual({ 'madd-munfasil engine': ['83:32:5'] });
+    const baqara = maddDifferences(byId('uthmani-hafs-fatiha-baqara').pack);
+    expect(baqara).toEqual({
+      'madd-lazim cpfair': ['2:1:1'],
+      'madd-munfasil engine': ['2:31:12', '2:33:2', '2:35:2', '2:85:3'],
+      'madd-muttasil cpfair': ['2:33:2', '2:35:2'],
+    });
   });
 });
 

@@ -64,3 +64,13 @@ our own rules or another source (ADR-0017).
   `uthmani-hafs-juz30@2` corrects five āyāt of v1.
 - al-Fātiḥa and al-Baqara are a second pack. The cross-check holds there as well: the same two
   kinds of difference, and nothing else.
+
+## Update 2026-10-10: madd in the engine (unit 5)
+
+- `detect(text, { madd: true })` finds madd ṭabīʿī, muttaṣil, munfaṣil and lāzim (spec 03
+  §4b), for the cards, the game and the unit test of unit 5. It is opt-in so the units 2–4
+  screens and the existing cross-check keep their results.
+- The cross-check extends to the madd: in Juzʾ ʿAmma, al-Fātiḥa and al-Baqara the engine and
+  cpfair agree on every long madd except the munfaṣil ḥukmī (يَٰٓـَٔادَمُ, هَٰٓؤُلَآءِ: the engine
+  follows the usual teaching, cpfair says muttaṣil) and the opening letters الٓمٓ; the engine
+  finds every natural madd cpfair marks. The muṣḥaf still colours from the pack.
