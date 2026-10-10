@@ -236,7 +236,9 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   mark it; reply by voice. _(Built: "Zum Abhören" on the ḥalaqa page, play, `good`/`again`, a
   quick remark (sīn, zāy and rāʾ among them) and his own words; while listening he taps the
   words that need work, and the student sees them underlined in the āyāt under his answer
-  (owner, 2026-10-10). Next: voice replies, the pre-check.)_
+  (owner, 2026-10-10); he can also answer aloud with a voice note of up to two minutes, heard
+  before sending, recorded again or removed, which the student plays under the answer
+  (2026-10-10). Next: the pre-check.)_
 - **T4 The ʿarḍ log.** Which sūras each student recited, when, and his verdict: the notebook of
   the chain, kept for him.
 - **T5 Rule by rule.** Who still struggles with which rule.

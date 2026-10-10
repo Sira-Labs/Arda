@@ -54,3 +54,13 @@ The teacher's answer can mark words of the recited āyāt (spec T3), stored in `
 student and the ḥalaqa's teachers see them, the export lists them, and they are deleted with
 the recording. Keeping verdicts and marks as text after a recording is gone is the ʿarḍ log's
 job (T4); until it exists, deleting a recording deletes its answer too.
+
+## Update 2026-10-10: voice notes
+
+The teacher can answer aloud (spec T3): one voice note per recording, up to two minutes and
+2.5 MB, kept in `recording_voice_notes` (migration `0012`) in Postgres like the recording's sound
+until the bucket exists. It is served by the same rules: only to the student and the ḥalaqa's
+teachers, with byte ranges and `Cache-Control: private, no-store`. A voice note belongs to the
+answer of the teacher who recorded it: it is saved only with their own answer, dropped when
+another teacher answers anew, and deleted with the recording and with the account of the teacher
+whose voice it is. The export lists its format, size and length, not the sound.
