@@ -36,7 +36,7 @@ describe('the rule cards’ examples in the Qurʾān', () => {
       );
       expect(e.to - e.from + 1, e.text).toBe(words.length);
       expect(
-        detect(e.uthmani).map((o) => o.rule),
+        detect(e.uthmani, { madd: true }).map((o) => o.rule),
         e.text
       ).toContain(e.rule);
       if (e.before !== null) expect(joinsNasal(e.before, words[0]!), e.text).toBe(false);
