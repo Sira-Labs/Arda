@@ -78,8 +78,9 @@ Rules for using it:
 
 ## 5. Layout and navigation
 
-- **Phone:** floating ink bottom bar with five destinations in the order of the loop:
-  **Heute · Pfad · Muṣḥaf · Labor · Sheikh**. Account sits in Today's header.
+- **Phone:** floating ink bottom bar with six destinations, the loop in order, then the
+  student's own plan and the sheikh: **Heute · Pfad · Muṣḥaf · Labor · Lernplan · Sheikh**
+  (Lernplan added by the owner, 2026-10-10). Account sits in Today's header.
 - **Desktop (≥ 960 px):** ink sidebar with the brand on top; content column ≤ 960 px.
 - **Learning screens** (a station, a game, recording) hide the bar and show a close button and
   progress.

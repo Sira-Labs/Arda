@@ -243,7 +243,8 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   the chain, kept for him. _(Built, ADR-0025: the "ʿArḍ-Heft" on the ḥalaqa page, per student
   and sūra how often, when last and with what verdict; each student's entries one by one;
   answered recordings enter it by themselves, what is recited face to face he writes in; the
-  student sees "Dein ʿArḍ" on the ḥalaqa page (2026-10-10).)_
+  student sees "Dein ʿArḍ" on the ḥalaqa page (2026-10-10). Entries stay when a student
+  leaves the ḥalaqa, under "Frühere Schüler·innen" (owner, 2026-10-10).)_
 - **T5 Rule by rule.** Who still struggles with which rule. _(Built, ADR-0026: "Regel für
   Regel" on the ḥalaqa page, per rule the students with game mistakes not yet mastered and his
   own quick remarks of the last 90 days, the rule most students struggle with first; only
