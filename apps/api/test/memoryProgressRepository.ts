@@ -9,6 +9,7 @@ import {
   MAX_CARDS,
   MAX_EVENTS,
   MAX_GAMES,
+  MAX_NOTES,
   mergeProgress,
   type Progress,
   type ProgressRepository,
@@ -36,6 +37,7 @@ export class MemoryProgressRepository implements ProgressRepository {
     if (
       merged.cards.length > MAX_CARDS ||
       Object.keys(merged.bestTimes).length > MAX_GAMES ||
+      (merged.notes ?? []).length > MAX_NOTES ||
       log.length > MAX_EVENTS
     ) {
       return { ok: false, error: 'too_many' };
@@ -43,6 +45,7 @@ export class MemoryProgressRepository implements ProgressRepository {
     this.seq = seq;
     merged.cards.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
     merged.places?.sort((a, b) => a.script.localeCompare(b.script));
+    merged.notes?.sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
     this.stored.set(userId, merged);
     this.logs.set(userId, log);
     const ids = new Set(sent.map((e) => e.id));

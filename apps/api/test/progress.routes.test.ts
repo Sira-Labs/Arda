@@ -5,8 +5,11 @@ import {
   clampToNow,
   MAX_CARDS,
   MAX_GAMES,
+  MAX_NOTES,
   mergeProgress,
+  type NoteKind,
   type ProgressCard,
+  type StudyNote,
 } from '../src/progress/repository.js';
 import { EVENT_PAGE, MAX_EVENTS_PER_REQUEST } from '../src/progress/repository.js';
 import { MAX_BODY_BYTES } from '../src/progress/routes.js';
@@ -43,6 +46,26 @@ const card = (id: string, updatedAt: number, box = 1): ProgressCard => ({
   due: updatedAt,
   lapses: 1,
   updatedAt,
+});
+
+const NOTE_IDS = [
+  '50000000-0000-4000-8000-000000000001',
+  '50000000-0000-4000-8000-000000000002',
+  '50000000-0000-4000-8000-000000000003',
+] as const;
+
+/** A note in "Mein Lernplan", written at `at`. */
+const note = (kind: NoteKind, at: number, over: Partial<StudyNote> = {}): StudyNote => ({
+  id: NOTE_IDS[0],
+  kind,
+  text: 'Etwas lernen',
+  range: null,
+  pages: null,
+  done: false,
+  deleted: false,
+  createdAt: at,
+  updatedAt: at,
+  ...over,
 });
 
 function setup() {
@@ -116,6 +139,7 @@ describe('progress sync (ADR-0022)', () => {
       cards: [],
       bestTimes: {},
       places: [],
+      notes: [],
       events: [],
       more: false,
     });
@@ -155,6 +179,41 @@ describe('progress sync (ADR-0022)', () => {
       { script: 'indopak', page: 9, at: NOW - 5000 },
       { script: 'uthmani', page: 604, at: NOW },
     ]);
+  });
+
+  it('keeps the later version of each study note, and a deleted one without its text', async () => {
+    const { sync } = setup();
+    const learn = note('learn', NOW - 9000, {
+      text: 'Zwei Seiten al-Baqara',
+      pages: { layout: 'indopak-15', from: 8, to: 9 },
+    });
+    const hard = note('difficulty', NOW - 9000, {
+      id: NOTE_IDS[1],
+      text: 'Das ḍād klingt wie dāl',
+      range: { sura: 2, from: 1, to: 5 },
+    });
+    await sync('student', { cards: [], bestTimes: {}, notes: [learn, hard] });
+    const body: Json = await (
+      await sync('student', {
+        cards: [],
+        bestTimes: {},
+        notes: [
+          // Older than the stored one: the stored one stays.
+          { ...learn, text: 'Eine Seite', updatedAt: NOW - 20_000 },
+          // Deleted later, with its text still on the device: kept as a tombstone.
+          { ...hard, deleted: true, updatedAt: NOW - 1000 },
+          note('review', NOW + 60_000, { id: NOTE_IDS[2], text: 'al-Mulk wiederholen' }),
+        ],
+      })
+    ).json();
+    expect(body.notes).toEqual([
+      learn,
+      { ...hard, deleted: true, text: '', range: null, updatedAt: NOW - 1000 },
+      expect.objectContaining({ kind: 'review', createdAt: NOW, updatedAt: NOW }),
+    ]);
+    // Another person sees none of them.
+    const other: Json = await (await sync('other', { cards: [], bestTimes: {} })).json();
+    expect(other.notes).toEqual([]);
   });
 
   it('stores a card dated in the future as answered now', async () => {
@@ -199,6 +258,43 @@ describe('progress sync (ADR-0022)', () => {
       { cards: [], bestTimes: {}, places: [{ script: 'indopak', page: 0, at: NOW }] },
     ],
     [
+      'a note without text',
+      { cards: [], bestTimes: {}, notes: [note('learn', NOW, { text: '   ' })] },
+    ],
+    [
+      'a note of an unknown kind',
+      { cards: [], bestTimes: {}, notes: [{ ...note('learn', NOW), kind: 'todo' }] },
+    ],
+    [
+      'a note on āyāt that do not exist',
+      {
+        cards: [],
+        bestTimes: {},
+        notes: [note('learn', NOW, { range: { sura: 112, from: 1, to: 5 } })],
+      },
+    ],
+    [
+      'a note on both āyāt and pages',
+      {
+        cards: [],
+        bestTimes: {},
+        notes: [
+          note('learn', NOW, {
+            range: { sura: 2, from: 1, to: 5 },
+            pages: { layout: 'madina', from: 2, to: 2 },
+          }),
+        ],
+      },
+    ],
+    [
+      'a note longer than 500 letters',
+      {
+        cards: [],
+        bestTimes: {},
+        notes: [note('learn', NOW, { text: 'x'.repeat(501) })],
+      },
+    ],
+    [
       'more reading places than scripts',
       {
         cards: [],
@@ -211,6 +307,21 @@ describe('progress sync (ADR-0022)', () => {
     const response = await sync('student', body);
     expect(response.status).toBe(400);
     expect(((await response.json()) as Json).error).toBe('invalid_body');
+    expect(repo.stored.size).toBe(0);
+  });
+
+  it('refuses more notes than a person may keep (413)', async () => {
+    const { sync, repo } = setup();
+    const response = await sync('student', {
+      cards: [],
+      bestTimes: {},
+      notes: Array.from({ length: MAX_NOTES + 1 }, (_, i) =>
+        note('learn', NOW, {
+          id: `40000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+        })
+      ),
+    });
+    expect(response.status).toBe(413);
     expect(repo.stored.size).toBe(0);
   });
 

@@ -1,14 +1,15 @@
 /**
  * Progress on the account (ADR-0022, S5.2), mounted at /api/v1:
  *
- *   POST /progress/sync  { userId, cards, bestTimes, places?, events?, since? }
- *                        → { cards, bestTimes, places, events, more }        progress:own
+ *   POST /progress/sync  { userId, cards, bestTimes, places?, notes?, events?, since? }
+ *                        → { cards, bestTimes, places, notes, events, more }  progress:own
  *
  * The device sends its whole deck; the answer is the merged deck, which the device merges into
  * its own. With it go the activity events the server has not confirmed (ADR-0023) and the last
  * sequence number the device has seen; the answer carries the events after it, a page at a
- * time (`more`). Reading places (one muṣḥaf page per script) merge by time like the cards. 413 `too_many` when the deck or the log would pass the limits; nothing is
- * stored then.
+ * time (`more`). Reading places (one muṣḥaf page per script) and study notes ("Mein Lernplan",
+ * private to the person) merge by time like the cards. 413 `too_many` when the deck, the notes
+ * or the log would pass the limits; nothing is stored then.
  * `userId` names the account the deck belongs to: when the session cookie has meanwhile been
  * replaced by another account's (a sign-in in another tab), 409 `other_account` keeps one
  * person's deck out of another's account.
@@ -20,10 +21,13 @@ import { z } from 'zod';
 import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
 import { ACTIVITY_KINDS, MAX_ROUND_TOTAL } from '@arda/engagement';
+import { PAGE_LAYOUTS, isAyaRange, isPageRun } from '@arda/quran';
 import {
   MAX_CARDS,
   MAX_EVENTS_PER_REQUEST,
   MAX_GAMES,
+  MAX_NOTES,
+  NOTE_KINDS,
   READING_SCRIPTS,
   type ProgressRepository,
 } from './repository.js';
@@ -73,6 +77,38 @@ const Place = z
   })
   .strict();
 
+const Note = z
+  .object({
+    id: z.string().uuid(),
+    kind: z.enum(NOTE_KINDS),
+    text: z.string().trim().max(500),
+    range: z
+      .object({ sura: z.number().int(), from: z.number().int(), to: z.number().int() })
+      .strict()
+      .refine(isAyaRange, { message: 'range' })
+      .nullable(),
+    pages: z
+      .object({
+        layout: z.enum(PAGE_LAYOUTS),
+        from: z.number().int(),
+        to: z.number().int(),
+      })
+      .strict()
+      .refine(isPageRun, { message: 'pages' })
+      .nullable(),
+    done: z.boolean(),
+    deleted: z.boolean(),
+    createdAt: Millis,
+    updatedAt: Millis,
+  })
+  .strict()
+  .refine((note) => !(note.range && note.pages), { message: 'pages' })
+  .refine((note) => note.deleted || note.text.length > 0, { message: 'text' })
+  // A deleted note keeps nothing of what it said.
+  .transform((note) =>
+    note.deleted ? { ...note, text: '', range: null, pages: null } : note
+  );
+
 const Body = z
   .object({
     userId: z.string().min(1).max(200),
@@ -85,6 +121,7 @@ const Body = z
     ),
     // One per script; a repeated script is merged by time like a repeated card.
     places: z.array(Place).max(READING_SCRIPTS.length).default([]),
+    notes: z.array(Note).default([]),
     events: z.array(Event).default([]),
     /** The last sequence number the device has seen. */
     since: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).default(0),
@@ -118,6 +155,7 @@ export function createProgressRoutes(deps: ProgressRouteDeps): Hono<ActorEnv> {
     if (
       parsed.data.cards.length > MAX_CARDS ||
       Object.keys(parsed.data.bestTimes).length > MAX_GAMES ||
+      parsed.data.notes.length > MAX_NOTES ||
       parsed.data.events.length > MAX_EVENTS_PER_REQUEST
     ) {
       return c.json({ error: 'too_many' }, 413);
