@@ -590,6 +590,9 @@ export const fr: Messages = {
     failed: 'Cela n’a pas marché. Réessaie, ou utilise un lien ou un code.',
   },
   recite: {
+    marksHint: 'Pendant l’écoute, touche les mots qui ne sont pas encore justes.',
+    marked: 'marqué',
+    marksCount: (count) => (count === 1 ? '1 mot marqué' : `${count} mots marqués`),
     record: 'Enregistrer',
     title: (sura, from, to) =>
       from === to

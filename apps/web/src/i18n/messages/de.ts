@@ -621,6 +621,10 @@ export const de = {
     failed: 'Das hat nicht geklappt. Versuch es noch einmal oder nimm Link oder Code.',
   } as Record<Exclude<PasskeyFailure, 'cancelled'>, string>,
   recite: {
+    marksHint: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
+    marked: 'markiert',
+    marksCount: (count: number) =>
+      count === 1 ? '1 Wort markiert' : `${count} Wörter markiert`,
     record: 'Aufnehmen',
     title: (sura: number, from: number, to: number) =>
       from === to

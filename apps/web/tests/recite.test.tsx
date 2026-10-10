@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
@@ -18,7 +21,20 @@ import { RecordingQueue } from '@/modules/recite/RecordingQueue';
 import { clock, RecordPanel } from '@/modules/recite/RecordPanel';
 import { baseMime, RecorderError, type RecorderFactory } from '@/modules/recite/recorder';
 import type { HalaqaSummary, Me, OwnRecitation, QueuedRecitation } from '@/services/auth';
+import type { PackIndex } from '@arda/quran';
+import type { PackLoaderDeps } from '@/content/packs';
+import { PackLoaderContext } from '@/modules/mushaf/usePack';
 import { fakeApi, Providers } from './render';
+
+/** The packs in the repository, loaded as the app loads them (checked, never cached). */
+const PACKS = resolve(__dirname, '../public/packs');
+const packs: PackLoaderDeps = {
+  index: JSON.parse(readFileSync(resolve(PACKS, 'index.json'), 'utf8')) as PackIndex,
+  fetch: async (url) =>
+    new Response(new Uint8Array(readFileSync(resolve(PACKS, url.slice(7))))),
+  cache: async () => null,
+  sha256: async (data) => createHash('sha256').update(new Uint8Array(data)).digest('hex'),
+};
 
 const HALAQA = '11111111-1111-4111-8111-111111111111';
 const OTHER = '22222222-2222-4222-8222-222222222222';
@@ -78,9 +94,11 @@ function renderWith(
   const api = fakeApi(answers, me);
   render(
     <Providers client={api.client}>
-      <ReciteContext.Provider value={{ recorder: recorder.factory, outbox }}>
-        <MemoryRouter>{ui}</MemoryRouter>
-      </ReciteContext.Provider>
+      <PackLoaderContext.Provider value={packs}>
+        <ReciteContext.Provider value={{ recorder: recorder.factory, outbox }}>
+          <MemoryRouter>{ui}</MemoryRouter>
+        </ReciteContext.Provider>
+      </PackLoaderContext.Provider>
     </Providers>
   );
   return { ...api, outbox, recorder };
@@ -464,7 +482,7 @@ const queued = (over: Partial<QueuedRecitation> = {}): QueuedRecitation => ({
 });
 
 describe('listening and answering (S4.2)', () => {
-  it('plays a waiting recitation and answers it with a verdict, a remark and a note', async () => {
+  it('plays a waiting recitation and answers it with a verdict, a remark, a note and marks', async () => {
     const { calls } = renderWith(
       <RecordingQueue halaqaId={HALAQA} />,
       {
@@ -494,14 +512,33 @@ describe('listening and answering (S4.2)', () => {
       within(row).getByRole('textbox'),
       '  Achte auf das Rāʾ in al-ṣamad. '
     );
+    // Al-Ikhlāṣ word by word: tap aṣ-ṣamad (2:2) and aḥad (1:4), then tap a word twice.
+    const words = await within(row).findByRole('group', {
+      name: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
+    });
+    const ayat = [...words.children] as HTMLElement[];
+    expect(ayat).toHaveLength(4);
+    const word = (aya: number, n: number) =>
+      within(ayat[aya - 1]!).getAllByRole('button')[n - 1]!;
+    await user.click(word(2, 2));
+    await user.click(word(1, 4));
+    await user.click(word(3, 1));
+    await user.click(word(3, 1));
+    expect(word(2, 2)).toHaveAttribute('aria-pressed', 'true');
+    expect(word(3, 1)).toHaveAttribute('aria-pressed', 'false');
     await user.click(within(row).getByRole('button', { name: 'Antwort senden' }));
     await waitFor(() =>
       expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
         verdict: 'again',
         remark: 'raRolled',
         note: 'Achte auf das Rāʾ in al-ṣamad.',
+        marks: [
+          { aya: 1, word: 4 },
+          { aya: 2, word: 2 },
+        ],
       })
     );
+    expect(screen.getByText('2 Wörter markiert')).toBeInTheDocument();
     expect(
       await screen.findByRole('heading', { name: 'Beantwortet' })
     ).toBeInTheDocument();
@@ -570,6 +607,7 @@ describe('the student’s recitations on Today', () => {
                 verdict: 'again',
                 remark: 'sinVoiced',
                 note: 'Noch einmal Āya 2.',
+                marks: [{ aya: 2, word: 2 }],
                 reviewerName: 'Sheikh Ahmad',
                 reviewedAt: '2026-10-06T12:00:00Z',
               },
@@ -588,6 +626,15 @@ describe('the student’s recitations on Today', () => {
     expect(within(answered).getByText('Sheikh Ahmad schreibt:')).toBeInTheDocument();
     expect(within(answered).getByText(/^Sīn summt/)).toBeInTheDocument();
     expect(within(answered).getByText('Noch einmal Āya 2.')).toBeInTheDocument();
+    // The marked word, underlined and named: aṣ-ṣamad in āya 2.
+    expect(within(answered).getByText('1 Wort markiert')).toBeInTheDocument();
+    const marked = await waitFor(() => {
+      const found = answered.querySelectorAll('.recited-mark');
+      expect(found).toHaveLength(1);
+      return found[0]!;
+    });
+    expect(marked).toHaveTextContent('(markiert)');
+    expect(marked.closest('[lang="ar"]')).toHaveAttribute('dir', 'rtl');
     expect(answered.querySelector('audio')).toHaveAttribute(
       'src',
       `/api/v1/recordings/${REC}/audio`
