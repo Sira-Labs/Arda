@@ -657,13 +657,13 @@ export const de = {
   struggles: {
     title: 'Regel für Regel',
     intro:
-      'Wer mit welcher Regel noch kämpft: Fehler aus den Spielen, die noch nicht sitzen, und deine Kurz-Bemerkungen und markierten Wörter der letzten 90 Tage.',
+      'Wer mit welcher Regel noch kämpft: Fehler aus den Spielen, die noch nicht sitzen, und Kurz-Bemerkungen und markierte Wörter aus den Antworten der letzten 90 Tage.',
     none: 'Gerade kämpft niemand mit einer Regel – oder es wurde noch nicht geübt.',
     open: (count: number) =>
       count === 1 ? '1 Fehler im Spiel offen' : `${count} Fehler im Spiel offen`,
-    remarks: (count: number) => `${count}× von dir angemerkt`,
+    remarks: (count: number) => `${count}× angemerkt`,
     marks: (count: number) =>
-      count === 1 ? '1 Wort von dir markiert' : `${count} Wörter von dir markiert`,
+      count === 1 ? '1 Wort markiert' : `${count} Wörter markiert`,
     last: (day: string) => `zuletzt ${day}`,
     topics: { madd: 'Madd (Dehnung)', makhraj: 'Aussprache der Buchstaben (Makhārij)' },
     card: 'Regelkarte',

@@ -81,10 +81,10 @@ describe('rule by rule for the sheikh (T5)', () => {
     expect(names).toEqual(['Ikhfāʾ', 'Qalqala', 'Aussprache der Buchstaben (Makhārij)']);
     const ikhfa = within(section).getByText('Ikhfāʾ').closest('li')!;
     expect(within(ikhfa).getByText('Amina').closest('li')).toHaveTextContent(
-      /2 Fehler im Spiel offen · 2× von dir angemerkt · zuletzt .*1\. Okt/
+      /2 Fehler im Spiel offen · 2× angemerkt · zuletzt .*1\. Okt/
     );
     expect(within(ikhfa).getByText('Yusuf').closest('li')).toHaveTextContent(
-      /^Yusuf1× von dir angemerkt · zuletzt/
+      /^Yusuf1× angemerkt · zuletzt/
     );
     expect(within(ikhfa).getByRole('link', { name: 'Regelkarte' })).toHaveAttribute(
       'href',
@@ -92,7 +92,7 @@ describe('rule by rule for the sheikh (T5)', () => {
     );
     const qalqala = within(section).getByText('Qalqala').closest('li')!;
     expect(within(qalqala).getByText('Yusuf').closest('li')).toHaveTextContent(
-      /2 Wörter von dir markiert · zuletzt/
+      /2 Wörter markiert · zuletzt/
     );
     const makhraj = within(section)
       .getByText('Aussprache der Buchstaben (Makhārij)')

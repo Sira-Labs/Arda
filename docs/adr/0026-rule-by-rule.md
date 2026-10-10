@@ -61,6 +61,5 @@ it was about.
   pack (cpfair's names mapped to the sheet's rules, every madd to madd; followers and silent
   letters left out); a word with exactly one is marked for it, and he can change or clear it.
 - **Counted in rule by rule:** named marks of the last 90 days (from the answer's ʿarḍ log
-  entry, so they stay when the take is deleted) count beside the remarks; the view shows "n
-  words marked by you" and the day of the last remark or mark.
+  entry, so they stay when the take is deleted) count beside the remarks; the view shows "n words marked" (every teacher of the ḥalaqa counts, so the labels name no one) and the day of the last remark or mark.
 - **The student sees the rule** of each marked word under the answer.
