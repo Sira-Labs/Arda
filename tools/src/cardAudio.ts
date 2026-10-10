@@ -12,7 +12,7 @@ import { splitWords } from './words';
 
 /**
  * The rule cards' examples heard (spec F2, "each example playable"): every example of the
- * sheikh's sheet and of units 3–5 is looked up in the whole Qurʾān, where al-Ḥuṣarī's
+ * sheikh's sheet and of units 3–6 is looked up in the whole Qurʾān, where al-Ḥuṣarī's
  * teaching recitation says it, and played from its āya's file. The sheet spells its examples
  * the common way (every sukūn and alif written) and some are set phrases rather than quotations
  * (عَلِيمٌ حَكِيمٌ), so an example is found by its letters, the closest vowels winning, and kept
@@ -152,7 +152,7 @@ export function locate(
       const span = ayaText.slice(i, i + words.length);
       if (span.map(skeleton).join(' ') !== want) continue;
       const uthmani = span.join(' ');
-      const rules = detect(uthmani, { madd: true });
+      const rules = detect(uthmani, { madd: true, tafkhim: true });
       if (!rules.some((o) => o.rule === example.expectedRule)) continue;
       const before = i > 0 ? ayaText[i - 1]! : null;
       if (before !== null && joinsNasal(before, span[0]!)) continue;

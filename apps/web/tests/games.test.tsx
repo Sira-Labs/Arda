@@ -8,9 +8,11 @@ import { UNIT2_CARDS, cardName } from '@/content/units';
 import {
   MADD_POOL,
   UNIT3_POOL,
+  WEIGHT_POOL,
   WORD_POOL,
   letterQuestion,
   maddRound,
+  weightRound,
   optionsOf,
   qalqalaQuestion,
   qalqalaRound,
@@ -21,6 +23,7 @@ import {
   unitTest,
   whichRuleRound,
 } from '@/games/questions';
+import { HeavyOrLight } from '@/modules/games/HeavyOrLight';
 import { MaddLength } from '@/modules/games/MaddLength';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { WhichRule3 } from '@/modules/games/WhichRule3';
@@ -361,6 +364,75 @@ describe('How long? (unit 5)', () => {
   });
 });
 
+describe('Heavy or light? (unit 6)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('asks four words of each weight, for rāʾ and the lām of Allāh', () => {
+    expect(WEIGHT_POOL).toHaveLength(16);
+    for (const card of ['ra', 'lam-jalala'] as const) {
+      for (const weight of ['heavy', 'light'] as const) {
+        expect(
+          WEIGHT_POOL.filter((q) => q.card === card && q.answer === weight),
+          `${card} ${weight}`
+        ).toHaveLength(4);
+      }
+    }
+    expect(optionsOf(WEIGHT_POOL[0]!)).toEqual(['heavy', 'light']);
+    const round = weightRound(seeded());
+    expect(round).toHaveLength(10);
+    expect(new Set(round.map((q) => q.id)).size).toBe(10);
+    // The question marks the rāʾ or the lām itself.
+    const mirsad = WEIGHT_POOL.find((q) => q.reason === 'before-heavy')!;
+    expect(mirsad.prompt.slice(mirsad.focus.start, mirsad.focus.carrierEnd)).toBe('رْ');
+    expect(questionOf(mirsad)).toEqual(mirsad);
+  });
+
+  it('says why after an answer and turns a mistake into a review card', async () => {
+    const store = new MemoryReviewStore();
+    renderGame(
+      '/pfad/6/spiel/schwer-oder-leicht',
+      store,
+      <HeavyOrLight random={seeded(4)} />
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Schwer oder leicht?' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText('Sprichst du den markierten Buchstaben schwer oder leicht?')
+    ).toBeInTheDocument();
+    const round = weightRound(seeded(4));
+    const why = {
+      'بِسْمِ اللَّهِ': 'Lām von Allāh nach Kasra',
+      'نَصْرُ اللَّهِ': 'Lām von Allāh nach Ḍamma',
+      'اللَّهُ الصَّمَدُ': 'Lām von Allāh am Anfang der Lesung',
+      مِرْصَادًا: 'Rāʾ sākin vor einem schweren Buchstaben',
+      ارْجِعِي: 'Rāʾ sākin nach dem Verbindungs-Hamza',
+      فِرْعَوْنَ: 'Rāʾ sākin nach Kasra',
+      رِزْقًا: 'Rāʾ mit Kasra',
+    } as Record<string, string>;
+    for (const [i, question] of round.entries()) {
+      // The first word is answered wrongly on purpose.
+      const right = question.answer === 'heavy' ? 'schwer' : 'leicht';
+      const wrong = right === 'schwer' ? 'leicht' : 'schwer';
+      await userEvent.click(
+        screen.getByRole('button', { name: i === 0 ? wrong : right })
+      );
+      const reason = why[question.prompt];
+      if (reason) expect(screen.getByRole('status')).toHaveTextContent(reason);
+      await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+    }
+    expect(screen.getByRole('heading', { name: '9 von 10 richtig' })).toBeInTheDocument();
+    expect(store.load().cards[round[0]!.id]).toMatchObject({
+      kind: 'weight',
+      answer: round[0]!.answer,
+      box: 1,
+    });
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'heavy-or-light', right: 9, total: 10 }),
+    ]);
+  });
+});
+
 describe('unit tests (ADR-0024)', () => {
   beforeEach(() => localStorage.setItem('arda.language', 'de'));
 
@@ -386,6 +458,19 @@ describe('unit tests (ADR-0024)', () => {
     expect(lengths.filter((a) => a === 'two-counts')).toHaveLength(3);
     expect(lengths.filter((a) => a === 'four-counts')).toHaveLength(4);
     expect(lengths.filter((a) => a === 'six-counts')).toHaveLength(3);
+    const six = unitTest(6, seeded());
+    expect(six).toHaveLength(10);
+    expect(new Set(six.map((q) => q.id)).size).toBe(10);
+    // Five heavy and five light, three rāʾ and two lām of Allāh of each.
+    const weights = six.flatMap((q) =>
+      q.kind === 'weight' ? [`${q.card} ${q.answer}`] : []
+    );
+    expect(weights.sort()).toEqual([
+      ...Array(2).fill('lam-jalala heavy'),
+      ...Array(2).fill('lam-jalala light'),
+      ...Array(3).fill('ra heavy'),
+      ...Array(3).fill('ra light'),
+    ]);
   });
 
   /** Answers the current letter question, rightly or not. */
@@ -453,6 +538,32 @@ describe('unit tests (ADR-0024)', () => {
     await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
   };
 
+  /** Answers the current "Heavy or light?" question rightly, from the word it shows. */
+  const answerWeight = async () => {
+    const word = document.querySelector('.paper .quran')!.textContent;
+    const question = WEIGHT_POOL.find((q) => q.prompt === word)!;
+    const name = question.answer === 'heavy' ? 'schwer' : 'leicht';
+    await userEvent.click(screen.getByRole('button', { name }));
+    await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+  };
+
+  it('leads from unit 5 to unit 6', async () => {
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={new MemoryReviewStore()}>
+          <MemoryRouter initialEntries={['/pfad/5/test']}>
+            <Routes>
+              <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    for (let i = 0; i < 10; i++) await answerMadd();
+    expect(screen.getByText('Bestanden – weiter mit Einheit 6.')).toBeInTheDocument();
+  });
+
   it('says every unit is done only when the other tests are passed too', async () => {
     const passed = (unit: number, n: number) => ({
       id: `00000000-0000-4000-8000-00000000000${n}`,
@@ -470,13 +581,14 @@ describe('unit tests (ADR-0024)', () => {
         [passed(2, 1).id]: passed(2, 1),
         [passed(3, 2).id]: passed(3, 2),
         [passed(4, 4).id]: passed(4, 4),
+        [passed(5, 5).id]: passed(5, 5),
       },
     });
     const { client } = fakeApi({});
     render(
       <Providers client={client}>
         <ReviewProvider store={store}>
-          <MemoryRouter initialEntries={['/pfad/5/test']}>
+          <MemoryRouter initialEntries={['/pfad/6/test']}>
             <Routes>
               <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
             </Routes>
@@ -484,7 +596,7 @@ describe('unit tests (ADR-0024)', () => {
         </ReviewProvider>
       </Providers>
     );
-    for (let i = 0; i < 10; i++) await answerMadd();
+    for (let i = 0; i < 10; i++) await answerWeight();
     expect(screen.getByText('Bestanden – alle Einheiten geschafft.')).toBeInTheDocument();
   });
 

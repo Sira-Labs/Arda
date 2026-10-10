@@ -33,7 +33,7 @@ const skeleton = (text: string) =>
     .replace(/ى/g, 'ي')
     .replace(/[^\p{Lo}]|ـ/gu, '');
 
-describe('the examples of units 2–5 are real words (spec 03 §4)', () => {
+describe('the examples of units 2–6 are real words (spec 03 §4)', () => {
   const keyed = [...SHEET_EXAMPLES, ...UNIT_EXAMPLES].filter((e) => e.wordKey);
   it.each(keyed.map((e) => [e.wordKey!, e.text] as const))('%s is %s', (key, text) => {
     const word = wordAt(key);

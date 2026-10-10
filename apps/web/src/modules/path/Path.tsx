@@ -18,7 +18,7 @@ const GAMES: Record<
   CardUnit,
   readonly {
     path: string;
-    game: 'whichRule' | 'sort' | 'unit3' | 'qalqala' | 'maddLength';
+    game: 'whichRule' | 'sort' | 'unit3' | 'qalqala' | 'maddLength' | 'weight';
   }[]
 > = {
   2: [
@@ -28,11 +28,12 @@ const GAMES: Record<
   3: [{ path: '/pfad/3/spiel/welche-regel', game: 'unit3' }],
   4: [{ path: '/pfad/4/spiel/buchstaben', game: 'qalqala' }],
   5: [{ path: '/pfad/5/spiel/wie-lang', game: 'maddLength' }],
+  6: [{ path: '/pfad/6/spiel/schwer-oder-leicht', game: 'weight' }],
 };
 
 /**
  * The path (spec F1, spec 01 §4): unit 1 in the letter lab, then units 2–4 from the sheikh's
- * sheet and unit 5 (madd), each with its rule cards in the order of the sheet and its games; the
+ * sheet, unit 5 (madd) and unit 6 (tafkhīm), each with its rule cards in the order of the sheet and its games; the
  * review of every unit at the end.
  */
 export function Path() {

@@ -3,7 +3,8 @@
  * this one, so a missing message fails the typecheck. Learners are addressed with "du".
  */
 import type { PasskeyFailure } from '@/services/passkeys';
-import type { CardId, MaddCard, MaddLength, RuleCase } from '@/content/units';
+import type { CardId, MaddCard, MaddLength, RuleCase, WeightCard } from '@/content/units';
+import type { WeightReason } from '@arda/tajweed';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { PageLayout } from '@arda/quran';
@@ -118,10 +119,15 @@ export const de = {
         intro:
           'Wie lange ein langer Vokal klingt: 2 Zählzeiten von Natur aus, 4–5 vor einem Hamza, 6 vor Shadda oder Sukūn.',
       },
-    } as Record<1 | 2 | 3 | 4 | 5, { title: string; intro: string }>,
+      6: {
+        title: 'Einheit 6 · Tafkhīm und Tarqīq',
+        intro:
+          'Schwer oder leicht: sieben Buchstaben sind immer schwer; das Lām von Allāh und das Rāʾ richten sich nach dem Vokal.',
+      },
+    } as Record<1 | 2 | 3 | 4 | 5 | 6, { title: string; intro: string }>,
     lab: 'Zum Buchstaben-Labor',
     letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
-    next: 'Einheit 6 (Tafkhīm und Tarqīq) und 7 (Waqf) folgen nach dem Pilot.',
+    next: 'Einheit 7 (Waqf und Ibtidāʾ) folgt nach dem Pilot.',
   },
   ruleCard: {
     play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
@@ -168,6 +174,16 @@ export const de = {
       min === max ? `${min} Zählzeiten` : `${min}–${max} Zählzeiten`,
     maddLetters: 'Die Madd-Buchstaben: Alif nach Fatḥa, Wāw nach Ḍamma, Yāʾ nach Kasra',
     thenHamza: 'Danach folgt ein Hamza:',
+    weights: { heavy: 'schwer (Tafkhīm)', light: 'leicht (Tarqīq)' },
+    lettersAlways: 'Diese sieben Buchstaben sind immer schwer',
+    when: {
+      'lam-heavy': 'Nach Fatḥa oder Ḍamma – und wenn die Lesung damit beginnt',
+      'lam-light': 'Nach Kasra, auch nach Tanwīn',
+      'ra-heavy':
+        'Mit Fatḥa oder Ḍamma; sākin nach Fatḥa oder Ḍamma, nach dem Verbindungs-Hamza oder vor einem schweren Buchstaben',
+      'ra-light': 'Mit Kasra; sākin nach Kasra',
+    },
+    lightKey: 'ohne Farbe = leicht (Tarqīq)',
     previous: 'Zurück',
     next: 'Weiter',
     done: 'Zur Einheit',
@@ -298,6 +314,36 @@ export const de = {
       ],
       tip: 'Auch die Buchstaben am Anfang mancher Sūren werden so gedehnt, z. B. الٓمٓ: „Lām“ und „Mīm“ je 6 Zählzeiten.',
     },
+    tafkhim: {
+      title: 'Die sieben schweren Buchstaben',
+      steps: [
+        'Erkenne einen der sieben Buchstaben خ ص ض غ ط ق ظ – Merkwort: خُصَّ ضَغْطٍ قِظْ.',
+        'Heb den hinteren Teil der Zunge zum Gaumen: Der Klang wird voll und dunkel.',
+        'Diese Buchstaben sind immer schwer, mit jedem Vokal und mit Sukūn.',
+        'Alle anderen Buchstaben sind leicht – bis auf das Lām von Allāh und das Rāʾ, die du auf den nächsten Karten lernst.',
+      ],
+      tip: 'Ein Alif nach einem schweren Buchstaben klingt mit ihm schwer (قَالَ), nach einem leichten leicht (كَانَ).',
+    },
+    'lam-jalala': {
+      title: 'Das Lām im Namen Allāh',
+      steps: [
+        'Erkenne das doppelte Lām im Namen Allāh (اللَّه), auch mit Vorsilbe: وَاللَّهِ, بِاللَّهِ, لِلَّهِ.',
+        'Schau auf den Vokal davor: Nach Fatḥa oder Ḍamma ist das Lām schwer.',
+        'Nach Kasra ist es leicht – auch nach einem Tanwīn, das vor dem Verbindungs-Hamza zu „-ni“ wird.',
+        'Beginnst du die Lesung mit Allāh, ist es schwer.',
+      ],
+      tip: 'Alle anderen Lām sind leicht, auch in لَعَلَّهُمْ oder اللَّهْوِ.',
+    },
+    ra: {
+      title: 'Das Rāʾ: schwer oder leicht',
+      steps: [
+        'Hat das Rāʾ Fatḥa oder Ḍamma, ist es schwer; mit Kasra ist es leicht.',
+        'Ruht das Rāʾ (Sukūn), entscheidet der Vokal davor: nach Fatḥa oder Ḍamma schwer, nach Kasra leicht.',
+        'Ausnahmen: Nach dem Verbindungs-Hamza (ارْجِعِي) und vor einem schweren Buchstaben im selben Wort (مِرْصَادًا) bleibt es schwer.',
+        'Roll das Rāʾ nicht: Ein einziger Schlag der Zungenspitze reicht.',
+      ],
+      tip: 'Wie das Rāʾ beim Anhalten klingt, lernst du in Einheit 7.',
+    },
   } as Record<CardId, { title: string; steps: string[]; tip: string }>,
   games: {
     eyebrow: (unit: number) => `Einheit ${unit} · Üben`,
@@ -387,6 +433,31 @@ export const de = {
         'madd-munfasil': 'Hamza am Anfang des nächsten Wortes',
         'madd-lazim': 'Shadda oder Sukūn im selben Wort',
       } as Record<MaddCard, string>,
+    },
+    weight: {
+      title: 'Schwer oder leicht?',
+      intro:
+        'Zehn echte Wörter: Ist das markierte Rāʾ oder das Lām von Allāh schwer oder leicht?',
+      question: 'Sprichst du den markierten Buchstaben schwer oder leicht?',
+      answers: { heavy: 'schwer', light: 'leicht' },
+      /** Why: the rāʾ or the lām of Allāh, sākin where a rāʾ rests, and the vowel. */
+      why: (card: WeightCard, reason: WeightReason) => {
+        const reasons = {
+          fatha: 'mit Fatḥa',
+          damma: 'mit Ḍamma',
+          kasra: 'mit Kasra',
+          'after-fatha': 'nach Fatḥa',
+          'after-damma': 'nach Ḍamma',
+          'after-kasra': 'nach Kasra',
+          'after-wasla': 'nach dem Verbindungs-Hamza',
+          'before-heavy': 'vor einem schweren Buchstaben',
+          start: 'am Anfang der Lesung',
+        } as Record<WeightReason, string>;
+        // A rāʾ without a vowel of its own rests (sākin).
+        const own = ['fatha', 'damma', 'kasra'].includes(reason);
+        const sakin = card === 'ra' && !own ? 'sākin ' : '';
+        return `${card === 'ra' ? 'Rāʾ' : 'Lām von Allāh'} ${sakin}${reasons[reason]}`;
+      },
     },
     shadda: 'Nūn oder Mīm mit Shadda',
   },

@@ -71,6 +71,9 @@ describe('heavy and light letters (unit 6)', () => {
 
   it('keep a rāʾ sākina heavy after hamzat al-waṣl and before a heavy letter', () => {
     expect(weights('ٱرْجِعِىٓ')).toEqual([['ra-heavy', 'after-wasla', 'رْ']]);
+    // Also where the spelling writes alif waṣla as a bare alif.
+    expect(weights('ارْجِعِي')).toEqual([['ra-heavy', 'after-wasla', 'رْ']]);
+    expect(weights('وَٱرْكَعُوا۟')).toEqual([['ra-heavy', 'after-wasla', 'رْ']]);
     expect(weights('رَبِّ ٱرْحَمْهُمَا')[1]).toEqual(['ra-heavy', 'after-wasla', 'رْ']);
     const [mirsad] = detect('مِرْصَادًا', { tafkhim: true }).filter(
       (o) => o.rule === 'ra-heavy'

@@ -6,6 +6,7 @@ import { Admin } from '@/modules/admin/Admin';
 import { SignIn } from '@/modules/account/SignIn';
 import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
+import { HeavyOrLight } from '@/modules/games/HeavyOrLight';
 import { MaddLength } from '@/modules/games/MaddLength';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { UnitTest } from '@/modules/games/UnitTest';
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
   { path: '/pfad/3/spiel/welche-regel', element: <WhichRule3 /> },
   { path: '/pfad/4/spiel/buchstaben', element: <QalqalaLetters /> },
   { path: '/pfad/5/spiel/wie-lang', element: <MaddLength /> },
+  { path: '/pfad/6/spiel/schwer-oder-leicht', element: <HeavyOrLight /> },
   { path: '/pfad/:unit/test', element: <UnitTest /> },
   { path: '/pfad/wiederholen', element: <ReviewSession /> },
   { path: '/labor/:letter/quiz', element: <LabQuizPage /> },

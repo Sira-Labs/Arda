@@ -617,6 +617,8 @@ describe('where an assignment leads (units 2–4)', () => {
     expect(gamePath('qalqala')).toBe('/pfad/4/spiel/buchstaben');
     expect(cardPath('madd-lazim')).toBe('/pfad/5/madd-lazim');
     expect(gamePath('madd-munfasil')).toBe('/pfad/5/spiel/wie-lang');
+    expect(cardPath('ra-light')).toBe('/pfad/6/ra');
+    expect(gamePath('lam-heavy')).toBe('/pfad/6/spiel/schwer-oder-leicht');
     expect(hasCard('qalqala')).toBe(true);
     expect(linkFor('learn', 'qalqala')).toBe('card');
     expect(linkFor('practise', 'idgham-shafawi')).toBe('game');
