@@ -16,9 +16,12 @@ import type {
   QueuedRecording,
   RecordingRepository,
   RemarkId,
+  ReviewInput,
+  ReviewOutcome,
   SaveOutcome,
   Verdict,
 } from '../src/recordings/repository.js';
+import { marksFit, type Mark } from '../src/recordings/repository.js';
 
 interface Row extends Omit<NewRecording, 'audio'> {
   id: string;
@@ -29,6 +32,7 @@ interface Row extends Omit<NewRecording, 'audio'> {
     verdict: Verdict;
     remark: RemarkId | null;
     note: string | null;
+    marks: Mark[];
     reviewerId: string;
     reviewedAt: string;
   } | null;
@@ -66,6 +70,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
             verdict: row.review.verdict,
             remark: row.review.remark,
             note: row.review.note,
+            marks: row.review.marks,
             reviewerName: this.names[row.review.reviewerId] ?? null,
             reviewedAt: row.review.reviewedAt,
           }
@@ -159,13 +164,19 @@ export class MemoryRecordingRepository implements RecordingRepository {
   async review(
     halaqaId: string,
     recordingId: string,
-    input: { verdict: Verdict; remark: RemarkId | null; note: string | null },
+    input: ReviewInput,
     reviewerId: string
-  ): Promise<boolean> {
+  ): Promise<ReviewOutcome> {
     const row = this.live().find((r) => r.id === recordingId && r.halaqaId === halaqaId);
-    if (!row) return false;
-    row.review = { ...input, reviewerId, reviewedAt: '2026-10-06T12:00:00.000Z' };
-    return true;
+    if (!row) return 'not_found';
+    if (!marksFit(row.range, input.marks)) return 'marks';
+    row.review = {
+      ...input,
+      marks: [...input.marks],
+      reviewerId,
+      reviewedAt: '2026-10-06T12:00:00.000Z',
+    };
+    return 'reviewed';
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

@@ -1531,18 +1531,48 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         await repo.review(
           halaqaId,
           ids[0]!,
-          { verdict: 'again', remark: 'sinVoiced', note: 'Das sīn stimmlos.' },
+          {
+            verdict: 'again',
+            remark: 'sinVoiced',
+            note: 'Das sīn stimmlos.',
+            marks: [{ aya: 1, word: 3 }],
+          },
           TEACHER
         )
-      ).toBe(true);
+      ).toBe('reviewed');
+      // A new answer replaces the marks; a word outside the āyāt or past an āya's end is refused.
+      expect(
+        await repo.review(
+          halaqaId,
+          ids[0]!,
+          {
+            verdict: 'again',
+            remark: 'sinVoiced',
+            note: 'Das sīn stimmlos.',
+            marks: [
+              { aya: 1, word: 2 },
+              { aya: 4, word: 5 },
+            ],
+          },
+          TEACHER
+        )
+      ).toBe('reviewed');
+      expect(
+        await repo.review(
+          halaqaId,
+          ids[0]!,
+          { verdict: 'good', remark: null, note: null, marks: [{ aya: 4, word: 6 }] },
+          TEACHER
+        )
+      ).toBe('marks');
       expect(
         await repo.review(
           '70000000-0000-4000-8000-000000000001',
           ids[1]!,
-          { verdict: 'good', remark: null, note: null },
+          { verdict: 'good', remark: null, note: null, marks: [] },
           TEACHER
         )
-      ).toBe(false);
+      ).toBe('not_found');
 
       const queue = await repo.queue(halaqaId, page);
       expect(queue.recordings.map((r) => r.id)).toEqual([ids[1], ids[2], ids[0]]);
@@ -1557,6 +1587,11 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
           verdict: 'again',
           remark: 'sinVoiced',
           note: 'Das sīn stimmlos.',
+          // The refused answer changed nothing.
+          marks: [
+            { aya: 1, word: 2 },
+            { aya: 4, word: 5 },
+          ],
           reviewerName: 'Sheikh Ahmad',
           reviewedAt: expect.any(String),
         },
@@ -1585,7 +1620,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await repo.review(
         halaqaId,
         kept.id,
-        { verdict: 'good', remark: null, note: null },
+        { verdict: 'good', remark: null, note: null, marks: [{ aya: 2, word: 1 }] },
         TEACHER
       );
       expect(await repo.remove(YUSUF, removed.id)).toBe(false);
@@ -1596,7 +1631,12 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
       const aminaExport = await new PgPrivacyRepository(pool).export(AMINA);
       expect(aminaExport.recordings).toEqual([
-        expect.objectContaining({ id: kept.id, sent_by_you: true, verdict: 'good' }),
+        expect.objectContaining({
+          id: kept.id,
+          sent_by_you: true,
+          verdict: 'good',
+          marks: [{ aya: 2, word: 1 }],
+        }),
       ]);
       expect(JSON.stringify(aminaExport.recordings)).not.toContain('fake opus');
       const teacherExport = await new PgPrivacyRepository(pool).export(TEACHER);
@@ -1610,6 +1650,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await repo.halaqaAudio(halaqaId, yusufs.id)).toBeNull();
       expect(await count('recordings')).toBe(0);
       expect(await count('recording_audio')).toBe(0);
+      expect(await count('recording_marks')).toBe(0);
     });
   });
 
