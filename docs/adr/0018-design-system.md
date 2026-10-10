@@ -29,3 +29,12 @@ best on warm paper.
 ## Consequences
 
 Design changes start in the design spec and the tokens, then the components.
+
+## Update 2026-10-11: a seventh family, tafkhīm (violet)
+
+- Unit 6 teaches heavy and light letters, so the cards need a colour for heavy. **Violet**
+  (`#6b3fa0` on paper, 7.3:1; `#c3a6f0` at night, 7.8:1), a hue apart from qalqala's blue and
+  darker than it, so the two differ in lightness too. Light letters stay uncoloured, as clear
+  ones do: tarqīq is the default.
+- The muṣḥaf does not colour tafkhīm (the pack has no such category), so the muṣḥaf's legend
+  lists only the families the pack draws (`MUSHAF_FAMILIES`); the rule cards name their own.

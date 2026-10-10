@@ -72,13 +72,14 @@ sheikh).
 
 ### Colour families (display, design spec §4)
 
-| Family                      | Rules                                                                          |
-| --------------------------- | ------------------------------------------------------------------------------ |
-| ghunna (green)              | ikhfāʾ, idghām with ghunna, iqlāb, ikhfāʾ/idghām shafawī, mushaddad nūn/mīm    |
-| qalqala (blue)              | qalqala                                                                        |
-| silent (grey)               | hamzat al-waṣl, lām shamsiyya, silent letters, idghām without ghunna (the nūn) |
-| madd (red, darker = longer) | madd 2 (ṭabīʿī), 4–5 (muttaṣil, munfaṣil), 6 (lāzim)                           |
-| none                        | iẓhār (clear is the default)                                                   |
+| Family                      | Rules                                                                                 |
+| --------------------------- | ------------------------------------------------------------------------------------- |
+| ghunna (green)              | ikhfāʾ, idghām with ghunna, iqlāb, ikhfāʾ/idghām shafawī, mushaddad nūn/mīm           |
+| qalqala (blue)              | qalqala                                                                               |
+| silent (grey)               | hamzat al-waṣl, lām shamsiyya, silent letters, idghām without ghunna (the nūn)        |
+| madd (red, darker = longer) | madd 2 (ṭabīʿī), 4–5 (muttaṣil, munfaṣil), 6 (lāzim)                                  |
+| tafkhīm (violet)            | the seven heavy letters, the lām of Allāh and the rāʾ when heavy (unit 6, cards only) |
+| none                        | iẓhār (clear is the default)                                                          |
 
 ## 4. Acceptance fixtures from the sheet
 
@@ -143,6 +144,30 @@ it decides (Ḥafṣ by way of ash-Shāṭibiyya, counts in `RULES[id].counts`):
   reads ʿUthmānī and plainly vocalised text; IndoPak's madd signs differ, and the muṣḥaf takes its
   rules from the pack anyway (ADR-0008).
 
+## 4c. Heavy and light letters (unit 6, engine)
+
+`detect(text, { tafkhim: true })` also finds the heavy (tafkhīm) and light (tarqīq) letters,
+read joined (waṣl), in Ḥafṣ by way of ash-Shāṭibiyya. Each occurrence says why (`reason`), for
+the cards and the game's feedback. The muṣḥaf does not colour them (cpfair has no such
+category), so its legend leaves the family out; the cards of unit 6 do.
+
+| Rule              | Heavy                                                                                                 | Light                                 |
+| ----------------- | ----------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| The seven letters | خ ص ض غ ط ق ظ (istiʿlāʾ, خُصَّ ضَغْطٍ قِظْ): always                                                   | –                                     |
+| Lām of Allāh      | after fatḥa or ḍamma (قَالَ ٱللَّهُ, رَسُولُ ٱللَّهِ), at the start of reading                        | after kasra (بِسْمِ ٱللَّهِ, لِلَّهِ) |
+| Rāʾ with a vowel  | with fatḥa or ḍamma (رَبِّ, خَيْرٌ)                                                                   | with kasra (رِجَالٌ)                  |
+| Rāʾ sākina        | after fatḥa or ḍamma (مَرْيَمَ), after hamzat al-waṣl (ٱرْجِعِىٓ), before a heavy letter (مِرْصَادًا) | after kasra (فِرْعَوْنَ)              |
+
+- The vowel before the lām of Allāh is the one heard: letters without a vowel of their own
+  (alif waṣla, the lām of "al", madd letters, silent letters) are passed over (قَالُوا۟ ٱللَّهُ is
+  heavy, فِى ٱللَّهِ light), and a tanwīn before alif waṣla is read with kasra (أَحَدٌ ٱللَّهُ).
+- Only the doubled lām of the name is the lām of Allāh: ٱللَّهْوِ, لَعَلَّهُمْ and لَّهُمْ are not.
+- A rāʾ merged into the next one (وَٱذْكُر رَّبَّكَ) is read once.
+- Left to waqf (unit 7) and the cards: the rāʾ at a stop, the words where both are allowed
+  (فِرْقٍ, مِصْرَ), the alif after a heavy letter and the degrees of tafkhīm.
+- Checked on both ʿUthmānī packs (all 305 lāms of Allāh and 1,335 rāʾs read as above) and
+  against every rāʾ word of the letter lab (`tools/test/lab.test.ts`).
+
 ## 5. Rendering checks (IndoPak font)
 
 - DigitalKhatt IndoPak renders IndoPak text with U+0652 sukūn; the ʿUthmānī U+06E1 shows a
@@ -178,8 +203,8 @@ silence before the word when there is one within 300 ms, forward to the next pau
 | ص      | as س, the back of the tongue raised and spread to the palate                                 | hams, rakhāwa, istiʿlāʾ, iṭbāq, iṣmāt, ṣafīr              |
 | ر      | tip of the tongue with a little of its back on the gum ridge, slightly behind the point of ن | jahr, tawassuṭ, istifāl, infitāḥ, idhlāq, inḥirāf, takrīr |
 
-Rāʾ is taught only in its clear cases (vowelled: heavy with fatḥa or ḍamma, light with kasra);
-rāʾ sākina and the rest wait for the sheikh.
+The lab asks rāʾ only in its clear cases (vowelled: heavy with fatḥa or ḍamma, light with
+kasra); rāʾ sākina is taught in unit 6 (§4c), a draft for the sheikh like the rest.
 
 ## 6. Review workflow
 
