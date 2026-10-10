@@ -116,14 +116,15 @@ go too. The range is checked against the muṣḥaf (`@arda/quran`) and the rule
 `@arda/tajweed` by the API; the database keeps the shape (read and recite need āyāt, learn and
 practise a rule). Word keys replace the sūra and āya columns when the content packs arrive.
 
-Built (migration `0006_recordings`, spec F7 and T3, ADR-0012):
+Built (migrations `0006_recordings` and `0011_recording_marks`, spec F7 and T3, ADR-0012):
 
 | Table             | Purpose                                                                                                                                                                                                                     |
 | ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `recordings`      | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when |
 | `recording_audio` | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                             |
+| `recording_marks` | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words); written and replaced with the answer                                                                               |
 
-Both cascade with the student's membership, so leaving, being removed or deleting the account
+All three cascade with the student's membership, so leaving, being removed or deleting the account
 deletes the student's recordings; the export lists them without the sound.
 
 Built (migration `0007_progress`, S5.2, ADR-0022):
@@ -214,7 +215,7 @@ in `recordings.routes.test.ts`; sound answered with byte ranges, which Safari ne
 | `POST /halaqat/:id/recordings?clientId=…`               | `halaqa:study` (student)  | send a take: the body is the sound (WebM, Ogg, MP4), the query what it recites; ≤ 6 MB, 10 min, 500 per student |
 | `GET /halaqat/:id/recordings?before=`                   | `halaqa:review` (teacher) | the queue, 50 at a time: waiting first, oldest first, then answered                                             |
 | `GET /halaqat/:id/recordings/:rid/audio`                | `halaqa:review`           | hear it                                                                                                         |
-| `PUT /halaqat/:id/recordings/:rid/review`               | `halaqa:review`           | answer `{ verdict, remark?, note? }`; again replaces it                                                         |
+| `PUT /halaqat/:id/recordings/:rid/review`               | `halaqa:review`           | answer `{ verdict, remark?, note?, marks? }`; again replaces it; ≤ 100 marks, each a word of the recited āyāt   |
 | `GET /recordings?before=`                               | `recitation:own`          | my recordings and their answers, newest first                                                                   |
 | `GET /recordings/:rid/audio`, `DELETE /recordings/:rid` | `recitation:own`          | hear or delete my own                                                                                           |
 

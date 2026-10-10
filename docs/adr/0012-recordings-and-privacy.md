@@ -46,3 +46,11 @@ S4.2 shipped with an interim store:
   consent for a student under 16 is still to be recorded by the teacher (next with T4).
 - **Deleting:** the student deletes any take; leaving the ḥalaqa or deleting the account
   deletes them (foreign keys to the membership). The export lists them without the sound.
+
+## Update 2026-10-10: marks on words
+
+The teacher's answer can mark words of the recited āyāt (spec T3), stored in `recording_marks`
+(migration `0011`) beside the verdict, remark and note. They follow the same rules: only the
+student and the ḥalaqa's teachers see them, the export lists them, and they are deleted with
+the recording. Keeping verdicts and marks as text after a recording is gone is the ʿarḍ log's
+job (T4); until it exists, deleting a recording deletes its answer too.
