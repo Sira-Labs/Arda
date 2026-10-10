@@ -626,13 +626,12 @@ export const fr: Messages = {
   struggles: {
     title: 'Règle par règle',
     intro:
-      'Qui a encore du mal avec quelle règle\u202f: les erreurs des jeux pas encore acquises, et tes remarques rapides et mots marqués des 90 derniers jours.',
+      'Qui a encore du mal avec quelle règle\u202f: les erreurs des jeux pas encore acquises, et les remarques rapides et mots marqués dans les réponses des 90 derniers jours.',
     none: 'Personne n’a de difficulté avec une règle en ce moment, ou rien n’a encore été pratiqué.',
     open: (count) =>
       count === 1 ? '1 erreur de jeu en cours' : `${count} erreurs de jeu en cours`,
-    remarks: (count) => `noté ${count}× par toi`,
-    marks: (count) =>
-      count === 1 ? '1 mot marqué par toi' : `${count} mots marqués par toi`,
+    remarks: (count) => `noté ${count}×`,
+    marks: (count) => (count === 1 ? '1 mot marqué' : `${count} mots marqués`),
     last: (day) => `dernière fois le ${day}`,
     topics: {
       madd: 'Madd (allongement)',
