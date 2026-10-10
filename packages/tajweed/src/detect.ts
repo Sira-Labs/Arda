@@ -11,6 +11,7 @@ import {
   isArabicLetter,
   letterOf,
 } from './letters';
+import { maddOccurrences } from './madd';
 import { type RuleId, isQalqalaLetter, mimSakinaRule, nunSakinaRule } from './rules';
 
 /** One place where a rule applies, as code-unit offsets into the text it was found in. */
@@ -86,13 +87,14 @@ const isIdgham = (rule: RuleId): boolean =>
 
 /**
  * Finds the rules of units 2–4 in vocalised text: nūn sākina and tanwīn, mīm sākina, ghunna on
- * a mushaddad nūn or mīm, and qalqala on a sākin letter. Pure and deterministic; the muṣḥaf's
- * rule layer comes from the content pack (ADR-0008), this is for the sheet's examples, the
- * games and checking the pack.
+ * a mushaddad nūn or mīm, and qalqala on a sākin letter; with `madd`, also the madd rules of
+ * unit 5 (asked for, so the cards and games of units 2–4 keep showing only their rules). Pure
+ * and deterministic; the muṣḥaf's rule layer comes from the content pack (ADR-0008), this is
+ * for the sheet's examples, the games and checking the pack. Occurrences come in text order.
  *
- * Not covered yet: madd, lām shamsiyya, hamzat al-waṣl and the rules at a stop (waqf).
+ * Not covered yet: lām shamsiyya, hamzat al-waṣl and the rules at a stop (waqf).
  */
-export function detect(text: string): Occurrence[] {
+export function detect(text: string, options: { madd?: boolean } = {}): Occurrence[] {
   const gs = graphemes(text);
   const found: Occurrence[] = [];
   // The letter a nūn or mīm merged into: its shadda is that idghām, not a second ghunna.
@@ -137,7 +139,8 @@ export function detect(text: string): Occurrence[] {
       found.push({ rule: 'qalqala', start: g.start, carrierEnd: g.end, end: g.end });
     }
   }
-  return found;
+  if (!options.madd) return found;
+  return [...found, ...maddOccurrences(gs)].sort((a, b) => a.start - b.start);
 }
 
 /** An occurrence from its carrier and the letter that decided it. */

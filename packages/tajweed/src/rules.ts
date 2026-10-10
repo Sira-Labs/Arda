@@ -26,11 +26,25 @@ export const RULE_IDS = [
   'ikhfa-shafawi',
   'ghunna-mushaddad',
   'qalqala',
+  'madd-tabii',
+  'madd-muttasil',
+  'madd-munfasil',
+  'madd-lazim',
 ] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
+/** The madd rules of unit 5 (spec 01, the path; spec 03 §4b): found by `detect` only when asked (`madd: true`). */
+export const MADD_RULES = [
+  'madd-tabii',
+  'madd-muttasil',
+  'madd-munfasil',
+  'madd-lazim',
+] as const;
+export type MaddRule = (typeof MADD_RULES)[number];
+
 /** Which sound the rule is about. */
-export type RuleSubject = 'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala';
+export type RuleSubject =
+  'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala' | 'madd';
 
 export interface Rule {
   id: RuleId;
@@ -45,6 +59,11 @@ export interface Rule {
   ghunna: boolean;
   /** The letters after the nūn or mīm that call for the rule (or the letters themselves). */
   letters: readonly Letter[];
+  /**
+   * How long a madd is held, in counts (ḥarakāt): fewest and most in Ḥafṣ by way of
+   * ash-Shāṭibiyya, the reading of the sheikh's muṣḥaf. Absent for the other rules.
+   */
+  counts?: readonly [number, number];
 }
 
 const rule = (r: Rule): Rule => r;
@@ -146,7 +165,56 @@ export const RULES: Readonly<Record<RuleId, Rule>> = {
     // quṭbu jadd
     letters: ['ق', 'ط', 'ب', 'ج', 'د'],
   }),
+  // The madd letters are alif after fatḥa, wāw sākina after ḍamma and yāʾ sākina after kasra
+  // (and the small alif, wāw and yāʾ the muṣḥaf writes for them); what follows them decides
+  // the madd. The alif is not one of the 28 (hamza stands for it), so `letters` names what
+  // decides the madd: the hamza, or nothing for the natural madd.
+  'madd-tabii': rule({
+    id: 'madd-tabii',
+    subject: 'madd',
+    arabic: 'مَدّ طَبِيعِيّ',
+    term: 'Madd ṭabīʿī',
+    family: 'madd-2',
+    ghunna: false,
+    letters: [],
+    counts: [2, 2],
+  }),
+  'madd-muttasil': rule({
+    id: 'madd-muttasil',
+    subject: 'madd',
+    arabic: 'مَدّ مُتَّصِل',
+    term: 'Madd muttaṣil',
+    family: 'madd-4',
+    ghunna: false,
+    letters: ['ء'],
+    counts: [4, 5],
+  }),
+  'madd-munfasil': rule({
+    id: 'madd-munfasil',
+    subject: 'madd',
+    arabic: 'مَدّ مُنْفَصِل',
+    term: 'Madd munfaṣil',
+    family: 'madd-4',
+    ghunna: false,
+    letters: ['ء'],
+    counts: [4, 5],
+  }),
+  // A shadda or sukūn after the madd letter in the same word (al-kalimī al-muthaqqal or
+  // al-mukhaffaf; the letters at the start of some sūras are taught with the cards).
+  'madd-lazim': rule({
+    id: 'madd-lazim',
+    subject: 'madd',
+    arabic: 'مَدّ لَازِم',
+    term: 'Madd lāzim',
+    family: 'madd-6',
+    ghunna: false,
+    letters: [],
+    counts: [6, 6],
+  }),
 };
+
+export const isMaddRule = (rule: RuleId): rule is MaddRule =>
+  (MADD_RULES as readonly RuleId[]).includes(rule);
 
 /** The four rules of nūn sākina and tanwīn: together they cover every letter exactly once. */
 export const NUN_SAKINA_RULES = [

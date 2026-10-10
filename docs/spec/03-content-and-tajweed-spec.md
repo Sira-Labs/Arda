@@ -110,6 +110,34 @@ the packs, and the engine test checks the rule. Drafts until the sheikh has revi
 | Iẓhār shafawī       | أَلَمْ تَرَ (105:1:1)                                                                                               |
 | Qalqala (ق ط ب ج د) | قَدْ أَفْلَحَ (87:14:1), أَطْعَمَهُمْ (106:4:2), الْأَبْتَرُ (108:3:4), النَّجْدَيْنِ (90:10:2), خَلَقْنَا (90:4:2) |
 
+## 4b. Madd (unit 5, engine)
+
+`detect(text, { madd: true })` also finds the madd rules; without the option it returns only
+the rules of units 2–4, so their cards and games are unchanged. A madd letter is alif (or alif
+maqṣūra) after fatḥa, wāw after ḍamma, yāʾ (ʿUthmānī ى) after kasra, each without a vowel of
+its own, or a letter with a long-vowel sign (small alif, small wāw or yāʾ). What is read after
+it decides (Ḥafṣ by way of ash-Shāṭibiyya, counts in `RULES[id].counts`):
+
+| Rule          | After the madd letter                                    | Counts | Example                         |
+| ------------- | -------------------------------------------------------- | ------ | ------------------------------- |
+| Madd ṭabīʿī   | nothing that lengthens it                                | 2      | قَالَ, فِيهِ, يَقُولُونَ        |
+| Madd muttaṣil | a hamza in the same word                                 | 4–5    | ٱلسَّمَآءِ, جَآءَ               |
+| Madd munfaṣil | a hamza starting the next word                           | 4–5    | بِمَآ أُنزِلَ, فِىٓ أَنفُسِكُمْ |
+| Madd lāzim    | a shadda or sukūn in the same word (with the madda sign) | 6      | ٱلضَّآلِّينَ, ٱلْحَآقَّةُ       |
+
+- The vocative yā and the hā of attention are written joined to the next word but are words of
+  their own: يَٰٓأَيُّهَا, هَٰٓؤُلَآءِ, يَٰٓـَٔادَمُ are munfaṣil (ḥukmī).
+- Not madd: a madd letter before alif waṣla (فِى ٱلْأَرْضِ), līn (شَىْءٍ, خَوْفٌ), letters marked
+  silent, the seat of fatḥatān.
+- Badal and the other madds of two counts in Ḥafṣ are ṭabīʿī here (ءَامَنُوا۟).
+- Left to the cards and to waqf (unit 7): the ʿāriḍ at a stop and the opening letters of sūras
+  (الٓمٓ).
+- Checked against cpfair in both ʿUthmānī packs (`tools/test/pack.test.ts`): the long madds
+  agree word by word, and every natural madd cpfair marks (only where a sign writes it) is found.
+  The only differences are the munfaṣil ḥukmī above (cpfair: muttaṣil) and الٓمٓ. The engine
+  reads ʿUthmānī and plainly vocalised text; IndoPak's madd signs differ, and the muṣḥaf takes its
+  rules from the pack anyway (ADR-0008).
+
 ## 5. Rendering checks (IndoPak font)
 
 - DigitalKhatt IndoPak renders IndoPak text with U+0652 sukūn; the ʿUthmānī U+06E1 shows a
