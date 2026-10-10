@@ -81,6 +81,11 @@ describe('the logo in the app', () => {
     const brand = nav.querySelector('.app-brand') as HTMLElement;
     expect(brand).toHaveTextContent('ʿArḍa');
     expect(brand.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
-    expect(within(nav).getAllByRole('link')).toHaveLength(5);
+    // Today, path, muṣḥaf, lab, the student's plan and the sheikh.
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((a) => a.getAttribute('href'))
+    ).toEqual(['/', '/pfad', '/mushaf', '/labor', '/lernplan', '/sheikh']);
   });
 });

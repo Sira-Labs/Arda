@@ -9,6 +9,7 @@ export const en: Messages = {
     path: 'Path',
     mushaf: 'Muṣḥaf',
     lab: 'Lab',
+    plan: 'Plan',
     sheikh: 'Sheikh',
   },
   brand: {
@@ -642,6 +643,7 @@ export const en: Messages = {
     submit: 'Add',
     written: 'Added.',
     remove: 'Remove',
+    former: 'Former students',
     mine: 'Your ʿarḍ',
     mineIntro: 'Which sūras you recited to your sheikh and how he found them.',
   },

@@ -6,8 +6,8 @@ import { LogoLockup } from './Logo';
 
 /**
  * One navigation for both layouts (docs/spec/04-design-system.md): a floating bottom bar on
- * phones, a sidebar from 960 px. Five destinations, the same order as the learning loop. In
- * Arabic the whole shell mirrors (dir="rtl").
+ * phones, a sidebar from 960 px. Six destinations: the learning loop in order, the student's
+ * own plan (owner, 2026-10-10) and the sheikh. In Arabic the whole shell mirrors (dir="rtl").
  */
 export const NAVIGATION: readonly {
   to: string;
@@ -18,6 +18,7 @@ export const NAVIGATION: readonly {
   { to: '/pfad', label: 'path', icon: 'path' },
   { to: '/mushaf', label: 'mushaf', icon: 'mushaf' },
   { to: '/labor', label: 'lab', icon: 'lab' },
+  { to: '/lernplan', label: 'plan', icon: 'plan' },
   { to: '/sheikh', label: 'sheikh', icon: 'sheikh' },
 ];
 
@@ -26,7 +27,7 @@ export function AppShell() {
   return (
     <div className="app">
       <nav className="app-nav" aria-label={m.nav.label}>
-        {/* The brand tops the sidebar; the phone's bottom bar has room for the five places only. */}
+        {/* The brand tops the sidebar; the phone's bottom bar has room for the six places only. */}
         <span className="app-brand">
           <LogoLockup name={m.nav.brand} />
         </span>
