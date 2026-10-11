@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { detect } from '@arda/tajweed';
+import { detect, isWaqfRule } from '@arda/tajweed';
 import { describe, expect, it } from 'vitest';
 import {
   CARD_EXAMPLES,
@@ -24,8 +24,9 @@ describe('the rule cards’ examples in the Qurʾān', () => {
     expect([...heard, ...data.missing].sort()).toEqual(
       [...new Set(CARD_EXAMPLES.map((e) => e.text))].sort()
     );
-    // The sheet's iẓhār shafawī example is a phrase, not a quotation.
-    expect(data.missing).toEqual(['عَلَيْهِمْ سَلَامٌ']);
+    // The sheet's iẓhār shafawī example is a phrase, not a quotation; two starts on ḍamma
+    // begin no āya, so the reciter runs on into them and the start is not heard.
+    expect(data.missing).toEqual(['عَلَيْهِمْ سَلَامٌ', 'اعْبُدُوا', 'اسْكُنْ']);
   });
 
   it('keeps only places with the example’s letters and the card’s rule, heard on their own', () => {
@@ -36,7 +37,9 @@ describe('the rule cards’ examples in the Qurʾān', () => {
       );
       expect(e.to - e.from + 1, e.text).toBe(words.length);
       expect(
-        detect(e.uthmani, { madd: true, tafkhim: true }).map((o) => o.rule),
+        detect(e.uthmani, { madd: true, tafkhim: true, waqf: isWaqfRule(e.rule) }).map(
+          (o) => o.rule
+        ),
         e.text
       ).toContain(e.rule);
       if (e.before !== null) expect(joinsNasal(e.before, words[0]!), e.text).toBe(false);

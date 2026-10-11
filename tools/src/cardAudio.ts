@@ -3,6 +3,7 @@ import {
   SHEET_EXAMPLES,
   UNIT_EXAMPLES,
   detect,
+  isWaqfRule,
   type RuleId,
   type SheetExample,
 } from '@arda/tajweed';
@@ -12,7 +13,7 @@ import { splitWords } from './words';
 
 /**
  * The rule cards' examples heard (spec F2, "each example playable"): every example of the
- * sheikh's sheet and of units 3–6 is looked up in the whole Qurʾān, where al-Ḥuṣarī's
+ * sheikh's sheet and of units 3–7 is looked up in the whole Qurʾān, where al-Ḥuṣarī's
  * teaching recitation says it, and played from its āya's file. The sheet spells its examples
  * the common way (every sukūn and alif written) and some are set phrases rather than quotations
  * (عَلِيمٌ حَكِيمٌ), so an example is found by its letters, the closest vowels winning, and kept
@@ -152,12 +153,17 @@ export function locate(
       const span = ayaText.slice(i, i + words.length);
       if (span.map(skeleton).join(' ') !== want) continue;
       const uthmani = span.join(' ');
-      const rules = detect(uthmani, { madd: true, tafkhim: true });
+      // Unit 7's examples are read at a stop or at a start, and heard only where the reciter
+      // stops (the āya ends with them) or starts (the āya begins with them).
+      const waqf = isWaqfRule(example.expectedRule);
+      const rules = detect(uthmani, { madd: true, tafkhim: true, waqf });
       if (!rules.some((o) => o.rule === example.expectedRule)) continue;
+      if (waqf && example.expectedRule.startsWith('ibtida') && i !== 0) continue;
       const before = i > 0 ? ayaText[i - 1]! : null;
       if (before !== null && joinsNasal(before, span[0]!)) continue;
       const time = timedSpan(timings, sura, aya, i + 1, i + words.length);
       if (!time) continue;
+      if (waqf && !example.expectedRule.startsWith('ibtida') && !time.last) continue;
       const own = keyed && keyed[0] === sura && keyed[1] === aya && keyed[2] === i + 1;
       found.push({
         text: example.text,

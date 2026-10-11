@@ -1,13 +1,23 @@
 import { describe, expect, it } from 'vitest';
-import { MADD_RULES, RULES, UNIT_EXAMPLES, detect, isMaddRule } from '../src';
+import {
+  MADD_RULES,
+  RULES,
+  UNIT_EXAMPLES,
+  WAQF_RULES,
+  detect,
+  isMaddRule,
+  isWaqfRule,
+} from '../src';
 
-describe('examples of units 3–6', () => {
+describe('examples of units 3–7', () => {
   it.each(UNIT_EXAMPLES.map((e) => [e.text, e.expectedRule] as const))(
     '%s shows %s',
     (text, rule) => {
-      expect(detect(text, { madd: true, tafkhim: true }).map((o) => o.rule)).toContain(
-        rule
-      );
+      // A stop reads the last word differently, so it is asked for unit 7's examples only.
+      const waqf = isWaqfRule(rule);
+      expect(
+        detect(text, { madd: true, tafkhim: true, waqf }).map((o) => o.rule)
+      ).toContain(rule);
     }
   );
 
@@ -71,6 +81,23 @@ describe('examples of units 3–6', () => {
         'after-kasra',
       ])
     );
+  });
+
+  it('gives unit 7 three or four words for each way to stop and to start', () => {
+    for (const rule of WAQF_RULES) {
+      const examples = UNIT_EXAMPLES.filter((e) => e.expectedRule === rule);
+      expect(examples.length, rule).toBeGreaterThanOrEqual(3);
+      for (const { text } of examples) {
+        const found = detect(text, { waqf: true }).map((o) => o.rule);
+        // One way to end and, for the starts, one way to begin: the one the example shows.
+        const ends = found.filter((r) => isWaqfRule(r) && !r.startsWith('ibtida'));
+        const starts = found.filter((r) => r.startsWith('ibtida'));
+        if (rule.startsWith('ibtida')) expect(starts, text).toEqual([rule]);
+        else if (rule === 'madd-arid' || rule === 'madd-lin') {
+          expect(ends, text).toEqual([rule, 'waqf-sukun']);
+        } else expect(ends, text).toEqual([rule]);
+      }
+    }
   });
 
   it('cites a word key for every example', () => {

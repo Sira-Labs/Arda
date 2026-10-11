@@ -1,8 +1,9 @@
 import type { SheetExample } from './sheet';
 
 /**
- * Examples for units 3–6 beyond the sheet (spec 03 §4): the sheet gives one example per mīm
- * sākina rule and none for the ghunna of a shadda, for qalqala, madd or tafkhīm. These are real words of
+ * Examples for units 3–7 beyond the sheet (spec 03 §4): the sheet gives one example per mīm
+ * sākina rule and none for the ghunna of a shadda,  for qalqala, madd, tafkhīm or
+ * waqf. These are real words of
  * the Qurʾān, spelt like the sheet (every sukūn written), each with the word key it was
  * checked against in the Tanzil text. Drafts until the sheikh has reviewed them.
  */
@@ -86,4 +87,41 @@ export const UNIT_EXAMPLES: readonly SheetExample[] = [
   { text: 'فِرْعَوْنَ', expectedRule: 'ra-light', wordKey: 'hafs:79:17:3' },
   { text: 'فَذَكِّرْ', expectedRule: 'ra-light', wordKey: 'hafs:87:9:1' },
   { text: 'وَالْفَجْرِ', expectedRule: 'ra-light', wordKey: 'hafs:89:1:1' },
+
+  // Waqf: the last word as the reciter stops on it, each at the end of an āya.
+  { text: 'أَحَدٌ', expectedRule: 'waqf-sukun', wordKey: 'hafs:112:1:4' },
+  { text: 'الْفَلَقِ', expectedRule: 'waqf-sukun', wordKey: 'hafs:113:1:4' },
+  { text: 'لَهَبٍ', expectedRule: 'waqf-sukun', wordKey: 'hafs:111:3:4' },
+  { text: 'عَلَقٍ', expectedRule: 'waqf-sukun', wordKey: 'hafs:96:2:4' },
+  { text: 'أَوْتَادًا', expectedRule: 'madd-iwad', wordKey: 'hafs:78:7:2' },
+  { text: 'سُبَاتًا', expectedRule: 'madd-iwad', wordKey: 'hafs:78:9:3' },
+  { text: 'لِبَاسًا', expectedRule: 'madd-iwad', wordKey: 'hafs:78:10:3' },
+  { text: 'أَفْوَاجًا', expectedRule: 'madd-iwad', wordKey: 'hafs:110:2:7' },
+  { text: 'الْقَارِعَةُ', expectedRule: 'waqf-ha', wordKey: 'hafs:101:1:1' },
+  { text: 'الْبَيِّنَةُ', expectedRule: 'waqf-ha', wordKey: 'hafs:98:1:12' },
+  { text: 'الْحُطَمَةُ', expectedRule: 'waqf-ha', wordKey: 'hafs:104:5:4' },
+  { text: 'الْمُوقَدَةُ', expectedRule: 'waqf-ha', wordKey: 'hafs:104:6:3' },
+
+  // Madd ʿāriḍ and līn: before the last letter of an āya, 2, 4 or 6 counts.
+  { text: 'الرَّحِيمِ', expectedRule: 'madd-arid', wordKey: 'hafs:1:1:4' },
+  { text: 'الْعَٰلَمِينَ', expectedRule: 'madd-arid', wordKey: 'hafs:1:2:4' },
+  { text: 'نَسْتَعِينُ', expectedRule: 'madd-arid', wordKey: 'hafs:1:5:4' },
+  { text: 'الْمُسْتَقِيمَ', expectedRule: 'madd-arid', wordKey: 'hafs:1:6:3' },
+  { text: 'قُرَيْشٍ', expectedRule: 'madd-lin', wordKey: 'hafs:106:1:2' },
+  { text: 'وَالصَّيْفِ', expectedRule: 'madd-lin', wordKey: 'hafs:106:2:4' },
+  { text: 'الْبَيْتِ', expectedRule: 'madd-lin', wordKey: 'hafs:106:3:4' },
+  { text: 'خَوْفٍ', expectedRule: 'madd-lin', wordKey: 'hafs:106:4:7' },
+
+  // Ibtidāʾ on alif waṣla: fatḥa and kasra where an āya begins with it, ḍamma within an āya.
+  { text: 'الْحَمْدُ', expectedRule: 'ibtida-fatha', wordKey: 'hafs:1:2:1' },
+  { text: 'الَّذِي', expectedRule: 'ibtida-fatha', wordKey: 'hafs:78:3:1' },
+  { text: 'النَّجْمُ', expectedRule: 'ibtida-fatha', wordKey: 'hafs:86:3:1' },
+  { text: 'النَّارِ', expectedRule: 'ibtida-fatha', wordKey: 'hafs:85:5:1' },
+  { text: 'ادْعُ', expectedRule: 'ibtida-damma', wordKey: 'hafs:2:68:2' },
+  { text: 'اعْبُدُوا', expectedRule: 'ibtida-damma', wordKey: 'hafs:2:21:3' },
+  { text: 'اسْكُنْ', expectedRule: 'ibtida-damma', wordKey: 'hafs:2:35:3' },
+  { text: 'ادْخُلُوا', expectedRule: 'ibtida-damma', wordKey: 'hafs:2:58:3' },
+  { text: 'اقْرَأْ', expectedRule: 'ibtida-kasra', wordKey: 'hafs:96:1:1' },
+  { text: 'اهْدِنَا', expectedRule: 'ibtida-kasra', wordKey: 'hafs:1:6:1' },
+  { text: 'اذْهَبْ', expectedRule: 'ibtida-kasra', wordKey: 'hafs:79:17:1' },
 ];
