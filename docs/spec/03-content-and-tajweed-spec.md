@@ -96,10 +96,10 @@ rule in the example, in reading order) or, when it is absent, only `expectedRule
 | مِنْ تَابَ, مِنْ ثَمَرَةٍ, مَنْ جَاءَ, مِنْ دِيَارِهِمْ, نَفْسٍ ذَائِقَةٍ, مِنْكُمْ    | ikhfāʾ                          |
 | تَرْمِيهِمْ بِحِجَارَةٍ / لَكُمْ مَا / عَلَيْهِمْ سَلَامٌ                              | ikhfāʾ / idghām / iẓhār shafawī |
 
-## 4a. Examples beyond the sheet (units 3–6, draft)
+## 4a. Examples beyond the sheet (units 3–7, draft)
 
 The sheet gives one example per mīm sākina rule and none for the ghunna of a shadda, for
-qalqala, madd or tafkhīm. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet
+qalqala, madd, tafkhīm or waqf. `UNIT_EXAMPLES` in `@arda/tajweed` adds real words, spelt like the sheet
 (every sukūn written, and the madda where the muṣḥaf writes it); `tools/test/examples.test.ts`
 checks every word key against the Tanzil text in the packs, and the engine test checks the
 rule. Drafts until the sheikh has reviewed them.
@@ -120,6 +120,14 @@ rule. Drafts until the sheikh has reviewed them.
 | Lām of Allāh, light | بِسْمِ اللَّهِ (1:1:1), الْحَمْدُ لِلَّهِ (1:2:1), دِينِ اللَّهِ (110:2:5), بِاللَّهِ (2:8:6)                                                |
 | Rāʾ, heavy          | رَبِّ (1:2:3), مَرْيَمَ (2:87:12), ارْجِعِي (89:28:1), مِرْصَادًا (78:21:4)                                                                  |
 | Rāʾ, light          | رِزْقًا (2:22:16), فِرْعَوْنَ (79:17:3), فَذَكِّرْ (87:9:1), وَالْفَجْرِ (89:1:1)                                                            |
+| Waqf: sukūn         | أَحَدٌ (112:1:4), الْفَلَقِ (113:1:4), لَهَبٍ (111:3:4), عَلَقٍ (96:2:4)                                                                     |
+| Waqf: madd al-ʿiwaḍ | أَوْتَادًا (78:7:2), سُبَاتًا (78:9:3), لِبَاسًا (78:10:3), أَفْوَاجًا (110:2:7)                                                             |
+| Waqf: tāʾ marbūṭa   | الْقَارِعَةُ (101:1:1), الْبَيِّنَةُ (98:1:12), الْحُطَمَةُ (104:5:4), الْمُوقَدَةُ (104:6:3)                                                |
+| Madd ʿāriḍ          | الرَّحِيمِ (1:1:4), الْعَٰلَمِينَ (1:2:4), نَسْتَعِينُ (1:5:4), الْمُسْتَقِيمَ (1:6:3)                                                       |
+| Madd līn            | قُرَيْشٍ (106:1:2), وَالصَّيْفِ (106:2:4), الْبَيْتِ (106:3:4), خَوْفٍ (106:4:7)                                                             |
+| Ibtidāʾ: fatḥa      | الْحَمْدُ (1:2:1), الَّذِي (78:3:1), النَّجْمُ (86:3:1), النَّارِ (85:5:1)                                                                   |
+| Ibtidāʾ: ḍamma      | ادْعُ (2:68:2), اعْبُدُوا (2:21:3), اسْكُنْ (2:35:3), ادْخُلُوا (2:58:3)                                                                     |
+| Ibtidāʾ: kasra      | اقْرَأْ (96:1:1), اهْدِنَا (1:6:1), اذْهَبْ (79:17:1)                                                                                        |
 
 ## 4b. Madd (unit 5, engine)
 
@@ -204,6 +212,10 @@ way to the stop's: madd ʿāriḍ for ṭabīʿī, the rāʾ at a stop for its o
 - Checked against cpfair at every āya end of both ʿUthmānī packs (`tools/test/pack.test.ts`):
   all 452 madd_246 and all 131 qalqala at the end agree. The ibtidāʾ vowel was read for all
   1,266 words with alif waṣla in the packs (fatḥa 1,161, kasra 89, ḍamma 16).
+- The cards hear a stop example only where an āya ends with it and a start only where an āya
+  begins with it (`tools/src/cardAudio.ts`): within an āya the reciter runs on. Two starts on
+  ḍamma begin no āya anywhere in the Qurʾān and stay silent. The signs' places are in
+  `apps/web/src/content/signs.ts`.
 - Left to the cards and the sheikh: rawm and ishmām, the rāʾ where both are allowed, the madd
   ʿāriḍ's length chosen per recitation, and stopping in the middle of an āya by meaning.
 
