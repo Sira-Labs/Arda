@@ -83,3 +83,12 @@ our own rules or another source (ADR-0017).
   on the packs (every lām of Allāh and every rāʾ read), in unit tests on the known cases
   (ٱرْجِعِىٓ, مِرْصَادًا, قَالُوا۟ ٱللَّهُ, أَحَدٌ ٱللَّهُ) and against the letter lab's rāʾ words,
   whose weights were read from their vowels before.
+
+## Update 2026-10-11: stopping and starting (unit 7)
+
+- `detect(text, { waqf: true })` reads the end of the text as a stop and its start as a
+  beginning on alif waṣla (spec 03 §4d): sukūn, madd al-ʿiwaḍ, tāʾ marbūṭa as hāʾ, madd ʿāriḍ
+  and līn, qalqala and the rāʾ at the stop; fatḥa, ḍamma or kasra to begin with.
+- The stop closes the gap left by units 2–6: at every āya end of both ʿUthmānī packs the engine
+  now agrees with cpfair's madd_246 (452) and its qalqala at the end (131), with no difference.
+  `WAQF_SIGNS` names the pause signs the packs carry; a test checks every one is known.
