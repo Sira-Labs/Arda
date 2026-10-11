@@ -1,4 +1,4 @@
-import { IZHAR_EXCEPTIONS, SHEET_EXAMPLES } from '@arda/tajweed';
+import { IZHAR_EXCEPTIONS, SHEET_EXAMPLES, waqfSignOf } from '@arda/tajweed';
 import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -483,6 +483,13 @@ describe('Stop and start, and the signs (unit 7)', () => {
     const start = START_POOL[0]!;
     expect(start.prompt.slice(start.focus.start, start.focus.start + 1)).toBe('ا');
     for (const q of [ha, start, SIGN_POOL[3]!]) expect(questionOf(q)).toEqual(q);
+  });
+
+  it('show each sign in an example that carries no other sign', () => {
+    for (const id of SIGN_IDS) {
+      const signs = [...SIGN_EXAMPLES[id].text].flatMap((c) => waqfSignOf(c)?.id ?? []);
+      expect(new Set(signs)).toEqual(new Set([id]));
+    }
   });
 
   it('says why after each answer and logs the round', async () => {

@@ -2,7 +2,8 @@ import type { WaqfSignId } from '@arda/tajweed';
 
 /**
  * Where the Madīna muṣḥaf writes each pause sign (spec 03 §4d): the words as Tanzil spells them,
- * the sign after the word it follows. The card shows them; the game asks what each one means.
+ * the sign after the word it follows. Each carries only its own sign, so the learner cannot take
+ * another for it. The card shows them; the game asks what each one means.
  */
 export const SIGN_EXAMPLES: Readonly<Record<WaqfSignId, { text: string; key: string }>> =
   {
@@ -12,5 +13,5 @@ export const SIGN_EXAMPLES: Readonly<Record<WaqfSignId, { text: string; key: str
     'wasl-awla': { text: 'مِّن رَّبِّهِمْۖ', key: 'hafs:2:5:4-5' },
     'waqf-awla': { text: 'ءَامَنَ ٱلسُّفَهَآءُۗ', key: 'hafs:2:13:11-12' },
     muanaqa: { text: 'لَا رَيْبَۛ فِيهِۛ', key: 'hafs:2:2:3-5' },
-    sakta: { text: 'كَلَّاۖ بَلْۜ رَانَ', key: 'hafs:83:14:1-3' },
+    sakta: { text: 'بَلْۜ رَانَ', key: 'hafs:83:14:2-3' },
   };

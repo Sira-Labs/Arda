@@ -166,7 +166,8 @@ export const fr: Messages = {
       'madd-arid': 'Une lettre de madd avant la dernière lettre devient ʿāriḍ à l’arrêt.',
       'madd-lin': 'Wāw ou yāʾ sākina après fatḥa avant la dernière lettre : līn.',
       'ibtida-fatha': 'Dans l’article « al- », tu commences par fatḥa.',
-      'ibtida-damma': 'Si la troisième lettre porte ḍamma, tu commences par ḍamma.',
+      'ibtida-damma':
+        'Si la troisième lettre porte une ḍamma d’origine, tu commences par ḍamma.',
       'ibtida-kasra': 'Sinon tu commences par kasra – aussi dans اسْم, ابْن, امْرَأَة.',
     },
     waqfKey: 'sans couleur = l’endroit dont il s’agit',
@@ -350,7 +351,7 @@ export const fr: Messages = {
         'Wāw ou yāʾ sākina après fatḥa (قُرَيْشْ, خَوْفْ) s’appellent līn : aussi 2, 4 ou 6.',
         'Garde la même durée tout au long d’une récitation.',
       ],
-      tip: 'Si tu poursuis sans t’arrêter, il reste un madd naturel de 2 temps.',
+      tip: 'Si tu poursuis sans t’arrêter, le ʿāriḍ devient un madd naturel de 2 temps, et le wāw ou le yāʾ du līn ne s’allonge pas du tout.',
     },
     'waqf-signs': {
       title: 'Les signes du muṣḥaf',
@@ -366,7 +367,7 @@ export const fr: Messages = {
       steps: [
         'Tu prononces la hamzat al-waṣl (ٱ) seulement quand tu commences par le mot.',
         'Dans l’article « al- », tu commences par fatḥa : الْحَمْدُ.',
-        'Si la troisième lettre porte ḍamma, tu commences par ḍamma : ادْعُ.',
+        'Si la troisième lettre porte une ḍamma d’origine, tu commences par ḍamma : ادْعُ.',
         'Sinon tu commences par kasra : اقْرَأْ, اهْدِنَا.',
       ],
       tip: 'Si tu poursuis depuis le mot précédent, la hamzat al-waṣl tombe.',
@@ -539,8 +540,8 @@ export const fr: Messages = {
         'madd-arid': 'un madd avant la dernière lettre',
         'madd-lin': 'un līn avant la dernière lettre',
         'ibtida-fatha': 'l’article al-',
-        'ibtida-damma': 'la troisième lettre porte ḍamma',
-        'ibtida-kasra': 'la troisième lettre ne porte pas ḍamma',
+        'ibtida-damma': 'la troisième lettre porte une ḍamma d’origine',
+        'ibtida-kasra': 'la troisième lettre ne porte pas de ḍamma d’origine',
       },
     },
     signs: {
