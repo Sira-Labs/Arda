@@ -22,7 +22,8 @@ type Vowel = 'fatha' | 'damma' | 'kasra';
 /**
  * Why a rāʾ or the lām of Allāh is heavy or light, for the card and the game's feedback: its own
  * vowel, or the vowel before it, the hamzat al-waṣl before a rāʾ sākina, or a heavy letter
- * after it; `start` for the lām of Allāh at the start of reading.
+ * after it; `start` for the lām of Allāh at the start of reading; `stop-…` for a rāʾ at a
+ * stop (unit 7), by the letter before it.
  */
 export type WeightReason =
   | Vowel
@@ -31,7 +32,11 @@ export type WeightReason =
   | 'after-kasra'
   | 'after-wasla'
   | 'before-heavy'
-  | 'start';
+  | 'start'
+  | 'stop-after-fatha'
+  | 'stop-after-damma'
+  | 'stop-after-kasra'
+  | 'stop-after-ya';
 
 function vowelOf(g: Grapheme): Vowel | undefined {
   for (const mark of g.marks) {

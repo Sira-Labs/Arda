@@ -36,6 +36,14 @@ export const RULE_IDS = [
   'lam-light',
   'ra-heavy',
   'ra-light',
+  'waqf-sukun',
+  'madd-iwad',
+  'waqf-ha',
+  'madd-arid',
+  'madd-lin',
+  'ibtida-fatha',
+  'ibtida-damma',
+  'ibtida-kasra',
 ] as const;
 export type RuleId = (typeof RULE_IDS)[number];
 
@@ -61,9 +69,25 @@ export const WEIGHT_RULES = [
 ] as const;
 export type WeightRule = (typeof WEIGHT_RULES)[number];
 
+/**
+ * Stopping and starting, unit 7 (spec 03 §4d): what a stop does to the last word, and the vowel
+ * that begins on alif waṣla. Found by `detect` only when asked (`waqf: true`).
+ */
+export const WAQF_RULES = [
+  'waqf-sukun',
+  'madd-iwad',
+  'waqf-ha',
+  'madd-arid',
+  'madd-lin',
+  'ibtida-fatha',
+  'ibtida-damma',
+  'ibtida-kasra',
+] as const;
+export type WaqfRule = (typeof WAQF_RULES)[number];
+
 /** Which sound the rule is about. */
 export type RuleSubject =
-  'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala' | 'madd' | 'tafkhim';
+  'nun-sakina-tanwin' | 'mim-sakina' | 'ghunna' | 'qalqala' | 'madd' | 'tafkhim' | 'waqf';
 
 export interface Rule {
   id: RuleId;
@@ -286,6 +310,83 @@ export const RULES: Readonly<Record<RuleId, Rule>> = {
     letters: [],
     weight: 'light',
   }),
+  // Unit 7: the stop on the last word, and the start on alif waṣla.
+  'waqf-sukun': rule({
+    id: 'waqf-sukun',
+    subject: 'waqf',
+    arabic: 'الوَقْف بِالسُّكُون',
+    term: 'Waqf bis-sukūn',
+    family: null,
+    ghunna: false,
+    letters: [],
+  }),
+  'madd-iwad': rule({
+    id: 'madd-iwad',
+    subject: 'waqf',
+    arabic: 'مَدّ العِوَض',
+    term: 'Madd al-ʿiwaḍ',
+    family: 'madd-2',
+    ghunna: false,
+    letters: [],
+    counts: [2, 2],
+  }),
+  'waqf-ha': rule({
+    id: 'waqf-ha',
+    subject: 'waqf',
+    arabic: 'التَّاء المَرْبُوطَة هَاءً',
+    term: 'Tāʾ marbūṭa',
+    family: null,
+    ghunna: false,
+    letters: [],
+  }),
+  // ʿĀriḍ and līn: 2, 4 or 6 counts, as the reciter chooses and keeps (cpfair's madd_246).
+  'madd-arid': rule({
+    id: 'madd-arid',
+    subject: 'waqf',
+    arabic: 'مَدّ عَارِض لِلسُّكُون',
+    term: 'Madd ʿāriḍ',
+    family: 'madd-2',
+    ghunna: false,
+    letters: [],
+    counts: [2, 6],
+  }),
+  'madd-lin': rule({
+    id: 'madd-lin',
+    subject: 'waqf',
+    arabic: 'مَدّ اللِّين',
+    term: 'Madd līn',
+    family: 'madd-2',
+    ghunna: false,
+    letters: [],
+    counts: [2, 6],
+  }),
+  'ibtida-fatha': rule({
+    id: 'ibtida-fatha',
+    subject: 'waqf',
+    arabic: 'البَدْء بِالفَتْح',
+    term: 'Ibtidāʾ bil-fatḥ',
+    family: null,
+    ghunna: false,
+    letters: [],
+  }),
+  'ibtida-damma': rule({
+    id: 'ibtida-damma',
+    subject: 'waqf',
+    arabic: 'البَدْء بِالضَّمّ',
+    term: 'Ibtidāʾ biḍ-ḍamm',
+    family: null,
+    ghunna: false,
+    letters: [],
+  }),
+  'ibtida-kasra': rule({
+    id: 'ibtida-kasra',
+    subject: 'waqf',
+    arabic: 'البَدْء بِالكَسْر',
+    term: 'Ibtidāʾ bil-kasr',
+    family: null,
+    ghunna: false,
+    letters: [],
+  }),
 };
 
 export const isMaddRule = (rule: RuleId): rule is MaddRule =>
@@ -293,6 +394,9 @@ export const isMaddRule = (rule: RuleId): rule is MaddRule =>
 
 export const isWeightRule = (rule: RuleId): rule is WeightRule =>
   (WEIGHT_RULES as readonly RuleId[]).includes(rule);
+
+export const isWaqfRule = (rule: RuleId): rule is WaqfRule =>
+  (WAQF_RULES as readonly RuleId[]).includes(rule);
 
 /** The four rules of nūn sākina and tanwīn: together they cover every letter exactly once. */
 export const NUN_SAKINA_RULES = [

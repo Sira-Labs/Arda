@@ -417,6 +417,10 @@ export const fr: Messages = {
           'after-wasla': 'après la hamzat al-waṣl',
           'before-heavy': 'devant une lettre lourde',
           start: 'au début de la récitation',
+          'stop-after-fatha': 'à l’arrêt, après fatḥa',
+          'stop-after-damma': 'à l’arrêt, après ḍamma',
+          'stop-after-kasra': 'à l’arrêt, après kasra',
+          'stop-after-ya': 'à l’arrêt, après yāʾ sākina',
         };
         // A rāʾ without a vowel of its own rests (sākin).
         const own = ['fatha', 'damma', 'kasra'].includes(reason);
