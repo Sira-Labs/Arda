@@ -3,8 +3,16 @@
  * this one, so a missing message fails the typecheck. Learners are addressed with "du".
  */
 import type { PasskeyFailure } from '@/services/passkeys';
-import type { CardId, MaddCard, MaddLength, RuleCase, WeightCard } from '@/content/units';
-import type { WeightReason } from '@arda/tajweed';
+import type {
+  CardId,
+  MaddCard,
+  MaddLength,
+  RuleCase,
+  StartVowel,
+  StopEnding,
+  WeightCard,
+} from '@/content/units';
+import type { WaqfRule, WaqfSignId, WeightReason } from '@arda/tajweed';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { PageLayout } from '@arda/quran';
@@ -124,10 +132,15 @@ export const de = {
         intro:
           'Schwer oder leicht: sieben Buchstaben sind immer schwer; das Lām von Allāh und das Rāʾ richten sich nach dem Vokal.',
       },
-    } as Record<1 | 2 | 3 | 4 | 5 | 6, { title: string; intro: string }>,
+      7: {
+        title: 'Einheit 7 · Waqf und Ibtidāʾ',
+        intro:
+          'Wie du anhältst und wieder anfängst – und was die Zeichen in deinem Muṣḥaf sagen.',
+      },
+    } as Record<1 | 2 | 3 | 4 | 5 | 6 | 7, { title: string; intro: string }>,
     lab: 'Zum Buchstaben-Labor',
     letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
-    next: 'Einheit 7 (Waqf und Ibtidāʾ) folgt nach dem Pilot.',
+    next: 'Einheit 8 (Riwāyāt) folgt später.',
   },
   ruleCard: {
     play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
@@ -184,6 +197,21 @@ export const de = {
       'ra-light': 'Mit Kasra; sākin nach Kasra',
     },
     lightKey: 'ohne Farbe = leicht (Tarqīq)',
+    twoFourSix: '2, 4 oder 6 Zählzeiten',
+    waqfWhen: {
+      'waqf-sukun':
+        'Der letzte Vokal fällt weg, der Buchstabe ruht (Sukūn) – auch nach Ḍammatān und Kasratān.',
+      'madd-iwad': 'Fatḥatān wird zu einem langen ā: 2 Zählzeiten.',
+      'waqf-ha': 'Tāʾ marbūṭa (ة) wird zu einem ruhenden Hāʾ (هْ).',
+      'madd-arid':
+        'Ein Madd-Buchstabe vor dem letzten Buchstaben wird beim Anhalten ʿāriḍ.',
+      'madd-lin': 'Wāw oder Yāʾ sākina nach Fatḥa vor dem letzten Buchstaben: Līn.',
+      'ibtida-fatha': 'Im Artikel „al-“ beginnst du mit Fatḥa.',
+      'ibtida-damma': 'Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma.',
+      'ibtida-kasra': 'Sonst beginnst du mit Kasra – auch in اسْم, ابْن, امْرَأَة.',
+    } as Record<WaqfRule, string>,
+    waqfKey: 'ohne Farbe = die Stelle, um die es geht',
+    signs: 'Zeichen im Muṣḥaf',
     previous: 'Zurück',
     next: 'Weiter',
     done: 'Zur Einheit',
@@ -344,7 +372,78 @@ export const de = {
       ],
       tip: 'Wie das Rāʾ beim Anhalten klingt, lernst du in Einheit 7.',
     },
+    waqf: {
+      title: 'Wie du am Wortende anhältst',
+      steps: [
+        'Halte am Ende eines Wortes an, nie mitten darin.',
+        'Der letzte Vokal fällt weg, der Buchstabe ruht: أَحَدٌ → أَحَدْ.',
+        'Fatḥatān wird zu einem langen ā: عَلِيمًا → عَلِيمَا.',
+        'Tāʾ marbūṭa wird zu Hāʾ: رَحْمَةٌ → رَحْمَهْ.',
+        'Endet das Wort auf einem langen Vokal, bleibt es, wie es ist: قَالُوا.',
+      ],
+      tip: 'Ein Qalqala-Buchstabe am Ende prallt beim Anhalten am stärksten zurück (الْفَلَقْ).',
+    },
+    'madd-arid': {
+      title: 'Madd beim Anhalten: 2, 4 oder 6',
+      steps: [
+        'Steht ein Madd-Buchstabe vor dem letzten Buchstaben, ruht beim Anhalten der Buchstabe danach.',
+        'Dieser Madd heißt ʿāriḍ (vorübergehend): Du darfst 2, 4 oder 6 Zählzeiten dehnen.',
+        'Wāw oder Yāʾ sākina nach Fatḥa (قُرَيْشْ, خَوْفْ) heißen Līn: ebenfalls 2, 4 oder 6.',
+        'Bleib in einer Lesung bei derselben Länge.',
+      ],
+      tip: 'Liest du weiter, ohne anzuhalten, bleibt es ein natürlicher Madd von 2 Zählzeiten.',
+    },
+    'waqf-signs': {
+      title: 'Die Zeichen im Muṣḥaf',
+      steps: [
+        'Die kleinen Zeichen über dem Text sagen dir, ob du anhalten darfst, sollst oder musst.',
+        'Ein Zeichen gilt für das Wort, nach dem es steht.',
+        'Am Ende einer Āya darfst du immer anhalten.',
+      ],
+      tip: 'Dein IndoPak-Muṣḥaf hat dazu weitere Zeichen (ط, ز, ص, قف); sie folgen.',
+    },
+    ibtida: {
+      title: 'Mit dem Verbindungs-Hamza beginnen',
+      steps: [
+        'Das Verbindungs-Hamza (ٱ) sprichst du nur, wenn du mit dem Wort beginnst.',
+        'Im Artikel „al-“ beginnst du mit Fatḥa: الْحَمْدُ.',
+        'Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma: ادْعُ.',
+        'Sonst beginnst du mit Kasra: اقْرَأْ, اهْدِنَا.',
+      ],
+      tip: 'Liest du vom Wort davor weiter, fällt das Verbindungs-Hamza weg.',
+    },
   } as Record<CardId, { title: string; steps: string[]; tip: string }>,
+  signs: {
+    lazim: {
+      name: 'Anhalten Pflicht',
+      meaning: 'Hier hältst du an: Weiterlesen würde den Sinn verändern.',
+    },
+    mamnu: {
+      name: 'Nicht anhalten',
+      meaning: 'Hier hältst du nicht an; musst du doch, beginn ein Stück davor neu.',
+    },
+    jaiz: {
+      name: 'Anhalten erlaubt',
+      meaning: 'Anhalten und Weiterlesen sind gleich gut.',
+    },
+    'wasl-awla': {
+      name: 'Weiterlesen besser',
+      meaning: 'Du darfst anhalten, aber Weiterlesen ist besser.',
+    },
+    'waqf-awla': {
+      name: 'Anhalten besser',
+      meaning: 'Du darfst weiterlesen, aber Anhalten ist besser.',
+    },
+    muanaqa: {
+      name: 'An einer von zwei Stellen',
+      meaning:
+        'Die Zeichen stehen paarweise: Halte an der einen oder an der anderen an, nicht an beiden.',
+    },
+    sakta: {
+      name: 'Sakta',
+      meaning: 'Ein kurzes Innehalten ohne Atem, dann weiter – in Ḥafṣ an vier Stellen.',
+    },
+  } as Record<WaqfSignId, { name: string; meaning: string }>,
   games: {
     eyebrow: (unit: number) => `Einheit ${unit} · Üben`,
     practise: 'Üben',
@@ -462,6 +561,36 @@ export const de = {
         const sakin = card === 'ra' && !own ? 'sākin ' : '';
         return `${card === 'ra' ? 'Rāʾ' : 'Lām von Allāh'} ${sakin}${reasons[reason]}`;
       },
+    },
+    stopStart: {
+      title: 'Anhalten und Anfangen',
+      intro:
+        'Zehn echte Wörter: Wie endet das Wort beim Anhalten, mit welchem Vokal beginnst du?',
+      questionStop: 'Wie endet das Wort, wenn du darauf anhältst?',
+      questionStart: 'Mit welchem Vokal beginnst du das Wort?',
+      answers: {
+        'stop-sukun': 'mit Sukūn',
+        'stop-alif': 'mit langem ā',
+        'stop-ha': 'mit Hāʾ',
+        'start-fatha': 'mit Fatḥa',
+        'start-damma': 'mit Ḍamma',
+        'start-kasra': 'mit Kasra',
+      } as Record<StopEnding | StartVowel, string>,
+      why: {
+        'waqf-sukun': 'der letzte Vokal fällt weg',
+        'madd-iwad': 'Fatḥatān wird zu ā',
+        'waqf-ha': 'Tāʾ marbūṭa wird zu Hāʾ',
+        'madd-arid': 'Madd vor dem letzten Buchstaben',
+        'madd-lin': 'Līn vor dem letzten Buchstaben',
+        'ibtida-fatha': 'der Artikel al-',
+        'ibtida-damma': 'der dritte Buchstabe hat Ḍamma',
+        'ibtida-kasra': 'der dritte Buchstabe hat keine Ḍamma',
+      } as Record<WaqfRule, string>,
+    },
+    signs: {
+      title: 'Die Zeichen',
+      intro: 'Sieben Zeichen aus dem Muṣḥaf: Was verlangt jedes von dir?',
+      question: 'Was sagt dir das Zeichen am Ende?',
     },
     shadda: 'Nūn oder Mīm mit Shadda',
   },

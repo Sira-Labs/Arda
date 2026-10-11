@@ -52,7 +52,7 @@ export function linkFor(kind: string, rule: RuleId | null): 'card' | 'game' | nu
   return kind === 'practise' ? 'game' : null;
 }
 
-/** Whether a rule card teaches the rule yet (units 2–6). */
+/** Whether a rule card teaches the rule yet (units 2–7). */
 export const hasCard = (rule: RuleId): boolean => cardOfRule(rule) !== undefined;
 
 /** The rule card that teaches the rule. */
@@ -68,5 +68,6 @@ export function gamePath(rule: RuleId): string {
   if (unit === 4) return '/pfad/4/spiel/buchstaben';
   if (unit === 5) return '/pfad/5/spiel/wie-lang';
   if (unit === 6) return '/pfad/6/spiel/schwer-oder-leicht';
+  if (unit === 7) return '/pfad/7/spiel/anhalten';
   return `/pfad/${unit}/spiel/welche-regel`;
 }

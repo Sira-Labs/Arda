@@ -2,16 +2,20 @@ import {
   IZHAR_EXCEPTIONS,
   SHEET_EXAMPLES,
   UNIT_EXAMPLES,
+  WAQF_SIGNS,
   detect,
+  isWaqfRule,
   type RuleId,
+  type WaqfSignId,
   type WeightReason,
 } from '@arda/tajweed';
 import type { Language } from '@/i18n/languages';
 
 /**
- * The rule cards of units 2–6 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
+ * The rule cards of units 2–7 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
  * sākina and tanwīn, unit 3 ghunna and mīm sākina, unit 4 qalqala, and beyond the sheet unit 5
- * madd and unit 6 heavy and light letters. The examples are the sheet's own and, where the sheet has too few, real words chosen
+ * madd, unit 6 heavy and light letters and unit 7 stopping and starting. The examples are the
+ * sheet's own and, where the sheet has too few, real words chosen
  * for it (`UNIT_EXAMPLES`);
  * `@arda/tajweed` keeps them and the engine is tested against them. The texts are in the i18n
  * catalogs (`cards`). Until the content pack exists (ADR-0010), this module is the units.
@@ -23,9 +27,10 @@ export const UNIT_CARDS = {
   4: ['qalqala'],
   5: ['madd-tabii', 'madd-muttasil', 'madd-munfasil', 'madd-lazim'],
   6: ['tafkhim', 'lam-jalala', 'ra'],
+  7: ['waqf', 'madd-arid', 'waqf-signs', 'ibtida'],
 } as const;
 export type CardUnit = keyof typeof UNIT_CARDS;
-export const CARD_UNITS = [2, 3, 4, 5, 6] as const satisfies readonly CardUnit[];
+export const CARD_UNITS = [2, 3, 4, 5, 6, 7] as const satisfies readonly CardUnit[];
 
 /**
  * The units with a test (ADR-0024): unit 1, the letter lab, since it has all 28 letters
@@ -53,8 +58,17 @@ export type MaddLength = (typeof MADD_LENGTHS)[number];
 /** The answers of "Heavy or light?" (unit 6). */
 export const WEIGHTS = ['heavy', 'light'] as const;
 export type Weight = (typeof WEIGHTS)[number];
-/** What a game question can be answered with: a card, "no qalqala", a length or a weight. */
-export type AnswerId = CardId | typeof NO_QALQALA | MaddLength | Weight;
+/** The answers of "Stop and start" (unit 7): how a word ends at a stop, how alif waṣla begins. */
+export const STOP_ENDINGS = ['stop-sukun', 'stop-alif', 'stop-ha'] as const;
+export type StopEnding = (typeof STOP_ENDINGS)[number];
+export const START_VOWELS = ['start-fatha', 'start-damma', 'start-kasra'] as const;
+export type StartVowel = (typeof START_VOWELS)[number];
+/** The answers of "The signs" (unit 7): what each pause sign asks. */
+export const SIGN_IDS: readonly WaqfSignId[] = WAQF_SIGNS.map((s) => s.id);
+/** What a game question can be answered with: a card, "no qalqala", a length, a weight, an
+ * ending, a starting vowel or a sign. */
+export type AnswerId =
+  CardId | typeof NO_QALQALA | MaddLength | Weight | StopEnding | StartVowel | WaqfSignId;
 
 /** How long a madd card's madd is held. */
 export const LENGTH_OF_CARD: Readonly<Record<MaddCard, MaddLength>> = {
@@ -82,6 +96,10 @@ const CARD_NAMES: Record<CardId, { term: string; arabic: string }> = {
   tafkhim: { term: 'Istiʿlāʾ', arabic: 'حُرُوف الِاسْتِعْلَاء' },
   'lam-jalala': { term: 'Lām al-jalāla', arabic: 'لَام لَفْظ الجَلَالَة' },
   ra: { term: 'Rāʾ', arabic: 'الرَّاء' },
+  waqf: { term: 'Waqf', arabic: 'الوَقْف' },
+  'madd-arid': { term: 'Madd ʿāriḍ', arabic: 'مَدّ عَارِض لِلسُّكُون' },
+  'waqf-signs': { term: 'ʿAlāmāt al-waqf', arabic: 'عَلَامَات الوَقْف' },
+  ibtida: { term: 'Ibtidāʾ', arabic: 'الابْتِدَاء' },
 };
 
 export function cardName(id: CardId, language: Language): string {
@@ -146,14 +164,21 @@ const RULES_OF_CARD: Record<CardId, readonly RuleId[]> = {
   tafkhim: ['tafkhim'],
   'lam-jalala': ['lam-heavy', 'lam-light'],
   ra: ['ra-heavy', 'ra-light'],
+  waqf: ['waqf-sukun', 'madd-iwad', 'waqf-ha'],
+  'madd-arid': ['madd-arid', 'madd-lin'],
+  // The signs are no rule of the engine: the card lists them (content/signs.ts).
+  'waqf-signs': [],
+  ibtida: ['ibtida-fatha', 'ibtida-damma', 'ibtida-kasra'],
 };
 
-/** The sheet's examples first, then the ones chosen for units 3–6. */
+/** The sheet's examples first, then the ones chosen for units 3–7. */
 const EXAMPLES = [...SHEET_EXAMPLES, ...UNIT_EXAMPLES];
 
 /** The example's first occurrence of `rule`. */
 function occurrenceOf(text: string, rule: RuleId) {
-  const occurrence = detect(text, { madd: true, tafkhim: true }).find(
+  // A stop reads the last word differently: only unit 7's examples are read as stopped on.
+  const waqf = isWaqfRule(rule);
+  const occurrence = detect(text, { madd: true, tafkhim: true, waqf }).find(
     (o) => o.rule === rule
   );
   if (!occurrence) throw new Error(`the sheet example ${text} does not show ${rule}`);

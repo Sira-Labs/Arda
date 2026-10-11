@@ -8,6 +8,8 @@ import { ReviewSession } from '@/modules/games/ReviewSession';
 import { SortLetters } from '@/modules/games/SortLetters';
 import { HeavyOrLight } from '@/modules/games/HeavyOrLight';
 import { MaddLength } from '@/modules/games/MaddLength';
+import { StopAndStart } from '@/modules/games/StopAndStart';
+import { WaqfSigns } from '@/modules/games/WaqfSigns';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { UnitTest } from '@/modules/games/UnitTest';
 import { WhichRule } from '@/modules/games/WhichRule';
@@ -40,6 +42,8 @@ const router = createBrowserRouter([
   { path: '/pfad/4/spiel/buchstaben', element: <QalqalaLetters /> },
   { path: '/pfad/5/spiel/wie-lang', element: <MaddLength /> },
   { path: '/pfad/6/spiel/schwer-oder-leicht', element: <HeavyOrLight /> },
+  { path: '/pfad/7/spiel/anhalten', element: <StopAndStart /> },
+  { path: '/pfad/7/spiel/zeichen', element: <WaqfSigns /> },
   { path: '/pfad/:unit/test', element: <UnitTest /> },
   { path: '/pfad/wiederholen', element: <ReviewSession /> },
   { path: '/labor/:letter/quiz', element: <LabQuizPage /> },

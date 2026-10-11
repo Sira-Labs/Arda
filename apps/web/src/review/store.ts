@@ -240,6 +240,9 @@ const CARD_KINDS: ReadonlySet<unknown> = new Set([
   'qalqala-letter',
   'madd-length',
   'weight',
+  'stop',
+  'start',
+  'sign',
 ]);
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
