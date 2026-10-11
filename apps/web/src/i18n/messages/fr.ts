@@ -93,10 +93,15 @@ export const fr: Messages = {
         intro:
           'Lourd ou léger : sept lettres sont toujours lourdes ; le lām d’Allāh et le rāʾ suivent la voyelle.',
       },
+      7: {
+        title: 'Unité 7 · Waqf et ibtidāʾ',
+        intro:
+          'Comment s’arrêter et reprendre – et ce que disent les signes de ton muṣḥaf.',
+      },
     },
     lab: 'Ouvrir le labo des lettres',
     letters: (count) => (count === 1 ? '1 lettre' : `${count} lettres`),
-    next: 'L’unité 7 (waqf et ibtidāʾ) suit après le pilote.',
+    next: 'L’unité 8 (riwāyāt) suit plus tard.',
   },
   ruleCard: {
     play: (sura, aya) => `Écouter\u202f: sourate ${sura}, āya ${aya}`,
@@ -152,6 +157,20 @@ export const fr: Messages = {
       'ra-light': 'Avec kasra ; sākin après kasra',
     },
     lightKey: 'sans couleur = léger (tarqīq)',
+    twoFourSix: '2, 4 ou 6 temps',
+    waqfWhen: {
+      'waqf-sukun':
+        'La dernière voyelle tombe et la lettre repose (sukūn) – aussi après ḍammatān et kasratān.',
+      'madd-iwad': 'Le fatḥatān devient un ā long : 2 temps.',
+      'waqf-ha': 'La tāʾ marbūṭa (ة) devient un hāʾ au repos (هْ).',
+      'madd-arid': 'Une lettre de madd avant la dernière lettre devient ʿāriḍ à l’arrêt.',
+      'madd-lin': 'Wāw ou yāʾ sākina après fatḥa avant la dernière lettre : līn.',
+      'ibtida-fatha': 'Dans l’article « al- », tu commences par fatḥa.',
+      'ibtida-damma': 'Si la troisième lettre porte ḍamma, tu commences par ḍamma.',
+      'ibtida-kasra': 'Sinon tu commences par kasra – aussi dans اسْم, ابْن, امْرَأَة.',
+    },
+    waqfKey: 'sans couleur = l’endroit dont il s’agit',
+    signs: 'Signes du muṣḥaf',
     previous: 'Retour',
     next: 'Suite',
     done: 'Vers l’unité',
@@ -312,6 +331,77 @@ export const fr: Messages = {
       ],
       tip: 'Comment le rāʾ sonne à l’arrêt, tu l’apprends à l’unité 7.',
     },
+    waqf: {
+      title: 'S’arrêter à la fin d’un mot',
+      steps: [
+        'Arrête-toi à la fin d’un mot, jamais au milieu.',
+        'La dernière voyelle tombe et la lettre repose : أَحَدٌ → أَحَدْ.',
+        'Le fatḥatān devient un ā long : عَلِيمًا → عَلِيمَا.',
+        'La tāʾ marbūṭa devient hāʾ : رَحْمَةٌ → رَحْمَهْ.',
+        'Si le mot finit par une voyelle longue, il reste tel quel : قَالُوا.',
+      ],
+      tip: 'Une lettre de qalqala à la fin rebondit le plus quand tu t’arrêtes dessus (الْفَلَقْ).',
+    },
+    'madd-arid': {
+      title: 'Le madd à l’arrêt : 2, 4 ou 6',
+      steps: [
+        'Si une lettre de madd précède la dernière lettre, la lettre qui suit repose à l’arrêt.',
+        'Ce madd s’appelle ʿāriḍ (passager) : tu peux l’allonger de 2, 4 ou 6 temps.',
+        'Wāw ou yāʾ sākina après fatḥa (قُرَيْشْ, خَوْفْ) s’appellent līn : aussi 2, 4 ou 6.',
+        'Garde la même durée tout au long d’une récitation.',
+      ],
+      tip: 'Si tu poursuis sans t’arrêter, il reste un madd naturel de 2 temps.',
+    },
+    'waqf-signs': {
+      title: 'Les signes du muṣḥaf',
+      steps: [
+        'Les petits signes au-dessus du texte te disent si tu peux, dois ou devrais t’arrêter.',
+        'Un signe vaut pour le mot qu’il suit.',
+        'À la fin d’une āya, tu peux toujours t’arrêter.',
+      ],
+      tip: 'Ton muṣḥaf IndoPak a d’autres signes (ط, ز, ص, قف) ; ils suivront.',
+    },
+    ibtida: {
+      title: 'Commencer par la hamzat al-waṣl',
+      steps: [
+        'Tu prononces la hamzat al-waṣl (ٱ) seulement quand tu commences par le mot.',
+        'Dans l’article « al- », tu commences par fatḥa : الْحَمْدُ.',
+        'Si la troisième lettre porte ḍamma, tu commences par ḍamma : ادْعُ.',
+        'Sinon tu commences par kasra : اقْرَأْ, اهْدِنَا.',
+      ],
+      tip: 'Si tu poursuis depuis le mot précédent, la hamzat al-waṣl tombe.',
+    },
+  },
+  signs: {
+    lazim: {
+      name: 'Arrêt obligatoire',
+      meaning: 'Arrête-toi ici : poursuivre changerait le sens.',
+    },
+    mamnu: {
+      name: 'Ne pas s’arrêter',
+      meaning: 'Ne t’arrête pas ici ; si tu le dois, reprends un peu avant.',
+    },
+    jaiz: {
+      name: 'Arrêt permis',
+      meaning: 'S’arrêter et poursuivre sont aussi bons l’un que l’autre.',
+    },
+    'wasl-awla': {
+      name: 'Mieux vaut poursuivre',
+      meaning: 'Tu peux t’arrêter, mais il vaut mieux poursuivre.',
+    },
+    'waqf-awla': {
+      name: 'Mieux vaut s’arrêter',
+      meaning: 'Tu peux poursuivre, mais il vaut mieux s’arrêter.',
+    },
+    muanaqa: {
+      name: 'À l’un des deux endroits',
+      meaning: 'Les signes vont par deux : arrête-toi à l’un ou à l’autre, pas aux deux.',
+    },
+    sakta: {
+      name: 'Sakta',
+      meaning:
+        'Une courte pause sans reprendre son souffle, puis on poursuit – à quatre endroits en Ḥafṣ.',
+    },
   },
   games: {
     eyebrow: (unit) => `Unité ${unit} · S’entraîner`,
@@ -427,6 +517,36 @@ export const fr: Messages = {
         const sakin = card === 'ra' && !own ? 'sākin ' : '';
         return `${card === 'ra' ? 'Rāʾ' : 'Lām d’Allāh'} ${sakin}${reasons[reason]}`;
       },
+    },
+    stopStart: {
+      title: 'S’arrêter et commencer',
+      intro:
+        'Dix vrais mots : comment finit le mot à l’arrêt, par quelle voyelle commences-tu ?',
+      questionStop: 'Comment finit le mot quand tu t’arrêtes dessus ?',
+      questionStart: 'Par quelle voyelle commences-tu le mot ?',
+      answers: {
+        'stop-sukun': 'par sukūn',
+        'stop-alif': 'par un ā long',
+        'stop-ha': 'par hāʾ',
+        'start-fatha': 'par fatḥa',
+        'start-damma': 'par ḍamma',
+        'start-kasra': 'par kasra',
+      },
+      why: {
+        'waqf-sukun': 'la dernière voyelle tombe',
+        'madd-iwad': 'le fatḥatān devient ā',
+        'waqf-ha': 'la tāʾ marbūṭa devient hāʾ',
+        'madd-arid': 'un madd avant la dernière lettre',
+        'madd-lin': 'un līn avant la dernière lettre',
+        'ibtida-fatha': 'l’article al-',
+        'ibtida-damma': 'la troisième lettre porte ḍamma',
+        'ibtida-kasra': 'la troisième lettre ne porte pas ḍamma',
+      },
+    },
+    signs: {
+      title: 'Les signes',
+      intro: 'Sept signes du muṣḥaf : que te demande chacun ?',
+      question: 'Que te dit le signe à la fin ?',
     },
     shadda: 'nūn ou mīm avec shadda',
   },

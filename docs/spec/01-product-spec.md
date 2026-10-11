@@ -85,7 +85,7 @@ card, so the rule returns until it holds.
 | 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
 
 Every unit has stations and ends with a unit test (Suffa's structure). A passed test marks the
-unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–6 test
+unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–7 test
 their rules; unit 1, the letter lab, tests the ear with ten words from across the lab. Every
 text is
 a draft until the sheikh has reviewed it.
@@ -150,6 +150,12 @@ kasra) and the rāʾ (by its vowel; sākina by the vowel before it, heavy after 
 before a heavy letter), every example heard and its reason under it; heavy in violet, light
 left clear. The game "Schwer oder leicht?" and a test of five heavy and five light words, so
 guessing one answer cannot pass. The rāʾ at a stop is left to unit 7 (spec 03 §4c).)_
+_(Built (owner, 2026-10-11): unit 7, waqf and ibtidāʾ. Four cards: how a word ends at a stop
+(sukūn, fatḥatān as a long ā, tāʾ marbūṭa as hāʾ), madd ʿāriḍ and līn (2, 4 or 6), the seven
+signs of the Madīna muṣḥaf with a real place for each, and the start on alif waṣla (fatḥa,
+ḍamma, kasra); the stop examples are heard where an āya ends, the starts where one begins. Two
+games, "Anhalten und Anfangen" and "Die Zeichen", and a test of one word for each way to stop
+and to start and four signs. IndoPak's own signs follow (spec 03 §4d).)_
 
 ### F2 — Rule cards _(Must)_
 

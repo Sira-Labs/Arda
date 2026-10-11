@@ -1,17 +1,23 @@
 import { passedUnits, type ActivityKind } from '@arda/engagement';
-import { RULES } from '@arda/tajweed';
+import { RULES, WAQF_SIGNS, type WaqfSignId } from '@arda/tajweed';
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
+import { SIGN_EXAMPLES } from '@/content/signs';
 import {
   MADD_LENGTHS,
   NO_QALQALA,
+  SIGN_IDS,
+  START_VOWELS,
+  STOP_ENDINGS,
   WEIGHTS,
   cardName,
   type AnswerId,
   type CardUnit,
   type MaddLength,
+  type StartVowel,
+  type StopEnding,
   type Weight,
 } from '@/content/units';
 import { optionsOf, type Question } from '@/games/questions';
@@ -19,6 +25,7 @@ import type { Language } from '@/i18n/languages';
 import type { Messages } from '@/i18n/messages';
 import { useI18n } from '@/i18n/I18nProvider';
 import { useReview } from '@/review/ReviewProvider';
+import { ruleName } from '@/tajweed/rules';
 import { focusSegments, segmentsOf } from '@/tajweed/segments';
 import { testVerdict } from './testVerdict';
 
@@ -61,6 +68,8 @@ export function RuleQuiz({
     | 'unit-test'
     | 'madd-length'
     | 'heavy-or-light'
+    | 'stop-and-start'
+    | 'waqf-signs'
   >;
   questions: readonly Question[];
   eyebrow: string;
@@ -195,7 +204,9 @@ function QuestionView({
       <div className="paper stack" style={{ gap: 4, alignItems: 'center' }}>
         {question.kind === 'which-rule' ||
         question.kind === 'madd-length' ||
-        question.kind === 'weight' ? (
+        question.kind === 'weight' ||
+        question.kind === 'stop' ||
+        question.kind === 'start' ? (
           <TajweedText
             large
             segments={
@@ -204,6 +215,8 @@ function QuestionView({
                 : focusSegments(question.prompt, question.focus)
             }
           />
+        ) : question.kind === 'sign' ? (
+          <SignPrompt sign={question.answer} />
         ) : (
           <p className="quran quran-lg" lang="ar" dir="rtl">
             {question.prompt}
@@ -216,11 +229,17 @@ function QuestionView({
               ? m.games.maddLength.question
               : question.kind === 'weight'
                 ? m.games.weight.question
-                : question.kind === 'sort-letter'
-                  ? m.games.sort.question
-                  : question.unit === 3
-                    ? m.games.unit3.question
-                    : m.games.whichRule.question}
+                : question.kind === 'stop'
+                  ? m.games.stopStart.questionStop
+                  : question.kind === 'start'
+                    ? m.games.stopStart.questionStart
+                    : question.kind === 'sign'
+                      ? m.games.signs.question
+                      : question.kind === 'sort-letter'
+                        ? m.games.sort.question
+                        : question.unit === 3
+                          ? m.games.unit3.question
+                          : m.games.whichRule.question}
         </p>
       </div>
 
@@ -263,20 +282,46 @@ const isLength = (id: AnswerId): id is MaddLength =>
   (MADD_LENGTHS as readonly string[]).includes(id);
 const isWeight = (id: AnswerId): id is Weight =>
   (WEIGHTS as readonly string[]).includes(id);
+const isStopOrStart = (id: AnswerId): id is StopEnding | StartVowel =>
+  (STOP_ENDINGS as readonly string[]).includes(id) ||
+  (START_VOWELS as readonly string[]).includes(id);
+const isSign = (id: AnswerId): id is WaqfSignId =>
+  (SIGN_IDS as readonly string[]).includes(id);
 
-/** An answer's name: the rule card's, "no qalqala", a madd's length, heavy or light. */
+/**
+ * An answer's name: the rule card's, "no qalqala", a madd's length, heavy or light, how a word
+ * ends or begins, or what a sign asks.
+ */
 function answerName(id: AnswerId, language: Language, m: Messages): string {
   if (id === NO_QALQALA) return m.games.qalqala.no;
   if (isLength(id)) return m.games.maddLength.lengths[id];
   if (isWeight(id)) return m.games.weight.answers[id];
+  if (isStopOrStart(id)) return m.games.stopStart.answers[id];
+  if (isSign(id)) return m.signs[id].name;
   return cardName(id, language);
+}
+
+/** A pause sign as the muṣḥaf writes it, after the words it follows (content/signs.ts). */
+function SignPrompt({ sign }: { sign: WaqfSignId }) {
+  return (
+    // The sign sits high above its word: room for it, and for the question below.
+    <p
+      className="quran quran-lg"
+      lang="ar"
+      dir="rtl"
+      data-script="madina"
+      style={{ paddingBlock: 8 }}
+    >
+      {SIGN_EXAMPLES[sign].text}
+    </p>
+  );
 }
 
 /**
  * Why: the letter that follows, and for the four exceptions that it is inside one word; the
  * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters; the madd and what comes
  * after its letter for "How long?"; the vowel that makes a rāʾ or the lām of Allāh heavy or
- * light.
+ * light; what a stop or a start does; what a sign asks.
  */
 function Reason({ question }: { question: Question }) {
   const { m, language } = useI18n();
@@ -289,6 +334,23 @@ function Reason({ question }: { question: Question }) {
   }
   if (question.kind === 'weight') {
     return <>{m.games.weight.why(question.card, question.reason)}</>;
+  }
+  if (question.kind === 'stop' || question.kind === 'start') {
+    return (
+      <>
+        {ruleName(question.rule, language)}: {m.games.stopStart.why[question.rule]}
+      </>
+    );
+  }
+  if (question.kind === 'sign') {
+    return (
+      <>
+        <span className="arabic" lang="ar" dir="rtl">
+          {WAQF_SIGNS.find((s) => s.id === question.answer)?.arabic}
+        </span>{' '}
+        – {m.signs[question.answer].meaning}
+      </>
+    );
   }
   if (question.kind === 'qalqala-letter') {
     return (

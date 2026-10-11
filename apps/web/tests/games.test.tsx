@@ -4,14 +4,19 @@ import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { UNIT2_CARDS, cardName } from '@/content/units';
+import { SIGN_IDS, UNIT2_CARDS, cardName } from '@/content/units';
 import {
   MADD_POOL,
+  SIGN_POOL,
+  START_POOL,
+  STOP_POOL,
   UNIT3_POOL,
   WEIGHT_POOL,
   WORD_POOL,
   letterQuestion,
   maddRound,
+  signsRound,
+  stopStartRound,
   weightRound,
   optionsOf,
   qalqalaQuestion,
@@ -25,6 +30,9 @@ import {
 } from '@/games/questions';
 import { HeavyOrLight } from '@/modules/games/HeavyOrLight';
 import { MaddLength } from '@/modules/games/MaddLength';
+import { StopAndStart } from '@/modules/games/StopAndStart';
+import { WaqfSigns } from '@/modules/games/WaqfSigns';
+import { SIGN_EXAMPLES } from '@/content/signs';
 import { QalqalaLetters } from '@/modules/games/QalqalaLetters';
 import { WhichRule3 } from '@/modules/games/WhichRule3';
 import { ReviewSession } from '@/modules/games/ReviewSession';
@@ -433,6 +441,104 @@ describe('Heavy or light? (unit 6)', () => {
   });
 });
 
+/** The German names of unit 7's answers, as the buttons show them. */
+const STOP_START_NAMES: Record<string, string> = {
+  'stop-sukun': 'mit Sukūn',
+  'stop-alif': 'mit langem ā',
+  'stop-ha': 'mit Hāʾ',
+  'start-fatha': 'mit Fatḥa',
+  'start-damma': 'mit Ḍamma',
+  'start-kasra': 'mit Kasra',
+};
+const SIGN_NAMES: Record<string, string> = {
+  lazim: 'Anhalten Pflicht',
+  mamnu: 'Nicht anhalten',
+  jaiz: 'Anhalten erlaubt',
+  'wasl-awla': 'Weiterlesen besser',
+  'waqf-awla': 'Anhalten besser',
+  muanaqa: 'An einer von zwei Stellen',
+  sakta: 'Sakta',
+};
+
+describe('Stop and start, and the signs (unit 7)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('ask how twelve words end and how eleven begin, and all seven signs', () => {
+    expect(STOP_POOL).toHaveLength(12);
+    expect(START_POOL).toHaveLength(11);
+    expect(SIGN_POOL.map((q) => q.answer)).toEqual(SIGN_IDS);
+    expect(optionsOf(STOP_POOL[0]!)).toEqual(['stop-sukun', 'stop-alif', 'stop-ha']);
+    expect(optionsOf(START_POOL[0]!)).toEqual([
+      'start-fatha',
+      'start-damma',
+      'start-kasra',
+    ]);
+    expect(optionsOf(SIGN_POOL[0]!)).toEqual(SIGN_IDS);
+    const round = stopStartRound(seeded());
+    expect(round).toHaveLength(10);
+    expect(new Set(round.map((q) => q.id)).size).toBe(10);
+    // A stop question marks the last letter; a start question the alif waṣla.
+    const ha = STOP_POOL.find((q) => q.answer === 'stop-ha')!;
+    expect(ha.prompt.slice(ha.focus.start, ha.focus.carrierEnd)).toMatch(/^ة/);
+    const start = START_POOL[0]!;
+    expect(start.prompt.slice(start.focus.start, start.focus.start + 1)).toBe('ا');
+    for (const q of [ha, start, SIGN_POOL[3]!]) expect(questionOf(q)).toEqual(q);
+  });
+
+  it('says why after each answer and logs the round', async () => {
+    const store = new MemoryReviewStore();
+    renderGame('/pfad/7/spiel/anhalten', store, <StopAndStart random={seeded(4)} />);
+    expect(
+      screen.getByRole('heading', { name: 'Anhalten und Anfangen' })
+    ).toBeInTheDocument();
+    const round = stopStartRound(seeded(4));
+    for (const [i, question] of round.entries()) {
+      const right = STOP_START_NAMES[question.answer]!;
+      const options = question.kind === 'stop' ? STOP_ENDING_NAMES : START_VOWEL_NAMES;
+      const wrong = options.find((name) => name !== right)!;
+      await userEvent.click(
+        screen.getByRole('button', { name: i === 0 ? wrong : right })
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(
+        question.kind === 'stop'
+          ? /letzte Vokal|Fatḥatān|Tāʾ marbūṭa/
+          : /Artikel|dritte Buchstabe/
+      );
+      await userEvent.click(screen.getByRole('button', { name: /Weiter|Auswerten/ }));
+    }
+    expect(screen.getByRole('heading', { name: '9 von 10 richtig' })).toBeInTheDocument();
+    expect(store.load().cards[round[0]!.id]).toMatchObject({
+      kind: round[0]!.kind,
+      box: 1,
+    });
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'stop-and-start', right: 9, total: 10 }),
+    ]);
+  });
+
+  it('asks what each sign means, showing it where the muṣḥaf writes it', async () => {
+    const store = new MemoryReviewStore();
+    renderGame('/pfad/7/spiel/zeichen', store, <WaqfSigns random={seeded(4)} />);
+    const round = signsRound(seeded(4));
+    for (const question of round) {
+      expect(document.querySelector('.paper .quran')).toHaveTextContent(
+        SIGN_EXAMPLES[question.answer].text
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: SIGN_NAMES[question.answer]! })
+      );
+      await userEvent.click(screen.getByRole('button', { name: /^(Weiter|Auswerten)$/ }));
+    }
+    expect(screen.getByRole('heading', { name: '7 von 7 richtig' })).toBeInTheDocument();
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'waqf-signs', right: 7, total: 7 }),
+    ]);
+  });
+});
+
+const STOP_ENDING_NAMES = ['mit Sukūn', 'mit langem ā', 'mit Hāʾ'];
+const START_VOWEL_NAMES = ['mit Fatḥa', 'mit Ḍamma', 'mit Kasra'];
+
 describe('unit tests (ADR-0024)', () => {
   beforeEach(() => localStorage.setItem('arda.language', 'de'));
 
@@ -471,6 +577,22 @@ describe('unit tests (ADR-0024)', () => {
       ...Array(3).fill('ra heavy'),
       ...Array(3).fill('ra light'),
     ]);
+    // One word for each way to stop and to start, and four different signs.
+    const seven = unitTest(7, seeded());
+    expect(seven).toHaveLength(10);
+    expect(seven.map((q) => q.answer).sort()).toEqual(
+      expect.arrayContaining([
+        'start-damma',
+        'start-fatha',
+        'start-kasra',
+        'stop-alif',
+        'stop-ha',
+        'stop-sukun',
+      ])
+    );
+    expect(
+      new Set(seven.filter((q) => q.kind === 'sign').map((q) => q.answer)).size
+    ).toBe(4);
   });
 
   /** Answers the current letter question, rightly or not. */
@@ -564,6 +686,33 @@ describe('unit tests (ADR-0024)', () => {
     expect(screen.getByText('Bestanden – weiter mit Einheit 6.')).toBeInTheDocument();
   });
 
+  /** Answers the current question of unit 7 rightly: a word to stop on or start with, or a sign. */
+  const answerWaqf = async () => {
+    const text = document.querySelector('.paper .quran')!.textContent;
+    const word = [...STOP_POOL, ...START_POOL].find((q) => q.prompt === text);
+    const sign = SIGN_IDS.find((id) => SIGN_EXAMPLES[id].text === text);
+    const name = word ? STOP_START_NAMES[word.answer] : SIGN_NAMES[sign!];
+    await userEvent.click(screen.getByRole('button', { name }));
+    await userEvent.click(screen.getByRole('button', { name: /^(Weiter|Auswerten)$/ }));
+  };
+
+  it('leads from unit 6 to unit 7', async () => {
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={new MemoryReviewStore()}>
+          <MemoryRouter initialEntries={['/pfad/6/test']}>
+            <Routes>
+              <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    for (let i = 0; i < 10; i++) await answerWeight();
+    expect(screen.getByText('Bestanden – weiter mit Einheit 7.')).toBeInTheDocument();
+  });
+
   it('says every unit is done only when the other tests are passed too', async () => {
     const passed = (unit: number, n: number) => ({
       id: `00000000-0000-4000-8000-00000000000${n}`,
@@ -582,13 +731,14 @@ describe('unit tests (ADR-0024)', () => {
         [passed(3, 2).id]: passed(3, 2),
         [passed(4, 4).id]: passed(4, 4),
         [passed(5, 5).id]: passed(5, 5),
+        [passed(6, 6).id]: passed(6, 6),
       },
     });
     const { client } = fakeApi({});
     render(
       <Providers client={client}>
         <ReviewProvider store={store}>
-          <MemoryRouter initialEntries={['/pfad/6/test']}>
+          <MemoryRouter initialEntries={['/pfad/7/test']}>
             <Routes>
               <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
             </Routes>
@@ -596,7 +746,7 @@ describe('unit tests (ADR-0024)', () => {
         </ReviewProvider>
       </Providers>
     );
-    for (let i = 0; i < 10; i++) await answerWeight();
+    for (let i = 0; i < 10; i++) await answerWaqf();
     expect(screen.getByText('Bestanden – alle Einheiten geschafft.')).toBeInTheDocument();
   });
 

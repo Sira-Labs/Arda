@@ -91,10 +91,14 @@ export const en: Messages = {
         intro:
           'Heavy or light: seven letters are always heavy; the lām of Allāh and the rāʾ follow the vowel.',
       },
+      7: {
+        title: 'Unit 7 · Waqf and ibtidāʾ',
+        intro: 'How to stop and start again – and what the signs in your muṣḥaf say.',
+      },
     },
     lab: 'Open the letter lab',
     letters: (count) => (count === 1 ? '1 letter' : `${count} letters`),
-    next: 'Unit 7 (waqf and ibtidāʾ) follows after the pilot.',
+    next: 'Unit 8 (riwāyāt) follows later.',
   },
   ruleCard: {
     play: (sura, aya) => `Listen: sūra ${sura}, āya ${aya}`,
@@ -149,6 +153,20 @@ export const en: Messages = {
       'ra-light': 'With kasra; sākin after kasra',
     },
     lightKey: 'no colour = light (tarqīq)',
+    twoFourSix: '2, 4 or 6 counts',
+    waqfWhen: {
+      'waqf-sukun':
+        'The last vowel falls away and the letter rests (sukūn) – also after ḍammatān and kasratān.',
+      'madd-iwad': 'Fatḥatān becomes a long ā: 2 counts.',
+      'waqf-ha': 'Tāʾ marbūṭa (ة) becomes a resting hāʾ (هْ).',
+      'madd-arid': 'A madd letter before the last letter becomes ʿāriḍ when you stop.',
+      'madd-lin': 'Wāw or yāʾ sākina after fatḥa before the last letter: līn.',
+      'ibtida-fatha': 'In the article “al-” you begin with fatḥa.',
+      'ibtida-damma': 'If the third letter has ḍamma, you begin with ḍamma.',
+      'ibtida-kasra': 'Otherwise you begin with kasra – also in اسْم, ابْن, امْرَأَة.',
+    },
+    waqfKey: 'no colour = the place in question',
+    signs: 'Signs in the muṣḥaf',
     previous: 'Back',
     next: 'Next',
     done: 'To the unit',
@@ -309,6 +327,76 @@ export const en: Messages = {
       ],
       tip: 'How the rāʾ sounds when you stop is taught in unit 7.',
     },
+    waqf: {
+      title: 'How to stop at the end of a word',
+      steps: [
+        'Stop at the end of a word, never in the middle.',
+        'The last vowel falls away and the letter rests: أَحَدٌ → أَحَدْ.',
+        'Fatḥatān becomes a long ā: عَلِيمًا → عَلِيمَا.',
+        'Tāʾ marbūṭa becomes hāʾ: رَحْمَةٌ → رَحْمَهْ.',
+        'If the word ends in a long vowel, it stays as it is: قَالُوا.',
+      ],
+      tip: 'A qalqala letter at the end bounces most when you stop on it (الْفَلَقْ).',
+    },
+    'madd-arid': {
+      title: 'Madd when stopping: 2, 4 or 6',
+      steps: [
+        'If a madd letter stands before the last letter, the letter after it rests when you stop.',
+        'This madd is called ʿāriḍ (passing): you may hold it 2, 4 or 6 counts.',
+        'Wāw or yāʾ sākina after fatḥa (قُرَيْشْ, خَوْفْ) are called līn: also 2, 4 or 6.',
+        'Keep the same length throughout one recitation.',
+      ],
+      tip: 'If you read on without stopping, it stays a natural madd of 2 counts.',
+    },
+    'waqf-signs': {
+      title: 'The signs in the muṣḥaf',
+      steps: [
+        'The small signs above the text tell you whether you may, should or must stop.',
+        'A sign belongs to the word it follows.',
+        'At the end of an āya you may always stop.',
+      ],
+      tip: 'Your IndoPak muṣḥaf has further signs (ط, ز, ص, قف); they follow.',
+    },
+    ibtida: {
+      title: 'Beginning with hamzat al-waṣl',
+      steps: [
+        'You say hamzat al-waṣl (ٱ) only when you begin with the word.',
+        'In the article “al-” you begin with fatḥa: الْحَمْدُ.',
+        'If the third letter has ḍamma, you begin with ḍamma: ادْعُ.',
+        'Otherwise you begin with kasra: اقْرَأْ, اهْدِنَا.',
+      ],
+      tip: 'If you read on from the word before, hamzat al-waṣl falls away.',
+    },
+  },
+  signs: {
+    lazim: {
+      name: 'Must stop',
+      meaning: 'Stop here: reading on would change the meaning.',
+    },
+    mamnu: {
+      name: 'Do not stop',
+      meaning: 'Do not stop here; if you must, begin again a little before.',
+    },
+    jaiz: {
+      name: 'Stopping allowed',
+      meaning: 'Stopping and reading on are equally good.',
+    },
+    'wasl-awla': {
+      name: 'Reading on is better',
+      meaning: 'You may stop, but reading on is better.',
+    },
+    'waqf-awla': {
+      name: 'Stopping is better',
+      meaning: 'You may read on, but stopping is better.',
+    },
+    muanaqa: {
+      name: 'At one of two places',
+      meaning: 'The signs come in pairs: stop at one or the other, not at both.',
+    },
+    sakta: {
+      name: 'Sakta',
+      meaning: 'A short pause without breath, then on – in four places in Ḥafṣ.',
+    },
   },
   games: {
     eyebrow: (unit) => `Unit ${unit} · Practise`,
@@ -422,6 +510,36 @@ export const en: Messages = {
         const sakin = card === 'ra' && !own ? 'sākin ' : '';
         return `${card === 'ra' ? 'Rāʾ' : 'Lām of Allāh'} ${sakin}${reasons[reason]}`;
       },
+    },
+    stopStart: {
+      title: 'Stop and start',
+      intro:
+        'Ten real words: how does the word end when you stop, which vowel do you begin with?',
+      questionStop: 'How does the word end when you stop on it?',
+      questionStart: 'Which vowel do you begin the word with?',
+      answers: {
+        'stop-sukun': 'on sukūn',
+        'stop-alif': 'on a long ā',
+        'stop-ha': 'on hāʾ',
+        'start-fatha': 'with fatḥa',
+        'start-damma': 'with ḍamma',
+        'start-kasra': 'with kasra',
+      },
+      why: {
+        'waqf-sukun': 'the last vowel falls away',
+        'madd-iwad': 'fatḥatān becomes ā',
+        'waqf-ha': 'tāʾ marbūṭa becomes hāʾ',
+        'madd-arid': 'a madd before the last letter',
+        'madd-lin': 'līn before the last letter',
+        'ibtida-fatha': 'the article al-',
+        'ibtida-damma': 'the third letter has ḍamma',
+        'ibtida-kasra': 'the third letter has no ḍamma',
+      },
+    },
+    signs: {
+      title: 'The signs',
+      intro: 'Seven signs of the muṣḥaf: what does each one ask of you?',
+      question: 'What does the sign at the end tell you?',
     },
     shadda: 'nūn or mīm with shadda',
   },

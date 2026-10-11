@@ -7,10 +7,13 @@ import {
   isMaddRule,
   isQalqalaLetter,
   RULES,
+  WAQF_SIGNS,
   nunSakinaRule,
   type Letter,
   type Occurrence,
   type RuleId,
+  type WaqfRule,
+  type WaqfSignId,
   type WeightReason,
 } from '@arda/tajweed';
 import {
@@ -27,6 +30,11 @@ import {
   type Weight,
   type WeightCard,
   WEIGHTS,
+  SIGN_IDS,
+  START_VOWELS,
+  STOP_ENDINGS,
+  type StartVowel,
+  type StopEnding,
 } from '@/content/units';
 import type { NewCard } from '@/review/leitner';
 
@@ -60,6 +68,17 @@ export function cardOfRule(rule: RuleId): CardId | undefined {
     case 'ra-heavy':
     case 'ra-light':
       return 'ra';
+    case 'waqf-sukun':
+    case 'madd-iwad':
+    case 'waqf-ha':
+      return 'waqf';
+    case 'madd-arid':
+    case 'madd-lin':
+      return 'madd-arid';
+    case 'ibtida-fatha':
+    case 'ibtida-damma':
+    case 'ibtida-kasra':
+      return 'ibtida';
     default:
       return undefined;
   }
@@ -111,8 +130,38 @@ export interface WeightQuestion extends NewCard {
   focus: Occurrence;
 }
 
+/** One question of "Stop and start" (unit 7): how the word ends when you stop on it. */
+export interface StopQuestion extends NewCard {
+  kind: 'stop';
+  answer: StopEnding;
+  rule: WaqfRule;
+  /** The last letter, which the stop changes. */
+  focus: Occurrence;
+}
+
+/** One question of "Stop and start" (unit 7): which vowel begins the word on alif waṣla. */
+export interface StartQuestion extends NewCard {
+  kind: 'start';
+  answer: StartVowel;
+  rule: WaqfRule;
+  focus: Occurrence;
+}
+
+/** One question of "The signs" (unit 7): what a pause sign of the muṣḥaf asks. */
+export interface SignQuestion extends NewCard {
+  kind: 'sign';
+  answer: WaqfSignId;
+}
+
 export type Question =
-  WordQuestion | LetterQuestion | QalqalaQuestion | MaddQuestion | WeightQuestion;
+  | WordQuestion
+  | LetterQuestion
+  | QalqalaQuestion
+  | MaddQuestion
+  | WeightQuestion
+  | StopQuestion
+  | StartQuestion
+  | SignQuestion;
 
 /** The answers a question offers: its unit's rule cards, qalqala or not, or three lengths. */
 export function optionsOf(question: Question): readonly AnswerId[] {
@@ -127,6 +176,12 @@ export function optionsOf(question: Question): readonly AnswerId[] {
       return MADD_LENGTHS;
     case 'weight':
       return WEIGHTS;
+    case 'stop':
+      return STOP_ENDINGS;
+    case 'start':
+      return START_VOWELS;
+    case 'sign':
+      return SIGN_IDS;
   }
 }
 
@@ -271,6 +326,65 @@ export function weightRound(random: Random, count = 10): WeightQuestion[] {
   return shuffle(WEIGHT_POOL, random).slice(0, count);
 }
 
+const ENDING_OF: Partial<Record<RuleId, StopEnding>> = {
+  'waqf-sukun': 'stop-sukun',
+  'madd-iwad': 'stop-alif',
+  'waqf-ha': 'stop-ha',
+};
+const VOWEL_OF: Partial<Record<RuleId, StartVowel>> = {
+  'ibtida-fatha': 'start-fatha',
+  'ibtida-damma': 'start-damma',
+  'ibtida-kasra': 'start-kasra',
+};
+
+/** A "Stop and start" question for an example of unit 7's stop or start, or `undefined`. */
+export function waqfQuestion(
+  text: string,
+  rule: RuleId
+): StopQuestion | StartQuestion | undefined {
+  const ending = ENDING_OF[rule];
+  const vowel = VOWEL_OF[rule];
+  const focus = detect(text, { waqf: true }).find((o) => o.rule === rule);
+  if (!focus || (!ending && !vowel)) return undefined;
+  const common = { prompt: text, rule: rule as WaqfRule, focus };
+  if (ending) return { ...common, id: `stop:${text}`, kind: 'stop', answer: ending };
+  return { ...common, id: `start:${text}`, kind: 'start', answer: vowel as StartVowel };
+}
+
+const waqfQuestions = UNIT_EXAMPLES.map((example) =>
+  waqfQuestion(example.text, example.expectedRule)
+);
+
+/** Every word of unit 7 that is stopped on: four ending on sukūn, on ā, on hāʾ. */
+export const STOP_POOL: readonly StopQuestion[] = waqfQuestions.filter(
+  (question): question is StopQuestion => question?.kind === 'stop'
+);
+/** Every word of unit 7 that is begun on alif waṣla. */
+export const START_POOL: readonly StartQuestion[] = waqfQuestions.filter(
+  (question): question is StartQuestion => question?.kind === 'start'
+);
+
+export function signQuestion(id: WaqfSignId): SignQuestion {
+  const sign = WAQF_SIGNS.find((s) => s.id === id)!;
+  return { id: `sign:${id}`, kind: 'sign', prompt: sign.sign, answer: id };
+}
+
+/** The seven signs of the Madīna muṣḥaf, one question each. */
+export const SIGN_POOL: readonly SignQuestion[] = SIGN_IDS.map(signQuestion);
+
+/** Ten (or `count`) words to stop on and to start with, mixed. */
+export function stopStartRound(
+  random: Random,
+  count = 10
+): (StopQuestion | StartQuestion)[] {
+  return shuffle([...STOP_POOL, ...START_POOL], random).slice(0, count);
+}
+
+/** The seven signs in random order. */
+export function signsRound(random: Random): SignQuestion[] {
+  return shuffle(SIGN_POOL, random);
+}
+
 /** Questions in a unit test (ADR-0024); 8 right of them pass it. */
 export const UNIT_TEST_SIZE = 10;
 
@@ -279,7 +393,8 @@ export const UNIT_TEST_SIZE = 10;
  * words with four letters to sort; unit 3 asks ten words; unit 4 the five qalqala letters among
  * five others, so guessing "qalqala" every time cannot pass it; unit 5 three words of two counts,
  * four of four to five and three of six, so no single length passes it either; unit 6 five
- * heavy and five light (three rāʾ and two lām of Allāh each).
+ * heavy and five light (three rāʾ and two lām of Allāh each); unit 7 one word for each way
+ * to stop and each way to start, and four different signs.
  */
 export function unitTest(unit: CardUnit, random: Random): Question[] {
   switch (unit) {
@@ -333,6 +448,21 @@ export function unitTest(unit: CardUnit, random: Random): Question[] {
         random
       );
     }
+    case 7: {
+      const one = (pool: readonly (StopQuestion | StartQuestion)[], answer: AnswerId) =>
+        shuffle(
+          pool.filter((q) => q.answer === answer),
+          random
+        ).slice(0, 1);
+      return shuffle(
+        [
+          ...STOP_ENDINGS.flatMap((ending) => one(STOP_POOL, ending)),
+          ...START_VOWELS.flatMap((vowel) => one(START_POOL, vowel)),
+          ...shuffle(SIGN_POOL, random).slice(0, 4),
+        ],
+        random
+      );
+    }
   }
 }
 
@@ -352,6 +482,9 @@ export function questionOf(card: NewCard): Question | undefined {
   }
   if (card.kind === 'weight') {
     return WEIGHT_POOL.find((question) => question.id === card.id);
+  }
+  if (card.kind === 'stop' || card.kind === 'start' || card.kind === 'sign') {
+    return [...STOP_POOL, ...START_POOL, ...SIGN_POOL].find((q) => q.id === card.id);
   }
   return [...WORD_POOL, ...UNIT3_POOL].find((question) => question.id === card.id);
 }

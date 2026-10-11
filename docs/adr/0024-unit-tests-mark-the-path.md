@@ -76,3 +76,11 @@ asked for it the same day). It tests what the lab trains, the ear:
   weight, five heavy and five light, so answering one weight every time reaches five. Mistakes
   become review cards (kind `weight`); the game's rounds are logged as `heavy-or-light`.
 - "Every unit done" now needs unit 6's test too; unit 5's pass says "weiter mit Einheit 6".
+
+## Update 2026-10-11: unit 7 (waqf and ibtidāʾ)
+
+- Unit 7's test asks one word for each way to stop (sukūn, a long ā, hāʾ) and to start (fatḥa,
+  ḍamma, kasra) and four different signs: no single answer is right more than once among the
+  words, nor among the signs. Mistakes become review cards (kinds `stop`, `start`, `sign`); the
+  games' rounds are logged as `stop-and-start` and `waqf-signs`.
+- "Every unit done" now needs unit 7's test too; unit 6's pass says "weiter mit Einheit 7".

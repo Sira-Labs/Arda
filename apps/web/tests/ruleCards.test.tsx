@@ -341,8 +341,56 @@ describe('unit 6 (tafkhīm and tarqīq)', () => {
   });
 });
 
+describe('unit 7 (waqf and ibtidāʾ)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('teaches how a word ends at a stop, each way with words heard where an āya ends', () => {
+    renderAt('/pfad/7/waqf');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Waqf – Wie du am Wortende anhältst'
+    );
+    expect(screen.getByText('Einheit 7 · Verstehen')).toBeInTheDocument();
+    expect(
+      screen.getByText('Tāʾ marbūṭa (ة) wird zu einem ruhenden Hāʾ (هْ).')
+    ).toBeInTheDocument();
+    expect(screen.getByText('2 Zählzeiten')).toBeInTheDocument();
+    expect(
+      screen.getByText('ohne Farbe = die Stelle, um die es geht')
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Anhören: Sūra 101, Āya 1' })
+    ).toBeInTheDocument();
+  });
+
+  it('holds madd ʿāriḍ and līn 2, 4 or 6 counts', () => {
+    renderAt('/pfad/7/madd-arid');
+    expect(screen.getAllByText('2, 4 oder 6 Zählzeiten')).toHaveLength(2);
+  });
+
+  it('lists the seven signs of the muṣḥaf with what each asks', () => {
+    renderAt('/pfad/7/waqf-signs');
+    const signs = screen.getByLabelText('Zeichen im Muṣḥaf');
+    expect(within(signs).getAllByRole('listitem')).toHaveLength(7);
+    expect(within(signs).getByText('Anhalten Pflicht')).toBeInTheDocument();
+    expect(
+      within(signs).getByText('Anhalten und Weiterlesen sind gleich gut.')
+    ).toBeInTheDocument();
+  });
+
+  it('ends the unit with the start on alif waṣla', () => {
+    renderAt('/pfad/7/ibtida');
+    expect(
+      screen.getByText('Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma.')
+    ).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
+      'href',
+      '/pfad'
+    );
+  });
+});
+
 describe('the path', () => {
-  it('lists units 1–6: the lab, then the cards of each unit in the order of the sheet and its games', () => {
+  it('lists units 1–7: the lab, then the cards of each unit in the order of the sheet and its games', () => {
     localStorage.setItem('arda.language', 'en');
     renderAt('/pfad');
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
@@ -376,6 +424,13 @@ describe('the path', () => {
       '/pfad/6/ra',
       '/pfad/6/spiel/schwer-oder-leicht',
       '/pfad/6/test',
+      '/pfad/7/waqf',
+      '/pfad/7/madd-arid',
+      '/pfad/7/waqf-signs',
+      '/pfad/7/ibtida',
+      '/pfad/7/spiel/anhalten',
+      '/pfad/7/spiel/zeichen',
+      '/pfad/7/test',
     ]);
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
@@ -386,6 +441,7 @@ describe('the path', () => {
       'Unit 4 · Qalqala',
       'Unit 5 · Madd',
       'Unit 6 · Tafkhīm and tarqīq',
+      'Unit 7 · Waqf and ibtidāʾ',
       'Review',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();

@@ -1,9 +1,10 @@
-import { RULES, type RuleId } from '@arda/tajweed';
+import { RULES, WAQF_SIGNS, type RuleId, type WaqfRule } from '@arda/tajweed';
 import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
 import { CARD_AUDIO } from '@/content/cardAudio';
+import { SIGN_EXAMPLES } from '@/content/signs';
 import {
   CARDS,
   UNIT_CARDS,
@@ -24,7 +25,7 @@ import { useReview } from '@/review/ReviewProvider';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
-/** `/pfad/:unit/:rule`: a rule card of units 2–6, or "not found" for anything else. */
+/** `/pfad/:unit/:rule`: a rule card of units 2–7, or "not found" for anything else. */
 export function RuleCardPage() {
   const { unit, rule } = useParams();
   if (!isCardUnit(unit) || !isCardOf(Number(unit) as CardUnit, rule)) {
@@ -98,6 +99,7 @@ export function RuleCard({ id }: { id: CardId }) {
             player={player}
           />
         ))}
+        {id === 'waqf-signs' && <Signs />}
 
         <div className="legend" aria-label={m.today.legend}>
           {families.map((family) => (
@@ -116,7 +118,9 @@ export function RuleCard({ id }: { id: CardId }) {
             <span>
               {card.groups.some((group) => RULES[group.rule].weight)
                 ? m.ruleCard.lightKey
-                : m.ruleCard.clear}
+                : card.groups.some((group) => RULES[group.rule].subject === 'waqf')
+                  ? m.ruleCard.waqfKey
+                  : m.ruleCard.clear}
             </span>
           )}
           {decided && (
@@ -200,6 +204,34 @@ function CardName({ id }: { id: CardId }) {
 
 const IZHAR = new Set(['izhar'] as const);
 
+/**
+ * The pause signs of the Madīna muṣḥaf (unit 7): each as it is written after its words, its
+ * name and what it asks.
+ */
+function Signs() {
+  const { m } = useI18n();
+  return (
+    <section className="stack" aria-label={m.ruleCard.signs}>
+      <ul className="stack signs" style={{ gap: 12 }}>
+        {WAQF_SIGNS.map((sign) => (
+          <li key={sign.id} className="paper stack" style={{ gap: 4 }}>
+            <p className="row" style={{ justifyContent: 'space-between', gap: 8 }}>
+              <strong>{m.signs[sign.id].name}</strong>
+              <span className="arabic" lang="ar" dir="rtl">
+                {sign.arabic}
+              </span>
+            </p>
+            <p className="quran" lang="ar" dir="rtl" data-script="madina">
+              {SIGN_EXAMPLES[sign.id].text}
+            </p>
+            <p className="muted">{m.signs[sign.id].meaning}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 /** The rules of unit 6 whose card says when they hold. */
 type WhenRule = 'lam-heavy' | 'lam-light' | 'ra-heavy' | 'ra-light';
 
@@ -267,15 +299,20 @@ function Group({
   const only = useMemo(() => new Set([group.rule]), [group.rule]);
   // Qalqala, madd and tafkhīm are no question of ghunna: a madd says how long it is held, a
   // letter of unit 6 whether it is heavy or light.
+  // ʿĀriḍ and līn are 2, 4 or 6 counts, not anything between.
   const quality = rule.counts
-    ? m.ruleCard.counts(...rule.counts)
-    : rule.weight
-      ? m.ruleCard.weights[rule.weight]
-      : rule.subject === 'qalqala'
-        ? null
-        : rule.ghunna
-          ? m.ruleCard.withGhunna
-          : m.ruleCard.withoutGhunna;
+    ? rule.counts[0] === 2 && rule.counts[1] === 6
+      ? m.ruleCard.twoFourSix
+      : m.ruleCard.counts(...rule.counts)
+    : rule.subject === 'waqf'
+      ? null
+      : rule.weight
+        ? m.ruleCard.weights[rule.weight]
+        : rule.subject === 'qalqala'
+          ? null
+          : rule.ghunna
+            ? m.ruleCard.withGhunna
+            : m.ruleCard.withoutGhunna;
   const decided = rule.subject === 'nun-sakina-tanwin' || rule.subject === 'mim-sakina';
   const lettersLabel =
     rule.subject === 'ghunna'
@@ -320,6 +357,9 @@ function Group({
         ) : rule.subject === 'tafkhim' && rule.letters.length === 0 ? (
           // The lām of Allāh and the rāʾ: when they are heavy or light.
           <p className="muted">{m.ruleCard.when[group.rule as WhenRule]}</p>
+        ) : rule.subject === 'waqf' ? (
+          // Stopping and starting: what happens to the word.
+          <p className="muted">{m.ruleCard.waqfWhen[group.rule as WaqfRule]}</p>
         ) : rule.letters.length > 0 ? (
           <>
             <p className="muted">{lettersLabel}</p>

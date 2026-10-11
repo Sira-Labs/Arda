@@ -14,6 +14,8 @@ export const ACTIVITY_KINDS = [
   'unit-test',
   'madd-length',
   'heavy-or-light',
+  'stop-and-start',
+  'waqf-signs',
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -28,6 +30,8 @@ export const ROUND_KINDS: ReadonlySet<ActivityKind> = new Set([
   'unit-test',
   'madd-length',
   'heavy-or-light',
+  'stop-and-start',
+  'waqf-signs',
 ]);
 
 /** The most questions one round has (Sort the 28 asks 28). */
