@@ -98,7 +98,8 @@ const isIdgham = (rule: RuleId): boolean =>
  * and deterministic; the muṣḥaf's rule layer comes from the content pack (ADR-0008), this is
  * for the sheet's examples, the games and checking the pack. Occurrences come in text order.
  *
- * Not covered yet: lām shamsiyya, hamzat al-waṣl and the rules at a stop (waqf).
+ * Not covered yet: lām shamsiyya, and hamzat al-waṣl as silent within the text (the start on
+ * it is covered by `waqf`).
  */
 export function detect(
   text: string,
