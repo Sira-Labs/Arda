@@ -207,7 +207,8 @@ export const de = {
         'Ein Madd-Buchstabe vor dem letzten Buchstaben wird beim Anhalten ʿāriḍ.',
       'madd-lin': 'Wāw oder Yāʾ sākina nach Fatḥa vor dem letzten Buchstaben: Līn.',
       'ibtida-fatha': 'Im Artikel „al-“ beginnst du mit Fatḥa.',
-      'ibtida-damma': 'Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma.',
+      'ibtida-damma':
+        'Hat der dritte Buchstabe eine ursprüngliche Ḍamma, beginnst du mit Ḍamma.',
       'ibtida-kasra': 'Sonst beginnst du mit Kasra – auch in اسْم, ابْن, امْرَأَة.',
     } as Record<WaqfRule, string>,
     waqfKey: 'ohne Farbe = die Stelle, um die es geht',
@@ -391,7 +392,7 @@ export const de = {
         'Wāw oder Yāʾ sākina nach Fatḥa (قُرَيْشْ, خَوْفْ) heißen Līn: ebenfalls 2, 4 oder 6.',
         'Bleib in einer Lesung bei derselben Länge.',
       ],
-      tip: 'Liest du weiter, ohne anzuhalten, bleibt es ein natürlicher Madd von 2 Zählzeiten.',
+      tip: 'Liest du weiter, ohne anzuhalten, wird der ʿĀriḍ ein natürlicher Madd von 2 Zählzeiten, und Wāw oder Yāʾ des Līn werden gar nicht gedehnt.',
     },
     'waqf-signs': {
       title: 'Die Zeichen im Muṣḥaf',
@@ -407,7 +408,7 @@ export const de = {
       steps: [
         'Das Verbindungs-Hamza (ٱ) sprichst du nur, wenn du mit dem Wort beginnst.',
         'Im Artikel „al-“ beginnst du mit Fatḥa: الْحَمْدُ.',
-        'Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma: ادْعُ.',
+        'Hat der dritte Buchstabe eine ursprüngliche Ḍamma, beginnst du mit Ḍamma: ادْعُ.',
         'Sonst beginnst du mit Kasra: اقْرَأْ, اهْدِنَا.',
       ],
       tip: 'Liest du vom Wort davor weiter, fällt das Verbindungs-Hamza weg.',
@@ -583,8 +584,8 @@ export const de = {
         'madd-arid': 'Madd vor dem letzten Buchstaben',
         'madd-lin': 'Līn vor dem letzten Buchstaben',
         'ibtida-fatha': 'der Artikel al-',
-        'ibtida-damma': 'der dritte Buchstabe hat Ḍamma',
-        'ibtida-kasra': 'der dritte Buchstabe hat keine Ḍamma',
+        'ibtida-damma': 'der dritte Buchstabe hat eine ursprüngliche Ḍamma',
+        'ibtida-kasra': 'der dritte Buchstabe hat keine ursprüngliche Ḍamma',
       } as Record<WaqfRule, string>,
     },
     signs: {

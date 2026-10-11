@@ -380,7 +380,9 @@ describe('unit 7 (waqf and ibtidāʾ)', () => {
   it('ends the unit with the start on alif waṣla', () => {
     renderAt('/pfad/7/ibtida');
     expect(
-      screen.getByText('Hat der dritte Buchstabe Ḍamma, beginnst du mit Ḍamma.')
+      screen.getByText(
+        'Hat der dritte Buchstabe eine ursprüngliche Ḍamma, beginnst du mit Ḍamma.'
+      )
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
       'href',

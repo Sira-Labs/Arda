@@ -162,7 +162,7 @@ export const en: Messages = {
       'madd-arid': 'A madd letter before the last letter becomes ʿāriḍ when you stop.',
       'madd-lin': 'Wāw or yāʾ sākina after fatḥa before the last letter: līn.',
       'ibtida-fatha': 'In the article “al-” you begin with fatḥa.',
-      'ibtida-damma': 'If the third letter has ḍamma, you begin with ḍamma.',
+      'ibtida-damma': 'If the third letter has an original ḍamma, you begin with ḍamma.',
       'ibtida-kasra': 'Otherwise you begin with kasra – also in اسْم, ابْن, امْرَأَة.',
     },
     waqfKey: 'no colour = the place in question',
@@ -346,7 +346,7 @@ export const en: Messages = {
         'Wāw or yāʾ sākina after fatḥa (قُرَيْشْ, خَوْفْ) are called līn: also 2, 4 or 6.',
         'Keep the same length throughout one recitation.',
       ],
-      tip: 'If you read on without stopping, it stays a natural madd of 2 counts.',
+      tip: 'If you read on without stopping, ʿāriḍ becomes a natural madd of 2 counts, and the wāw or yāʾ of līn is not lengthened at all.',
     },
     'waqf-signs': {
       title: 'The signs in the muṣḥaf',
@@ -362,7 +362,7 @@ export const en: Messages = {
       steps: [
         'You say hamzat al-waṣl (ٱ) only when you begin with the word.',
         'In the article “al-” you begin with fatḥa: الْحَمْدُ.',
-        'If the third letter has ḍamma, you begin with ḍamma: ادْعُ.',
+        'If the third letter has an original ḍamma, you begin with ḍamma: ادْعُ.',
         'Otherwise you begin with kasra: اقْرَأْ, اهْدِنَا.',
       ],
       tip: 'If you read on from the word before, hamzat al-waṣl falls away.',
@@ -532,8 +532,8 @@ export const en: Messages = {
         'madd-arid': 'a madd before the last letter',
         'madd-lin': 'līn before the last letter',
         'ibtida-fatha': 'the article al-',
-        'ibtida-damma': 'the third letter has ḍamma',
-        'ibtida-kasra': 'the third letter has no ḍamma',
+        'ibtida-damma': 'the third letter has an original ḍamma',
+        'ibtida-kasra': 'the third letter has no original ḍamma',
       },
     },
     signs: {
