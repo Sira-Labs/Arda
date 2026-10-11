@@ -18,6 +18,9 @@ export {
   WEIGHT_RULES,
   type WeightRule,
   isWeightRule,
+  WAQF_RULES,
+  type WaqfRule,
+  isWaqfRule,
   type NunSakinaRule,
   nunSakinaRule,
   type MimSakinaRule,
@@ -26,6 +29,7 @@ export {
 } from './rules';
 export { detect, type Occurrence } from './detect';
 export type { WeightReason } from './weight';
+export { WAQF_SIGNS, type WaqfSign, type WaqfSignId, waqfSignOf } from './signs';
 export { SHEET_EXAMPLES, IZHAR_EXCEPTIONS, type SheetExample } from './sheet';
 export { UNIT_EXAMPLES } from './examples';
 export {

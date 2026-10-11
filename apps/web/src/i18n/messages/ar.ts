@@ -460,6 +460,10 @@ export const ar: Messages = {
           'after-wasla': 'بعد همزة الوصل',
           'before-heavy': 'قبل حرف استعلاء',
           start: 'في أول القراءة',
+          'stop-after-fatha': 'عند الوقف بعد فتح',
+          'stop-after-damma': 'عند الوقف بعد ضم',
+          'stop-after-kasra': 'عند الوقف بعد كسر',
+          'stop-after-ya': 'عند الوقف بعد ياء ساكنة',
         };
         // A rāʾ without a vowel of its own rests (sākin).
         const own = ['fatha', 'damma', 'kasra'].includes(reason);

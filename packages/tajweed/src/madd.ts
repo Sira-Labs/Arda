@@ -76,7 +76,7 @@ function isHamza(g: Grapheme): boolean {
  * ḍamma, yāʾ after kasra, each without a vowel of its own; or a letter carrying a long-vowel
  * sign.
  */
-function isMaddLetter(gs: readonly Grapheme[], i: number): boolean {
+export function isMaddLetter(gs: readonly Grapheme[], i: number): boolean {
   const g = gs[i] as Grapheme;
   if (isSilent(g)) return false;
   if ([...g.marks].some((m) => LONG_VOWEL_SIGNS.has(m) && m !== 'ٰ')) return true;

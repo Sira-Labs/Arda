@@ -12,6 +12,7 @@ import {
   letterOf,
 } from './letters';
 import { maddOccurrences } from './madd';
+import { stopOccurrences, startOccurrence } from './waqf';
 import { weightOccurrences, type WeightReason } from './weight';
 import { type RuleId, isQalqalaLetter, mimSakinaRule, nunSakinaRule } from './rules';
 
@@ -91,8 +92,9 @@ const isIdgham = (rule: RuleId): boolean =>
 /**
  * Finds the rules of units 2–4 in vocalised text: nūn sākina and tanwīn, mīm sākina, ghunna on
  * a mushaddad nūn or mīm, and qalqala on a sākin letter; with `madd`, also the madd rules of
- * unit 5, and with `tafkhim` the heavy and light letters of unit 6 (asked for, so the cards and
- * games of the earlier units keep showing only their rules). Pure
+ * unit 5, with `tafkhim` the heavy and light letters of unit 6, and with `waqf` the stop at the
+ * end of the text and the start on alif waṣla of unit 7 (asked for, so the cards and games of
+ * the earlier units keep showing only their rules). Pure
  * and deterministic; the muṣḥaf's rule layer comes from the content pack (ADR-0008), this is
  * for the sheet's examples, the games and checking the pack. Occurrences come in text order.
  *
@@ -100,7 +102,7 @@ const isIdgham = (rule: RuleId): boolean =>
  */
 export function detect(
   text: string,
-  options: { madd?: boolean; tafkhim?: boolean } = {}
+  options: { madd?: boolean; tafkhim?: boolean; waqf?: boolean } = {}
 ): Occurrence[] {
   const gs = graphemes(text);
   const found: Occurrence[] = [];
@@ -146,12 +148,24 @@ export function detect(
       found.push({ rule: 'qalqala', start: g.start, carrierEnd: g.end, end: g.end });
     }
   }
-  if (!options.madd && !options.tafkhim) return found;
-  return [
+  if (!options.madd && !options.tafkhim && !options.waqf) return found;
+  let all = [
     ...found,
     ...(options.madd ? maddOccurrences(gs) : []),
     ...(options.tafkhim ? weightOccurrences(gs) : []),
-  ].sort((a, b) => a.start - b.start);
+  ];
+  if (options.waqf) {
+    const start = startOccurrence(gs);
+    const stop = stopOccurrences(gs);
+    // At the stop, the stop's reading replaces the joined one on the same letter: madd ʿāriḍ
+    // for ṭabīʿī, the rāʾ by the letter before it; a qalqala found already is kept once.
+    const replaced = new Set(stop.map((o) => o.start));
+    const joinedOnly = (o: Occurrence): boolean =>
+      !replaced.has(o.start) ||
+      (o.rule !== 'madd-tabii' && !o.rule.startsWith('ra-') && o.rule !== 'qalqala');
+    all = [...all.filter(joinedOnly), ...stop, ...(start ? [start] : [])];
+  }
+  return all.sort((a, b) => a.start - b.start);
 }
 
 /** An occurrence from its carrier and the letter that decided it. */

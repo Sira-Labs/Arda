@@ -452,6 +452,10 @@ export const de = {
           'after-wasla': 'nach dem Verbindungs-Hamza',
           'before-heavy': 'vor einem schweren Buchstaben',
           start: 'am Anfang der Lesung',
+          'stop-after-fatha': 'beim Anhalten nach Fatḥa',
+          'stop-after-damma': 'beim Anhalten nach Ḍamma',
+          'stop-after-kasra': 'beim Anhalten nach Kasra',
+          'stop-after-ya': 'beim Anhalten nach Yāʾ sākina',
         } as Record<WeightReason, string>;
         // A rāʾ without a vowel of its own rests (sākin).
         const own = ['fatha', 'damma', 'kasra'].includes(reason);

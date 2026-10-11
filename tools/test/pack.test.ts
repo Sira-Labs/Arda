@@ -6,6 +6,7 @@ import {
   PACK_RULES,
   detect,
   isMaddRule,
+  waqfSignOf,
   type PackRuleId,
   type RuleId,
 } from '@arda/tajweed';
@@ -311,6 +312,54 @@ describe('the packs in the app', () => {
       'qalqala cpfair at the end',
     ]);
     expect(baqara['ghunna-mushaddad engine']).toEqual(['2:105', '2:245', '2:261']);
+  });
+
+  it('agree with the engine at every stop at an āya end: ʿāriḍ and qalqala (unit 7)', () => {
+    for (const id of ['uthmani-hafs-juz30', 'uthmani-hafs-fatiha-baqara']) {
+      let arid = 0;
+      for (const sura of byId(id).pack.suras) {
+        for (const aya of sura.ayat) {
+          const last = aya.words[aya.words.length - 1]!;
+          const text = aya.words.map((w) => w.t).join(' ');
+          const offset = text.length - last.t.length;
+          const engine = new Set<string>(
+            detect(text, { waqf: true })
+              .filter((o) => o.start >= offset)
+              .map((o) => (o.rule === 'madd-lin' ? 'madd-arid' : o.rule))
+          );
+          const data = new Set<string>(
+            (last.r ?? [])
+              .filter((span) => !span[3])
+              .map(([, , id]) =>
+                id === 'madd_246' ? 'madd-arid' : id === 'qalqalah' ? 'qalqala' : id
+              )
+          );
+          if (data.has('madd-arid')) arid++;
+          for (const rule of ['madd-arid', 'qalqala']) {
+            expect(engine.has(rule), `${sura.sura}:${aya.aya} ${rule}`).toBe(
+              data.has(rule)
+            );
+          }
+        }
+      }
+      expect(arid, id).toBeGreaterThan(150);
+    }
+  });
+
+  it('know every pause sign they carry (unit 7)', () => {
+    for (const { pack } of shipped.filter((s) => s.pack.script === 'uthmani')) {
+      for (const sura of pack.suras) {
+        for (const aya of sura.ayat) {
+          for (const word of aya.words) {
+            for (const sign of word.a ?? '') {
+              // The sajdah sign is no pause sign.
+              if (sign === '۩') continue;
+              expect(waqfSignOf(sign), `${sura.sura}:${aya.aya} ${sign}`).toBeDefined();
+            }
+          }
+        }
+      }
+    }
   });
 
   it('agree with the engine on every madd but the ʿāriḍ (ADR-0008, unit 5)', () => {

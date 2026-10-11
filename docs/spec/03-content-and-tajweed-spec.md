@@ -175,6 +175,38 @@ category), so its legend leaves the family out; the cards of unit 6 do.
 - Checked on both ʿUthmānī packs (all 305 lāms of Allāh and 1,335 rāʾs read as above) and
   against every rāʾ word of the letter lab (`tools/test/lab.test.ts`).
 
+## 4d. Stopping and starting (unit 7, engine)
+
+`detect(text, { waqf: true })` reads the end of the text as a stop (waqf) and its start as a
+beginning (ibtidāʾ), in Ḥafṣ by way of ash-Shāṭibiyya. Joined readings of the same letter give
+way to the stop's: madd ʿāriḍ for ṭabīʿī, the rāʾ at a stop for its own vowel.
+
+| At the stop                 | The last word                                                                  | Example                              |
+| --------------------------- | ------------------------------------------------------------------------------ | ------------------------------------ |
+| Sukūn (`waqf-sukun`)        | the last vowel, tanwīn of ḍamma or kasra, and the ṣila of a hāʾ fall away      | أَحَدْ, بِهْ                         |
+| Madd al-ʿiwaḍ (`madd-iwad`) | fatḥatān (not on tāʾ marbūṭa) becomes a long ā, 2 counts                       | عَلِيمَا, هُدَى                      |
+| Tāʾ marbūṭa (`waqf-ha`)     | is read as a hāʾ sākina                                                        | رَحْمَهْ                             |
+| Madd ʿāriḍ (`madd-arid`)    | a madd letter before the last letter: 2, 4 or 6 counts, kept the same          | ٱلْعَٰلَمِينْ, نَسْتَعِينْ           |
+| Madd līn (`madd-lin`)       | wāw or yāʾ sākina after fatḥa before the last letter: 2, 4 or 6 counts         | قُرَيْشْ, خَوْفْ                     |
+| Qalqala                     | on a qalqala letter at the end, also with shadda                               | ٱلْفَلَقْ, ٱلْحَقّْ                  |
+| Rāʾ                         | light after kasra or yāʾ sākina (one sākin letter between allowed), else heavy | حِجْرْ, خَبِيرْ / ٱلْقَدْرْ, غَفُورْ |
+
+- A word ending in a long vowel stays as it is (قَالُوا۟, ٱلضُّحَىٰ). A madd before a final hamza
+  stays muttaṣil (ٱلسَّمَآءِ), not ʿāriḍ.
+- Ibtidāʾ on alif waṣla: fatḥa in the article (ٱلْحَمْدُ, ٱلَّذِى, ٱلْـَٔاخِرَةِ), ḍamma where the
+  third letter has an original ḍamma (ٱنظُرْ, ٱدْعُ, ٱتُّبِعُوا۟; with a shadda the doubled second
+  letter is the third), kasra otherwise (ٱرْجِعِىٓ, ٱتَّقُوا۟) and in the nouns (ٱسْمُهُۥ, ٱبْنُ,
+  ٱمْرُؤٌ) and the verbs whose ḍamma is not their own (ٱمْشُوا۟, ٱقْضُوٓا۟).
+- The pause signs of the Madīna muṣḥaf (`WAQF_SIGNS`, kept by the packs after a word): ۘ lāzim
+  (stop), ۙ mamnūʿ (do not stop), ۚ jāʾiz (either), ۖ al-waṣl awlā (continuing is better), ۗ
+  al-waqf awlā (stopping is better), ۛ muʿānaqa (stop at one of the two), and ۜ sakta (a short
+  stop without breath). IndoPak signs (ط, ز, ص, قف …) are not taught yet.
+- Checked against cpfair at every āya end of both ʿUthmānī packs (`tools/test/pack.test.ts`):
+  all 452 madd_246 and all 131 qalqala at the end agree. The ibtidāʾ vowel was read for all
+  1,266 words with alif waṣla in the packs (fatḥa 1,161, kasra 89, ḍamma 16).
+- Left to the cards and the sheikh: rawm and ishmām, the rāʾ where both are allowed, the madd
+  ʿāriḍ's length chosen per recitation, and stopping in the middle of an āya by meaning.
+
 ## 5. Rendering checks (IndoPak font)
 
 - DigitalKhatt IndoPak renders IndoPak text with U+0652 sukūn; the ʿUthmānī U+06E1 shows a
