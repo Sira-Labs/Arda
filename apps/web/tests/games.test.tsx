@@ -6,6 +6,8 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SIGN_IDS, UNIT2_CARDS, cardName } from '@/content/units';
 import {
+  CHANGE_POOL,
+  HEAR_POOL,
   MADD_POOL,
   SIGN_POOL,
   START_POOL,
@@ -13,6 +15,8 @@ import {
   UNIT3_POOL,
   WEIGHT_POOL,
   WORD_POOL,
+  changeRound,
+  hearRound,
   letterQuestion,
   maddRound,
   signsRound,
@@ -28,7 +32,11 @@ import {
   unitTest,
   whichRuleRound,
 } from '@/games/questions';
+import { HafsOrWarsh } from '@/modules/games/HafsOrWarsh';
 import { HeavyOrLight } from '@/modules/games/HeavyOrLight';
+import { WarshChanges } from '@/modules/games/WarshChanges';
+import type { Timings } from '@/modules/mushaf/timings';
+import { PlayerContext, type PlayerDeps } from '@/modules/mushaf/usePlayer';
 import { MaddLength } from '@/modules/games/MaddLength';
 import { StopAndStart } from '@/modules/games/StopAndStart';
 import { WaqfSigns } from '@/modules/games/WaqfSigns';
@@ -600,6 +608,15 @@ describe('unit tests (ADR-0024)', () => {
     expect(
       new Set(seven.filter((q) => q.kind === 'sign').map((q) => q.answer)).size
     ).toBe(4);
+    // Three Warsh madds, three of the hamza, two sounds and two words: no single group passes.
+    const eight = unitTest(8, seeded());
+    expect(new Set(eight.map((q) => q.id)).size).toBe(10);
+    expect(eight.map((q) => q.answer).sort()).toEqual([
+      ...Array(2).fill('other-words'),
+      ...Array(3).fill('warsh-hamza'),
+      ...Array(3).fill('warsh-madd'),
+      ...Array(2).fill('warsh-sounds'),
+    ]);
   });
 
   /** Answers the current letter question, rightly or not. */
@@ -720,6 +737,33 @@ describe('unit tests (ADR-0024)', () => {
     expect(screen.getByText('Bestanden – weiter mit Einheit 7.')).toBeInTheDocument();
   });
 
+  it('leads from unit 7 to unit 8', async () => {
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={new MemoryReviewStore()}>
+          <MemoryRouter initialEntries={['/pfad/7/test']}>
+            <Routes>
+              <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
+            </Routes>
+          </MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+    for (let i = 0; i < 10; i++) await answerWaqf();
+    expect(screen.getByText('Bestanden – weiter mit Einheit 8.')).toBeInTheDocument();
+  });
+
+  /** Answers the current question of unit 8 rightly, from the Ḥafṣ word it shows. */
+  const answerChange = async () => {
+    const text = document.querySelector('.paper .quran')!.textContent;
+    const question = CHANGE_POOL.find((q) => q.prompt === text)!;
+    await userEvent.click(
+      screen.getByRole('button', { name: cardName(question.answer, 'de') })
+    );
+    await userEvent.click(screen.getByRole('button', { name: /^(Weiter|Auswerten)$/ }));
+  };
+
   it('says every unit is done only when the other tests are passed too', async () => {
     const passed = (unit: number, n: number) => ({
       id: `00000000-0000-4000-8000-00000000000${n}`,
@@ -739,13 +783,14 @@ describe('unit tests (ADR-0024)', () => {
         [passed(4, 4).id]: passed(4, 4),
         [passed(5, 5).id]: passed(5, 5),
         [passed(6, 6).id]: passed(6, 6),
+        [passed(7, 7).id]: passed(7, 7),
       },
     });
     const { client } = fakeApi({});
     render(
       <Providers client={client}>
         <ReviewProvider store={store}>
-          <MemoryRouter initialEntries={['/pfad/7/test']}>
+          <MemoryRouter initialEntries={['/pfad/8/test']}>
             <Routes>
               <Route path="/pfad/:unit/test" element={<UnitTest random={seeded(4)} />} />
             </Routes>
@@ -753,7 +798,7 @@ describe('unit tests (ADR-0024)', () => {
         </ReviewProvider>
       </Providers>
     );
-    for (let i = 0; i < 10; i++) await answerWaqf();
+    for (let i = 0; i < 10; i++) await answerChange();
     expect(screen.getByText('Bestanden – alle Einheiten geschafft.')).toBeInTheDocument();
   });
 
@@ -889,5 +934,125 @@ describe('two tabs', () => {
       window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
     });
     expect(screen.getByRole('link', { name: '1 Karte wiederholen' })).toBeInTheDocument();
+  });
+});
+
+/** An audio element that records what it is asked to play. */
+class FakeAudio extends EventTarget {
+  src = '';
+  played: string[] = [];
+  play() {
+    this.played.push(this.src);
+    return Promise.resolve();
+  }
+  pause() {}
+}
+
+describe('What Warsh changes, and Ḥafṣ or Warsh (unit 8)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('ask every Warsh word, four of each group, and every heard āya in both riwāyāt', () => {
+    expect(CHANGE_POOL).toHaveLength(16);
+    expect(new Set(CHANGE_POOL.map((q) => q.id)).size).toBe(16);
+    for (const card of ['warsh-madd', 'warsh-hamza', 'warsh-sounds', 'other-words']) {
+      expect(
+        CHANGE_POOL.filter((q) => q.answer === card),
+        card
+      ).toHaveLength(4);
+    }
+    expect(optionsOf(CHANGE_POOL[0]!)).toEqual([
+      'warsh-madd',
+      'warsh-hamza',
+      'warsh-sounds',
+      'other-words',
+    ]);
+    expect(HEAR_POOL).toHaveLength(28);
+    expect(optionsOf(HEAR_POOL[0]!)).toEqual(['hafs', 'warsh']);
+    // A round hears ten different āyāt, each in one of the two.
+    const round = hearRound(seeded());
+    expect(round).toHaveLength(10);
+    expect(new Set(round.map((q) => q.example.wordKey)).size).toBe(10);
+    expect(changeRound(seeded())).toHaveLength(10);
+    for (const q of [CHANGE_POOL[4]!, HEAR_POOL[3]!]) expect(questionOf(q)).toEqual(q);
+  });
+
+  it('says what Warsh changes and how he says it, and logs the round', async () => {
+    const store = new MemoryReviewStore();
+    renderGame(
+      '/pfad/8/spiel/was-aendert-warsh',
+      store,
+      <WarshChanges random={seeded(4)} />
+    );
+    expect(
+      screen.getByRole('heading', { name: 'Was ändert Warsh?' })
+    ).toBeInTheDocument();
+    const round = changeRound(seeded(4));
+    for (const [i, question] of round.entries()) {
+      const right = cardName(question.answer, 'de');
+      const wrong = cardName(
+        question.answer === 'warsh-madd' ? 'warsh-hamza' : 'warsh-madd',
+        'de'
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: i === 0 ? wrong : right })
+      );
+      const status = screen.getByRole('status');
+      if (question.example.spoken)
+        expect(status).toHaveTextContent(question.example.spoken);
+      await userEvent.click(screen.getByRole('button', { name: /^(Weiter|Auswerten)$/ }));
+    }
+    expect(screen.getByRole('heading', { name: '9 von 10 richtig' })).toBeInTheDocument();
+    expect(store.load().cards[round[0]!.id]).toMatchObject({
+      kind: 'riwaya-change',
+      box: 1,
+    });
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'warsh-changes', right: 9, total: 10 }),
+    ]);
+  });
+
+  it('plays each āya in the riwāya it asks about, and logs the round', async () => {
+    const audio = new FakeAudio();
+    const deps: PlayerDeps = {
+      createAudio: () => audio as unknown as HTMLAudioElement,
+      fetchTimings: async () => ({ ayat: {} }) as unknown as Timings,
+    };
+    const store = new MemoryReviewStore();
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <PlayerContext.Provider value={deps}>
+          <ReviewProvider store={store}>
+            <MemoryRouter>
+              <HafsOrWarsh random={seeded(4)} />
+            </MemoryRouter>
+          </ReviewProvider>
+        </PlayerContext.Provider>
+      </Providers>
+    );
+    const round = hearRound(seeded(4));
+    for (const question of round) {
+      await userEvent.click(screen.getByRole('button', { name: /Anhören/ }));
+      expect(audio.played.at(-1)).toContain(
+        question.answer === 'warsh'
+          ? '/warsh/warsh_Abdul_Basit_128kbps/'
+          : '/Abdul_Basit_Murattal_192kbps/'
+      );
+      await userEvent.click(
+        screen.getByRole('button', {
+          name: question.answer === 'warsh' ? 'Warsh' : 'Ḥafṣ',
+        })
+      );
+      expect(screen.getByRole('status')).toHaveTextContent(
+        question.answer === 'warsh' ? 'Das war Warsh:' : 'Das war Ḥafṣ; bei Warsh:'
+      );
+      await userEvent.click(screen.getByRole('button', { name: /^(Weiter|Auswerten)$/ }));
+    }
+    expect(
+      screen.getByRole('heading', { name: '10 von 10 richtig' })
+    ).toBeInTheDocument();
+    expect(Object.values(store.load().activity ?? {})).toEqual([
+      expect.objectContaining({ kind: 'hafs-or-warsh', right: 10, total: 10 }),
+    ]);
   });
 });

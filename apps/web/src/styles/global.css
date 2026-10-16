@@ -555,6 +555,11 @@ a {
   justify-content: space-between;
 }
 .path-cards,
+/* How another riwāya says a word (unit 8): large enough to read its vowels. */
+.spoken {
+  font-size: 1.5rem;
+  line-height: 1.6;
+}
 .signs {
   list-style: none;
   margin: 0;

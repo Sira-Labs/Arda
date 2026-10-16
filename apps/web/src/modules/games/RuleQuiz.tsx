@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LearningShell } from '@/components/LearningShell';
 import { TajweedText } from '@/components/TajweedText';
+import { riwayaAudioOf } from '@/content/riwayaAudio';
 import { SIGN_EXAMPLES } from '@/content/signs';
 import {
+  HEARD_RIWAYAT,
   MADD_LENGTHS,
   NO_QALQALA,
   SIGN_IDS,
@@ -15,15 +17,18 @@ import {
   cardName,
   type AnswerId,
   type CardUnit,
+  type HeardRiwaya,
   type MaddLength,
   type StartVowel,
   type StopEnding,
   type Weight,
 } from '@/content/units';
-import { optionsOf, type Question } from '@/games/questions';
+import { optionsOf, type HearQuestion, type Question } from '@/games/questions';
 import type { Language } from '@/i18n/languages';
 import type { Messages } from '@/i18n/messages';
 import { useI18n } from '@/i18n/I18nProvider';
+import { PlayIcon } from '@/modules/mushaf/PlayerBar';
+import { useAyaPlayer } from '@/modules/path/useAyaPlayer';
 import { useReview } from '@/review/ReviewProvider';
 import { ruleName } from '@/tajweed/rules';
 import { focusSegments, segmentsOf } from '@/tajweed/segments';
@@ -70,6 +75,8 @@ export function RuleQuiz({
     | 'heavy-or-light'
     | 'stop-and-start'
     | 'waqf-signs'
+    | 'warsh-changes'
+    | 'hafs-or-warsh'
   >;
   questions: readonly Question[];
   eyebrow: string;
@@ -217,6 +224,16 @@ function QuestionView({
           />
         ) : question.kind === 'sign' ? (
           <SignPrompt sign={question.answer} />
+        ) : question.kind === 'riwaya-change' ? (
+          <TajweedText
+            large
+            segments={focusSegments(question.prompt, {
+              start: question.mark.start,
+              carrierEnd: question.mark.end,
+            })}
+          />
+        ) : question.kind === 'riwaya-hear' ? (
+          <HearPrompt question={question} />
         ) : (
           <p className="quran quran-lg" lang="ar" dir="rtl">
             {question.prompt}
@@ -235,11 +252,15 @@ function QuestionView({
                     ? m.games.stopStart.questionStart
                     : question.kind === 'sign'
                       ? m.games.signs.question
-                      : question.kind === 'sort-letter'
-                        ? m.games.sort.question
-                        : question.unit === 3
-                          ? m.games.unit3.question
-                          : m.games.whichRule.question}
+                      : question.kind === 'riwaya-change'
+                        ? m.games.warshChanges.question
+                        : question.kind === 'riwaya-hear'
+                          ? m.games.hafsOrWarsh.question
+                          : question.kind === 'sort-letter'
+                            ? m.games.sort.question
+                            : question.unit === 3
+                              ? m.games.unit3.question
+                              : m.games.whichRule.question}
         </p>
       </div>
 
@@ -257,6 +278,10 @@ function QuestionView({
           </button>
         ))}
       </div>
+
+      {question.kind === 'riwaya-hear' && (
+        <p className="muted example-source">{m.riwayaCard.source}</p>
+      )}
 
       {answered && (
         <div
@@ -287,10 +312,12 @@ const isStopOrStart = (id: AnswerId): id is StopEnding | StartVowel =>
   (START_VOWELS as readonly string[]).includes(id);
 const isSign = (id: AnswerId): id is WaqfSignId =>
   (SIGN_IDS as readonly string[]).includes(id);
+const isHeard = (id: AnswerId): id is HeardRiwaya =>
+  (HEARD_RIWAYAT as readonly string[]).includes(id);
 
 /**
  * An answer's name: the rule card's, "no qalqala", a madd's length, heavy or light, how a word
- * ends or begins, or what a sign asks.
+ * ends or begins, what a sign asks, or a riwāya.
  */
 function answerName(id: AnswerId, language: Language, m: Messages): string {
   if (id === NO_QALQALA) return m.games.qalqala.no;
@@ -298,6 +325,7 @@ function answerName(id: AnswerId, language: Language, m: Messages): string {
   if (isWeight(id)) return m.games.weight.answers[id];
   if (isStopOrStart(id)) return m.games.stopStart.answers[id];
   if (isSign(id)) return m.signs[id].name;
+  if (isHeard(id)) return m.riwayat[id].short;
   return cardName(id, language);
 }
 
@@ -318,13 +346,61 @@ function SignPrompt({ sign }: { sign: WaqfSignId }) {
 }
 
 /**
+ * The āya recited in Ḥafṣ or Warsh by the same reciter, its Ḥafṣ word marked where the two
+ * differ. The learner starts it: browsers may refuse sound nobody asked for.
+ */
+function HearPrompt({ question }: { question: HearQuestion }) {
+  const { m } = useI18n();
+  const player = useAyaPlayer();
+  const src = riwayaAudioOf(question.example, question.answer);
+  return (
+    <div className="stack" style={{ gap: 8, alignItems: 'center' }}>
+      <TajweedText
+        large
+        segments={focusSegments(question.prompt, {
+          start: question.mark.start,
+          carrierEnd: question.mark.end,
+        })}
+      />
+      {src && (
+        <button type="button" className="btn" onClick={() => player.play(src)}>
+          <PlayIcon pause={player.playing === src} /> {m.games.hafsOrWarsh.play}
+        </button>
+      )}
+      {player.failed && <p role="alert">{m.lab.listen.failed}</p>}
+    </div>
+  );
+}
+
+/**
  * Why: the letter that follows, and for the four exceptions that it is inside one word; the
  * shadda for the ghunna of unit 3; quṭbu jadd for the qalqala letters; the madd and what comes
  * after its letter for "How long?"; the vowel that makes a rāʾ or the lām of Allāh heavy or
- * light; what a stop or a start does; what a sign asks.
+ * light; what a stop or a start does; what a sign asks; what Warsh changes, and how he says it.
  */
 function Reason({ question }: { question: Question }) {
   const { m, language } = useI18n();
+  if (question.kind === 'riwaya-change' || question.kind === 'riwaya-hear') {
+    const { change, spoken } = question.example;
+    const what = m.riwayaCard.changes[change];
+    return (
+      <>
+        {question.kind === 'riwaya-hear' &&
+          (question.answer === 'hafs'
+            ? m.games.hafsOrWarsh.hafs
+            : m.games.hafsOrWarsh.warsh)}{' '}
+        {what.name} – {what.what}
+        {spoken && (
+          <>
+            {' '}
+            <bdi className="arabic spoken" lang="ar" dir="rtl">
+              {spoken}
+            </bdi>
+          </>
+        )}
+      </>
+    );
+  }
   if (question.kind === 'madd-length') {
     return (
       <>
