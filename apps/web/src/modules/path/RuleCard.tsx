@@ -102,7 +102,8 @@ export function RuleCard({ id }: { id: CardId }) {
         ))}
         {id === 'waqf-signs' && <Signs />}
         {id === 'riwayat' && <RiwayatList />}
-        {isChangeCard(id) && <ChangeExamples card={id} />}
+        {/* A new card is a new player: the āya of the card before stops (its cleanup). */}
+        {isChangeCard(id) && <ChangeExamples key={id} card={id} />}
 
         {/* Unit 8 colours no rule: its marks are the places another riwāya differs. */}
         {(families.length > 0 || hasClear || decided) && (
