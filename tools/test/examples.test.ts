@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import type { Pack, PackIndex } from '@arda/quran';
-import { SHEET_EXAMPLES, UNIT_EXAMPLES } from '@arda/tajweed';
+import { RIWAYA_EXAMPLES, SHEET_EXAMPLES, UNIT_EXAMPLES } from '@arda/tajweed';
 
 const web = (path: string) =>
   fileURLToPath(new URL(`../../apps/web/${path}`, import.meta.url));
@@ -40,4 +40,15 @@ describe('the examples of units 2–7 are real words (spec 03 §4)', () => {
     expect(word, `no word at ${key} in the packs`).toBeDefined();
     expect(skeleton(word!)).toBe(skeleton(text.split(' ')[0]!));
   });
+});
+
+describe('the examples of unit 8 are real words, as Ḥafṣ reads them (spec 03 §4e)', () => {
+  it.each(RIWAYA_EXAMPLES.map((e) => [e.wordKey, e.text] as const))(
+    '%s is %s',
+    (key, text) => {
+      const word = wordAt(key);
+      expect(word, `no word at ${key} in the packs`).toBeDefined();
+      expect(skeleton(word!)).toBe(skeleton(text.split(' ')[0]!));
+    }
+  );
 });
