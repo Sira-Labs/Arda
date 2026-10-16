@@ -84,3 +84,12 @@ asked for it the same day). It tests what the lab trains, the ear:
   words, nor among the signs. Mistakes become review cards (kinds `stop`, `start`, `sign`); the
   games' rounds are logged as `stop-and-start` and `waqf-signs`.
 - "Every unit done" now needs unit 7's test too; unit 6's pass says "weiter mit Einheit 7".
+
+## Update 2026-10-16: unit 8 (riwāyāt)
+
+- Unit 8's test asks "Was ändert Warsh?" of ten Ḥafṣ words: three madds, three of the hamza, two
+  sounds and two words, so answering one group every time reaches three. Mistakes become review
+  cards (kinds `riwaya-change` and, from the listening game, `riwaya-hear`); the games' rounds
+  are logged as `warsh-changes` and `hafs-or-warsh`. The test asks nothing by ear, so it works
+  offline.
+- "Every unit done" now needs unit 8's test too; unit 7's pass says "weiter mit Einheit 8".

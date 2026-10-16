@@ -12,7 +12,13 @@ import type {
   StopEnding,
   WeightCard,
 } from '@/content/units';
-import type { WaqfRule, WaqfSignId, WeightReason } from '@arda/tajweed';
+import type {
+  RiwayaChange,
+  RiwayaId,
+  WaqfRule,
+  WaqfSignId,
+  WeightReason,
+} from '@arda/tajweed';
 import type { RuleFamily, RuleId } from '@/tajweed/rules';
 import type { AssignmentKind } from '@/services/auth';
 import type { PageLayout } from '@arda/quran';
@@ -137,10 +143,15 @@ export const de = {
         intro:
           'Wie du anhältst und wieder anfängst – und was die Zeichen in deinem Muṣḥaf sagen.',
       },
-    } as Record<1 | 2 | 3 | 4 | 5 | 6 | 7, { title: string; intro: string }>,
+      8: {
+        title: 'Einheit 8 · Riwāyāt',
+        intro:
+          'Was andere Riwāyāt anders lesen als Ḥafṣ – vor allem Warsh, von derselben Stimme in beiden gelesen.',
+      },
+    } as Record<1 | 2 | 3 | 4 | 5 | 6 | 7 | 8, { title: string; intro: string }>,
     lab: 'Zum Buchstaben-Labor',
     letters: (count: number) => (count === 1 ? '1 Buchstabe' : `${count} Buchstaben`),
-    next: 'Einheit 8 (Riwāyāt) folgt später.',
+    next: 'Das sind alle acht Einheiten. Wiederhole sie, bis sie sitzen.',
   },
   ruleCard: {
     play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
@@ -413,7 +424,129 @@ export const de = {
       ],
       tip: 'Liest du vom Wort davor weiter, fällt das Verbindungs-Hamza weg.',
     },
+    riwayat: {
+      title: 'Was ist eine Riwāya?',
+      steps: [
+        'Der Qurʾān ist in zehn anerkannten Lesarten (Qirāʾāt) überliefert, jede von einem Imām.',
+        'Jeder Imām hat zwei Überlieferer; was einer von ihnen weitergibt, heißt Riwāya.',
+        'Du liest Ḥafṣ ʿan ʿĀṣim. Alle Riwāyāt sind Qurʾān; keine ist besser als die andere.',
+        'Sie unterscheiden sich in der Aussprache und in manchen Wörtern; alle sind sicher überliefert.',
+      ],
+      tip: 'Liest dein Imām anders als du, ist das kein Fehler: Er liest wohl eine andere Riwāya.',
+    },
+    'warsh-madd': {
+      title: 'Länger gedehnt',
+      steps: [
+        'Warsh hält den getrennten Madd 6 Zählzeiten.',
+        'Einen Madd nach einem Hamza (ءَامَنُوا) darf er 2, 4 oder 6 Zählzeiten halten: Badal.',
+        'Hör ʿAbd al-Bāsiṭ: dieselbe Āya in Ḥafṣ und in Warsh.',
+      ],
+      tip: 'Du liest weiter Ḥafṣ: 4 bis 5 Zählzeiten im getrennten Madd, 2 im Badal.',
+    },
+    'warsh-hamza': {
+      title: 'Übertragen oder ersetzt',
+      steps: [
+        'Naql: Steht ein Hamza nach einem ruhenden Buchstaben am Wortende, fällt es weg; sein Vokal geht auf den Buchstaben davor: qada-flaḥa.',
+        'Ibdāl: Ein ruhendes Hamza am Anfang der Wurzel wird zum langen Vokal: mākūl.',
+      ],
+      tip: 'Der Warsh-Muṣḥaf schreibt diese Stellen mit eigenen Zeichen; hier siehst du sie im Ḥafṣ-Text markiert.',
+    },
+    'warsh-sounds': {
+      title: 'Leichter, schwerer, zwischen a und i',
+      steps: [
+        'Taqlīl: Am Ende der Āyāt von elf Sūren, darunter aḍ-Ḍuḥā, klingt das Alif maqṣūra zwischen a und i.',
+        'Rāʾ: Nach Kasra oder ruhendem Yāʾ liest Warsh das Rāʾ leicht, auch mit Fatḥa: baṣīran.',
+        'Lām: Nach Ṣād, Ṭāʾ oder Ẓāʾ liest er ein Lām mit Fatḥa schwer: ṣalātihim.',
+      ],
+      tip: 'Das Lām von Allāh liest Warsh wie Ḥafṣ.',
+    },
+    'other-words': {
+      title: 'Andere Wörter, andere Riwāyāt',
+      steps: [
+        'Manche Wörter lesen andere Riwāyāt anders: Warsh, Qālūn und ad-Dūrī lesen مَلِكِ statt مَٰلِكِ.',
+        'Nur Ḥafṣ liest كُفُوًا mit Wāw; Shuʿba, Warsh, Qālūn und ad-Dūrī lesen es mit Hamza: كُفُؤًا.',
+        'Qālūn darf عَلَيْهِمُو sagen; ad-Dūrī neigt das ā von النَّاسِ zum e.',
+      ],
+      tip: 'Beide Lesarten sind überliefert, beide sind Qurʾān.',
+    },
   } as Record<CardId, { title: string; steps: string[]; tip: string }>,
+  riwayat: {
+    hafs: {
+      name: 'Ḥafṣ ʿan ʿĀṣim',
+      short: 'Ḥafṣ',
+      where: 'Deine Riwāya; die meisten Muslime lesen sie.',
+    },
+    shuba: {
+      name: 'Shuʿba ʿan ʿĀṣim',
+      short: 'Shuʿba',
+      where: 'Der zweite Überlieferer von ʿĀṣim; heute selten gelesen.',
+    },
+    warsh: {
+      name: 'Warsh ʿan Nāfiʿ',
+      short: 'Warsh',
+      where: 'Gelesen in Marokko, Algerien, Mauretanien und Westafrika.',
+    },
+    qalun: {
+      name: 'Qālūn ʿan Nāfiʿ',
+      short: 'Qālūn',
+      where: 'Gelesen vor allem in Libyen und Tunesien.',
+    },
+    duri: {
+      name: 'ad-Dūrī ʿan Abī ʿAmr',
+      short: 'ad-Dūrī',
+      where: 'Gelesen vor allem im Sudan und im Tschad.',
+    },
+  } as Record<RiwayaId, { name: string; short: string; where: string }>,
+  riwayaCard: {
+    list: 'Die Riwāyāt',
+    hafs: 'Ḥafṣ',
+    source:
+      'Vortrag: ʿAbd al-Bāsiṭ ʿAbd aṣ-Ṣamad, murattal in Ḥafṣ und in Warsh, EveryAyah.com',
+    play: (riwaya: string, sura: number, aya: number) =>
+      `${riwaya} anhören: Sūra ${sura}, Āya ${aya}`,
+    changes: {
+      'madd-munfasil': {
+        name: 'Getrennter Madd',
+        what: 'Warsh dehnt ihn 6 Zählzeiten, Ḥafṣ 4 bis 5.',
+      },
+      'madd-badal': {
+        name: 'Madd nach Hamza (Badal)',
+        what: 'Warsh darf ihn 2, 4 oder 6 Zählzeiten dehnen, Ḥafṣ dehnt 2.',
+      },
+      naql: {
+        name: 'Hamza übertragen (Naql)',
+        what: 'Das Hamza fällt weg, sein Vokal geht auf den ruhenden Buchstaben davor.',
+      },
+      ibdal: {
+        name: 'Hamza wird Madd (Ibdāl)',
+        what: 'Ein ruhendes Hamza am Anfang der Wurzel wird zum langen Vokal.',
+      },
+      taqlil: {
+        name: 'Zwischen a und i (Taqlīl)',
+        what: 'Das Alif am Ende dieser Āyāt klingt zwischen Fatḥa und Kasra.',
+      },
+      'ra-tarqiq': {
+        name: 'Leichtes Rāʾ',
+        what: 'Nach Kasra oder ruhendem Yāʾ liest Warsh das Rāʾ leicht, auch mit Fatḥa.',
+      },
+      'lam-taghliz': {
+        name: 'Schweres Lām',
+        what: 'Nach Ṣād, Ṭāʾ oder Ẓāʾ liest Warsh ein Lām mit Fatḥa schwer.',
+      },
+      word: {
+        name: 'Ein anderes Wort',
+        what: 'Andere Riwāyāt lesen hier ein anderes Wort oder eine andere Form.',
+      },
+      sila: {
+        name: 'Wāw nach dem Mīm (Ṣila)',
+        what: 'Qālūn darf dem Mīm der Mehrzahl ein Wāw anhängen.',
+      },
+      imala: {
+        name: 'Neigung zum e (Imāla)',
+        what: 'ad-Dūrī neigt das ā von an-nās zum e, wenn es Kasra hat.',
+      },
+    } as Record<RiwayaChange, { name: string; what: string }>,
+  },
   signs: {
     lazim: {
       name: 'Anhalten Pflicht',
@@ -592,6 +725,20 @@ export const de = {
       title: 'Die Zeichen',
       intro: 'Sieben Zeichen aus dem Muṣḥaf: Was verlangt jedes von dir?',
       question: 'Was sagt dir das Zeichen am Ende?',
+    },
+    warshChanges: {
+      title: 'Was ändert Warsh?',
+      intro: 'Zehn Wörter in Ḥafṣ: Was liest Warsh an der markierten Stelle anders?',
+      question: 'Was ändert Warsh an der markierten Stelle?',
+    },
+    hafsOrWarsh: {
+      title: 'Ḥafṣ oder Warsh?',
+      intro:
+        'ʿAbd al-Bāsiṭ liest jede Āya in einer der beiden Riwāyāt. Hörst du, in welcher?',
+      question: 'Welche Riwāya hörst du? Achte auf die markierte Stelle.',
+      play: 'Anhören',
+      hafs: 'Das war Ḥafṣ; bei Warsh:',
+      warsh: 'Das war Warsh:',
     },
     shadda: 'Nūn oder Mīm mit Shadda',
   },

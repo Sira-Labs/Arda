@@ -1,6 +1,8 @@
 import {
+  CHANGE_GROUP,
   IZHAR_EXCEPTIONS,
   LETTERS,
+  RIWAYA_EXAMPLES,
   SHEET_EXAMPLES,
   UNIT_EXAMPLES,
   detect,
@@ -8,15 +10,21 @@ import {
   isQalqalaLetter,
   RULES,
   WAQF_SIGNS,
+  changeMark,
   nunSakinaRule,
+  type ChangeMark,
   type Letter,
   type Occurrence,
+  type RiwayaExample,
   type RuleId,
   type WaqfRule,
   type WaqfSignId,
   type WeightReason,
 } from '@arda/tajweed';
 import {
+  CARD_OF_GROUP,
+  CHANGE_CARDS,
+  HEARD_RIWAYAT,
   LENGTH_OF_CARD,
   MADD_LENGTHS,
   NO_QALQALA,
@@ -24,6 +32,8 @@ import {
   type AnswerId,
   type CardId,
   type CardUnit,
+  type ChangeCard,
+  type HeardRiwaya,
   type MaddCard,
   type MaddLength,
   type Unit2Card,
@@ -153,6 +163,22 @@ export interface SignQuestion extends NewCard {
   answer: WaqfSignId;
 }
 
+/** One question of "What does Warsh change?" (unit 8): a Ḥafṣ word, the place marked. */
+export interface ChangeQuestion extends NewCard {
+  kind: 'riwaya-change';
+  answer: ChangeCard;
+  example: RiwayaExample;
+  mark: ChangeMark;
+}
+
+/** One question of "Ḥafṣ or Warsh?" (unit 8): an āya recited in one of the two. */
+export interface HearQuestion extends NewCard {
+  kind: 'riwaya-hear';
+  answer: HeardRiwaya;
+  example: RiwayaExample;
+  mark: ChangeMark;
+}
+
 export type Question =
   | WordQuestion
   | LetterQuestion
@@ -161,7 +187,9 @@ export type Question =
   | WeightQuestion
   | StopQuestion
   | StartQuestion
-  | SignQuestion;
+  | SignQuestion
+  | ChangeQuestion
+  | HearQuestion;
 
 /** The answers a question offers: its unit's rule cards, qalqala or not, or three lengths. */
 export function optionsOf(question: Question): readonly AnswerId[] {
@@ -182,6 +210,10 @@ export function optionsOf(question: Question): readonly AnswerId[] {
       return START_VOWELS;
     case 'sign':
       return SIGN_IDS;
+    case 'riwaya-change':
+      return CHANGE_CARDS;
+    case 'riwaya-hear':
+      return HEARD_RIWAYAT;
   }
 }
 
@@ -385,6 +417,54 @@ export function signsRound(random: Random): SignQuestion[] {
   return shuffle(SIGN_POOL, random);
 }
 
+/** Warsh's examples of unit 8: what he reads differently from Ḥafṣ. */
+const WARSH_EXAMPLES = RIWAYA_EXAMPLES.filter((e) => e.by.includes('warsh'));
+
+/** A "What does Warsh change?" question; the word key tells apart the two قَدْ أَفْلَحَ. */
+export function changeQuestion(example: RiwayaExample): ChangeQuestion {
+  return {
+    id: `riwaya-change:${example.wordKey}`,
+    kind: 'riwaya-change',
+    prompt: example.text,
+    answer: CARD_OF_GROUP[CHANGE_GROUP[example.change]],
+    example,
+    mark: changeMark(example),
+  };
+}
+
+/** Every Warsh example: four madds, four of the hamza, four sounds, four words. */
+export const CHANGE_POOL: readonly ChangeQuestion[] = WARSH_EXAMPLES.map(changeQuestion);
+
+/** A "Ḥafṣ or Warsh?" question: the example's āya in one riwāya. */
+export function hearQuestion(example: RiwayaExample, riwaya: HeardRiwaya): HearQuestion {
+  return {
+    id: `riwaya-hear:${example.wordKey}:${riwaya}`,
+    kind: 'riwaya-hear',
+    prompt: example.text,
+    answer: riwaya,
+    example,
+    mark: changeMark(example),
+  };
+}
+
+/** Every heard example, once in Ḥafṣ and once in Warsh. */
+export const HEAR_POOL: readonly HearQuestion[] = WARSH_EXAMPLES.filter(
+  (e) => e.audio
+).flatMap((e) => HEARD_RIWAYAT.map((riwaya) => hearQuestion(e, riwaya)));
+
+/** Ten (or `count`) different Warsh words in random order. */
+export function changeRound(random: Random, count = 10): ChangeQuestion[] {
+  return shuffle(CHANGE_POOL, random).slice(0, count);
+}
+
+/** Ten (or `count`) āyāt, each heard once in this round, Ḥafṣ and Warsh mixed. */
+export function hearRound(random: Random, count = 10): HearQuestion[] {
+  const seen = new Set<string>();
+  return shuffle(HEAR_POOL, random)
+    .filter((q) => !seen.has(q.example.wordKey) && seen.add(q.example.wordKey))
+    .slice(0, count);
+}
+
 /** Questions in a unit test (ADR-0024); 8 right of them pass it. */
 export const UNIT_TEST_SIZE = 10;
 
@@ -394,7 +474,8 @@ export const UNIT_TEST_SIZE = 10;
  * five others, so guessing "qalqala" every time cannot pass it; unit 5 three words of two counts,
  * four of four to five and three of six, so no single length passes it either; unit 6 five
  * heavy and five light (three rāʾ and two lām of Allāh each); unit 7 one word for each way
- * to stop and each way to start, and four different signs.
+ * to stop and each way to start, and four different signs; unit 8 three Warsh madds, three of
+ * the hamza, two sounds and two words, so no single group passes it.
  */
 export function unitTest(unit: CardUnit, random: Random): Question[] {
   switch (unit) {
@@ -463,6 +544,22 @@ export function unitTest(unit: CardUnit, random: Random): Question[] {
         random
       );
     }
+    case 8: {
+      const of = (card: ChangeCard, count: number) =>
+        shuffle(
+          CHANGE_POOL.filter((q) => q.answer === card),
+          random
+        ).slice(0, count);
+      return shuffle(
+        [
+          ...of('warsh-madd', 3),
+          ...of('warsh-hamza', 3),
+          ...of('warsh-sounds', 2),
+          ...of('other-words', 2),
+        ],
+        random
+      );
+    }
   }
 }
 
@@ -482,6 +579,12 @@ export function questionOf(card: NewCard): Question | undefined {
   }
   if (card.kind === 'weight') {
     return WEIGHT_POOL.find((question) => question.id === card.id);
+  }
+  if (card.kind === 'riwaya-change') {
+    return CHANGE_POOL.find((question) => question.id === card.id);
+  }
+  if (card.kind === 'riwaya-hear') {
+    return HEAR_POOL.find((question) => question.id === card.id);
   }
   if (card.kind === 'stop' || card.kind === 'start' || card.kind === 'sign') {
     return [...STOP_POOL, ...START_POOL, ...SIGN_POOL].find((q) => q.id === card.id);

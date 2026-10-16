@@ -391,8 +391,72 @@ describe('unit 7 (waqf and ibtidāʾ)', () => {
   });
 });
 
+describe('unit 8 (riwāyāt)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  it('names the five riwāyāt, each with where it is read', () => {
+    renderAt('/pfad/8/riwayat');
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Riwāyāt – Was ist eine Riwāya?'
+    );
+    const list = screen.getByLabelText('Die Riwāyāt');
+    expect(within(list).getAllByRole('listitem')).toHaveLength(5);
+    expect(within(list).getByText('Warsh ʿan Nāfiʿ')).toBeInTheDocument();
+    expect(
+      within(list).getByText('Gelesen in Marokko, Algerien, Mauretanien und Westafrika.')
+    ).toBeInTheDocument();
+    // No rule is coloured on unit 8's cards, so there is no colour key.
+    expect(screen.queryByLabelText('Farben im Muṣḥaf')).toBeNull();
+  });
+
+  it('plays the same āya in Ḥafṣ and in Warsh, by the same reciter', async () => {
+    const { audio, deps } = fakePlayer();
+    renderAt('/pfad/8/warsh-madd', new MemoryReviewStore(), deps);
+    expect(screen.getByRole('heading', { name: 'Getrennter Madd' })).toBeInTheDocument();
+    expect(screen.getByText('Madd nach Hamza (Badal)')).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Ḥafṣ anhören: Sūra 108, Āya 1' })
+    );
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Warsh anhören: Sūra 108, Āya 1' })
+    );
+    expect(audio.played).toEqual([
+      'https://everyayah.com/data/Abdul_Basit_Murattal_192kbps/108001.mp3',
+      'https://everyayah.com/data/warsh/warsh_Abdul_Basit_128kbps/108001.mp3',
+    ]);
+    expect(
+      screen.getByText(/ʿAbd al-Bāsiṭ ʿAbd aṣ-Ṣamad, murattal in Ḥafṣ und in Warsh/)
+    ).toBeInTheDocument();
+  });
+
+  it('writes how Warsh says a word where its letters change', () => {
+    renderAt('/pfad/8/warsh-hamza');
+    expect(screen.getAllByText('قَدَ ٱفْلَحَ')).toHaveLength(2);
+    expect(screen.getByText('مَاكُولٍ')).toBeInTheDocument();
+    expect(screen.getByText('Shuʿba, Warsh, Qālūn')).toBeInTheDocument();
+  });
+
+  it('hears al-Fātiḥa’s مَلِكِ by the Madanī count, and al-Baqara not at all', async () => {
+    const { audio, deps } = fakePlayer();
+    renderAt('/pfad/8/other-words', new MemoryReviewStore(), deps);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Warsh anhören: Sūra 1, Āya 4' })
+    );
+    expect(audio.played).toEqual([
+      'https://everyayah.com/data/warsh/warsh_Abdul_Basit_128kbps/001003.mp3',
+    ]);
+    expect(screen.queryByRole('button', { name: /Sūra 2, Āya/ })).toBeNull();
+    expect(screen.getByText('Qālūn')).toBeInTheDocument();
+    expect(screen.getByText('ad-Dūrī')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Zur Einheit' })).toHaveAttribute(
+      'href',
+      '/pfad'
+    );
+  });
+});
+
 describe('the path', () => {
-  it('lists units 1–7: the lab, then the cards of each unit in the order of the sheet and its games', () => {
+  it('lists units 1–8: the lab, then the cards of each unit in the order of the sheet and its games', () => {
     localStorage.setItem('arda.language', 'en');
     renderAt('/pfad');
     const links = screen.getAllByRole('link').map((a) => a.getAttribute('href'));
@@ -433,6 +497,14 @@ describe('the path', () => {
       '/pfad/7/spiel/anhalten',
       '/pfad/7/spiel/zeichen',
       '/pfad/7/test',
+      '/pfad/8/riwayat',
+      '/pfad/8/warsh-madd',
+      '/pfad/8/warsh-hamza',
+      '/pfad/8/warsh-sounds',
+      '/pfad/8/other-words',
+      '/pfad/8/spiel/was-aendert-warsh',
+      '/pfad/8/spiel/hafs-oder-warsh',
+      '/pfad/8/test',
     ]);
     expect(
       screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent)
@@ -444,6 +516,7 @@ describe('the path', () => {
       'Unit 5 · Madd',
       'Unit 6 · Tafkhīm and tarqīq',
       'Unit 7 · Waqf and ibtidāʾ',
+      'Unit 8 · Riwāyāt',
       'Review',
     ]);
     expect(screen.getByText('15 letters')).toBeInTheDocument();

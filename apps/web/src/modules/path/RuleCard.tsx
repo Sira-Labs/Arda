@@ -22,10 +22,11 @@ import { useWordPlayer, type WordPlayer } from '@/modules/lab/useWordPlayer';
 import { PlayIcon } from '@/modules/mushaf/PlayerBar';
 import { Soon } from '@/modules/Soon';
 import { useReview } from '@/review/ReviewProvider';
+import { ChangeExamples, RiwayatList, isChangeCard } from './RiwayaCard';
 import { ruleName, type RuleFamily } from '@/tajweed/rules';
 import { segmentsOf } from '@/tajweed/segments';
 
-/** `/pfad/:unit/:rule`: a rule card of units 2–7, or "not found" for anything else. */
+/** `/pfad/:unit/:rule`: a rule card of units 2–8, or "not found" for anything else. */
 export function RuleCardPage() {
   const { unit, rule } = useParams();
   if (!isCardUnit(unit) || !isCardOf(Number(unit) as CardUnit, rule)) {
@@ -100,38 +101,43 @@ export function RuleCard({ id }: { id: CardId }) {
           />
         ))}
         {id === 'waqf-signs' && <Signs />}
+        {id === 'riwayat' && <RiwayatList />}
+        {isChangeCard(id) && <ChangeExamples card={id} />}
 
-        <div className="legend" aria-label={m.today.legend}>
-          {families.map((family) => (
-            <span key={family}>
-              <b className="tj" data-rule={family}>
-                ●
-              </b>{' '}
-              {m.ruleCard.colourKey(
-                m.ruleCard.colours[family],
-                m.rules[family].name,
-                m.rules[family].hint
-              )}
-            </span>
-          ))}
-          {hasClear && (
-            <span>
-              {card.groups.some((group) => RULES[group.rule].weight)
-                ? m.ruleCard.lightKey
-                : card.groups.some((group) => RULES[group.rule].subject === 'waqf')
-                  ? m.ruleCard.waqfKey
-                  : m.ruleCard.clear}
-            </span>
-          )}
-          {decided && (
-            <span>
-              <span className="arabic tj-follower" lang="ar" aria-hidden="true">
-                ب
-              </span>{' '}
-              {m.ruleCard.followerKey}
-            </span>
-          )}
-        </div>
+        {/* Unit 8 colours no rule: its marks are the places another riwāya differs. */}
+        {(families.length > 0 || hasClear || decided) && (
+          <div className="legend" aria-label={m.today.legend}>
+            {families.map((family) => (
+              <span key={family}>
+                <b className="tj" data-rule={family}>
+                  ●
+                </b>{' '}
+                {m.ruleCard.colourKey(
+                  m.ruleCard.colours[family],
+                  m.rules[family].name,
+                  m.rules[family].hint
+                )}
+              </span>
+            ))}
+            {hasClear && (
+              <span>
+                {card.groups.some((group) => RULES[group.rule].weight)
+                  ? m.ruleCard.lightKey
+                  : card.groups.some((group) => RULES[group.rule].subject === 'waqf')
+                    ? m.ruleCard.waqfKey
+                    : m.ruleCard.clear}
+              </span>
+            )}
+            {decided && (
+              <span>
+                <span className="arabic tj-follower" lang="ar" aria-hidden="true">
+                  ب
+                </span>{' '}
+                {m.ruleCard.followerKey}
+              </span>
+            )}
+          </div>
+        )}
 
         <ol className="steps">
           {m.cards[id].steps.map((step) => (
@@ -155,8 +161,13 @@ export function RuleCard({ id }: { id: CardId }) {
           </section>
         )}
 
-        {player.failed && <p role="alert">{m.lab.listen.failed}</p>}
-        <p className="muted example-source">{m.lab.listen.source}</p>
+        {/* Unit 8 is heard in ʿAbd al-Bāsiṭ's recitations, credited on its cards. */}
+        {unit !== 8 && (
+          <>
+            {player.failed && <p role="alert">{m.lab.listen.failed}</p>}
+            <p className="muted example-source">{m.lab.listen.source}</p>
+          </>
+        )}
 
         {card.sourcesDiffer && (
           <aside className="note stack" style={{ gap: 4 }}>

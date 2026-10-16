@@ -95,10 +95,15 @@ export const en: Messages = {
         title: 'Unit 7 · Waqf and ibtidāʾ',
         intro: 'How to stop and start again – and what the signs in your muṣḥaf say.',
       },
+      8: {
+        title: 'Unit 8 · Riwāyāt',
+        intro:
+          'What other riwāyāt read differently from Ḥafṣ – above all Warsh, recited in both by the same voice.',
+      },
     },
     lab: 'Open the letter lab',
     letters: (count) => (count === 1 ? '1 letter' : `${count} letters`),
-    next: 'Unit 8 (riwāyāt) follows later.',
+    next: 'These are all eight units. Review them until they hold.',
   },
   ruleCard: {
     play: (sura, aya) => `Listen: sūra ${sura}, āya ${aya}`,
@@ -367,6 +372,128 @@ export const en: Messages = {
       ],
       tip: 'If you read on from the word before, hamzat al-waṣl falls away.',
     },
+    riwayat: {
+      title: 'What is a riwāya?',
+      steps: [
+        'The Qurʾān has come down in ten recognised readings (qirāʾāt), each from an imām.',
+        'Each imām has two narrators; what one of them passes on is called a riwāya.',
+        'You read Ḥafṣ ʿan ʿĀṣim. Every riwāya is Qurʾān; none is better than another.',
+        'They differ in pronunciation and in some words; all of them are soundly transmitted.',
+      ],
+      tip: 'If your imām reads differently from you, it is no mistake: he likely reads another riwāya.',
+    },
+    'warsh-madd': {
+      title: 'Held longer',
+      steps: [
+        'Warsh holds the separated madd 6 counts.',
+        'A madd after a hamza (ءَامَنُوا) he may hold 2, 4 or 6 counts: badal.',
+        'Listen to ʿAbd al-Bāsiṭ: the same āya in Ḥafṣ and in Warsh.',
+      ],
+      tip: 'You keep reading Ḥafṣ: 4 to 5 counts in the separated madd, 2 in badal.',
+    },
+    'warsh-hamza': {
+      title: 'Carried over or replaced',
+      steps: [
+        'Naql: when a hamza follows a resting letter at the end of a word, it falls away and its vowel moves to the letter before: qada-flaḥa.',
+        'Ibdāl: a resting hamza at the start of the root becomes the long vowel: mākūl.',
+      ],
+      tip: 'The Warsh muṣḥaf writes these places with signs of its own; here you see them marked in the Ḥafṣ text.',
+    },
+    'warsh-sounds': {
+      title: 'Lighter, heavier, between a and i',
+      steps: [
+        'Taqlīl: at the āya ends of eleven sūras, aḍ-Ḍuḥā among them, the alif maqṣūra sounds between a and i.',
+        'Rāʾ: after kasra or a resting yāʾ Warsh reads the rāʾ light, even with fatḥa: baṣīran.',
+        'Lām: after ṣād, ṭāʾ or ẓāʾ he reads a lām with fatḥa heavy: ṣalātihim.',
+      ],
+      tip: 'Warsh reads the lām of Allāh as Ḥafṣ does.',
+    },
+    'other-words': {
+      title: 'Other words, other riwāyāt',
+      steps: [
+        'Other riwāyāt read some words differently: Warsh, Qālūn and ad-Dūrī read مَلِكِ for مَٰلِكِ.',
+        'Only Ḥafṣ reads كُفُوًا with wāw; Shuʿba, Warsh, Qālūn and ad-Dūrī read it with hamza: كُفُؤًا.',
+        'Qālūn may say عَلَيْهِمُو; ad-Dūrī leans the ā of النَّاسِ towards e.',
+      ],
+      tip: 'Both readings are transmitted; both are Qurʾān.',
+    },
+  },
+  riwayat: {
+    hafs: {
+      name: 'Ḥafṣ ʿan ʿĀṣim',
+      short: 'Ḥafṣ',
+      where: 'Your riwāya; most Muslims read it.',
+    },
+    shuba: {
+      name: 'Shuʿba ʿan ʿĀṣim',
+      short: 'Shuʿba',
+      where: 'ʿĀṣim’s second narrator; rarely read today.',
+    },
+    warsh: {
+      name: 'Warsh ʿan Nāfiʿ',
+      short: 'Warsh',
+      where: 'Read in Morocco, Algeria, Mauritania and West Africa.',
+    },
+    qalun: {
+      name: 'Qālūn ʿan Nāfiʿ',
+      short: 'Qālūn',
+      where: 'Read above all in Libya and Tunisia.',
+    },
+    duri: {
+      name: 'ad-Dūrī ʿan Abī ʿAmr',
+      short: 'ad-Dūrī',
+      where: 'Read above all in Sudan and Chad.',
+    },
+  },
+  riwayaCard: {
+    list: 'The riwāyāt',
+    hafs: 'Ḥafṣ',
+    source:
+      'Recitation: ʿAbd al-Bāsiṭ ʿAbd aṣ-Ṣamad, murattal in Ḥafṣ and in Warsh, EveryAyah.com',
+    play: (riwaya: string, sura: number, aya: number) =>
+      `Listen to ${riwaya}: sūra ${sura}, āya ${aya}`,
+    changes: {
+      'madd-munfasil': {
+        name: 'Separated madd',
+        what: 'Warsh holds it 6 counts, Ḥafṣ 4 to 5.',
+      },
+      'madd-badal': {
+        name: 'Madd after a hamza (badal)',
+        what: 'Warsh may hold it 2, 4 or 6 counts, Ḥafṣ holds 2.',
+      },
+      naql: {
+        name: 'Hamza carried over (naql)',
+        what: 'The hamza falls away; its vowel moves to the resting letter before it.',
+      },
+      ibdal: {
+        name: 'Hamza becomes a madd (ibdāl)',
+        what: 'A resting hamza at the start of the root becomes the long vowel.',
+      },
+      taqlil: {
+        name: 'Between a and i (taqlīl)',
+        what: 'The alif at the end of these āyāt sounds between fatḥa and kasra.',
+      },
+      'ra-tarqiq': {
+        name: 'Light rāʾ',
+        what: 'After kasra or a resting yāʾ Warsh reads the rāʾ light, even with fatḥa.',
+      },
+      'lam-taghliz': {
+        name: 'Heavy lām',
+        what: 'After ṣād, ṭāʾ or ẓāʾ Warsh reads a lām with fatḥa heavy.',
+      },
+      word: {
+        name: 'Another word',
+        what: 'Other riwāyāt read another word or form here.',
+      },
+      sila: {
+        name: 'Wāw after the mīm (ṣila)',
+        what: 'Qālūn may join a wāw to the mīm of the plural.',
+      },
+      imala: {
+        name: 'Leaning to e (imāla)',
+        what: 'ad-Dūrī leans the ā of an-nās towards e when it has kasra.',
+      },
+    },
   },
   signs: {
     lazim: {
@@ -540,6 +667,20 @@ export const en: Messages = {
       title: 'The signs',
       intro: 'Seven signs of the muṣḥaf: what does each one ask of you?',
       question: 'What does the sign at the end tell you?',
+    },
+    warshChanges: {
+      title: 'What does Warsh change?',
+      intro: 'Ten words in Ḥafṣ: what does Warsh read differently at the marked place?',
+      question: 'What does Warsh change at the marked place?',
+    },
+    hafsOrWarsh: {
+      title: 'Ḥafṣ or Warsh?',
+      intro:
+        'ʿAbd al-Bāsiṭ recites each āya in one of the two riwāyāt. Can you hear which?',
+      question: 'Which riwāya do you hear? Listen for the marked place.',
+      play: 'Listen',
+      hafs: 'That was Ḥafṣ; in Warsh:',
+      warsh: 'That was Warsh:',
     },
     shadda: 'nūn or mīm with shadda',
   },

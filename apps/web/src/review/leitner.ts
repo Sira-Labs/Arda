@@ -19,7 +19,9 @@ export type CardKind =
   | 'weight'
   | 'stop'
   | 'start'
-  | 'sign';
+  | 'sign'
+  | 'riwaya-change'
+  | 'riwaya-hear';
 
 export interface ReviewCard {
   /** Content-derived and stable (`which-rule:<text>`, `sort:<letter>`), so sync can merge. */

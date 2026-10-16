@@ -82,7 +82,7 @@ card, so the rule returns until it holds.
 | 5     | Madd: natural, joined, separated, necessary                                 | classical order                |
 | 6     | Tafkhīm & tarqīq: heavy and light letters, the lām of Allāh, the rāʾ        | classical order                |
 | 7     | Waqf & ibtidāʾ: where to stop and start; the signs of your muṣḥaf           | classical order                |
-| 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | later                          |
+| 8     | Riwāyāt: what changes in Warsh, Qālūn, Shuʿba and others                    | ash-Shāṭibiyya (ADR-0027)      |
 
 Every unit has stations and ends with a unit test (Suffa's structure). A passed test marks the
 unit on the path and recommends the next one; nothing is locked (ADR-0024). Units 2–7 test
@@ -156,6 +156,13 @@ signs of the Madīna muṣḥaf with a real place for each, and the start on ali
 ḍamma, kasra); the stop examples are heard where an āya ends, the starts where one begins. Two
 games, "Anhalten und Anfangen" and "Die Zeichen", and a test of one word for each way to stop
 and to start and four signs. IndoPak's own signs follow (spec 03 §4d).)_
+_(Built (owner, 2026-10-16): unit 8, riwāyāt, by contrast with Ḥafṣ (ADR-0027). Five cards:
+the five riwāyāt (Ḥafṣ and Shuʿba ʿan ʿĀṣim, Warsh and Qālūn ʿan Nāfiʿ, ad-Dūrī ʿan Abī ʿAmr)
+with where each is read; Warsh's madds, hamza and sounds; other words, with Qālūn's ṣila and
+ad-Dūrī's imāla. Every example is a Ḥafṣ word with the place marked, who reads it otherwise and
+how; where ʿAbd al-Bāsiṭ recited the āya in both, it is heard in Ḥafṣ and in Warsh. Two games,
+"Was ändert Warsh?" and "Ḥafṣ oder Warsh?" (by ear), and a test of three Warsh madds, three of
+the hamza, two sounds and two words (spec 03 §4e).)_
 
 ### F2 — Rule cards _(Must)_
 

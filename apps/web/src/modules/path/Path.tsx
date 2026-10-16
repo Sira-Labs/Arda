@@ -26,7 +26,9 @@ const GAMES: Record<
       | 'maddLength'
       | 'weight'
       | 'stopStart'
-      | 'signs';
+      | 'signs'
+      | 'warshChanges'
+      | 'hafsOrWarsh';
   }[]
 > = {
   2: [
@@ -41,12 +43,16 @@ const GAMES: Record<
     { path: '/pfad/7/spiel/anhalten', game: 'stopStart' },
     { path: '/pfad/7/spiel/zeichen', game: 'signs' },
   ],
+  8: [
+    { path: '/pfad/8/spiel/was-aendert-warsh', game: 'warshChanges' },
+    { path: '/pfad/8/spiel/hafs-oder-warsh', game: 'hafsOrWarsh' },
+  ],
 };
 
 /**
  * The path (spec F1, spec 01 §4): unit 1 in the letter lab, then units 2–4 from the sheikh's
- * sheet, unit 5 (madd), unit 6 (tafkhīm) and unit 7 (waqf), each with its rule cards in the order of the sheet and its games; the
- * review of every unit at the end.
+ * sheet, unit 5 (madd), unit 6 (tafkhīm), unit 7 (waqf) and unit 8 (riwāyāt), each with its
+ * cards in the order of the sheet and its games; the review of every unit at the end.
  */
 export function Path() {
   const { m } = useI18n();

@@ -1,10 +1,13 @@
 import {
   IZHAR_EXCEPTIONS,
+  RIWAYAT,
   SHEET_EXAMPLES,
   UNIT_EXAMPLES,
   WAQF_SIGNS,
   detect,
   isWaqfRule,
+  type ChangeGroup,
+  type RiwayaId,
   type RuleId,
   type WaqfSignId,
   type WeightReason,
@@ -12,9 +15,10 @@ import {
 import type { Language } from '@/i18n/languages';
 
 /**
- * The rule cards of units 2–7 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
+ * The rule cards of units 2–8 (spec 01 §4, F2), built from the sheikh's sheet: unit 2 nūn
  * sākina and tanwīn, unit 3 ghunna and mīm sākina, unit 4 qalqala, and beyond the sheet unit 5
- * madd, unit 6 heavy and light letters and unit 7 stopping and starting. The examples are the
+ * madd, unit 6 heavy and light letters, unit 7 stopping and starting and unit 8 the riwāyāt
+ * (by contrast with Ḥafṣ, ADR-0027: its cards hold no rule of the engine). The examples are the
  * sheet's own and, where the sheet has too few, real words chosen
  * for it (`UNIT_EXAMPLES`);
  * `@arda/tajweed` keeps them and the engine is tested against them. The texts are in the i18n
@@ -28,9 +32,10 @@ export const UNIT_CARDS = {
   5: ['madd-tabii', 'madd-muttasil', 'madd-munfasil', 'madd-lazim'],
   6: ['tafkhim', 'lam-jalala', 'ra'],
   7: ['waqf', 'madd-arid', 'waqf-signs', 'ibtida'],
+  8: ['riwayat', 'warsh-madd', 'warsh-hamza', 'warsh-sounds', 'other-words'],
 } as const;
 export type CardUnit = keyof typeof UNIT_CARDS;
-export const CARD_UNITS = [2, 3, 4, 5, 6, 7] as const satisfies readonly CardUnit[];
+export const CARD_UNITS = [2, 3, 4, 5, 6, 7, 8] as const satisfies readonly CardUnit[];
 
 /**
  * The units with a test (ADR-0024): unit 1, the letter lab, since it has all 28 letters
@@ -46,6 +51,15 @@ export type MaddCard = (typeof UNIT_CARDS)[5][number];
 /** The cards of unit 6 whose letter can be heavy or light. */
 export type WeightCard = 'lam-jalala' | 'ra';
 export type CardId = (typeof UNIT_CARDS)[CardUnit][number];
+/** The cards of unit 8 that show what another riwāya reads, one group of changes each. */
+export type ChangeCard = Exclude<(typeof UNIT_CARDS)[8][number], 'riwayat'>;
+export const CARD_OF_GROUP: Readonly<Record<ChangeGroup, ChangeCard>> = {
+  madd: 'warsh-madd',
+  hamza: 'warsh-hamza',
+  sound: 'warsh-sounds',
+  word: 'other-words',
+};
+export const CHANGE_CARDS: readonly ChangeCard[] = Object.values(CARD_OF_GROUP);
 
 /** The second answer of the qalqala game: the letter does not bounce. */
 export const NO_QALQALA = 'no-qalqala';
@@ -65,10 +79,22 @@ export const START_VOWELS = ['start-fatha', 'start-damma', 'start-kasra'] as con
 export type StartVowel = (typeof START_VOWELS)[number];
 /** The answers of "The signs" (unit 7): what each pause sign asks. */
 export const SIGN_IDS: readonly WaqfSignId[] = WAQF_SIGNS.map((s) => s.id);
+/** The answers of "Ḥafṣ or Warsh?" (unit 8): which riwāya the reciter reads. */
+export const HEARD_RIWAYAT = ['hafs', 'warsh'] as const satisfies readonly RiwayaId[];
+export type HeardRiwaya = (typeof HEARD_RIWAYAT)[number];
+/** The riwāyāt by id, for their Arabic names. */
+export const RIWAYA_IDS: readonly RiwayaId[] = RIWAYAT.map((r) => r.id);
 /** What a game question can be answered with: a card, "no qalqala", a length, a weight, an
- * ending, a starting vowel or a sign. */
+ * ending, a starting vowel, a sign or a riwāya. */
 export type AnswerId =
-  CardId | typeof NO_QALQALA | MaddLength | Weight | StopEnding | StartVowel | WaqfSignId;
+  | CardId
+  | typeof NO_QALQALA
+  | MaddLength
+  | Weight
+  | StopEnding
+  | StartVowel
+  | WaqfSignId
+  | HeardRiwaya;
 
 /** How long a madd card's madd is held. */
 export const LENGTH_OF_CARD: Readonly<Record<MaddCard, MaddLength>> = {
@@ -100,6 +126,14 @@ const CARD_NAMES: Record<CardId, { term: string; arabic: string }> = {
   'madd-arid': { term: 'Madd ʿāriḍ', arabic: 'مَدّ عَارِض لِلسُّكُون' },
   'waqf-signs': { term: 'ʿAlāmāt al-waqf', arabic: 'عَلَامَات الوَقْف' },
   ibtida: { term: 'Ibtidāʾ', arabic: 'الابْتِدَاء' },
+  riwayat: { term: 'Riwāyāt', arabic: 'الرِّوَايَات' },
+  'warsh-madd': { term: 'Warsh: Madd', arabic: 'المَدّ عِنْدَ وَرْش' },
+  'warsh-hamza': { term: 'Warsh: Hamza', arabic: 'الهَمْز عِنْدَ وَرْش' },
+  'warsh-sounds': {
+    term: 'Warsh: Taqlīl, Rāʾ, Lām',
+    arabic: 'التَّقْلِيل وَالتَّرْقِيق وَالتَّغْلِيظ',
+  },
+  'other-words': { term: 'Farsh al-ḥurūf', arabic: 'فَرْش الحُرُوف' },
 };
 
 export function cardName(id: CardId, language: Language): string {
@@ -169,6 +203,12 @@ const RULES_OF_CARD: Record<CardId, readonly RuleId[]> = {
   // The signs are no rule of the engine: the card lists them (content/signs.ts).
   'waqf-signs': [],
   ibtida: ['ibtida-fatha', 'ibtida-damma', 'ibtida-kasra'],
+  // Unit 8 shows what other riwāyāt read (`RIWAYA_EXAMPLES`), not the engine's rules.
+  riwayat: [],
+  'warsh-madd': [],
+  'warsh-hamza': [],
+  'warsh-sounds': [],
+  'other-words': [],
 };
 
 /** The sheet's examples first, then the ones chosen for units 3–7. */

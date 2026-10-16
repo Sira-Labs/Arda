@@ -16,6 +16,8 @@ export const ACTIVITY_KINDS = [
   'heavy-or-light',
   'stop-and-start',
   'waqf-signs',
+  'warsh-changes',
+  'hafs-or-warsh',
 ] as const;
 export type ActivityKind = (typeof ACTIVITY_KINDS)[number];
 
@@ -32,6 +34,8 @@ export const ROUND_KINDS: ReadonlySet<ActivityKind> = new Set([
   'heavy-or-light',
   'stop-and-start',
   'waqf-signs',
+  'warsh-changes',
+  'hafs-or-warsh',
 ]);
 
 /** The most questions one round has (Sort the 28 asks 28). */
