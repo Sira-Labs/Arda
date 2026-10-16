@@ -90,3 +90,9 @@ Until the IndoPak layer exists, the ʿUthmānī text shows Tanzil's Madīna paus
   word and its rules still show. The choice is kept on the device.
 - Turning: the page follows a finger moving sideways and turns past 60 px; buttons below it.
   Pinch-zooming, two fingers and moving a zoomed-in view never turn the page.
+
+## Update 2026-10-16: unit 8 by contrast
+
+Unit 8 does not wait for non-Ḥafṣ packs: it shows Ḥafṣ words and says who reads them how, and
+plays ʿAbd al-Bāsiṭ's Ḥafṣ and Warsh recordings of the same āya (ADR-0027). Packs for Warsh and
+the others still need an open text and rule data.

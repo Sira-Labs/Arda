@@ -61,3 +61,9 @@ or the pack is built per installation from the Tanzil text plus a published tran
   stays open as a courtesy, no longer as a blocker.
 - **Rules:** cpfair's annotations (CC BY 4.0) are carried letter by letter from the ʿUthmānī
   text onto the IndoPak words (`tools/src/carry.ts`); every rule of every shipped pack lands.
+
+## Update 2026-10-16: ʿAbd al-Bāsiṭ in Ḥafṣ and Warsh (unit 8)
+
+Unit 8 streams ʿAbd al-Bāsiṭ's murattal recordings in Ḥafṣ (`Abdul_Basit_Murattal_192kbps`) and
+Warsh (`warsh/warsh_Abdul_Basit_128kbps`) from EveryAyah, āya by āya, with credit, under rule 2
+and question 2 (ADR-0027). Nothing is bundled or cached.
