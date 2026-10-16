@@ -219,6 +219,34 @@ way to the stop's: madd ʿāriḍ for ṭabīʿī, the rāʾ at a stop for its o
 - Left to the cards and the sheikh: rawm and ishmām, the rāʾ where both are allowed, the madd
   ʿāriḍ's length chosen per recitation, and stopping in the middle of an āya by meaning.
 
+## 4e. What other riwāyāt read (unit 8, draft)
+
+Unit 8 teaches the riwāyāt by contrast with Ḥafṣ (ADR-0027). `RIWAYA_EXAMPLES` in
+`@arda/tajweed` holds Ḥafṣ words from the packs (keys checked by the tools test), who reads
+each differently and how; `changeMark` marks the place in the Ḥafṣ word.
+
+| Group | Change (`RiwayaChange`)          | Who                | What changes                                                         | Example (Ḥafṣ → spoken)             |
+| ----- | -------------------------------- | ------------------ | -------------------------------------------------------------------- | ----------------------------------- |
+| Madd  | separated madd (`madd-munfasil`) | Warsh              | 6 counts (Ḥafṣ 4 or 5)                                               | إِنَّآ أَعْطَيْنَاكَ (108:1)        |
+| Madd  | badal (`madd-badal`)             | Warsh              | a madd after a hamza 2, 4 or 6 counts (Ḥafṣ 2)                       | ءَامَنُوا (95:6)                    |
+| Hamza | naql                             | Warsh              | the hamza falls away, its vowel goes to the sākin before             | قَدْ أَفْلَحَ → قَدَ ٱفْلَحَ        |
+| Hamza | ibdāl                            | Warsh (and others) | a hamza sākina beginning the root becomes the madd letter            | مَأْكُولٍ → مَاكُولٍ                |
+| Sound | taqlīl                           | Warsh              | alif maqṣūra between fatḥa and kasra at the āya ends of eleven sūras | وَالضُّحَىٰ (93:1)                  |
+| Sound | thinner rāʾ (`ra-tarqiq`)        | Warsh              | rāʾ with fatḥa or ḍamma light after kasra or yāʾ sākina              | بَصِيرًا (84:15)                    |
+| Sound | heavier lām (`lam-taghliz`)      | Warsh              | lām with fatḥa heavy after ṣād, ṭāʾ or ẓāʾ with fatḥa or sukūn       | صَلَاتِهِمْ (107:5)                 |
+| Word  | other words (`word`)             | per word           | another word or form (farsh al-ḥurūf)                                | مَٰلِكِ → مَلِكِ, كُفُوًا → كُفُؤًا |
+| Word  | ṣila                             | Qālūn (may)        | a wāw after the mīm of the plural                                    | عَلَيْهِمْ → عَلَيْهِمُو            |
+| Word  | imāla                            | ad-Dūrī            | the ā of an-nās leans towards ē when it has kasra                    | النَّاسِ (114:1)                    |
+
+- Eighteen examples: four per group, six words. What each riwāya reads follows
+  ash-Shāṭibiyya as commonly taught; drafts until the sheikh has reviewed them.
+- Warsh is heard in ʿAbd al-Bāsiṭ's two murattal recordings on EveryAyah, Ḥafṣ and Warsh, the
+  whole āya, streamed (ADR-0027). His Warsh files are numbered by the Madanī count; the chosen
+  āyāt were matched by the clips' lengths, and al-Baqara's two examples are not heard.
+- Left to the cards and the sheikh: Warsh's other ways (fatḥ beside taqlīl, the lengths of
+  badal), the two hamzas, idghām kabīr, the counts of the āyāt themselves, and the other
+  readers.
+
 ## 5. Rendering checks (IndoPak font)
 
 - DigitalKhatt IndoPak renders IndoPak text with U+0652 sukūn; the ʿUthmānī U+06E1 shows a
