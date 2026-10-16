@@ -429,6 +429,20 @@ describe('unit 8 (riwāyāt)', () => {
     ).toBeInTheDocument();
   });
 
+  it('stops the āya when the learner goes on to the next card', async () => {
+    const { audio, deps } = fakePlayer();
+    renderAt('/pfad/8/warsh-madd', new MemoryReviewStore(), deps);
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Warsh anhören: Sūra 108, Āya 1' })
+    );
+    expect(audio.paused).toBe(false);
+    await userEvent.click(screen.getByRole('link', { name: /^Weiter: Warsh: Hamza$/ }));
+    expect(
+      screen.getByRole('heading', { name: 'Hamza übertragen (Naql)' })
+    ).toBeInTheDocument();
+    expect(audio.paused).toBe(true);
+  });
+
   it('writes how Warsh says a word where its letters change', () => {
     renderAt('/pfad/8/warsh-hamza');
     expect(screen.getAllByText('قَدَ ٱفْلَحَ')).toHaveLength(2);
