@@ -97,10 +97,10 @@ have no date yet.
 
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 
-| Date       | Change                                                                                                                                     | From            | To                                                           |
-| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------ |
-| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                                                                       | Suffa `3540971` | ʿArḍa S0.3                                                   |
-| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)                                                     | ʿArḍa           | Suffa (to check: its lockfile has one copy today)            |
-| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language)                                              | ʿArḍa           | Suffa (its ADR-0021 plans languages)                         |
-| 2026-10-07 | Engagement rules: day keys, XP-level curve, streak with shields (`packages/engagement`)                                                    | Suffa `3540971` | ʿArḍa S5.2 (ADR-0023; own XP weights, activity log)          |
-| 2026-11-14 | Better Auth 1.7.6 → 1.7.7 for CVE-2026-114607 (critical; stopped the release scan); `@better-auth/core` 1.7.7 also a direct API dependency | ʿArḍa           | Suffa (to do there: same bump; this run works in ʿArḍa only) |
+| Date       | Change                                                                                                                                  | From            | To                                                           |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ------------------------------------------------------------ |
+| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                                                                    | Suffa `3540971` | ʿArḍa S0.3                                                   |
+| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)                                                  | ʿArḍa           | Suffa (to check: its lockfile has one copy today)            |
+| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language)                                           | ʿArḍa           | Suffa (its ADR-0021 plans languages)                         |
+| 2026-10-07 | Engagement rules: day keys, XP-level curve, streak with shields (`packages/engagement`)                                                 | Suffa `3540971` | ʿArḍa S5.2 (ADR-0023; own XP weights, activity log)          |
+| 2026-11-14 | Better Auth 1.7.6 → 1.7.7 for CVE-2026-114607 (critical; stopped the release scan); lockfile layout kept as for 1.7.6 (ADR-0004 update) | ʿArḍa           | Suffa (to do there: same bump; this run works in ʿArḍa only) |
