@@ -74,6 +74,24 @@
 | S6.2 Agreement report per rule                        | the sheikh's verdicts vs the check, per rule, from opted-in recordings |
 | S6–S9 Weekly pilot, feedback triaged into the backlog | one ḥalaqa every week; issues triaged each Monday                      |
 
+## Waiting on the owner
+
+One line per item: what is needed, what it blocks, and what is assumed until he answers
+(owner decision of 2026-11-14, ADR-0006 update). The roadmap's "Waiting on" table has the dates.
+
+- Owner: the production server and its secrets (S5.3: own server, GitHub environment `production`, restore drill). Blocks gate G3 and the pilot. Until then: staging only.
+- Owner: the sheikh made a teacher on staging (admin action with 2FA). Blocks G1 with him. Until then: test accounts only.
+- Owner: the sheikh's review of the texts, examples and drawings of units 1–8 and the letter lab (S5.1, S5.5–S5.8), and his answers 1 (iqlāb with ghunna), 4 (his lessons) and 5 (the name) of spec 01 §8. Blocks publishing reviewed content and G3. Until then: everything stays marked "Entwurf".
+- Owner: a replacement for the sheet's example عَلَيْهِمْ سَلَامٌ, which the Qurʾān does not have as written (spec 01 F2), from the sheikh. Blocks the last of 41 examples being heard. Until then: it stays on the card, silent.
+- Owner: the sheikh's source for the IndoPak pause signs (ط, ز, ص, قف …) and their meanings as he teaches them (spec 03 §4d). Blocks teaching them in unit 7. Until then: only the Madīna signs are taught.
+- Owner: Warsh recordings for the two al-Baqara examples of unit 8, or the sheikh's word that they may stay silent (ADR-0027: ʿAbd al-Bāsiṭ's Warsh follows the Madanī count). Blocks 2 of 18 examples being heard beside Ḥafṣ. Until then: they stay silent.
+- Owner: streaming terms from EveryAyah and QuranicAudio (ADR-0009 question 2). Blocks keeping the reciters for the pilot. Until then: streamed from their servers with credit, never cached.
+- Owner: RustFS buckets for recordings (ADR-0012). Blocks moving sound out of Postgres. Until then: recordings stay in Postgres.
+- Owner: a GPU host or CPU budget for `arda-speech` (S6.1, ADR-0013). Blocks S6.1 and S6.2. Until then: no speech check.
+- Owner: `ARDA_ANTHROPIC_API_KEY` on staging (ADR-0020). Blocks translated remarks. Until then: remarks are shown untranslated.
+- Owner: native review of the French and Arabic texts. Blocks offering them in the pilot. Until then: German first, the others as they are.
+- Owner: the portfolio option A–D (roadmap, "Portfolio capacity"). Decides the pace. Until then: A, nightly runs.
+
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 
 | Date       | Change                                                                                        | From            | To                                                  |

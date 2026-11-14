@@ -35,3 +35,21 @@ an untested image in front of them, and production must run exactly what staging
 ## Consequences
 
 The `main` branch is always deployable; work happens on branches with pull requests.
+
+## Update 2026-11-14: autonomous runs merge their own pull requests
+
+The owner decided on 2026-11-14 that development continues without him (it extends his note of
+2026-10-04 in the roadmap, "keep going and merge PRs automatically"):
+
+- A run plans and implements without waiting for a plan approval. Hard-to-reverse decisions are
+  still recorded as an ADR in the same pull request.
+- The agent opens its pull requests ready for review and enables auto-merge; where that is not
+  possible it merges itself once every required check is green and every review thread is
+  resolved. Nothing merges with a red or pending check, and no test, lint rule, ruleset, branch
+  protection or workflow permission is changed to get there.
+- A merge to `main` still deploys staging only. Production keeps what this ADR says: its own
+  server and the owner as required reviewer (story S5.3, the owner's).
+- What only the owner can give is listed as "Owner:" lines under "Waiting on the owner" in the
+  sprint plan and mailed to him on Sundays; the run takes the next story instead of waiting.
+
+The rules for a run are in `CLAUDE.md`.
