@@ -49,6 +49,43 @@ export const en: Messages = {
     shields: (count) => (count === 1 ? '1 streak shield' : `${count} streak shields`),
     shieldHint:
       'Every 7 days of practice earn a streak shield (at most 2). It covers a missed day.',
+    quests: {
+      title: 'For today',
+      hint: 'Three small goals, the same every day.',
+      names: {
+        round: (goal) => (goal === 1 ? 'Finish a round' : `Finish ${goal} rounds`),
+        'right-answers': (goal) => `${goal} right answers`,
+        variety: (goal) => `Practise in ${goal} different ways`,
+      },
+      progress: (progress, goal) => `${progress} / ${goal}`,
+      done: 'done',
+      bonus: (points) => `+${points} XP`,
+      allDone: 'All three done for today.',
+    },
+    badges: {
+      title: 'Badges',
+      intro: 'What you have done so far. Each badge is earned once.',
+      count: (earned, total) => `${earned} of ${total} badges`,
+      open: 'See the badges',
+      back: 'Back to Today',
+      earned: 'earned',
+      pending: 'still open',
+      names: {
+        'first-round': { name: 'First round', hint: 'Finished a round.' },
+        'first-card': { name: 'First rule', hint: 'Read a rule card to its end.' },
+        'perfect-round': {
+          name: 'No mistakes',
+          hint: 'A round of at least ten questions without a mistake.',
+        },
+        'all-letters': { name: 'All 28', hint: 'Sorted all 28 letters right.' },
+        'first-unit': { name: 'First test', hint: 'Passed the test of a unit.' },
+        'all-units': { name: 'The whole path', hint: 'Passed the test of every unit.' },
+        'streak-7': { name: 'A week', hint: 'Practised 7 days in a row.' },
+        'streak-30': { name: 'A month', hint: 'Practised 30 days in a row.' },
+        'level-5': { name: 'Level 5', hint: 'Reached level 5.' },
+        'level-10': { name: 'Level 10', hint: 'Reached level 10.' },
+      },
+    },
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'nasal sound, 2 counts (ikhfāʾ, idghām, iqlāb)' },

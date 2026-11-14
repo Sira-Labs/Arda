@@ -61,3 +61,36 @@ on which days someone practised or how many rounds they finished.
 - Changing a weight changes everyone's XP at once, since XP is always recomputed from the
   log; the rules carry a version for when the server keeps totals.
 - The export lists the log; deleting the account deletes it.
+
+## Update 2026-11-14: daily quests and badges
+
+The "not yet" above is built (sprint story S5.2, spec 01 F1). Both are pure functions of the
+activity log in `packages/engagement`; the log, the sync and the API do not change.
+
+- **Daily quests** (`quests.ts`): three goals a day, the same for everyone and every day, in
+  the device's time zone: finish a round; 20 right answers in rounds; practise in two different
+  ways (two kinds of event, a rule card counts as one). Fixed rather than drawn, because the
+  guardrails rule out chance, and three steady goals need no explaining. A quest left open is
+  simply gone the next day; nothing is lost and nothing is said about it.
+- **Quest bonus:** each quest done gives 10 XP, on top of the round cap (at most 30 a day).
+  `summarise` adds it to the total and to today. This is XP rules **version 2**: as the
+  consequences above say, a changed rule changes everyone's XP at once, so past days whose
+  quests were done count their bonus too and some learners rise a level with this release.
+- **Badges** (`badges.ts`), ten, each earned once for a deed: the first round, the first rule
+  card, a round of ten or more questions without a mistake, all 28 letters sorted right, the
+  first unit test passed, every unit test of the path passed, 7 and 30 days in a row (the
+  longest streak, shields included as the streak counts them), levels 5 and 10. No badge
+  depends on other learners, on chance or on a deadline.
+- **Where they show:** "Für heute" on Today lists the quests with a bar and the state in words;
+  "Dein Fortschritt" counts the badges and leads to `/abzeichen`, which lists all ten with what
+  each takes.
+- **Not stored:** quests and badges are recomputed from the log, like XP. A badge has no date,
+  and one earned by the longest streak can in rare cases change when another device's older
+  events arrive and move a shield; storing awards would need a server total, which waits until
+  something needs it (teacher views, T5).
+- **Suffa:** its quests and badges were not read for this (the nightly run works in this
+  repository only); the rules here are ʿArḍa's own and are noted in the port log to compare.
+
+Alternatives: quests that rotate by weekday (more variety, but a goal such as "review" cannot be
+met on a day without due cards); badges without XP for quests (a quest with no effect on Today
+reads as decoration).

@@ -1,8 +1,10 @@
 import type { ActivityEvent } from '@arda/engagement';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { Badges } from '@/modules/today/Badges';
 import { ProgressCard } from '@/modules/today/ProgressCard';
+import { QuestsCard } from '@/modules/today/QuestsCard';
 import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider, useReview, type Review } from '@/review/ReviewProvider';
 import {
@@ -15,6 +17,7 @@ import {
   type ReviewState,
 } from '@/review/store';
 import { EVENTS_PER_REQUEST, SYNC_DELAY_MS } from '@/review/useProgressSync';
+import type { ReactNode } from 'react';
 import type { Me, ProgressPayload } from '@/services/auth';
 import { fakeApi, Providers } from './render';
 
@@ -270,17 +273,24 @@ describe('"Dein Fortschritt" on Today', () => {
   });
 
   it('shows the level, XP of today, the streak and its shields', () => {
-    // Eight days in a row with a perfect round each (30 XP): 240 XP, level 3, one shield.
+    // Eight days in a row with a perfect round each (30 XP) and the quest "a round" (10 XP):
+    // 320 XP, level 4, one shield.
     const days = Array.from({ length: 8 }, (_, i) =>
       event({ at: NOW - (7 - i) * DAY, right: 10, total: 10 })
     );
     renderCard(...days);
-    expect(screen.getByText('Level 3')).toBeInTheDocument();
-    expect(screen.getByText(/240 XP/)).toBeInTheDocument();
-    expect(screen.getByText('heute +30 XP')).toBeInTheDocument();
+    expect(screen.getByText('Level 4')).toBeInTheDocument();
+    expect(screen.getByText(/320 XP/)).toBeInTheDocument();
+    expect(screen.getByText('heute +40 XP')).toBeInTheDocument();
     expect(screen.getByText(/8 Tage in Folge/)).toBeInTheDocument();
     expect(screen.getByText('Heute schon geübt.')).toBeInTheDocument();
     expect(screen.getByText('1 Schutzschild')).toBeInTheDocument();
+    // First round, a round without a mistake, a week in a row.
+    expect(screen.getByText('3 von 10 Abzeichen')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Abzeichen ansehen' })).toHaveAttribute(
+      'href',
+      '/abzeichen'
+    );
   });
 
   it('keeps a streak standing until today is over', () => {
@@ -289,5 +299,79 @@ describe('"Dein Fortschritt" on Today', () => {
     expect(
       screen.getByText('Übe heute, damit deine Serie weitergeht.')
     ).toBeInTheDocument();
+  });
+});
+
+describe('"Für heute" and the badges (ADR-0023, update 2026-11-14)', () => {
+  beforeEach(() => localStorage.setItem('arda.language', 'de'));
+
+  function renderWith(ui: ReactNode, ...events: LoggedEvent[]) {
+    const { client } = fakeApi({});
+    render(
+      <Providers client={client}>
+        <ReviewProvider store={new MemoryReviewStore(withLog(...events))}>
+          <MemoryRouter>{ui}</MemoryRouter>
+        </ReviewProvider>
+      </Providers>
+    );
+  }
+
+  it('lists the three quests of the day, all open at first', () => {
+    renderWith(<QuestsCard now={() => NOW} />);
+    expect(
+      screen.getByText('Drei kleine Ziele, jeden Tag dieselben.')
+    ).toBeInTheDocument();
+    const bars = screen.getAllByRole('progressbar');
+    expect(bars.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Schließe eine Runde ab',
+      '20 richtige Antworten',
+      'Übe auf 2 verschiedene Arten',
+    ]);
+    expect(bars.map((b) => b.getAttribute('aria-valuenow'))).toEqual(['0', '0', '0']);
+    expect(screen.getByText('0 / 20')).toBeInTheDocument();
+  });
+
+  it('shows how far each quest has come and marks a done one in words', () => {
+    renderWith(<QuestsCard now={() => NOW} />, event({ right: 8 }));
+    expect(screen.getByText('geschafft · +10 XP')).toBeInTheDocument();
+    expect(screen.getByText('8 / 20')).toBeInTheDocument();
+    expect(screen.getByText('1 / 2')).toBeInTheDocument();
+  });
+
+  it('says so when all three are done, and forgets yesterday', () => {
+    renderWith(
+      <QuestsCard now={() => NOW} />,
+      event({ right: 10 }),
+      event({ kind: 'review', right: 10 })
+    );
+    expect(screen.getByText('Alle drei für heute geschafft.')).toBeInTheDocument();
+    expect(screen.getAllByText('geschafft · +10 XP')).toHaveLength(3);
+  });
+
+  it('starts fresh the next day', () => {
+    renderWith(<QuestsCard now={() => NOW} />, event({ at: NOW - DAY, right: 10 }));
+    expect(screen.queryByText(/geschafft/)).not.toBeInTheDocument();
+  });
+
+  it('lists every badge with what it takes, earned or still open', () => {
+    renderWith(
+      <Badges now={() => NOW} />,
+      event({ right: 10, total: 10 }),
+      event({ kind: 'rule-card', ref: 'iqlab', right: 0, total: 0 })
+    );
+    expect(screen.getByRole('heading', { name: 'Abzeichen' })).toBeInTheDocument();
+    expect(screen.getByText('3 von 10 Abzeichen')).toBeInTheDocument();
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(10);
+    const state = (name: string) => {
+      const item = items.find((i) => within(i).queryByText(name));
+      return within(item!).getByText(/^(erreicht|noch offen)$/).textContent;
+    };
+    expect(state('Erste Runde')).toBe('erreicht');
+    expect(state('Erste Regel')).toBe('erreicht');
+    expect(state('Ohne Fehler')).toBe('erreicht');
+    expect(state('Eine Woche')).toBe('noch offen');
+    expect(state('Der ganze Pfad')).toBe('noch offen');
+    expect(screen.getByText('7 Tage in Folge geübt.')).toBeInTheDocument();
   });
 });

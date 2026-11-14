@@ -474,6 +474,34 @@ a {
   font-size: 0.8rem;
   vertical-align: middle;
 }
+/* The badges (ADR-0023): a grid of cards; an open badge is quiet, an earned one in ink. */
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.badge {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--text-muted);
+}
+.badge > svg {
+  flex-shrink: 0;
+}
+.badge .chip {
+  align-self: flex-start;
+  margin-block-start: 4px;
+}
+.badge-earned {
+  color: var(--text);
+}
+.badge-earned > svg {
+  color: var(--good);
+}
 .h-small {
   font-size: 1.05rem;
   font-weight: 800;
