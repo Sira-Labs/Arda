@@ -96,6 +96,53 @@ export const de = {
       count === 1 ? '1 Schutzschild' : `${count} Schutzschilde`,
     shieldHint:
       'Alle 7 Übungstage gibt es ein Schutzschild (höchstens 2). Es deckt einen verpassten Tag.',
+    quests: {
+      title: 'Für heute',
+      hint: 'Drei kleine Ziele, jeden Tag dieselben.',
+      names: {
+        round: (goal: number) =>
+          goal === 1 ? 'Schließe eine Runde ab' : `Schließe ${goal} Runden ab`,
+        'right-answers': (goal: number) => `${goal} richtige Antworten`,
+        variety: (goal: number) => `Übe auf ${goal} verschiedene Arten`,
+      },
+      progress: (progress: number, goal: number) => `${progress} / ${goal}`,
+      done: 'geschafft',
+      bonus: (points: number) => `+${points} XP`,
+      allDone: 'Alle drei für heute geschafft.',
+    },
+    badges: {
+      title: 'Abzeichen',
+      intro: 'Was du schon geschafft hast. Jedes Abzeichen gibt es einmal.',
+      count: (earned: number, total: number) => `${earned} von ${total} Abzeichen`,
+      open: 'Abzeichen ansehen',
+      back: 'Zurück zu Heute',
+      earned: 'erreicht',
+      pending: 'noch offen',
+      names: {
+        'first-round': { name: 'Erste Runde', hint: 'Eine Runde zu Ende gespielt.' },
+        'first-card': {
+          name: 'Erste Regel',
+          hint: 'Eine Regelkarte bis zum Ende gelesen.',
+        },
+        'perfect-round': {
+          name: 'Ohne Fehler',
+          hint: 'Eine Runde mit mindestens zehn Fragen ohne Fehler.',
+        },
+        'all-letters': {
+          name: 'Alle 28',
+          hint: 'Alle 28 Buchstaben richtig sortiert.',
+        },
+        'first-unit': { name: 'Erster Test', hint: 'Den Test einer Einheit bestanden.' },
+        'all-units': {
+          name: 'Der ganze Pfad',
+          hint: 'Den Test jeder Einheit bestanden.',
+        },
+        'streak-7': { name: 'Eine Woche', hint: '7 Tage in Folge geübt.' },
+        'streak-30': { name: 'Ein Monat', hint: '30 Tage in Folge geübt.' },
+        'level-5': { name: 'Level 5', hint: 'Level 5 erreicht.' },
+        'level-10': { name: 'Level 10', hint: 'Level 10 erreicht.' },
+      },
+    },
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'Nasenklang, 2 Zählzeiten (Ikhfāʾ, Idghām, Iqlāb)' },

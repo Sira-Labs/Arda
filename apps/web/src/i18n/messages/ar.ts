@@ -96,6 +96,47 @@ export const ar: Messages = {
     shields: (count) =>
       count === 1 ? 'درع واحد' : count === 2 ? 'درعان' : `${num(count)} دروع`,
     shieldHint: 'كل سبعة أيام تدريب تمنحك درعًا (درعان على الأكثر)، يغطي يومًا فاتك.',
+    quests: {
+      title: 'لهذا اليوم',
+      hint: 'ثلاثة أهداف صغيرة، هي نفسها كل يوم.',
+      names: {
+        round: (goal) => (goal === 1 ? 'أكمل جولة واحدة' : `أكمل ${num(goal)} جولات`),
+        'right-answers': (goal) => `${num(goal)} إجابة صحيحة`,
+        variety: (goal) =>
+          goal === 2 ? 'تدرّب بطريقتين مختلفتين' : `تدرّب بـ${num(goal)} طرق مختلفة`,
+      },
+      progress: (progress, goal) => `${num(progress)} / ${num(goal)}`,
+      done: 'تمّ',
+      bonus: (points) => `+${num(points)} XP`,
+      allDone: 'أتممت الثلاثة لهذا اليوم.',
+    },
+    badges: {
+      title: 'الأوسمة',
+      intro: 'ما أنجزته حتى الآن. كل وسام يُنال مرة واحدة.',
+      count: (earned, total) => `${num(earned)} من ${num(total)} أوسمة`,
+      open: 'عرض الأوسمة',
+      back: 'العودة إلى اليوم',
+      earned: 'نِلته',
+      pending: 'لم يُنل بعد',
+      names: {
+        'first-round': { name: 'أول جولة', hint: 'أكملت جولة.' },
+        'first-card': { name: 'أول قاعدة', hint: 'قرأت بطاقة قاعدة إلى آخرها.' },
+        'perfect-round': {
+          name: 'بلا خطأ',
+          hint: 'جولة من عشرة أسئلة على الأقل بلا خطأ.',
+        },
+        'all-letters': {
+          name: 'الثمانية والعشرون',
+          hint: 'رتّبت الحروف الثمانية والعشرين كلها صحيحة.',
+        },
+        'first-unit': { name: 'أول اختبار', hint: 'نجحت في اختبار وحدة.' },
+        'all-units': { name: 'المسار كله', hint: 'نجحت في اختبار كل وحدة.' },
+        'streak-7': { name: 'أسبوع', hint: 'تدرّبت سبعة أيام على التوالي.' },
+        'streak-30': { name: 'شهر', hint: 'تدرّبت ثلاثين يومًا على التوالي.' },
+        'level-5': { name: `المستوى ${num(5)}`, hint: `بلغت المستوى ${num(5)}.` },
+        'level-10': { name: `المستوى ${num(10)}`, hint: `بلغت المستوى ${num(10)}.` },
+      },
+    },
   },
   rules: {
     ghunna: { name: 'غنة', hint: 'صوت من الخيشوم، حركتان (إخفاء، إدغام، إقلاب)' },

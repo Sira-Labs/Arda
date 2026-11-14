@@ -14,6 +14,7 @@ import { ContinueReading } from '@/modules/mushaf/ContinueReading';
 import { PlanCard } from '@/modules/plan/PlanCard';
 import { MyRecitations } from '@/modules/recite/MyRecitations';
 import { ProgressCard } from './ProgressCard';
+import { QuestsCard } from './QuestsCard';
 import { segmentsOf } from '@/tajweed/segments';
 import { useSession } from '@/state/session';
 
@@ -129,6 +130,8 @@ export function Today() {
       <PlanCard />
 
       <ProgressCard />
+
+      <QuestsCard />
 
       <MyRecitations />
 

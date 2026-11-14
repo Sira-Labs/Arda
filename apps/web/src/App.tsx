@@ -30,6 +30,7 @@ import { OutboxSender } from '@/modules/recite/OutboxSender';
 import { RuleCardPage } from '@/modules/path/RuleCard';
 import { Sheikh } from '@/modules/sheikh/Sheikh';
 import { Soon } from '@/modules/Soon';
+import { Badges } from '@/modules/today/Badges';
 import { Today } from '@/modules/today/Today';
 import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider } from '@/review/ReviewProvider';
@@ -59,6 +60,7 @@ const router = createBrowserRouter([
       { path: '/konto', element: <Account /> },
       { path: '/pfad', element: <Path /> },
       { path: '/lernplan', element: <StudyPlan /> },
+      { path: '/abzeichen', element: <Badges /> },
       { path: '/mushaf', element: <Mushaf /> },
       { path: '/mushaf/seite/:page', element: <MushafPage /> },
       { path: '/mushaf/:sura', element: <SuraView /> },

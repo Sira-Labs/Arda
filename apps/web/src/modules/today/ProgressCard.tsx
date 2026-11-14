@@ -1,14 +1,16 @@
+import { Link } from 'react-router-dom';
 import { Icon } from '@/components/Icon';
 import { useEngagement } from '@/engagement/useEngagement';
 import { useI18n } from '@/i18n/I18nProvider';
 
 /**
  * "Dein Fortschritt" on Today (ADR-0023): level and XP with the way to the next level, the
- * streak and its shields. Kind words only: a missed day is never held against anyone.
+ * streak and its shields, and the way to the badges. Kind words only: a missed day is never held against anyone.
  */
 export function ProgressCard({ now }: { now?: () => number }) {
   const { m } = useI18n();
-  const { totalXp, todayXp, level, streak } = useEngagement(now);
+  const { totalXp, todayXp, level, streak, badges } = useEngagement(now);
+  const earned = badges.filter((b) => b.earned).length;
   const percent = Math.round((level.into / Math.max(1, level.span)) * 100);
   const streakLine =
     streak.current === 0
@@ -66,6 +68,13 @@ export function ProgressCard({ now }: { now?: () => number }) {
           </p>
         </div>
       )}
+      <div className="row" style={{ gap: 8, alignItems: 'center' }}>
+        <Icon name="badge" />
+        <p style={{ margin: 0 }}>
+          <strong>{m.engagement.badges.count(earned, badges.length)}</strong>{' '}
+          <Link to="/abzeichen">{m.engagement.badges.open}</Link>
+        </p>
+      </div>
     </section>
   );
 }

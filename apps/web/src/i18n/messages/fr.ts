@@ -50,6 +50,49 @@ export const fr: Messages = {
     shields: (count) => (count === 1 ? '1 bouclier' : `${count} boucliers`),
     shieldHint:
       'Tous les 7 jours d’entraînement, tu gagnes un bouclier (2 au plus). Il couvre un jour manqué.',
+    quests: {
+      title: 'Pour aujourd’hui',
+      hint: 'Trois petits objectifs, les mêmes chaque jour.',
+      names: {
+        round: (goal) => (goal === 1 ? 'Termine une partie' : `Termine ${goal} parties`),
+        'right-answers': (goal) => `${goal} bonnes réponses`,
+        variety: (goal) => `Entraîne-toi de ${goal} façons différentes`,
+      },
+      progress: (progress, goal) => `${progress} / ${goal}`,
+      done: 'réussi',
+      bonus: (points) => `+${points}\u202fXP`,
+      allDone: 'Les trois sont réussis pour aujourd’hui.',
+    },
+    badges: {
+      title: 'Insignes',
+      intro: 'Ce que tu as déjà accompli. Chaque insigne s’obtient une fois.',
+      count: (earned, total) => `${earned} insignes sur ${total}`,
+      open: 'Voir les insignes',
+      back: 'Retour à Aujourd’hui',
+      earned: 'obtenu',
+      pending: 'pas encore',
+      names: {
+        'first-round': { name: 'Première partie', hint: 'Une partie terminée.' },
+        'first-card': {
+          name: 'Première règle',
+          hint: 'Une fiche de règle lue jusqu’au bout.',
+        },
+        'perfect-round': {
+          name: 'Sans faute',
+          hint: 'Une partie d’au moins dix questions sans faute.',
+        },
+        'all-letters': { name: 'Les 28', hint: 'Les 28 lettres bien classées.' },
+        'first-unit': { name: 'Premier test', hint: 'Le test d’une unité réussi.' },
+        'all-units': {
+          name: 'Tout le parcours',
+          hint: 'Le test de chaque unité réussi.',
+        },
+        'streak-7': { name: 'Une semaine', hint: '7 jours d’affilée.' },
+        'streak-30': { name: 'Un mois', hint: '30 jours d’affilée.' },
+        'level-5': { name: 'Niveau 5', hint: 'Niveau 5 atteint.' },
+        'level-10': { name: 'Niveau 10', hint: 'Niveau 10 atteint.' },
+      },
+    },
   },
   rules: {
     ghunna: { name: 'Ghunna', hint: 'son nasal, 2 temps (ikhfāʾ, idghām, iqlāb)' },
