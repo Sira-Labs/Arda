@@ -71,8 +71,14 @@ OAuth) without changing student sign-in.
 
 The release scan (Trivy, ADR-0006) stopped the release of `main` on a critical finding in
 `better-auth` 1.7.6, fixed in 1.7.7 ("OAuth state can be used as a magic link to sign in").
-`better-auth` and `@better-auth/passkey` are now 1.7.7. `@better-auth/core` 1.7.7 is a direct
-dependency of the API as well as the root override: npm did not apply the override when it
-resolved the passkey plugin's peer and reached for a newer core, which is the second copy the
-override exists to prevent. The lockfile holds one copy of core. No `.trivyignore` entry was
-added. Suffa runs the same version and needs the same bump (port log).
+`better-auth` and `@better-auth/passkey` are now 1.7.7, the root override of
+`@better-auth/core` with them. The lockfile keeps the layout it had for 1.7.6 (the Better Auth
+packages at the top, one copy of core, one zod 4 beside them): left to resolve the new
+versions itself, npm either refused (it took a newer core for the passkey plugin's peer) or
+nested the packages under `apps/api`, where the image's slim install no longer has the zod
+that `better-call` imports and the api does not start. The first attempt (PR 56) shipped that
+nested layout with core as a direct dependency; the release's smoke test stopped it before
+the api image was published or anything deployed, and PR 57 restored the layout. A Better Auth bump is therefore checked
+with the image's own install (`npm ci --omit=dev --omit=optional --workspace @arda/api`) and a
+start of `dist/main.js`, not only with the tests. No `.trivyignore` entry was added.
+Suffa runs the same version and needs the same bump (port log).
