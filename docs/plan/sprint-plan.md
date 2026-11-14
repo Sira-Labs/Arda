@@ -92,13 +92,15 @@ have no date yet.
 - Owner: a GPU host or CPU budget for `arda-speech` (S6.1, ADR-0013). Blocks S6.1 and S6.2. Until then: no speech check.
 - Owner: `ARDA_ANTHROPIC_API_KEY` on staging (ADR-0020). Blocks translated remarks. Until then: remarks are shown untranslated.
 - Owner: native review of the French and Arabic texts. Blocks offering them in the pilot. Until then: German first, the others as they are.
+- Owner: Better Auth 1.7.7 in Suffa (CVE-2026-114607, critical, sign-in; fixed here on 2026-11-14, see the port log). Blocks nothing in ʿArḍa; Suffa stays on the vulnerable 1.7.6 until someone bumps it. Until then: ʿArḍa is fixed, Suffa is not.
 - Owner: the portfolio option A–D (roadmap, "Portfolio capacity"). Decides the pace. Until then: A, nightly runs.
 
 ## Port log (Suffa ↔ ʿArḍa, ADR-0002)
 
-| Date       | Change                                                                                        | From            | To                                                  |
-| ---------- | --------------------------------------------------------------------------------------------- | --------------- | --------------------------------------------------- |
-| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                          | Suffa `3540971` | ʿArḍa S0.3                                          |
-| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)        | ʿArḍa           | Suffa (to check: its lockfile has one copy today)   |
-| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language) | ʿArḍa           | Suffa (its ADR-0021 plans languages)                |
-| 2026-10-07 | Engagement rules: day keys, XP-level curve, streak with shields (`packages/engagement`)       | Suffa `3540971` | ʿArḍa S5.2 (ADR-0023; own XP weights, activity log) |
+| Date       | Change                                                                                                                                     | From            | To                                                           |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ------------------------------------------------------------ |
+| 2026-10-03 | Auth, account, admin, audit, TOTP, migrations, tests                                                                                       | Suffa `3540971` | ʿArḍa S0.3                                                   |
+| 2026-10-03 | Pin `@better-auth/core` to the `better-auth` version (two copies break passkey errors)                                                     | ʿArḍa           | Suffa (to check: its lockfile has one copy today)            |
+| 2026-10-03 | Sign-in mail in the person's language (`metadata.language`, stored language, Accept-Language)                                              | ʿArḍa           | Suffa (its ADR-0021 plans languages)                         |
+| 2026-10-07 | Engagement rules: day keys, XP-level curve, streak with shields (`packages/engagement`)                                                    | Suffa `3540971` | ʿArḍa S5.2 (ADR-0023; own XP weights, activity log)          |
+| 2026-11-14 | Better Auth 1.7.6 → 1.7.7 for CVE-2026-114607 (critical; stopped the release scan); `@better-auth/core` 1.7.7 also a direct API dependency | ʿArḍa           | Suffa (to do there: same bump; this run works in ʿArḍa only) |
