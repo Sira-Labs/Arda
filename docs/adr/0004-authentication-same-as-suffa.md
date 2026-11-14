@@ -66,3 +66,13 @@ OAuth) without changing student sign-in.
 - Every fix to the auth code in Suffa is ported here in the same week (ADR-0002).
 - Acceptance: `apps/api/test/auth.pg.integration.test.ts` (ported from Suffa) must stay green
   against Postgres in CI.
+
+## Update 2026-11-14: Better Auth 1.7.7 (CVE-2026-114607)
+
+The release scan (Trivy, ADR-0006) stopped the release of `main` on a critical finding in
+`better-auth` 1.7.6, fixed in 1.7.7 ("OAuth state can be used as a magic link to sign in").
+`better-auth` and `@better-auth/passkey` are now 1.7.7. `@better-auth/core` 1.7.7 is a direct
+dependency of the API as well as the root override: npm did not apply the override when it
+resolved the passkey plugin's peer and reached for a newer core, which is the second copy the
+override exists to prevent. The lockfile holds one copy of core. No `.trivyignore` entry was
+added. Suffa runs the same version and needs the same bump (port log).

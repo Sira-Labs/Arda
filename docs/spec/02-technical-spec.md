@@ -58,7 +58,7 @@ tools/          content import: Tanzil text and cpfair rules into checksummed pa
 | ---------- | ------------------------------------------------- | ------------------------------------------------------- |
 | Runtime    | Node 22, TypeScript 5, ESM                        | npm workspaces, one lockfile                            |
 | API        | Hono 4 on `@hono/node-server`                     | dependency-injected routes, testable without a DB       |
-| Auth       | Better Auth 1.7.6 + `@better-auth/passkey`        | ADR-0004; `@better-auth/core` pinned                    |
+| Auth       | Better Auth 1.7.7 + `@better-auth/passkey`        | ADR-0004; `@better-auth/core` pinned                    |
 | DB         | Postgres 17, raw `pg`, plain SQL migrations       | advisory-locked runner, `schema_migrations`             |
 | Validation | zod 3                                             | env config and request bodies                           |
 | Build      | tsc (types), esbuild (api), Vite (web)            | the api bundle inlines `@arda/*`; npm packages external |
