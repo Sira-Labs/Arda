@@ -1,13 +1,14 @@
 /**
- * XP rules v1 (ADR-0023, after Suffa's ADR-0016): pure functions of the activity log, so every
+ * XP rules (ADR-0023, after Suffa's ADR-0016): pure functions of the activity log, so every
  * device computes the same numbers, offline and at once. XP rewards finished rounds and right
- * answers, not volume: round XP is capped per day.
+ * answers, not volume: round XP is capped per day. Version 2 adds the bonus of the daily quests
+ * (`quests.ts`), which `summarise` counts on top.
  */
 import { ROUND_KINDS, type ActivityEvent } from './activity.js';
 import { dayKey } from './day.js';
 
 /** Bump when a weight changes. */
-export const RULES_VERSION = 1;
+export const RULES_VERSION = 2;
 
 export const XP_RULES = {
   /** Per right answer in a round. */

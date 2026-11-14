@@ -8,6 +8,7 @@ import {
   MAX_SHIELDS,
   passedUnits,
   passesUnitTest,
+  QUEST_RULES,
   roundXp,
   summarise,
   xpAwards,
@@ -163,10 +164,12 @@ describe('the summary', () => {
       event({ at: at('2026-10-06T22:30Z'), right: 5, total: 10 }),
     ];
     const summary = summarise(events, at('2026-10-07T12:00Z'), TZ);
-    expect(summary.totalXp).toBe(30 + 15);
-    expect(summary.todayXp).toBe(15);
+    // Rules v2: each day's round also does the quest "a round" (10 XP bonus).
+    expect(summary.totalXp).toBe(30 + 15 + 2 * QUEST_RULES.bonus);
+    expect(summary.todayXp).toBe(15 + QUEST_RULES.bonus);
     expect(summary.streak).toMatchObject({ current: 2, activeToday: true });
-    expect(summary.level.level).toBe(1);
+    // 65 XP: level 2 starts at 50.
+    expect(summary.level.level).toBe(2);
   });
 });
 
