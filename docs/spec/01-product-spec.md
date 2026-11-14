@@ -129,7 +129,11 @@ account across devices; a guest's deck joins the account at the first sign-in, a
 account's deck on the same device is replaced, never merged.)_
 _(Built (owner, 2026-10-07, ADR-0023): every finished round and every rule card read to its
 end goes into an activity log synced with the account; Today shows level, XP, the streak and
-its shields, the end of a round its XP. Daily quests and badges are next.)_
+its shields, the end of a round its XP.)_
+_(Built (2026-11-14, ADR-0023 update): "Für heute" on Today has three daily quests (a round,
+20 right answers, two kinds of practice), 10 XP each; ten badges for deeds (first round, first
+rule card, a round without a mistake, all 28 letters, unit tests, 7 and 30 days in a row,
+levels 5 and 10) at `/abzeichen`.)_
 _(Built (owner, 2026-10-07, S5.1): the path shows units 1–4. Unit 1 leads to the letter lab
 (sīn, zāy, ṣād, rāʾ so far); unit 3 has four cards (ghunna of a shadda and the three mīm
 sākina rules) and its "Which rule?", unit 4 the qalqala card and the qalqala letters.)_
