@@ -77,7 +77,9 @@
 ## Waiting on the owner
 
 One line per item: what is needed, what it blocks, and what is assumed until he answers
-(owner decision of 2026-11-14, ADR-0006 update). The roadmap's "Waiting on" table has the dates.
+(owner decision of 2026-11-14, ADR-0006 update). The roadmap's "Waiting on" table has the dates
+of the items it lists; the replacement example, the IndoPak pause signs and the Warsh recordings
+have no date yet.
 
 - Owner: the production server and its secrets (S5.3: own server, GitHub environment `production`, restore drill). Blocks gate G3 and the pilot. Until then: staging only.
 - Owner: the sheikh made a teacher on staging (admin action with 2FA). Blocks G1 with him. Until then: test accounts only.
