@@ -196,9 +196,12 @@ async function main(): Promise<void> {
   );
   const stop = (signal: NodeJS.Signals) => {
     log.info({ signal }, 'service.stopping');
-    stopSpeech?.();
+    // The speech check's turn writes to the database: let it end before the pool closes.
+    const speechStopped = (stopSpeech?.() ?? Promise.resolve()).catch((error: unknown) =>
+      log.error({ err: error }, 'speech.stop_failed')
+    );
     server.close(() => {
-      pool.end().finally(() => process.exit(0));
+      void speechStopped.then(() => pool.end()).finally(() => process.exit(0));
     });
   };
   process.once('SIGTERM', stop);

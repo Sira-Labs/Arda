@@ -10,6 +10,11 @@ import type { Hint } from './checker.js';
 /** A recording taken for a check: its sound and what it recites. */
 export interface ClaimedRecording {
   id: string;
+  /**
+   * Which try this is. It names the claim: what a taker writes back counts only while the
+   * check is still on this try, so a taker whose lease ran out cannot undo its successor's work.
+   */
+  attempt: number;
   range: { sura: number; from: number; to: number };
   mime: RecordingMime;
   audio: Buffer;
@@ -30,10 +35,22 @@ export interface SpeechRepository {
    * lease ran out, oldest first, and marks them `pending`.
    */
   claim(request: ClaimRequest): Promise<ClaimedRecording[]>;
-  /** Keeps the hints (replacing earlier ones) and marks the check done. */
-  done(recordingId: string, model: string, hints: readonly Hint[]): Promise<void>;
+  /**
+   * Keeps the hints (replacing earlier ones) and marks the check done; false when the claim
+   * is no longer this taker's (or the recording is gone), and nothing is kept.
+   */
+  done(
+    claim: Pick<ClaimedRecording, 'id' | 'attempt'>,
+    model: string,
+    hints: readonly Hint[]
+  ): Promise<boolean>;
   /** Marks the check failed with a short reason; it is tried again until `maxAttempts`. */
-  failed(recordingId: string, reason: string): Promise<void>;
+  failed(
+    claim: Pick<ClaimedRecording, 'id' | 'attempt'>,
+    reason: string
+  ): Promise<boolean>;
+  /** Gives the try back unused (the api is shutting down): the recording waits as before. */
+  release(claim: Pick<ClaimedRecording, 'id' | 'attempt'>): Promise<boolean>;
 }
 
 export class PgSpeechRepository implements SpeechRepository {
@@ -49,6 +66,7 @@ export class PgSpeechRepository implements SpeechRepository {
       aya_to: number;
       mime: RecordingMime;
       data: Buffer;
+      attempts: number;
     }>(
       `with open as (
          select r.id
@@ -74,9 +92,9 @@ export class PgSpeechRepository implements SpeechRepository {
                   or (recording_checks.status = 'pending'
                       and recording_checks.updated_at
                           < now() - make_interval(secs => $3::double precision / 1000)))
-         returning recording_id
+         returning recording_id, attempts
        )
-       select r.id, r.sura, r.aya_from, r.aya_to, r.mime, a.data
+       select r.id, r.sura, r.aya_from, r.aya_to, r.mime, a.data, claimed.attempts
          from claimed
          join recordings r on r.id = claimed.recording_id
          join recording_audio a on a.recording_id = r.id
@@ -85,26 +103,32 @@ export class PgSpeechRepository implements SpeechRepository {
     );
     return rows.map((row) => ({
       id: row.id,
+      attempt: row.attempts,
       range: { sura: row.sura, from: row.aya_from, to: row.aya_to },
       mime: row.mime,
       audio: row.data,
     }));
   }
 
-  async done(recordingId: string, model: string, hints: readonly Hint[]): Promise<void> {
+  async done(
+    claim: Pick<ClaimedRecording, 'id' | 'attempt'>,
+    model: string,
+    hints: readonly Hint[]
+  ): Promise<boolean> {
     const client = await this.pool.connect();
     try {
       await client.query('begin');
-      // The recording may be gone by now (the student deleted it): then nothing is kept.
+      // Only the taker of this try writes: the recording may be gone by now (the student
+      // deleted it) or another taker may have it after this one's lease ran out.
       const { rowCount } = await client.query(
         `update recording_checks
-            set status = 'done', model = $2, error = null, updated_at = now()
-          where recording_id = $1`,
-        [recordingId, model]
+            set status = 'done', model = $3, error = null, updated_at = now()
+          where recording_id = $1 and status = 'pending' and attempts = $2`,
+        [claim.id, claim.attempt, model]
       );
       if (rowCount) {
         await client.query('delete from recording_hints where recording_id = $1', [
-          recordingId,
+          claim.id,
         ]);
         if (hints.length > 0) {
           await client.query(
@@ -112,11 +136,12 @@ export class PgSpeechRepository implements SpeechRepository {
              select $1, h.aya, h.word, h.topic, h.verdict
                from jsonb_to_recordset($2::jsonb)
                     as h(aya smallint, word smallint, topic text, verdict text)`,
-            [recordingId, JSON.stringify(hints)]
+            [claim.id, JSON.stringify(hints)]
           );
         }
       }
       await client.query('commit');
+      return Boolean(rowCount);
     } catch (error) {
       await client.query('rollback');
       throw error;
@@ -125,12 +150,33 @@ export class PgSpeechRepository implements SpeechRepository {
     }
   }
 
-  async failed(recordingId: string, reason: string): Promise<void> {
-    await this.pool.query(
+  async failed(
+    claim: Pick<ClaimedRecording, 'id' | 'attempt'>,
+    reason: string
+  ): Promise<boolean> {
+    const { rowCount } = await this.pool.query(
       `update recording_checks
-          set status = 'failed', error = $2, updated_at = now()
-        where recording_id = $1 and status = 'pending'`,
-      [recordingId, reason.slice(0, 200)]
+          set status = 'failed', error = $3, updated_at = now()
+        where recording_id = $1 and status = 'pending' and attempts = $2`,
+      [claim.id, claim.attempt, reason.slice(0, 200)]
     );
+    return Boolean(rowCount);
+  }
+
+  async release(claim: Pick<ClaimedRecording, 'id' | 'attempt'>): Promise<boolean> {
+    // A first try given back leaves no row; a later one goes back to the failure before it.
+    const first = await this.pool.query(
+      `delete from recording_checks
+        where recording_id = $1 and status = 'pending' and attempts = $2 and attempts = 1`,
+      [claim.id, claim.attempt]
+    );
+    if (first.rowCount) return true;
+    const later = await this.pool.query(
+      `update recording_checks
+          set status = 'failed', attempts = attempts - 1, error = 'stopped', updated_at = now()
+        where recording_id = $1 and status = 'pending' and attempts = $2`,
+      [claim.id, claim.attempt]
+    );
+    return Boolean(later.rowCount);
   }
 }

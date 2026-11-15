@@ -16,8 +16,8 @@ const ayaEnd = (aya: number) => `۝${aya.toLocaleString('ar-EG')}`;
  * teacher taps the words that need work (`onToggle`) and may say which rule each was about
  * (`onTopic`, ADR-0026 update), the rule the word carries chosen for him when it is only one;
  * under the answer the student sees them marked, with the rule. Marked words are underlined
- * and named for screen readers, never colour alone. Shows nothing while the text loads or when
- * the app does not carry the sūra.
+ * and named for screen readers, never colour alone. Shows no text while it loads or when the
+ * app does not carry the sūra.
  *
  * `hints` are the speech check's words to listen to again (ADR-0013), for the teacher only:
  * ringed in the text, never marked for him, and listed with their rules under it as what they
@@ -57,10 +57,35 @@ export function RecitedWords({
   const sura = result?.ok
     ? result.pack.suras.find((s) => s.sura === range.sura)
     : undefined;
-  if (!sura) return null;
-  const ayat = sura.ayat.filter((a) => a.aya >= range.from && a.aya <= range.to);
   const wordAt = (mark: WordMark) =>
-    sura.ayat.find((a) => a.aya === mark.aya)?.words[mark.word - 1];
+    sura?.ayat.find((a) => a.aya === mark.aya)?.words[mark.word - 1];
+  // The hints do not wait for the text: without the pack a word is named by its place.
+  const hintList = hinted.size > 0 && (
+    <div className="check-hints stack" style={{ gap: 4 }}>
+      <p className="muted" style={{ margin: 0 }}>
+        <strong>{m.recite.hintsTitle}</strong> {m.recite.hintsNote}
+      </p>
+      <ul className="mark-topics" aria-label={m.recite.hintsTitle}>
+        {[...hinted.values()].map((hint) => {
+          const text = wordAt(hint)?.t;
+          return (
+            <li key={keyOf(hint)}>
+              {text ? (
+                <bdi className="quran" lang="ar" dir="rtl">
+                  {text}
+                </bdi>
+              ) : (
+                <span dir="ltr">{keyOf(hint)}</span>
+              )}
+              <span>{hint.topics.map((t) => topicName(t, m, language)).join(' · ')}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+  if (!sura) return hintList || null;
+  const ayat = sura.ayat.filter((a) => a.aya >= range.from && a.aya <= range.to);
   // The teacher names a rule for any mark; the student sees the marks that have one.
   const listed = onTopic ? marks : marks.filter((mark) => mark.topic);
   return (
@@ -115,25 +140,7 @@ export function RecitedWords({
           </span>
         ))}
       </p>
-      {hinted.size > 0 && (
-        <div className="check-hints stack" style={{ gap: 4 }}>
-          <p className="muted" style={{ margin: 0 }}>
-            <strong>{m.recite.hintsTitle}</strong> {m.recite.hintsNote}
-          </p>
-          <ul className="mark-topics" aria-label={m.recite.hintsTitle}>
-            {[...hinted.values()].map((hint) => (
-              <li key={keyOf(hint)}>
-                <bdi className="quran" lang="ar" dir="rtl">
-                  {wordAt(hint)?.t ?? `${hint.aya}:${hint.word}`}
-                </bdi>
-                <span>
-                  {hint.topics.map((t) => topicName(t, m, language)).join(' · ')}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {hintList}
       {listed.length > 0 && (
         <ul className="mark-topics" aria-label={m.recite.markedWords}>
           {listed.map((mark) => {

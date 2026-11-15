@@ -133,6 +133,34 @@ describe('asking arda-speech', () => {
     expect(await reasonOf(checker(hanging, 5).check(INPUT))).toBe('timeout');
   });
 
+  it('names a timeout or a reset that strikes while the answer is read', async () => {
+    const dying = (error: Error) =>
+      (async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => {
+            throw error;
+          },
+        }) as unknown as Response) as typeof fetch;
+    const timeout = Object.assign(new Error('timed out'), { name: 'TimeoutError' });
+    expect(await reasonOf(checker(dying(timeout)).check(INPUT))).toBe('timeout');
+    expect(await reasonOf(checker(dying(new TypeError('terminated'))).check(INPUT))).toBe(
+      'unreachable'
+    );
+  });
+
+  it('ends with "stopped" when the api shuts down, before or while it waits', async () => {
+    const hanging = ((_url: string, init: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        init.signal!.addEventListener('abort', () => reject(init.signal!.reason));
+      })) as typeof fetch;
+    const stop = new AbortController();
+    const waiting = reasonOf(checker(hanging).check(INPUT, stop.signal));
+    stop.abort();
+    expect(await waiting).toBe('stopped');
+  });
+
   it('lets an unexpected error through', async () => {
     const broken = (async () => {
       throw new RangeError('bug');
@@ -141,26 +169,39 @@ describe('asking arda-speech', () => {
   });
 });
 
+type Claim = Pick<ClaimedRecording, 'id' | 'attempt'>;
+
 class MemorySpeechRepository implements SpeechRepository {
   waiting: ClaimedRecording[] = [];
   requests: ClaimRequest[] = [];
   kept = new Map<string, { model: string; hints: readonly Hint[] }>();
   failures = new Map<string, string>();
+  released: string[] = [];
+  /** Claims another taker has taken over: what their first taker writes is refused. */
+  lost = new Set<string>();
 
   async claim(request: ClaimRequest): Promise<ClaimedRecording[]> {
     this.requests.push(request);
     return this.waiting.splice(0, request.limit);
   }
-  async done(recordingId: string, model: string, hints: readonly Hint[]): Promise<void> {
-    this.kept.set(recordingId, { model, hints });
+  async done(claim: Claim, model: string, hints: readonly Hint[]): Promise<boolean> {
+    if (this.lost.has(claim.id)) return false;
+    this.kept.set(claim.id, { model, hints });
+    return true;
   }
-  async failed(recordingId: string, reason: string): Promise<void> {
-    this.failures.set(recordingId, reason);
+  async failed(claim: Claim, reason: string): Promise<boolean> {
+    if (this.lost.has(claim.id)) return false;
+    this.failures.set(claim.id, reason);
+    return true;
+  }
+  async release(claim: Claim): Promise<boolean> {
+    this.released.push(claim.id);
+    return true;
   }
 }
 
 describe('a turn of the speech check', () => {
-  const recording = (id: string): ClaimedRecording => ({ id, ...INPUT });
+  const recording = (id: string): ClaimedRecording => ({ id, attempt: 1, ...INPUT });
   const HINTS: Hint[] = [{ aya: 1, word: 2, topic: 'makhraj', verdict: 'check' }];
 
   it('takes one recording, asks the service and keeps its hints', async () => {
@@ -209,6 +250,21 @@ describe('a turn of the speech check', () => {
     expect(check).not.toHaveBeenCalled();
   });
 
+  it('keeps nothing and counts nothing when another taker has the recording by now', async () => {
+    const repo = new MemorySpeechRepository();
+    repo.waiting = [recording('a')];
+    repo.lost.add('a');
+    const warned: string[] = [];
+    const service = new SpeechCheckService({
+      checker: { check: async () => ({ model: 'm1', hints: HINTS }) },
+      repo,
+      log: { ...quiet, warn: (_obj, msg) => warned.push(msg) },
+    });
+    expect(await service.runOnce()).toEqual({ checked: 0, failed: 0 });
+    expect(repo.kept.size).toBe(0);
+    expect(warned).toEqual(['speech.claim_lost']);
+  });
+
   it('polls without starting a second turn while one runs, and stops', async () => {
     vi.useFakeTimers();
     try {
@@ -232,9 +288,36 @@ describe('a turn of the speech check', () => {
       await vi.advanceTimersByTimeAsync(1000);
       expect(claim).toHaveBeenCalledTimes(2);
       release();
-      stop();
+      await stop();
       await vi.advanceTimersByTimeAsync(5000);
       expect(claim).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('on stop ends the check under way, gives its try back and waits until that is written', async () => {
+    vi.useFakeTimers();
+    try {
+      const repo = new MemorySpeechRepository();
+      repo.waiting = [recording('a')];
+      const checker: SpeechChecker = {
+        check: (_input, stop) =>
+          new Promise((_resolve, reject) => {
+            stop!.addEventListener('abort', () =>
+              reject(new SpeechCheckError('stopped'))
+            );
+          }),
+      };
+      const service = new SpeechCheckService({ checker, repo, log: quiet });
+      const stop = service.start(1000);
+      await vi.advanceTimersByTimeAsync(1000);
+      expect(repo.released).toEqual([]);
+      await stop();
+      // Written before stop() resolves, so the pool can close after it.
+      expect(repo.released).toEqual(['a']);
+      expect(repo.failures.size).toBe(0);
+      expect(repo.kept.size).toBe(0);
     } finally {
       vi.useRealTimers();
     }

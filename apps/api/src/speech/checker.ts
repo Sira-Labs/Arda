@@ -50,8 +50,23 @@ export class SpeechCheckError extends Error {
 }
 
 export interface SpeechChecker {
-  /** Hints for one recitation; throws `SpeechCheckError`. */
-  check(input: SpeechInput): Promise<SpeechResult>;
+  /**
+   * Hints for one recitation; throws `SpeechCheckError`. Aborting `stop` ends the check with
+   * the reason `stopped` (the api is shutting down).
+   */
+  check(input: SpeechInput, stop?: AbortSignal): Promise<SpeechResult>;
+}
+
+/** The reason of a check ended by the api's shutdown: the try is given back, not counted. */
+export const STOPPED = 'stopped';
+
+/** What went wrong while talking to the service, as a reason; `null` for anything else. */
+function transportReason(error: unknown, stop?: AbortSignal): string | null {
+  if (stop?.aborted) return STOPPED;
+  if (error instanceof Error && error.name === 'TimeoutError') return 'timeout';
+  // fetch reports a refused connection, a reset or a redirect as a TypeError.
+  if (error instanceof TypeError) return 'unreachable';
+  return null;
 }
 
 const Answer = z
@@ -101,7 +116,7 @@ export class HttpSpeechChecker implements SpeechChecker {
     private readonly timeoutMs: number = SPEECH_TIMEOUT_MS
   ) {}
 
-  async check(input: SpeechInput): Promise<SpeechResult> {
+  async check(input: SpeechInput, stop?: AbortSignal): Promise<SpeechResult> {
     const { sura, from, to } = input.range;
     const query = new URLSearchParams({
       sura: String(sura),
@@ -109,6 +124,7 @@ export class HttpSpeechChecker implements SpeechChecker {
       to: String(to),
       riwaya: RIWAYA,
     });
+    const timeout = AbortSignal.timeout(this.timeoutMs);
     let response: Response;
     try {
       response = await this.fetchImpl(`${this.settings.url}/v1/check?${query}`, {
@@ -120,14 +136,11 @@ export class HttpSpeechChecker implements SpeechChecker {
         body: input.audio,
         // Never follow the service elsewhere: the sound stays on our servers (ADR-0012).
         redirect: 'error',
-        signal: AbortSignal.timeout(this.timeoutMs),
+        signal: stop ? AbortSignal.any([timeout, stop]) : timeout,
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
-        throw new SpeechCheckError('timeout');
-      }
-      // fetch reports a refused connection, a reset or a redirect as a TypeError.
-      if (error instanceof TypeError) throw new SpeechCheckError('unreachable');
+      const reason = transportReason(error, stop);
+      if (reason) throw new SpeechCheckError(reason);
       throw error;
     }
     if (!response.ok) throw new SpeechCheckError(`http_${response.status}`);
@@ -136,6 +149,9 @@ export class HttpSpeechChecker implements SpeechChecker {
       body = await response.json();
     } catch (error) {
       if (error instanceof SyntaxError) throw new SpeechCheckError('answer_json');
+      // The timeout, a reset or the shutdown can also strike while the answer is read.
+      const reason = transportReason(error, stop);
+      if (reason) throw new SpeechCheckError(reason);
       throw error;
     }
     const result = parseAnswer(body, input.range);

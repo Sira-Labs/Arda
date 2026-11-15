@@ -2103,6 +2103,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(claimed).toEqual([
         {
           id: first,
+          attempt: 1,
           range: { sura: 112, from: 1, to: 4 },
           mime: 'audio/webm',
           audio: SOUND,
@@ -2131,8 +2132,8 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
     it('keeps the hints, shows the teacher those to check and the student none', async () => {
       const id = await send();
-      await speech.claim(CLAIM);
-      await speech.done(id, 'quran-muallim-1', [
+      const [claim] = await speech.claim(CLAIM);
+      await speech.done(claim!, 'quran-muallim-1', [
         { aya: 4, word: 5, topic: 'qalqala', verdict: 'check' },
         { aya: 1, word: 2, topic: 'makhraj', verdict: 'good' },
         { aya: 1, word: 2, topic: 'ghunna', verdict: 'check' },
@@ -2152,18 +2153,19 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(own.recordings[0]).not.toHaveProperty('hints');
       // Checked recordings are not handed out again.
       expect(await speech.claim(CLAIM)).toEqual([]);
-      // A later answer replaces the hints.
-      await speech.done(id, 'quran-muallim-2', []);
+      // A check that is done takes no second answer.
+      expect(await speech.done(claim!, 'quran-muallim-2', [])).toBe(false);
       expect(
         (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
-      ).toEqual([]);
+      ).toHaveLength(2);
     });
 
     it('tries a failed check again, three times in all', async () => {
       const id = await send();
       for (const attempt of [1, 2, 3]) {
-        expect((await speech.claim(CLAIM)).map((r) => r.id)).toEqual([id]);
-        await speech.failed(id, 'http_503');
+        const [claim] = await speech.claim(CLAIM);
+        expect(claim).toMatchObject({ id, attempt });
+        expect(await speech.failed(claim!, 'http_503')).toBe(true);
         expect(await check(id)).toMatchObject({
           status: 'failed',
           attempts: attempt,
@@ -2175,35 +2177,74 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
 
     it('takes up a check whose lease ran out', async () => {
       const id = await send();
-      await speech.claim(CLAIM);
+      const [first] = await speech.claim(CLAIM);
       expect(await speech.claim({ ...CLAIM, leaseMs: 600_000 })).toEqual([]);
       await pool.query(
         `update recording_checks set updated_at = now() - interval '11 minutes'
           where recording_id = $1`,
         [id]
       );
-      expect((await speech.claim(CLAIM)).map((r) => r.id)).toEqual([id]);
+      const [second] = await speech.claim(CLAIM);
+      expect(second).toMatchObject({ id, attempt: 2 });
       expect(await check(id)).toMatchObject({ status: 'pending', attempts: 2 });
-    });
-
-    it('refuses hints the schema does not know and keeps the earlier ones', async () => {
-      const id = await send();
-      await speech.claim(CLAIM);
-      await speech.done(id, 'm', [{ aya: 1, word: 1, topic: 'madd', verdict: 'check' }]);
-      await expect(
-        speech.done(id, 'm', [
-          { aya: 1, word: 1, topic: 'ishmam' as never, verdict: 'check' },
-        ])
-      ).rejects.toThrow(/recording_hints_topic_check/);
+      // The first taker wakes up late: nothing it writes counts any more.
+      const stale = [
+        { aya: 1, word: 1, topic: 'madd' as const, verdict: 'check' as const },
+      ];
+      expect(await speech.done(first!, 'old', stale)).toBe(false);
+      expect(await speech.failed(first!, 'timeout')).toBe(false);
+      expect(await speech.release(first!)).toBe(false);
+      expect(await check(id)).toMatchObject({ status: 'pending', attempts: 2 });
+      expect(await speech.done(second!, 'new', [])).toBe(true);
+      expect(await check(id)).toMatchObject({ status: 'done', model: 'new' });
       expect(
         (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
-      ).toEqual([{ aya: 1, word: 1, topic: 'madd' }]);
+      ).toEqual([]);
+    });
+
+    it('gives a try back when the api stops mid-check', async () => {
+      const id = await send();
+      const [first] = await speech.claim(CLAIM);
+      expect(await speech.release(first!)).toBe(true);
+      expect(await check(id)).toBeUndefined();
+      // Taken again as a first try; a later try given back returns to the failure before it.
+      const [again] = await speech.claim(CLAIM);
+      expect(again).toMatchObject({ id, attempt: 1 });
+      await speech.failed(again!, 'http_503');
+      const [third] = await speech.claim(CLAIM);
+      expect(third).toMatchObject({ attempt: 2 });
+      expect(await speech.release(third!)).toBe(true);
+      expect(await check(id)).toMatchObject({
+        status: 'failed',
+        attempts: 1,
+        error: 'stopped',
+      });
+      expect((await speech.claim(CLAIM))[0]).toMatchObject({ id, attempt: 2 });
+    });
+
+    it('keeps nothing of an answer the schema refuses', async () => {
+      const id = await send();
+      const [claim] = await speech.claim(CLAIM);
+      await expect(
+        speech.done(claim!, 'm', [
+          { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+          { aya: 1, word: 2, topic: 'ishmam' as never, verdict: 'check' },
+        ])
+      ).rejects.toThrow(/recording_hints_topic_check/);
+      // The check is still this taker's to fail.
+      expect(
+        (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
+      ).toEqual([]);
+      expect(await check(id)).toMatchObject({ status: 'pending', attempts: 1 });
+      expect(await speech.failed(claim!, 'answer_store')).toBe(true);
     });
 
     it('lets the hints go with the recording', async () => {
       const id = await send();
-      await speech.claim(CLAIM);
-      await speech.done(id, 'm', [{ aya: 1, word: 1, topic: 'madd', verdict: 'check' }]);
+      const [claim] = await speech.claim(CLAIM);
+      await speech.done(claim!, 'm', [
+        { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+      ]);
       expect(await recordings.remove(AMINA, id)).toBe(true);
       const left = await pool.query(
         `select (select count(*)::int from recording_hints) as hints,
@@ -2211,8 +2252,12 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       );
       expect(left.rows[0]).toEqual({ hints: 0, checks: 0 });
       // An answer arriving for a recording that is gone keeps nothing.
-      await speech.done(id, 'm', [{ aya: 1, word: 1, topic: 'madd', verdict: 'check' }]);
-      await speech.failed(id, 'late');
+      expect(
+        await speech.done(claim!, 'm', [
+          { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+        ])
+      ).toBe(false);
+      expect(await speech.failed(claim!, 'late')).toBe(false);
       expect(
         (await pool.query('select count(*)::int as n from recording_hints')).rows[0]
       ).toEqual({ n: 0 });

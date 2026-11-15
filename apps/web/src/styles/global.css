@@ -1146,6 +1146,11 @@ button.recited-word:hover {
   outline: 2px dotted var(--info);
   outline-offset: -1px;
 }
+/* Keyboard focus stays the solid ring, so a focused hinted word is told from a hinted one. */
+.recited-hint:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
 .check-hints {
   padding: 8px 12px;
   border-inline-start: 3px dotted var(--info);

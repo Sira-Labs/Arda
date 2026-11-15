@@ -618,6 +618,32 @@ describe('listening and answering (S4.2)', () => {
     );
   });
 
+  it('lists the hints by their place when the app does not carry the sūra', async () => {
+    renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [
+            queued({
+              // Āl ʿImrān is in no pack the app ships.
+              range: { sura: 3, from: 1, to: 2 },
+              hints: [{ aya: 2, word: 3, topic: 'madd' }],
+            }),
+          ],
+          more: false,
+        }),
+      },
+      TEACHER
+    );
+    const row = (await screen.findByText('Amina')).closest('li')!;
+    const list = await within(row).findByRole('list', {
+      name: 'Hinweise der automatischen Prüfung',
+    });
+    expect(within(list).getByRole('listitem')).toHaveTextContent('2:3');
+    expect(within(list).getByRole('listitem')).toHaveTextContent('Madd');
+    expect(row.querySelector('.recited-words')).toBeNull();
+  });
+
   it('shows no hints where the speech check has none', async () => {
     renderWith(
       <RecordingQueue halaqaId={HALAQA} />,

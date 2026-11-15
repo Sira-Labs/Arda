@@ -3,7 +3,7 @@
  * takes a few, asks `arda-speech` one after the other and keeps the hints. Until the worker
  * role exists (ADR-0003) the api does this itself, in small turns between requests.
  */
-import { SpeechCheckError, type SpeechChecker } from './checker.js';
+import { SpeechCheckError, STOPPED, type SpeechChecker } from './checker.js';
 import type { SpeechRepository } from './repository.js';
 
 /** One recording at a time: the model is slow and the host small. */
@@ -27,7 +27,10 @@ export interface SpeechTurn {
 }
 
 export class SpeechCheckService {
-  private running = false;
+  /** The turn under way, if any. */
+  private turn: Promise<void> | null = null;
+  /** Aborted when the api stops: the check under way ends and gives its try back. */
+  private readonly stopping = new AbortController();
 
   constructor(
     private readonly deps: {
@@ -48,16 +51,30 @@ export class SpeechCheckService {
     });
     for (const recording of claimed) {
       try {
-        const result = await checker.check(recording);
-        await repo.done(recording.id, result.model, result.hints);
-        turn.checked++;
-        log.info(
-          { recordingId: recording.id, model: result.model, hints: result.hints.length },
-          'speech.checked'
-        );
+        const result = await checker.check(recording, this.stopping.signal);
+        // A taker whose lease ran out meanwhile keeps nothing: its successor has the recording.
+        if (await repo.done(recording, result.model, result.hints)) {
+          turn.checked++;
+          log.info(
+            {
+              recordingId: recording.id,
+              model: result.model,
+              hints: result.hints.length,
+            },
+            'speech.checked'
+          );
+        } else {
+          log.warn({ recordingId: recording.id }, 'speech.claim_lost');
+        }
       } catch (error) {
         if (!(error instanceof SpeechCheckError)) throw error;
-        await repo.failed(recording.id, error.reason);
+        if (error.reason === STOPPED) {
+          // Shutting down is no fault of the recording: the try is not counted.
+          await repo.release(recording);
+          log.info({ recordingId: recording.id }, 'speech.released');
+          continue;
+        }
+        await repo.failed(recording, error.reason);
         turn.failed++;
         log.warn({ recordingId: recording.id, reason: error.reason }, 'speech.failed');
       }
@@ -67,23 +84,29 @@ export class SpeechCheckService {
 
   /**
    * Looks for work every `intervalMs`; a turn still running is not started twice. Returns the
-   * function that stops it.
+   * function that stops it: no new turn starts, the check under way is ended and its try
+   * given back, and the promise resolves when the turn has written that down. Call it before
+   * the database pool closes.
    */
-  start(intervalMs: number = SPEECH_INTERVAL_MS): () => void {
+  start(intervalMs: number = SPEECH_INTERVAL_MS): () => Promise<void> {
     const tick = () => {
-      if (this.running) return;
-      this.running = true;
-      this.runOnce()
+      if (this.turn || this.stopping.signal.aborted) return;
+      this.turn = this.runOnce()
+        .then(() => undefined)
         .catch((error: unknown) =>
           this.deps.log.error({ err: error }, 'speech.turn_failed')
         )
         .finally(() => {
-          this.running = false;
+          this.turn = null;
         });
     };
     const timer = setInterval(tick, intervalMs);
     // The poll never keeps the process alive on its own.
     timer.unref();
-    return () => clearInterval(timer);
+    return async () => {
+      clearInterval(timer);
+      this.stopping.abort();
+      await this.turn;
+    };
   }
 }

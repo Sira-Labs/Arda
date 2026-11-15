@@ -62,7 +62,10 @@ sees them.
   30 seconds it takes one recording that was never checked, asks the service (two minutes at
   most) and keeps the hints. A claim is a lease in `recording_checks` (ten minutes), so two api
   instances never check the same take and a check lost with its instance is taken up again; a
-  recording the service cannot hear is tried three times and then left alone. Recordings made
+  recording the service cannot hear is tried three times and then left alone. A claim is named
+  by its try: what a taker writes back counts only while the check is still on that try, so one
+  whose lease ran out cannot overwrite its successor's hints. When the api stops, the check
+  under way is ended, its try given back uncounted, and the database closes after that. Recordings made
   before the service existed are checked too, oldest first.
 - **Where hints are kept.** `recording_hints` (migration `0017`): recording, āya, word, topic,
   verdict. They go with the recording, like its marks (ADR-0012). `good` hints are kept as
