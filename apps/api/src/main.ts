@@ -3,8 +3,9 @@
  * wires sign-in (ADR-0004) and serves HTTP on ARDA_PORT.
  * Exit code 1 = invalid configuration or a fatal error at start.
  *
- * Background work (speech check, recording alignment) gets its own worker role on the same
- * image once it exists (ADR-0003); nothing runs in the background yet.
+ * Background work (recording alignment) gets its own worker role on the same image once it
+ * exists (ADR-0003). Until then the speech check, when it is configured, runs here in small
+ * turns (ADR-0013 update 2026-11-15); nothing else runs in the background.
  */
 import { fileURLToPath } from 'node:url';
 import { serve } from '@hono/node-server';
@@ -34,6 +35,9 @@ import { PgRecordingRepository } from './recordings/repository.js';
 import { PgArdaLogRepository } from './ardaLog/repository.js';
 import { PgRuleRepository } from './rules/repository.js';
 import { TranslationService } from './translation/service.js';
+import { HttpSpeechChecker } from './speech/checker.js';
+import { PgSpeechRepository } from './speech/repository.js';
+import { SpeechCheckService } from './speech/service.js';
 
 const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta.url));
 
@@ -148,11 +152,28 @@ async function main(): Promise<void> {
     translation ? 'translate.enabled' : 'translate.disabled'
   );
 
+  // The speech check (ADR-0013): off without its service; its hints go to the teachers only.
+  const speech = config.speech
+    ? new SpeechCheckService({
+        checker: new HttpSpeechChecker(config.speech),
+        repo: new PgSpeechRepository(pool),
+        log,
+      })
+    : null;
+  const stopSpeech = speech?.start();
+  log.info(
+    config.speech
+      ? { host: new URL(config.speech.url).host }
+      : { reason: 'ARDA_SPEECH_URL and ARDA_SPEECH_TOKEN are not set' },
+    config.speech ? 'speech.enabled' : 'speech.disabled'
+  );
+
   const halaqat = new PgHalaqaRepository(pool);
   const app = createApp({
     version: config.version,
     expectedRevision: expectedRevision(migrations),
     health: { schemaRevision: () => currentRevision(pool) },
+    speech: Boolean(speech),
     onProbeError: (error) => log.warn({ err: error }, 'health.probe_failed'),
     auth: authRoutes,
     account: accountRoutes,
@@ -175,6 +196,7 @@ async function main(): Promise<void> {
   );
   const stop = (signal: NodeJS.Signals) => {
     log.info({ signal }, 'service.stopping');
+    stopSpeech?.();
     server.close(() => {
       pool.end().finally(() => process.exit(0));
     });

@@ -1,5 +1,5 @@
 /**
- * Recitations in Postgres (spec F7, T3; ADR-0012; migrations 0006, 0011, 0012). Who may call what is decided
+ * Recitations in Postgres (spec F7, T3; ADR-0012; migrations 0006, 0011, 0012, 0017). Who may call what is decided
  * by the routes' policies; the queries here additionally keep a student to their own
  * recordings and a teacher to the ḥalaqa in the path. The sound is kept in `recording_audio`
  * until the RustFS bucket exists (ADR-0012 update 2026-10-06), and so is the teacher's voice note.
@@ -138,11 +138,23 @@ export interface OwnRecording extends RecordingBase {
   halaqaName: string;
 }
 
+/**
+ * A word the speech check would have the teacher listen to again, and the rule it is about
+ * (ADR-0013). A hint, never a verdict; only the ḥalaqa's teachers see it.
+ */
+export interface CheckHint {
+  aya: number;
+  word: number;
+  topic: Topic;
+}
+
 /** A recording as a teacher of its ḥalaqa sees it. */
 export interface QueuedRecording extends RecordingBase {
   studentId: string;
   studentName: string | null;
   studentEmail: string | null;
+  /** The speech check's `check` hints in reading order; empty when it found none or has not run. */
+  hints: CheckHint[];
 }
 
 export interface Page<T> {
@@ -398,10 +410,17 @@ export class PgRecordingRepository implements RecordingRepository {
         student_id: string;
         student_name: string | null;
         student_email: string | null;
+        hints: CheckHint[];
       }
     >(
+      // The hints are read here only: the student's list (`own`) never selects them.
       `select ${COLUMNS}, r.student_id, nullif(btrim(s.name), '') as student_name,
-              s.email as student_email
+              s.email as student_email,
+              coalesce((select json_agg(json_build_object('aya', h.aya, 'word', h.word,
+                                                          'topic', h.topic)
+                                        order by h.aya, h.word, h.topic)
+                          from recording_hints h
+                         where h.recording_id = r.id and h.verdict = 'check'), '[]') as hints
          from recordings r
          join users s on s.id = r.student_id
          left join users t on t.id = r.reviewed_by
@@ -416,6 +435,7 @@ export class PgRecordingRepository implements RecordingRepository {
         studentId: row.student_id,
         studentName: row.student_name,
         studentEmail: row.student_email,
+        hints: row.hints,
       })),
       page.limit
     );

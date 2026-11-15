@@ -116,6 +116,56 @@ describe('loadConfig', () => {
     expect(config.warnings).toHaveLength(1);
   });
 
+  it('switches the speech check on only with its URL and a strong token (ADR-0013)', () => {
+    const TOKEN = 's'.repeat(40);
+    const on = loadConfig({
+      ARDA_DATABASE_URL: DB,
+      ARDA_SPEECH_URL: 'http://srv-captain--arda-speech:8000/',
+      ARDA_SPEECH_TOKEN: TOKEN,
+    });
+    expect(on.speech).toEqual({
+      url: 'http://srv-captain--arda-speech:8000',
+      token: TOKEN,
+    });
+    expect(on.warnings).toEqual([]);
+
+    expect(loadConfig({ ARDA_DATABASE_URL: DB }).speech).toBeUndefined();
+    // CapRover keeps empty variables.
+    const empty = loadConfig({
+      ARDA_DATABASE_URL: DB,
+      ARDA_SPEECH_URL: '',
+      ARDA_SPEECH_TOKEN: '',
+    });
+    expect(empty.speech).toBeUndefined();
+    expect(empty.warnings).toEqual([]);
+
+    const half = loadConfig({
+      ARDA_DATABASE_URL: DB,
+      ARDA_SPEECH_URL: 'http://srv-captain--arda-speech:8000',
+    });
+    expect(half.speech).toBeUndefined();
+    expect(half.warnings).toEqual([
+      'ARDA_SPEECH_URL and ARDA_SPEECH_TOKEN go together; the speech check is off',
+    ]);
+
+    const prod = {
+      ARDA_ENV: 'prod',
+      ARDA_DATABASE_URL: DB,
+      ARDA_AUTH_SECRET: SECRET,
+      ARDA_PUBLIC_URL: 'https://arda-stg.siralabs.org',
+      ARDA_SPEECH_URL: 'http://srv-captain--arda-speech:8000',
+    };
+    const weak = loadConfig({ ...prod, ARDA_SPEECH_TOKEN: 'short' });
+    expect(weak.speech).toBeUndefined();
+    expect(weak.warnings).toHaveLength(1);
+    // The warning names the setting, never its value.
+    expect(weak.warnings[0]).not.toContain('short');
+    expect(loadConfig({ ...prod, ARDA_SPEECH_TOKEN: TOKEN }).speech).toBeDefined();
+    expect(issues({ ARDA_DATABASE_URL: DB, ARDA_SPEECH_URL: 'not a url' })).toEqual([
+      'ARDA_SPEECH_URL: ARDA_SPEECH_URL must be a URL',
+    ]);
+  });
+
   it('never writes sign-in links to files in prod', () => {
     expect(
       issues({

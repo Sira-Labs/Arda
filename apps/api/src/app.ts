@@ -55,6 +55,8 @@ export interface AppDeps {
   version: string;
   expectedRevision: string | null;
   health: HealthProbe;
+  /** Whether the speech check is configured (ADR-0013); reported by the health check. */
+  speech?: boolean;
   onProbeError?: (error: unknown) => void;
   /** Sign-in (Better Auth) and the signed-in user; omitted when sign-in is not configured. */
   auth?: AuthRouteDeps;
@@ -105,6 +107,7 @@ export function createApp(deps: AppDeps): Hono {
           expectedRevision: deps.expectedRevision,
           auth: deps.auth ? 'enabled' : 'disabled',
           translation: deps.translations?.service.enabled ? 'enabled' : 'disabled',
+          speech: deps.speech ? 'enabled' : 'disabled',
         },
         { status: ok ? 200 : 503 }
       );

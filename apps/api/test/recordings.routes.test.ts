@@ -440,6 +440,8 @@ describe('the teacher listens and answers (T3)', () => {
     );
     expect(queue.recordings.map((r: Json) => r.id)).toEqual([second, first]);
     expect(queue.recordings[0]).toMatchObject({ studentName: 'Yusuf', review: null });
+    // No speech check has run: no hints.
+    expect(queue.recordings.map((r: Json) => r.hints)).toEqual([[], []]);
     const mine = await json(await call('member', 'GET', '/recordings'));
     expect(mine.recordings).toHaveLength(1);
     expect(mine.recordings[0]).toMatchObject({
@@ -721,5 +723,36 @@ describe('ranges and formats', () => {
     expect(mimeOf('AUDIO/OGG; codecs=opus')).toBe('audio/ogg');
     expect(mimeOf('text/html')).toBeNull();
     expect(mimeOf(undefined)).toBeNull();
+  });
+});
+
+describe("the speech check's hints (ADR-0013)", () => {
+  const HINTS = [
+    { aya: 1, word: 2, topic: 'makhraj' as const },
+    { aya: 4, word: 5, topic: 'qalqala' as const },
+  ];
+
+  it('reach the teachers of the ḥalaqa in their queue, and nobody else', async () => {
+    const { call, halaqaId, repo, sent } = await setup();
+    const id = await sent('member');
+    repo.hints.set(id, HINTS);
+
+    const queue = await json(
+      await call('owner', 'GET', `/halaqat/${halaqaId}/recordings`)
+    );
+    expect(queue.recordings[0].hints).toEqual(HINTS);
+
+    // The student who recited sees the recording, never the hints.
+    const mine = await json(await call('member', 'GET', '/recordings'));
+    expect(mine.recordings).toHaveLength(1);
+    expect(mine.recordings[0]).not.toHaveProperty('hints');
+    expect(JSON.stringify(mine)).not.toContain('makhraj');
+
+    // Nor does a classmate, a teacher of another ḥalaqa or a stranger reach the queue.
+    for (const actor of ['member', 'classmate', 'otherTeacher', 'outsider', 'pending']) {
+      const refused = await call(actor, 'GET', `/halaqat/${halaqaId}/recordings`);
+      expect([403, 404]).toContain(refused.status);
+      expect(await refused.text()).not.toContain('makhraj');
+    }
   });
 });
