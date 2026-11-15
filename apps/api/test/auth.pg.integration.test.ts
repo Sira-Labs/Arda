@@ -34,6 +34,7 @@ import { PgTranslationRepository, sourceHash } from '../src/translation/reposito
 import { PgHalaqaRepository } from '../src/halaqat/repository.js';
 import { PgArdaLogRepository } from '../src/ardaLog/repository.js';
 import { PgRuleRepository } from '../src/rules/repository.js';
+import { PgSpeechRepository } from '../src/speech/repository.js';
 import {
   PgAssignmentRepository,
   type NewAssignment,
@@ -2020,6 +2021,246 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       await pool.query('delete from users where id = $1', [AMINA]);
       expect(await log.ownSummary(AMINA)).toEqual([]);
       expect((await log.summary(halaqaId)).map((s) => s.studentId)).toEqual([YUSUF]);
+    });
+  });
+
+  describe('the speech check (S6.1, ADR-0013)', () => {
+    const TEACHER = '51000000-0000-4000-8000-000000000001';
+    const AMINA = '51000000-0000-4000-8000-000000000002';
+    const NOW = new Date('2026-11-15T12:00:00Z');
+    const SOUND = Buffer.from('fake opus bytes');
+    const CLAIM = { limit: 1, maxAttempts: 3, leaseMs: 600_000 };
+    let recordings: PgRecordingRepository;
+    let speech: PgSpeechRepository;
+    let halaqaId: string;
+    let takes = 0;
+    const send = async (): Promise<string> => {
+      const saved = await recordings.save(
+        {
+          clientId: `61000000-0000-4000-8000-${String(++takes).padStart(12, '0')}`,
+          halaqaId,
+          studentId: AMINA,
+          assignmentId: null,
+          range: { sura: 112, from: 1, to: 4 },
+          mime: 'audio/webm',
+          durationMs: 4200,
+          audio: SOUND,
+        },
+        100
+      );
+      if (saved.status !== 'created') throw new Error(saved.status);
+      // Recordings are taken oldest first; the test's takes are made in one instant.
+      await pool.query(
+        `update recordings set created_at = $2::timestamptz + make_interval(secs => $3)
+          where id = $1`,
+        [saved.id, NOW, takes]
+      );
+      return saved.id;
+    };
+    const check = async (id: string) =>
+      (
+        await pool.query<{
+          status: string;
+          attempts: number;
+          model: string | null;
+          error: string | null;
+        }>(
+          'select status, attempts, model, error from recording_checks where recording_id = $1',
+          [id]
+        )
+      ).rows[0];
+
+    beforeEach(async () => {
+      const halaqat = new PgHalaqaRepository(pool);
+      recordings = new PgRecordingRepository(pool);
+      speech = new PgSpeechRepository(pool);
+      await pool.query(
+        `insert into users (id, email, name, role) values
+           ($1, 'sheikh2@example.org', 'Sheikh Ahmad', 'teacher'),
+           ($2, 'amina2@example.org', 'Amina', 'student')`,
+        [TEACHER, AMINA]
+      );
+      halaqaId = await halaqat.create({
+        name: 'Juzʾ ʿAmma',
+        oneToOne: false,
+        teacherId: TEACHER,
+      });
+      const tokenHash = hashInviteToken(newInviteToken());
+      await halaqat.createInvite({
+        halaqaId,
+        tokenHash,
+        actorId: TEACHER,
+        expiresAt: new Date(Date.now() + 60_000),
+      });
+      await halaqat.join(tokenHash, AMINA, new Date());
+      await halaqat.approve(halaqaId, AMINA, TEACHER);
+    });
+
+    it('hands each recording out once, oldest first, with its sound', async () => {
+      const first = await send();
+      const second = await send();
+      const claimed = await speech.claim(CLAIM);
+      expect(claimed).toEqual([
+        {
+          id: first,
+          attempt: 1,
+          range: { sura: 112, from: 1, to: 4 },
+          mime: 'audio/webm',
+          audio: SOUND,
+        },
+      ]);
+      expect(await check(first)).toMatchObject({ status: 'pending', attempts: 1 });
+      // The first is out on its lease: the next taker gets the second, then nothing.
+      expect((await speech.claim(CLAIM)).map((r) => r.id)).toEqual([second]);
+      expect(await speech.claim(CLAIM)).toEqual([]);
+    });
+
+    it('two takers at once never get the same recording', async () => {
+      const ids = [await send(), await send(), await send()];
+      // Takers that find a recording just claimed by another come back empty and ask again.
+      const got: string[] = [];
+      for (let round = 0; round < 3; round++) {
+        const turns = await Promise.all([1, 2, 3, 4].map(() => speech.claim(CLAIM)));
+        got.push(...turns.flat().map((r) => r.id));
+      }
+      expect([...got].sort()).toEqual([...ids].sort());
+      const attempts = await pool.query<{ attempts: number }>(
+        'select attempts from recording_checks'
+      );
+      expect(attempts.rows.map((r) => r.attempts)).toEqual([1, 1, 1]);
+    });
+
+    it('keeps the hints, shows the teacher those to check and the student none', async () => {
+      const id = await send();
+      const [claim] = await speech.claim(CLAIM);
+      await speech.done(claim!, 'quran-muallim-1', [
+        { aya: 4, word: 5, topic: 'qalqala', verdict: 'check' },
+        { aya: 1, word: 2, topic: 'makhraj', verdict: 'good' },
+        { aya: 1, word: 2, topic: 'ghunna', verdict: 'check' },
+      ]);
+      expect(await check(id)).toMatchObject({
+        status: 'done',
+        attempts: 1,
+        model: 'quran-muallim-1',
+        error: null,
+      });
+      const queue = await recordings.queue(halaqaId, { limit: 50 });
+      expect(queue.recordings[0]!.hints).toEqual([
+        { aya: 1, word: 2, topic: 'ghunna' },
+        { aya: 4, word: 5, topic: 'qalqala' },
+      ]);
+      const own = await recordings.own(AMINA, { limit: 50 });
+      expect(own.recordings[0]).not.toHaveProperty('hints');
+      // Checked recordings are not handed out again.
+      expect(await speech.claim(CLAIM)).toEqual([]);
+      // A check that is done takes no second answer.
+      expect(await speech.done(claim!, 'quran-muallim-2', [])).toBe(false);
+      expect(
+        (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
+      ).toHaveLength(2);
+    });
+
+    it('tries a failed check again, three times in all', async () => {
+      const id = await send();
+      for (const attempt of [1, 2, 3]) {
+        const [claim] = await speech.claim(CLAIM);
+        expect(claim).toMatchObject({ id, attempt });
+        expect(await speech.failed(claim!, 'http_503')).toBe(true);
+        expect(await check(id)).toMatchObject({
+          status: 'failed',
+          attempts: attempt,
+          error: 'http_503',
+        });
+      }
+      expect(await speech.claim(CLAIM)).toEqual([]);
+    });
+
+    it('takes up a check whose lease ran out', async () => {
+      const id = await send();
+      const [first] = await speech.claim(CLAIM);
+      expect(await speech.claim({ ...CLAIM, leaseMs: 600_000 })).toEqual([]);
+      await pool.query(
+        `update recording_checks set updated_at = now() - interval '11 minutes'
+          where recording_id = $1`,
+        [id]
+      );
+      const [second] = await speech.claim(CLAIM);
+      expect(second).toMatchObject({ id, attempt: 2 });
+      expect(await check(id)).toMatchObject({ status: 'pending', attempts: 2 });
+      // The first taker wakes up late: nothing it writes counts any more.
+      const stale = [
+        { aya: 1, word: 1, topic: 'madd' as const, verdict: 'check' as const },
+      ];
+      expect(await speech.done(first!, 'old', stale)).toBe(false);
+      expect(await speech.failed(first!, 'timeout')).toBe(false);
+      expect(await speech.release(first!)).toBe(false);
+      expect(await check(id)).toMatchObject({ status: 'pending', attempts: 2 });
+      expect(await speech.done(second!, 'new', [])).toBe(true);
+      expect(await check(id)).toMatchObject({ status: 'done', model: 'new' });
+      expect(
+        (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
+      ).toEqual([]);
+    });
+
+    it('gives a try back when the api stops mid-check', async () => {
+      const id = await send();
+      const [first] = await speech.claim(CLAIM);
+      expect(await speech.release(first!)).toBe(true);
+      expect(await check(id)).toBeUndefined();
+      // Taken again as a first try; a later try given back returns to the failure before it.
+      const [again] = await speech.claim(CLAIM);
+      expect(again).toMatchObject({ id, attempt: 1 });
+      await speech.failed(again!, 'http_503');
+      const [third] = await speech.claim(CLAIM);
+      expect(third).toMatchObject({ attempt: 2 });
+      expect(await speech.release(third!)).toBe(true);
+      expect(await check(id)).toMatchObject({
+        status: 'failed',
+        attempts: 1,
+        error: 'stopped',
+      });
+      expect((await speech.claim(CLAIM))[0]).toMatchObject({ id, attempt: 2 });
+    });
+
+    it('keeps nothing of an answer the schema refuses', async () => {
+      const id = await send();
+      const [claim] = await speech.claim(CLAIM);
+      await expect(
+        speech.done(claim!, 'm', [
+          { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+          { aya: 1, word: 2, topic: 'ishmam' as never, verdict: 'check' },
+        ])
+      ).rejects.toThrow(/recording_hints_topic_check/);
+      // The check is still this taker's to fail.
+      expect(
+        (await recordings.queue(halaqaId, { limit: 50 })).recordings[0]!.hints
+      ).toEqual([]);
+      expect(await check(id)).toMatchObject({ status: 'pending', attempts: 1 });
+      expect(await speech.failed(claim!, 'answer_store')).toBe(true);
+    });
+
+    it('lets the hints go with the recording', async () => {
+      const id = await send();
+      const [claim] = await speech.claim(CLAIM);
+      await speech.done(claim!, 'm', [
+        { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+      ]);
+      expect(await recordings.remove(AMINA, id)).toBe(true);
+      const left = await pool.query(
+        `select (select count(*)::int from recording_hints) as hints,
+                (select count(*)::int from recording_checks) as checks`
+      );
+      expect(left.rows[0]).toEqual({ hints: 0, checks: 0 });
+      // An answer arriving for a recording that is gone keeps nothing.
+      expect(
+        await speech.done(claim!, 'm', [
+          { aya: 1, word: 1, topic: 'madd', verdict: 'check' },
+        ])
+      ).toBe(false);
+      expect(await speech.failed(claim!, 'late')).toBe(false);
+      expect(
+        (await pool.query('select count(*)::int as n from recording_hints')).rows[0]
+      ).toEqual({ n: 0 });
     });
   });
 

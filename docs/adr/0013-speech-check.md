@@ -34,3 +34,57 @@ Browser speech recognition (as Suffa's first step): not precise enough for ṣif
 
 Needs a GPU host or a CPU budget measured first (spec 02 §7, open item). The app is fully
 useful without it: the teacher hears every recitation.
+
+## Update 2026-11-15: the api's side of the check (S6.1, first part)
+
+The service itself waits for its host (owner). What does not need the host is built, so that a
+running `arda-speech` only has to be pointed at: the contract, where hints are kept and who
+sees them.
+
+- **Contract.** The api calls the service, never the other way round, so the service needs no
+  way into the api or the database and no internet access:
+
+  ```
+  POST {ARDA_SPEECH_URL}/v1/check?sura=&from=&to=&riwaya=hafs
+  Authorization: Bearer {ARDA_SPEECH_TOKEN}        Content-Type: the take's format
+  body: the sound
+  → 200 { "model": "…", "words": [{ "aya": 1, "word": 2, "topic": "ghunna", "verdict": "check" }] }
+  ```
+
+  It gets the sound and what is recited, nothing about the student or the ḥalaqa. Words are
+  counted as the content packs count them (like the teacher's marks); `topic` is one of the
+  marks' topics (the nine rule cards, `madd`, `makhraj`), so a hint and a mark on the same word
+  can be compared rule by rule; `verdict` is `good` or `check`, never "wrong". The api treats
+  the answer as input: a word outside the recited āyāt, an unknown topic or a repeated word and
+  topic fails the whole answer, and nothing of it is kept. Redirects are not followed.
+
+- **Who runs it.** Until the worker role exists (ADR-0003) the api does, in small turns: every
+  30 seconds it takes one recording that was never checked, asks the service (two minutes at
+  most) and keeps the hints. A claim is a lease in `recording_checks` (ten minutes), so two api
+  instances never check the same take and a check lost with its instance is taken up again; a
+  recording the service cannot hear is tried three times and then left alone. A claim is named
+  by its try: what a taker writes back counts only while the check is still on that try, so one
+  whose lease ran out cannot overwrite its successor's hints. When the api stops, the check
+  under way is ended, its try given back uncounted, and the database closes after that. Recordings made
+  before the service existed are checked too, oldest first.
+- **Where hints are kept.** `recording_hints` (migration `0017`): recording, āya, word, topic,
+  verdict. They go with the recording, like its marks (ADR-0012). `good` hints are kept as
+  well: the agreement report (S6.2) needs both sides.
+- **Who sees them.** Only the teachers of the recording's ḥalaqa, in their listening queue
+  (`halaqa:review`): the words to check are ringed and listed with their rules under the text,
+  named as hints of an automatic check. A hint marks nothing: the teacher taps a word himself,
+  and only his marks are sent, stored in the ʿarḍ log and shown to the student. The student's
+  own list never reads the table; a route test and the Postgres suite hold that.
+- **Off by default.** Without `ARDA_SPEECH_URL` and `ARDA_SPEECH_TOKEN` (in prod at least 32
+  random characters) nothing is asked and `/healthz` reports `speech: disabled`; half of the
+  two, or a weak token, switches it off with a loud log line instead of stopping the api.
+- **Not yet:** the service (model, alignment, the engine's expected ṣifāt), the opt-in for
+  evaluation (ADR-0012) and the agreement report per rule (S6.2), the gate that lets a rule's
+  check reach students, the admin's view of failed checks. The account export does not list
+  hints: they are about the student, but shown before a rule has passed its gate they would be
+  read as verdicts. Whether the export must carry them is a legal question for the owner.
+
+Alternatives: the service pulling work from the api with its token (it would need a way into
+the api and a second route × role surface for a machine); hints inside the queue's JSON only,
+without a table (nothing to measure agreement on); checking at upload (a slow model would hold
+the student's upload open, and offline takes arrive in bursts).

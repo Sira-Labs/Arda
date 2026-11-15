@@ -229,11 +229,23 @@ export interface OwnRecitation extends RecitationBase {
   halaqaName: string;
 }
 
+/**
+ * A word the speech check would have the teacher listen to again, and the rule it is about
+ * (ADR-0013). A hint, never a verdict; the api gives it to the ḥalaqa's teachers only.
+ */
+export interface CheckHint {
+  aya: number;
+  word: number;
+  topic: RuleTopic;
+}
+
 /** A recitation in a teacher's queue. */
 export interface QueuedRecitation extends RecitationBase {
   studentId: string;
   studentName: string | null;
   studentEmail: string | null;
+  /** The speech check's hints in reading order; missing or empty when it has none. */
+  hints?: CheckHint[];
 }
 
 export interface RecitationPage<T> {

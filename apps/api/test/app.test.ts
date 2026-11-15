@@ -24,6 +24,10 @@ describe('health', () => {
       version: 'sha-test',
       schemaRevision: '0001_users_and_auth',
       auth: 'disabled',
+      speech: 'disabled',
+    });
+    expect(await (await app({ speech: true }).request('/healthz')).json()).toMatchObject({
+      speech: 'enabled',
     });
   });
 

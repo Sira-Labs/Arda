@@ -25,7 +25,7 @@ import type {
   Verdict,
   VoiceNoteOutcome,
 } from '../src/recordings/repository.js';
-import { marksFit, type Mark } from '../src/recordings/repository.js';
+import { marksFit, type CheckHint, type Mark } from '../src/recordings/repository.js';
 
 interface Row extends Omit<NewRecording, 'audio'> {
   id: string;
@@ -45,6 +45,8 @@ interface Row extends Omit<NewRecording, 'audio'> {
 
 export class MemoryRecordingRepository implements RecordingRepository {
   rows: Row[] = [];
+  /** The speech check's `check` hints per recording, as migration 0017 keeps them. */
+  hints = new Map<string, CheckHint[]>();
   private seq = 0;
 
   constructor(
@@ -158,6 +160,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
         studentId: r.studentId,
         studentName: this.names[r.studentId] ?? null,
         studentEmail: null,
+        hints: this.hints.get(r.id) ?? [],
       })),
       rows.map((r) => r.id),
       page

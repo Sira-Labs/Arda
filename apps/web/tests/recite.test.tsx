@@ -556,6 +556,113 @@ describe('listening and answering (S4.2)', () => {
     expect(screen.getByRole('button', { name: 'Ändern' })).toBeInTheDocument();
   });
 
+  it('rings the words the speech check hints at, names their rules, and marks none for him', async () => {
+    const { calls } = renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [
+            queued({
+              hints: [
+                { aya: 1, word: 4, topic: 'qalqala' },
+                { aya: 4, word: 3, topic: 'idgham' },
+                { aya: 4, word: 3, topic: 'madd' },
+              ],
+            }),
+          ],
+          more: false,
+        }),
+        [`PUT /api/v1/halaqat/${HALAQA}/recordings/${REC}/review`]: () =>
+          new Response(null, { status: 204 }),
+      },
+      TEACHER
+    );
+    const user = userEvent.setup();
+    const row = (await screen.findByText('Amina')).closest('li')!;
+    const words = await within(row).findByRole('group', {
+      name: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
+    });
+    const ayat = [...words.children] as HTMLElement[];
+    const word = (aya: number, n: number) =>
+      within(ayat[aya - 1]!).getAllByRole('button')[n - 1]!;
+    // Ringed and named for screen readers; a hint presses nothing.
+    expect(word(1, 4)).toHaveClass('recited-hint');
+    expect(word(1, 4)).toHaveTextContent('(Hinweis der automatischen Prüfung)');
+    expect(word(1, 4)).toHaveAttribute('aria-pressed', 'false');
+    expect(word(1, 1)).not.toHaveClass('recited-hint');
+    expect(words.querySelectorAll('.recited-hint')).toHaveLength(2);
+    // Listed as what they are, one line per word with its rules.
+    expect(
+      within(row).getByText(
+        'Nur für dich, nicht für den Schüler. Hör an diesen Stellen genau hin – du entscheidest.'
+      )
+    ).toBeInTheDocument();
+    const list = within(row).getByRole('list', {
+      name: 'Hinweise der automatischen Prüfung',
+    });
+    const lines = within(list).getAllByRole('listitem');
+    expect(lines).toHaveLength(2);
+    expect(lines[0]).toHaveTextContent('Qalqala');
+    expect(lines[1]).toHaveTextContent('Idghām · Madd');
+    expect(within(row).queryByRole('list', { name: 'Markierte Wörter' })).toBeNull();
+    // He answers "good" without a mark: the hints are not sent as his marks.
+    await user.click(within(row).getByRole('button', { name: 'Gut' }));
+    await user.click(within(row).getByRole('button', { name: 'Antwort senden' }));
+    await waitFor(() =>
+      expect(calls.find((c) => c.method === 'PUT')?.body).toEqual({
+        verdict: 'good',
+        remark: null,
+        note: null,
+        marks: [],
+      })
+    );
+  });
+
+  it('lists the hints by their place when the app does not carry the sūra', async () => {
+    renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [
+            queued({
+              // Āl ʿImrān is in no pack the app ships.
+              range: { sura: 3, from: 1, to: 2 },
+              hints: [{ aya: 2, word: 3, topic: 'madd' }],
+            }),
+          ],
+          more: false,
+        }),
+      },
+      TEACHER
+    );
+    const row = (await screen.findByText('Amina')).closest('li')!;
+    const list = await within(row).findByRole('list', {
+      name: 'Hinweise der automatischen Prüfung',
+    });
+    expect(within(list).getByRole('listitem')).toHaveTextContent('2:3');
+    expect(within(list).getByRole('listitem')).toHaveTextContent('Madd');
+    expect(row.querySelector('.recited-words')).toBeNull();
+  });
+
+  it('shows no hints where the speech check has none', async () => {
+    renderWith(
+      <RecordingQueue halaqaId={HALAQA} />,
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/recordings`]: Response.json({
+          recordings: [queued({ hints: [] })],
+          more: false,
+        }),
+      },
+      TEACHER
+    );
+    const row = (await screen.findByText('Amina')).closest('li')!;
+    await within(row).findByRole('group', {
+      name: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
+    });
+    expect(row.querySelector('.recited-hint')).toBeNull();
+    expect(within(row).queryByText(/automatischen Prüfung/)).toBeNull();
+  });
+
   it('answers aloud too: records a voice note, listens back and sends it after the answer', async () => {
     const { calls, recorder } = renderWith(
       <RecordingQueue halaqaId={HALAQA} />,

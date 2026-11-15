@@ -69,6 +69,12 @@ const RawEnvSchema = z.object({
   ARDA_ANTHROPIC_API_KEY: z.string().trim().optional(),
   ARDA_TRANSLATE_MODEL: z.string().trim().default('claude-opus-5-5'),
   ARDA_TRANSLATE_DAILY_LIMIT: z.coerce.number().int().min(0).max(10_000).default(200),
+  /**
+   * The speech check (ADR-0013): where `arda-speech` listens inside our network and the token
+   * the api shows it. Off unless both are set.
+   */
+  ARDA_SPEECH_URL: optionalUrl('ARDA_SPEECH_URL'),
+  ARDA_SPEECH_TOKEN: z.string().trim().optional(),
   ARDA_LOG_LEVEL: z
     .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace'])
     .default('info'),
@@ -95,6 +101,8 @@ export interface Config {
   mailDir: string | undefined;
   /** Translation of written remarks; undefined turns it off (ADR-0020). */
   translation: { apiKey: string; model: string; dailyLimit: number } | undefined;
+  /** The speech check's service; undefined turns it off (ADR-0013). */
+  speech: { url: string; token: string } | undefined;
   /**
    * Optional features switched off because their settings are incomplete; logged at start
    * (`config.feature_off`). Only unsafe settings stop the service.
@@ -160,6 +168,24 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
       'ARDA_SMTP_USER and ARDA_SMTP_PASSWORD go together; sign-in mails are off'
     );
   }
+  // The speech check is optional: half of its settings, or a token too weak to keep other
+  // services on the host from asking in the api's name, switch it off (logged loudly).
+  const speechToken = raw.ARDA_SPEECH_TOKEN || undefined;
+  let speechComplete = Boolean(raw.ARDA_SPEECH_URL && speechToken);
+  if (Boolean(raw.ARDA_SPEECH_URL) !== Boolean(speechToken)) {
+    warnings.push(
+      'ARDA_SPEECH_URL and ARDA_SPEECH_TOKEN go together; the speech check is off'
+    );
+  } else if (
+    speechToken &&
+    raw.ARDA_ENV === 'prod' &&
+    (speechToken.length < MIN_SECRET_LENGTH || isPlaceholder(speechToken))
+  ) {
+    speechComplete = false;
+    warnings.push(
+      `ARDA_SPEECH_TOKEN must be at least ${MIN_SECRET_LENGTH} random characters; the speech check is off`
+    );
+  }
   if (raw.ARDA_MAIL_DIR && raw.ARDA_ENV === 'prod') {
     issues.push('ARDA_MAIL_DIR must not be set in prod');
   }
@@ -198,6 +224,9 @@ export function loadConfig(env: NodeJS.ProcessEnv): Config {
     appOrigins,
     mailDir: raw.ARDA_MAIL_DIR || undefined,
     warnings,
+    speech: speechComplete
+      ? { url: raw.ARDA_SPEECH_URL!.replace(/\/$/, ''), token: speechToken! }
+      : undefined,
     translation: raw.ARDA_ANTHROPIC_API_KEY
       ? {
           apiKey: raw.ARDA_ANTHROPIC_API_KEY,

@@ -1169,6 +1169,10 @@ export const de = {
     noTopic: '– keine Regel –',
     marksHint: 'Tippe beim Hören die Wörter an, die noch nicht stimmen.',
     marked: 'markiert',
+    hinted: 'Hinweis der automatischen Prüfung',
+    hintsTitle: 'Hinweise der automatischen Prüfung',
+    hintsNote:
+      'Nur für dich, nicht für den Schüler. Hör an diesen Stellen genau hin – du entscheidest.',
     marksCount: (count: number) =>
       count === 1 ? '1 Wort markiert' : `${count} Wörter markiert`,
     record: 'Aufnehmen',

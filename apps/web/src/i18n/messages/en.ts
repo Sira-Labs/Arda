@@ -1090,6 +1090,10 @@ export const en: Messages = {
     noTopic: '– no rule –',
     marksHint: 'While you listen, tap the words that are not right yet.',
     marked: 'marked',
+    hinted: 'hint of the automatic check',
+    hintsTitle: 'Hints of the automatic check',
+    hintsNote:
+      'For you only, not for the student. Listen closely at these places – you decide.',
     marksCount: (count) => (count === 1 ? '1 word marked' : `${count} words marked`),
     record: 'Record',
     title: (sura, from, to) =>
