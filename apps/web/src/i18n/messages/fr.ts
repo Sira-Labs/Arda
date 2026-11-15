@@ -1118,6 +1118,10 @@ export const fr: Messages = {
     noTopic: '– aucune règle –',
     marksHint: 'Pendant l’écoute, touche les mots qui ne sont pas encore justes.',
     marked: 'marqué',
+    hinted: 'indice de la vérification automatique',
+    hintsTitle: 'Indices de la vérification automatique',
+    hintsNote:
+      'Pour toi seulement, pas pour l’élève. Écoute bien à ces endroits – c’est toi qui décides.',
     marksCount: (count) => (count === 1 ? '1 mot marqué' : `${count} mots marqués`),
     record: 'Enregistrer',
     title: (sura, from, to) =>

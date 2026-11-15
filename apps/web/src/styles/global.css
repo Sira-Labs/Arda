@@ -1141,6 +1141,15 @@ button.recited-word:hover {
   text-underline-offset: 0.35em;
   text-decoration-skip-ink: none;
 }
+/* A hint of the speech check (ADR-0013): a dotted ring, his own mark stays the wavy line. */
+.recited-hint {
+  outline: 2px dotted var(--info);
+  outline-offset: -1px;
+}
+.check-hints {
+  padding: 8px 12px;
+  border-inline-start: 3px dotted var(--info);
+}
 .recited-end {
   color: var(--text-muted);
   margin-inline: 0.15em;

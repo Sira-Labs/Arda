@@ -225,6 +225,7 @@ function QueueItem({
           <RecitedWords
             range={recording.range}
             marks={marks}
+            hints={recording.hints}
             onToggle={(mark) => setMarks((current) => toggleMark(current, mark))}
             onTopic={(mark, topic) =>
               setMarks((current) => setMarkTopic(current, mark, topic))
