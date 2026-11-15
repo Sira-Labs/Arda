@@ -125,6 +125,8 @@ spec F7 and T3, ADR-0012):
 | `recording_audio`       | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                               |
 | `recording_marks`       | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words), each with the rule it was about if he said (migration `0015`, ADR-0026 update); written and replaced with the answer |
 | `recording_voice_notes` | the teacher's spoken answer, one per recording: who recorded it, format, size, length (≤ 2 min, 2.5 MB) and the sound; dropped when another teacher answers anew                                                              |
+| `recording_checks`      | the speech check's work list (migration `0017`, ADR-0013 update 2026-11-15): per recording `pending` (a lease), `done` with the model, or `failed` with the reason and the attempts                                           |
+| `recording_hints`       | what the speech check said, per word and topic: `good` or `check`; read only for the teachers' queue                                                                                                                          |
 
 All of them cascade with the student's membership, so leaving, being removed or deleting the
 account deletes the student's recordings; a voice note goes with its teacher's account too. The
@@ -264,22 +266,23 @@ added to the route-by-role matrix test.
 
 ## 6. Configuration (`ARDA_*`)
 
-| Variable                                                                                     | Required              | Meaning                                                                              |
-| -------------------------------------------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------ |
-| `ARDA_ENV`                                                                                   | — (`dev`)             | `dev`, `test` or `prod`; prod enforces secrets                                       |
-| `ARDA_PORT`                                                                                  | — (8000)              | HTTP port                                                                            |
-| `ARDA_DATABASE_URL`                                                                          | yes                   | `postgres://…`; in prod with a generated password ≥ 16 chars                         |
-| `ARDA_DB_POOL_MAX`                                                                           | — (10)                | connection pool size                                                                 |
-| `ARDA_AUTH_SECRET`                                                                           | prod                  | ≥ 32 random chars; signs sessions, seals TOTP secrets                                |
-| `ARDA_PUBLIC_URL`                                                                            | prod                  | e.g. `https://arda-stg.siralabs.org`; links in mails, passkey relying party          |
-| `ARDA_TRUSTED_ORIGINS`                                                                       | —                     | more web origins (while moving domains)                                              |
-| `ARDA_APP_ORIGINS`                                                                           | —                     | native app origins (bearer tokens, CORS without credentials)                         |
-| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`, `ARDA_MAIL_FROM` | for sign-in           | Google Workspace SMTP relay                                                          |
-| `ARDA_MAIL_DIR`                                                                              | —                     | browser tests: links to files (never in prod)                                        |
-| `ARDA_ANTHROPIC_API_KEY`                                                                     | —                     | Claude key for translating written remarks; translation is off without it (ADR-0020) |
-| `ARDA_TRANSLATE_MODEL`                                                                       | — (`claude-opus-5-5`) | model for translations                                                               |
-| `ARDA_TRANSLATE_DAILY_LIMIT`                                                                 | — (200)               | new translations per teacher and day; cache hits do not count                        |
-| `ARDA_LOG_LEVEL`, `ARDA_VERSION`                                                             | —                     | logging; release tag reported by health                                              |
+| Variable                                                                                     | Required              | Meaning                                                                                                          |
+| -------------------------------------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `ARDA_ENV`                                                                                   | — (`dev`)             | `dev`, `test` or `prod`; prod enforces secrets                                                                   |
+| `ARDA_PORT`                                                                                  | — (8000)              | HTTP port                                                                                                        |
+| `ARDA_DATABASE_URL`                                                                          | yes                   | `postgres://…`; in prod with a generated password ≥ 16 chars                                                     |
+| `ARDA_DB_POOL_MAX`                                                                           | — (10)                | connection pool size                                                                                             |
+| `ARDA_AUTH_SECRET`                                                                           | prod                  | ≥ 32 random chars; signs sessions, seals TOTP secrets                                                            |
+| `ARDA_PUBLIC_URL`                                                                            | prod                  | e.g. `https://arda-stg.siralabs.org`; links in mails, passkey relying party                                      |
+| `ARDA_TRUSTED_ORIGINS`                                                                       | —                     | more web origins (while moving domains)                                                                          |
+| `ARDA_APP_ORIGINS`                                                                           | —                     | native app origins (bearer tokens, CORS without credentials)                                                     |
+| `ARDA_SMTP_HOST`, `ARDA_SMTP_PORT`, `ARDA_SMTP_USER`, `ARDA_SMTP_PASSWORD`, `ARDA_MAIL_FROM` | for sign-in           | Google Workspace SMTP relay                                                                                      |
+| `ARDA_MAIL_DIR`                                                                              | —                     | browser tests: links to files (never in prod)                                                                    |
+| `ARDA_ANTHROPIC_API_KEY`                                                                     | —                     | Claude key for translating written remarks; translation is off without it (ADR-0020)                             |
+| `ARDA_TRANSLATE_MODEL`                                                                       | — (`claude-opus-5-5`) | model for translations                                                                                           |
+| `ARDA_TRANSLATE_DAILY_LIMIT`                                                                 | — (200)               | new translations per teacher and day; cache hits do not count                                                    |
+| `ARDA_SPEECH_URL`, `ARDA_SPEECH_TOKEN`                                                       | —                     | the speech check's service inside our network and the token the api shows it (ADR-0013); off unless both are set |
+| `ARDA_LOG_LEVEL`, `ARDA_VERSION`                                                             | —                     | logging; release tag reported by health                                                                          |
 
 Web (`arda-web` container): `ARDA_API_UPSTREAM`, `ARDA_MEDIA_UPSTREAM`, `ARDA_VERSION`.
 Backup: `ARDA_BACKUP_*` (runbook).

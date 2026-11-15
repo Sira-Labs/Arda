@@ -268,6 +268,9 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   (owner, 2026-10-10); he can also answer aloud with a voice note of up to two minutes, heard
   before sending, recorded again or removed, which the student plays under the answer
   (2026-10-10). Next: the pre-check.)_
+  _(Built (2026-11-15, ADR-0013 update): the pre-check's place in the queue. When `arda-speech`
+  runs, the words it would have him hear again are ringed and listed with their rules as hints
+  of an automatic check, for him only; they mark nothing. The service itself waits for its host.)_
 - **T4 The ʿarḍ log.** Which sūras each student recited, when, and his verdict: the notebook of
   the chain, kept for him. _(Built, ADR-0025: the "ʿArḍ-Heft" on the ḥalaqa page, per student
   and sūra how often, when last and with what verdict; each student's entries one by one;
