@@ -1,3 +1,4 @@
+import { EvaluationOptIn } from '@/modules/speech/EvaluationOptIn';
 import { useEffect, useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { useI18n } from '@/i18n/I18nProvider';
@@ -56,6 +57,7 @@ export function Account({
         <LanguagePicker />
         <p className="muted">{m.account.languageHint}</p>
       </section>
+      <EvaluationOptIn />
       {me.role === 'admin' && (
         // Admins only: the admin area needs the second factor (ADR-0005).
         <>

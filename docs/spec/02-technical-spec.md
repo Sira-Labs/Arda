@@ -119,14 +119,15 @@ practise a rule). Word keys replace the sūra and āya columns when the content 
 Built (migrations `0006_recordings`, `0011_recording_marks` and `0012_recording_voice_notes`,
 spec F7 and T3, ADR-0012):
 
-| Table                   | Purpose                                                                                                                                                                                                                       |
-| ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `recordings`            | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when   |
-| `recording_audio`       | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                               |
-| `recording_marks`       | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words), each with the rule it was about if he said (migration `0015`, ADR-0026 update); written and replaced with the answer |
-| `recording_voice_notes` | the teacher's spoken answer, one per recording: who recorded it, format, size, length (≤ 2 min, 2.5 MB) and the sound; dropped when another teacher answers anew                                                              |
-| `recording_checks`      | the speech check's work list (migration `0017`, ADR-0013 update 2026-11-15): per recording `pending` (a lease), `done` with the model, or `failed` with the reason and the attempts                                           |
-| `recording_hints`       | what the speech check said, per word and topic: `good` or `check`; read only for the teachers' queue                                                                                                                          |
+| Table                      | Purpose                                                                                                                                                                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `recordings`               | one take: the client's id (a retried upload lands once), ḥalaqa, student, the assignment it answers, sūra and āyāt, format, size, length, the teacher's verdict (`good`/`again`), quick remark, note, who answered and when   |
+| `recording_audio`          | the sound, apart from the list so a list never reads it; until the bucket `arda-recordings` exists (ADR-0012 update 2026-10-06)                                                                                               |
+| `recording_marks`          | the words the teacher marked in the answer (āya and word of the recited sūra, as the packs count words), each with the rule it was about if he said (migration `0015`, ADR-0026 update); written and replaced with the answer |
+| `recording_voice_notes`    | the teacher's spoken answer, one per recording: who recorded it, format, size, length (≤ 2 min, 2.5 MB) and the sound; dropped when another teacher answers anew                                                              |
+| `recording_checks`         | the speech check's work list (migration `0017`, ADR-0013 update 2026-11-15): per recording `pending` (a lease), `done` with the model, or `failed` with the reason and the attempts                                           |
+| `recording_hints`          | what the speech check said, per word and topic: `good` or `check`; read only for the teachers' queue                                                                                                                          |
+| `speech_evaluation_optins` | a student's revocable opt-in to let their recitations count in measuring the speech check (migration `0018`, ADR-0013 update 2026-11-16); a row is the opt-in                                                                 |
 
 All of them cascade with the student's membership, so leaving, being removed or deleting the
 account deletes the student's recordings; a voice note goes with its teacher's account too. The
@@ -251,9 +252,12 @@ Built for T4 (ADR-0025, every route against every kind of caller in `ardaLog.rou
 
 Built for T5 (ADR-0026, every kind of caller in `rules.routes.test.ts`):
 
-| Method and path          | Action         | Purpose                                                                                                                                                                                                            |
-| ------------------------ | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `GET /halaqat/:id/rules` | `halaqa:rules` | T5 (ADR-0026): per active student and topic the practice cards still in box 1–2, their lapses, the teachers' `again` remarks and the words they marked for it in the last 90 days; only topics with something open |
+| Method and path                        | Action          | Purpose                                                                                                                                                                                                            |
+| -------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /halaqat/:id/rules`               | `halaqa:rules`  | T5 (ADR-0026): per active student and topic the practice cards still in box 1–2, their lapses, the teachers' `again` remarks and the words they marked for it in the last 90 days; only topics with something open |
+| `GET /speech/evaluation`               | `profile:read`  | S6.2 (ADR-0013 update 2026-11-16): `{ available, optedIn, since }`, my opt-in for measuring the speech check                                                                                                       |
+| `PUT /speech/evaluation` `{ optedIn }` | `profile:write` | give it or take it back; audited; giving it answers 409 where no speech check is configured                                                                                                                        |
+| `GET /halaqat/:id/speech/agreement`    | `halaqa:review` | per model and topic the words the check and the teacher agree on, false alarms, misses, what was not compared, the share and whether it reaches the gate; counts only                                              |
 
 Built for S5.2 (ADR-0022, every kind of caller in `progress.routes.test.ts`):
 

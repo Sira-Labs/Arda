@@ -9,6 +9,7 @@ import { ArdaLog } from '@/modules/arda/ArdaLog';
 import { MyArda } from '@/modules/arda/MyArda';
 import { RecordingQueue } from '@/modules/recite/RecordingQueue';
 import { RuleByRule } from '@/modules/rules/RuleByRule';
+import { SpeechAgreement } from '@/modules/speech/SpeechAgreement';
 import { InviteBox } from './InviteBox';
 
 /**
@@ -100,6 +101,7 @@ export function Halaqa() {
             )}
           />
           <RuleByRule halaqaId={halaqa.id} />
+          <SpeechAgreement halaqaId={halaqa.id} />
           <HalaqaAssignments
             halaqaId={halaqa.id}
             students={view.members.filter(

@@ -22,6 +22,7 @@ import {
 import { createHalaqaRoutes, type HalaqaRouteDeps } from './halaqat/routes.js';
 import { createProgressRoutes, type ProgressRouteDeps } from './progress/routes.js';
 import { createRecordingRoutes, type RecordingRouteDeps } from './recordings/routes.js';
+import { createSpeechRoutes, type SpeechRouteDeps } from './speech/routes.js';
 import { createArdaLogRoutes, type ArdaLogRouteDeps } from './ardaLog/routes.js';
 import { createRuleRoutes, type RuleRouteDeps } from './rules/routes.js';
 import { authorize, type AuthorizeLog } from './authz/middleware.js';
@@ -78,6 +79,8 @@ export interface AppDeps {
   rules?: RuleRouteDeps;
   /** The review deck and best times on the account (ADR-0022). */
   progress?: ProgressRouteDeps;
+  /** The opt-in for measuring the speech check and the agreement per rule (S6.2, ADR-0013). */
+  speechEvaluation?: SpeechRouteDeps;
   /**
    * Origins of the web app (ARDA_PUBLIC_URL, ARDA_TRUSTED_ORIGINS). When set, state-changing
    * API requests that a browser marks as coming from another site are refused (403).
@@ -177,6 +180,9 @@ export function createApp(deps: AppDeps): Hono {
   if (deps.ardaLog) app.route('/api/v1', createArdaLogRoutes(deps.ardaLog));
   if (deps.rules) app.route('/api/v1', createRuleRoutes(deps.rules));
   if (deps.progress) app.route('/api/v1', createProgressRoutes(deps.progress));
+  if (deps.speechEvaluation) {
+    app.route('/api/v1', createSpeechRoutes(deps.speechEvaluation));
+  }
 
   app.notFound((c) => c.json({ error: 'not_found' }, 404));
   app.onError((error, c) => {

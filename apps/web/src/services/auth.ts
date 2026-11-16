@@ -317,6 +317,40 @@ export interface NewArdaEntry {
 /** What a struggle is about: a rule card of the path, madd, or the letters' articulation. */
 export type RuleTopic = CardId | 'madd' | 'makhraj';
 
+/** The opt-in for measuring the speech check (S6.2): separate from the consent to record. */
+export interface SpeechEvaluation {
+  /** Whether a speech check is running at all; without one there is nothing to opt in to. */
+  available: boolean;
+  optedIn: boolean;
+  since: string | null;
+}
+
+/** The check and the teacher on one rule, for one model: counts of words (ADR-0013). */
+export interface SpeechAgreement {
+  model: string;
+  topic: RuleTopic;
+  bothCheck: number;
+  bothGood: number;
+  falseAlarms: number;
+  misses: number;
+  /** Marked for another rule or for none he named: not compared. */
+  unclear: number;
+  /** Marked for this rule, not judged by the check. */
+  unheard: number;
+  /** The words compared. */
+  occurrences: number;
+  /** The share they agree on; `null` before anything was compared. */
+  agreement: number | null;
+  reachesGate: boolean;
+}
+
+export interface SpeechAgreementReport {
+  recordings: number;
+  students: number;
+  gate: { occurrences: number; agreement: number };
+  rows: SpeechAgreement[];
+}
+
 /** One student and a topic they still struggle with (spec T5, ADR-0026). */
 export interface Struggle {
   studentId: string;
@@ -734,6 +768,27 @@ export class AuthClient {
     halaqaId: string
   ): Promise<ApiResult<{ since: string; struggles: Struggle[] }>> {
     return apiRequest(this.fetchImpl, `${HALAQAT}/${encodeURIComponent(halaqaId)}/rules`);
+  }
+
+  /** Whether my recitations may count in measuring the speech check (S6.2, ADR-0013). */
+  speechEvaluation(): Promise<ApiResult<SpeechEvaluation>> {
+    return apiRequest(this.fetchImpl, '/api/v1/speech/evaluation');
+  }
+
+  /** Gives that opt-in or takes it back. */
+  setSpeechEvaluation(optedIn: boolean): Promise<ApiResult<unknown>> {
+    return apiRequest(this.fetchImpl, '/api/v1/speech/evaluation', {
+      method: 'PUT',
+      body: JSON.stringify({ optedIn }),
+    });
+  }
+
+  /** The speech check against the teacher's marks in a ḥalaqa, per model and rule. */
+  speechAgreement(halaqaId: string): Promise<ApiResult<SpeechAgreementReport>> {
+    return apiRequest(
+      this.fetchImpl,
+      `${HALAQAT}/${encodeURIComponent(halaqaId)}/speech/agreement`
+    );
   }
 
   /** The signed-in student's own ʿarḍ log per ḥalaqa and sūra. */

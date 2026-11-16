@@ -1066,6 +1066,37 @@ export const fr: Messages = {
     more: (count) => (count === 1 ? 'et 1 autre' : `et ${count} autres`),
     open: 'Ouvrir le plan d’étude',
   },
+  speech: {
+    optIn: {
+      title: 'Mesurer la vérification automatique',
+      what: 'Une vérification automatique écoute tes enregistrements et donne des indices à ton cheikh. Avant de montrer quoi que ce soit aux élèves, on mesure combien de fois elle est d’accord avec lui. Tu peux autoriser que tes enregistrements soient comptés.',
+      points: [
+        'On compte seulement si la vérification et ton cheikh disent la même chose d’un mot. Personne de plus n’entend tes enregistrements.',
+        'Tes enregistrements ne servent pas à l’entraînement et ne quittent pas nos serveurs.',
+        'Tu peux revenir sur ton accord à tout moment ; tes enregistrements ne comptent alors plus, aussitôt.',
+      ],
+      on: (day) => (day ? `Autorisé depuis le ${day}.` : 'Autorisé.'),
+      off: 'Non autorisé.',
+      give: 'Autoriser',
+      revoke: 'Retirer',
+      loadFailed: 'Impossible de charger ton choix pour le moment.',
+      retry: 'Recharger',
+    },
+    agreement: {
+      title: 'La vérification automatique et toi',
+      intro: (recordings, students) =>
+        `Combien de fois les indices de la vérification automatique et tes marques disent la même chose d’un mot. À partir de ${recordings} enregistrements corrigés de ${students} élèves qui l’ont autorisé.`,
+      rule: 'Règle',
+      compared: 'Mots',
+      agree: 'd’accord',
+      falseAlarms: 'indice seul',
+      misses: 'toi seul',
+      percent: (value) => `${value}\u202f%`,
+      gate: 'seuil atteint',
+      gateNote: (occurrences, percent) =>
+        `Une règle n’est montrée aux élèves qu’à partir de ${occurrences} mots comparés et de ${percent}\u202f% d’accord. « Indice seul » : la vérification a signalé le mot, tu ne l’as pas marqué ; « toi seul » : tu l’as marqué pour cette règle, la vérification l’a trouvé bon. Ces chiffres ne sont qu’une mesure : la décision n’est pas automatique.`,
+    },
+  },
   struggles: {
     title: 'Règle par règle',
     intro:

@@ -19,6 +19,7 @@ import {
 } from '../src/progress/repository.js';
 import {
   PgRecordingRepository,
+  type Mark,
   type NewRecording,
 } from '../src/recordings/repository.js';
 import {
@@ -34,6 +35,8 @@ import { PgTranslationRepository, sourceHash } from '../src/translation/reposito
 import { PgHalaqaRepository } from '../src/halaqat/repository.js';
 import { PgArdaLogRepository } from '../src/ardaLog/repository.js';
 import { PgRuleRepository } from '../src/rules/repository.js';
+import type { Hint } from '../src/speech/checker.js';
+import { PgEvaluationRepository } from '../src/speech/evaluation.js';
 import { PgSpeechRepository } from '../src/speech/repository.js';
 import {
   PgAssignmentRepository,
@@ -2261,6 +2264,233 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(
         (await pool.query('select count(*)::int as n from recording_hints')).rows[0]
       ).toEqual({ n: 0 });
+    });
+
+    describe('measured against the teacher (S6.2)', () => {
+      const YUSUF = '51000000-0000-4000-8000-000000000003';
+      let evaluation: PgEvaluationRepository;
+
+      /** A take by `studentId`, heard by the check with `hints` and answered with `marks`. */
+      const judged = async (
+        studentId: string,
+        hints: Hint[],
+        marks: Mark[],
+        model = 'm1'
+      ): Promise<string> => {
+        const saved = await recordings.save(
+          {
+            clientId: `62000000-0000-4000-8000-${String(++takes).padStart(12, '0')}`,
+            halaqaId,
+            studentId,
+            assignmentId: null,
+            range: { sura: 112, from: 1, to: 4 },
+            mime: 'audio/webm',
+            durationMs: 4200,
+            audio: SOUND,
+          },
+          100
+        );
+        if (saved.status !== 'created') throw new Error(saved.status);
+        // Whatever else still waits is claimed with it and stays out on its lease.
+        const claim = (await speech.claim({ ...CLAIM, limit: 50 })).find(
+          (c) => c.id === saved.id
+        );
+        expect(await speech.done(claim!, model, hints)).toBe(true);
+        expect(
+          await recordings.review(
+            halaqaId,
+            saved.id,
+            { verdict: 'again', remark: null, note: null, marks },
+            TEACHER
+          )
+        ).toBe('reviewed');
+        return saved.id;
+      };
+      const hint = (
+        aya: number,
+        word: number,
+        topic: Hint['topic'],
+        verdict: Hint['verdict']
+      ): Hint => ({ aya, word, topic, verdict });
+
+      beforeEach(async () => {
+        evaluation = new PgEvaluationRepository(pool);
+        const halaqat = new PgHalaqaRepository(pool);
+        await pool.query(
+          `insert into users (id, email, name, role)
+           values ($1, 'yusuf2@example.org', 'Yusuf', 'student')`,
+          [YUSUF]
+        );
+        const tokenHash = hashInviteToken(newInviteToken());
+        await halaqat.createInvite({
+          halaqaId,
+          tokenHash,
+          actorId: TEACHER,
+          expiresAt: new Date(Date.now() + 60_000),
+        });
+        await halaqat.join(tokenHash, YUSUF, new Date());
+        await halaqat.approve(halaqaId, YUSUF, TEACHER);
+      });
+
+      it('keeps the opt-in per person, audited, and in the export', async () => {
+        expect(await evaluation.optIn(AMINA)).toEqual({ optedIn: false, since: null });
+        await evaluation.setOptIn(AMINA, true, '203.0.113.7');
+        // Asking again changes nothing and is not audited twice.
+        await evaluation.setOptIn(AMINA, true, '203.0.113.7');
+        const given = await evaluation.optIn(AMINA);
+        expect(given.optedIn).toBe(true);
+        expect(given.since).toMatch(/^20\d\d-/);
+        expect(await evaluation.optIn(YUSUF)).toEqual({ optedIn: false, since: null });
+        const exported = await new PgPrivacyRepository(pool).export(AMINA);
+        expect(exported.speechEvaluation).toEqual({ optedInAt: given.since });
+        await evaluation.setOptIn(AMINA, false, null);
+        await evaluation.setOptIn(AMINA, false, null);
+        expect(await evaluation.optIn(AMINA)).toEqual({ optedIn: false, since: null });
+        const audit = await pool.query<{ action: string; ip_address: string | null }>(
+          `select action, ip_address from audit_log
+            where actor_id = $1 and action like 'speech.%' order by id`,
+          [AMINA]
+        );
+        expect(audit.rows).toEqual([
+          { action: 'speech.evaluation_opted_in', ip_address: '203.0.113.7' },
+          { action: 'speech.evaluation_opted_out', ip_address: null },
+        ]);
+        expect(
+          (await new PgPrivacyRepository(pool).export(AMINA)).speechEvaluation
+        ).toEqual({ optedInAt: null });
+      });
+
+      it('counts the check against the marks, word by word and rule by rule', async () => {
+        await evaluation.setOptIn(AMINA, true, null);
+        await judged(
+          AMINA,
+          [
+            hint(1, 1, 'ghunna', 'check'), // marked for ghunna: both say check
+            hint(1, 2, 'ghunna', 'good'), // unmarked: both say good
+            hint(1, 3, 'ghunna', 'check'), // unmarked: a false alarm
+            hint(1, 4, 'ghunna', 'good'), // marked for ghunna: a miss
+            hint(2, 1, 'ghunna', 'check'), // marked for another rule: unclear
+            hint(2, 2, 'ghunna', 'good'), // marked without a rule: unclear
+            hint(4, 5, 'qalqala', 'check'), // marked for qalqala
+          ],
+          [
+            { aya: 1, word: 1, topic: 'ghunna' },
+            { aya: 1, word: 4, topic: 'ghunna' },
+            { aya: 2, word: 1, topic: 'madd' },
+            { aya: 2, word: 2, topic: null },
+            { aya: 4, word: 5, topic: 'qalqala' },
+            { aya: 3, word: 1, topic: 'ghunna' }, // the check did not judge it: unheard
+          ]
+        );
+        expect(await evaluation.agreement(halaqaId)).toEqual({
+          recordings: 1,
+          students: 1,
+          rows: [
+            {
+              model: 'm1',
+              topic: 'ghunna',
+              bothCheck: 1,
+              bothGood: 1,
+              falseAlarms: 1,
+              misses: 1,
+              unclear: 2,
+              unheard: 1,
+            },
+            {
+              model: 'm1',
+              topic: 'qalqala',
+              bothCheck: 1,
+              bothGood: 0,
+              falseAlarms: 0,
+              misses: 0,
+              unclear: 0,
+              unheard: 0,
+            },
+            // The word marked for madd was judged on ghunna only.
+            {
+              model: 'm1',
+              topic: 'madd',
+              bothCheck: 0,
+              bothGood: 0,
+              falseAlarms: 0,
+              misses: 0,
+              unclear: 0,
+              unheard: 1,
+            },
+          ],
+        });
+      });
+
+      it('counts only opted-in students, and nobody after the opt-in is taken back', async () => {
+        await evaluation.setOptIn(AMINA, true, null);
+        await judged(AMINA, [hint(1, 1, 'madd', 'good')], []);
+        await judged(YUSUF, [hint(1, 1, 'madd', 'check')], []);
+        expect(await evaluation.agreement(halaqaId)).toMatchObject({
+          recordings: 1,
+          students: 1,
+          rows: [{ topic: 'madd', bothGood: 1, falseAlarms: 0 }],
+        });
+        await evaluation.setOptIn(YUSUF, true, null);
+        expect(await evaluation.agreement(halaqaId)).toMatchObject({
+          recordings: 2,
+          students: 2,
+          rows: [{ topic: 'madd', bothGood: 1, falseAlarms: 1 }],
+        });
+        await evaluation.setOptIn(AMINA, false, null);
+        await evaluation.setOptIn(YUSUF, false, null);
+        expect(await evaluation.agreement(halaqaId)).toEqual({
+          recordings: 0,
+          students: 0,
+          rows: [],
+        });
+      });
+
+      it('leaves out recordings not yet answered or not yet heard, and other ḥalaqāt', async () => {
+        await evaluation.setOptIn(AMINA, true, null);
+        // Heard by the check, not answered by the teacher.
+        const waiting = await send();
+        const [claim] = await speech.claim({ ...CLAIM, limit: 50 });
+        await speech.done(claim!, 'm1', [hint(1, 1, 'madd', 'check')]);
+        // Answered by the teacher, not heard by the check.
+        const unheard = await send();
+        await recordings.review(
+          halaqaId,
+          unheard,
+          { verdict: 'good', remark: null, note: null, marks: [] },
+          TEACHER
+        );
+        expect(waiting).not.toBe(unheard);
+        expect(await evaluation.agreement(halaqaId)).toEqual({
+          recordings: 0,
+          students: 0,
+          rows: [],
+        });
+        await judged(AMINA, [hint(1, 1, 'madd', 'good')], []);
+        expect((await evaluation.agreement(halaqaId)).recordings).toBe(1);
+        expect(
+          await evaluation.agreement('70000000-0000-4000-8000-000000000009')
+        ).toEqual({ recordings: 0, students: 0, rows: [] });
+      });
+
+      it('keeps the models apart', async () => {
+        await evaluation.setOptIn(AMINA, true, null);
+        await judged(AMINA, [hint(1, 1, 'madd', 'good')], [], 'm1');
+        await judged(AMINA, [hint(1, 1, 'madd', 'check')], [], 'm2');
+        const report = await evaluation.agreement(halaqaId);
+        expect(report.rows.map((r) => [r.model, r.bothGood, r.falseAlarms])).toEqual([
+          ['m1', 1, 0],
+          ['m2', 0, 1],
+        ]);
+      });
+
+      it('forgets the opt-in with the account', async () => {
+        await evaluation.setOptIn(AMINA, true, null);
+        await pool.query('delete from users where id = $1', [AMINA]);
+        expect(
+          (await pool.query('select count(*)::int as n from speech_evaluation_optins'))
+            .rows[0]
+        ).toEqual({ n: 0 });
+      });
     });
   });
 

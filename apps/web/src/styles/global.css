@@ -1165,3 +1165,29 @@ button.recited-word:hover {
   background: var(--bg-elev-2);
   border-radius: var(--radius-sm);
 }
+
+/* The speech check against the teacher (S6.2): a small table of counts. */
+.agreement-scroll {
+  overflow-x: auto;
+}
+.agreement-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+.agreement-table th,
+.agreement-table td {
+  padding: 6px 8px;
+  border-block-end: 1px solid var(--bg-elev-2);
+  text-align: start;
+  vertical-align: top;
+}
+/* A number and its unit stay on one line. */
+.agreement-table td {
+  white-space: nowrap;
+}
+.agreement-table thead th {
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.85rem;
+}
