@@ -88,3 +88,44 @@ Alternatives: the service pulling work from the api with its token (it would nee
 the api and a second route × role surface for a machine); hints inside the queue's JSON only,
 without a table (nothing to measure agreement on); checking at upload (a slow model would hold
 the student's upload open, and offline takes arrive in bursts).
+
+## Update 2026-11-16: the opt-in and the agreement per rule (S6.2)
+
+Built without the service, like the api's side before it: once hints exist, the measurement
+is there.
+
+- **The opt-in.** A student allows, on the account page, that their recitations count when the
+  check is measured against the teacher. It is separate from the consent to record, off until
+  given, revocable, audited (`speech.evaluation_opted_in`, `…_opted_out`) and part of the
+  export; it goes with the account (`speech_evaluation_optins`, migration `0018`). It is
+  offered only where a speech check is configured, and can always be taken back. It allows
+  counting only: nobody hears a recording who could not before, and nothing is used for
+  training (ADR-0012 keeps that for a separate opt-in).
+- **What is counted.** Recordings of a ḥalaqa that a teacher answered, the check heard, and
+  whose student is opted in at the moment of asking. Taking the opt-in back therefore takes
+  the student's recitations out at once; no labels are stored apart from the recordings.
+- **How a word is compared**, per model and topic, for every word the check judged on that
+  topic:
+  - `check` and the teacher marked the word for this topic, or `good` and he left the word
+    unmarked: they agree;
+  - `check` and the word unmarked: a false alarm; `good` and the word marked for this topic:
+    a miss;
+  - the word marked for another topic or for none he named: **not compared**. He names one
+    rule per word, so such a mark says nothing about this topic either way.
+    Words he marked for a topic that the check did not judge on it are counted beside the table
+    (`unheard`), not in the share.
+- **The gate as a number.** A row reaches the gate at ≥ 200 compared words and ≥ 90 %
+  agreement. The report says so; nothing is switched on by it. Showing a rule's check to
+  students stays a decision of its own, taken across ḥalaqāt, and is not built.
+- **Who sees it.** The teachers of the ḥalaqa (`halaqa:review`), as counts per model and rule:
+  no word, no student, no recording. A new model starts its own rows.
+- **A known weakness: the teacher sees the hints while he marks.** A ringed word invites a
+  mark, so agreement measured this way runs higher than it would blind. S6.1's acceptance puts
+  the hints in his queue, so this run keeps that; whether hints should stay hidden until he
+  has answered, for recordings that count, is the owner's and the sheikh's call (sprint plan).
+  Until then the numbers are an upper bound, and the report's note says they decide nothing.
+
+Alternatives: storing a label per word when the teacher answers (survives a deleted recording,
+but a revoked opt-in would have to chase its labels); counting a mark for another rule as
+disagreement (punishes the check for a limit of the marking screen); one report across all
+ḥalaqāt for admins (needs a view of other teachers' work that ADR-0005 does not give).
