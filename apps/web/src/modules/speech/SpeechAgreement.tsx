@@ -13,19 +13,25 @@ import { useSession } from '@/state/session';
 export function SpeechAgreement({ halaqaId }: { halaqaId: string }) {
   const { m, language } = useI18n();
   const { client } = useSession();
-  const [report, setReport] = useState<SpeechAgreementReport | null>(null);
+  // Kept with the ḥalaqa it was asked for: another ḥalaqa never shows this one's counts.
+  const [loaded, setLoaded] = useState<{
+    halaqaId: string;
+    report: SpeechAgreementReport;
+  } | null>(null);
 
   useEffect(() => {
     let current = true;
     void client.speechAgreement(halaqaId).then((result) => {
+      if (!current) return;
       // A failed load leaves the card away: the page works without it.
-      if (current && result.ok) setReport(result.value);
+      setLoaded(result.ok ? { halaqaId, report: result.value } : null);
     });
     return () => {
       current = false;
     };
   }, [client, halaqaId]);
 
+  const report = loaded?.halaqaId === halaqaId ? loaded.report : null;
   if (!report || report.rows.length === 0) return null;
   const models = [...new Set(report.rows.map((row) => row.model))];
   const percent = (share: number) => Math.round(share * 100);

@@ -1066,6 +1066,8 @@ export const ar: Messages = {
       off: 'غير مسموح.',
       give: 'أسمح',
       revoke: 'أتراجع',
+      loadFailed: 'تعذّر الآن تحميل اختيارك.',
+      retry: 'أعد التحميل',
     },
     agreement: {
       title: 'الفحص الآلي وأنت',

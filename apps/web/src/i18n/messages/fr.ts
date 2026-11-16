@@ -1079,6 +1079,8 @@ export const fr: Messages = {
       off: 'Non autorisé.',
       give: 'Autoriser',
       revoke: 'Retirer',
+      loadFailed: 'Impossible de charger ton choix pour le moment.',
+      retry: 'Recharger',
     },
     agreement: {
       title: 'La vérification automatique et toi',

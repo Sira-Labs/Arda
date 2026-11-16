@@ -120,6 +120,44 @@ describe('the opt-in for measuring the speech check (S6.2)', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/Erlaubt seit/);
   });
 
+  it('says when the opt-in cannot be read and asks again, so it can still be taken back', async () => {
+    let failing = true;
+    renderWith(
+      <EvaluationOptIn />,
+      {
+        'GET /api/v1/speech/evaluation': () =>
+          failing
+            ? Response.json({ error: 'unavailable' }, { status: 503 })
+            : Response.json({
+                available: true,
+                optedIn: true,
+                since: '2026-11-16T08:00:00.000Z',
+              }),
+      },
+      STUDENT
+    );
+    const user = userEvent.setup();
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Ob du das erlaubt hast, ließ sich gerade nicht laden.'
+    );
+    expect(screen.queryByRole('button', { name: 'Zurücknehmen' })).toBeNull();
+    failing = false;
+    await user.click(screen.getByRole('button', { name: 'Nochmal laden' }));
+    expect(
+      await screen.findByRole('button', { name: 'Zurücknehmen' })
+    ).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('stays away where the api does not know the opt-in at all', async () => {
+    const { calls } = renderWith(<EvaluationOptIn />, {}, STUDENT);
+    await waitFor(() =>
+      expect(calls.some((c) => c.path.endsWith('/evaluation'))).toBe(true)
+    );
+    expect(screen.queryByText('Automatische Prüfung messen')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
   it('says so when the change is refused and keeps what was', async () => {
     renderWith(
       <EvaluationOptIn />,
@@ -225,5 +263,36 @@ describe('the speech check against the teacher (S6.2)', () => {
       expect(empty.calls.some((c) => c.path.endsWith('/agreement'))).toBe(true)
     );
     expect(screen.queryByText('Automatische Prüfung und du')).toBeNull();
+  });
+
+  it("never shows one ḥalaqa's numbers under another", async () => {
+    const TITLE = 'Automatische Prüfung und du';
+    const OTHER = 'b0000000-0000-4000-8000-000000000002';
+    const api = fakeApi(
+      {
+        [`GET /api/v1/halaqat/${HALAQA}/speech/agreement`]: Response.json(
+          report([row()])
+        ),
+        [`GET /api/v1/halaqat/${OTHER}/speech/agreement`]: Response.json(
+          { error: 'forbidden' },
+          { status: 403 }
+        ),
+      },
+      TEACHER
+    );
+    const ui = (halaqaId: string) => (
+      <Providers client={api.client}>
+        <MemoryRouter>
+          <SpeechAgreement halaqaId={halaqaId} />
+        </MemoryRouter>
+      </Providers>
+    );
+    const view = render(ui(HALAQA));
+    expect(await screen.findByRole('heading', { name: TITLE })).toBeInTheDocument();
+    view.rerender(ui(OTHER));
+    // Gone at once, and still gone after the other ḥalaqa's load failed.
+    expect(screen.queryByRole('heading', { name: TITLE })).toBeNull();
+    await waitFor(() => expect(api.calls.some((c) => c.path.includes(OTHER))).toBe(true));
+    expect(screen.queryByRole('heading', { name: TITLE })).toBeNull();
   });
 });

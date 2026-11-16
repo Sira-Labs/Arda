@@ -1131,6 +1131,8 @@ export const de = {
       off: 'Nicht erlaubt.',
       give: 'Erlauben',
       revoke: 'Zurücknehmen',
+      loadFailed: 'Ob du das erlaubt hast, ließ sich gerade nicht laden.',
+      retry: 'Nochmal laden',
     },
     agreement: {
       title: 'Automatische Prüfung und du',

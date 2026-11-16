@@ -138,13 +138,18 @@ export class PgEvaluationRepository implements EvaluationRepository {
         join recording_checks c on c.recording_id = r.id and c.status = 'done'
         join speech_evaluation_optins o on o.user_id = r.student_id
        where r.halaqa_id = $1 and r.reviewed_at is not null`;
-    const [totals, compared, unheard] = await Promise.all([
-      this.pool.query<{ recordings: number; students: number }>(
+    // One snapshot for all three counts: an opt-in taken back or an answer changed between
+    // them would otherwise give totals and rows that never were true together.
+    const client = await this.pool.connect();
+    let totals, compared, unheard;
+    try {
+      await client.query('begin transaction isolation level repeatable read read only');
+      totals = await client.query<{ recordings: number; students: number }>(
         `select count(*)::int as recordings, count(distinct student_id)::int as students
            from (${counted}) counted`,
         [halaqaId]
-      ),
-      this.pool.query<{
+      );
+      compared = await client.query<{
         model: string;
         topic: Topic;
         both_check: number;
@@ -170,8 +175,8 @@ export class PgEvaluationRepository implements EvaluationRepository {
              on m.recording_id = h.recording_id and m.aya = h.aya and m.word = h.word
           group by counted.model, h.topic`,
         [halaqaId]
-      ),
-      this.pool.query<{ model: string; topic: Topic; unheard: number }>(
+      );
+      unheard = await client.query<{ model: string; topic: Topic; unheard: number }>(
         `select counted.model, m.topic, count(*)::int as unheard
            from (${counted}) counted
            join recording_marks m on m.recording_id = counted.id and m.topic is not null
@@ -181,8 +186,14 @@ export class PgEvaluationRepository implements EvaluationRepository {
                      and h.word = m.word and h.topic = m.topic)
           group by counted.model, m.topic`,
         [halaqaId]
-      ),
-    ]);
+      );
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
     const byKey = new Map<string, Agreement>();
     const row = (model: string, topic: Topic): Agreement => {
       const key = `${model}\n${topic}`;

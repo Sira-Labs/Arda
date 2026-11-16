@@ -1053,6 +1053,8 @@ export const en: Messages = {
       off: 'Not allowed.',
       give: 'Allow',
       revoke: 'Take back',
+      loadFailed: 'Whether you allowed this could not be loaded just now.',
+      retry: 'Load again',
     },
     agreement: {
       title: 'The automatic check and you',
