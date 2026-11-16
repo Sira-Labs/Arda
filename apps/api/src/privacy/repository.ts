@@ -41,6 +41,8 @@ export interface AccountExport {
   progress: Progress;
   /** Rounds finished and rule cards read, from which XP and the streak come (ADR-0023). */
   activity: StoredEvent[];
+  /** When this person allowed their recitations to count in measuring the speech check (S6.2). */
+  speechEvaluation: { optedInAt: string | null };
   /** Privileged changes made by or to this person. */
   auditLog: Record<string, unknown>[];
 }
@@ -68,6 +70,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       progress,
       activity,
       audit,
+      speechOptIn,
     ] = await Promise.all([
       this.pool.query(
         `select id, email, email_verified, name, role, language, time_zone, disabled_at,
@@ -157,6 +160,10 @@ export class PgPrivacyRepository implements PrivacyRepository {
           order by id`,
         [userId]
       ),
+      this.pool.query<{ opted_in_at: Date }>(
+        'select opted_in_at from speech_evaluation_optins where user_id = $1',
+        [userId]
+      ),
     ]);
     return {
       exportedAt: new Date().toISOString(),
@@ -171,6 +178,9 @@ export class PgPrivacyRepository implements PrivacyRepository {
       ardaLog: ardaLog.rows,
       progress,
       activity,
+      speechEvaluation: {
+        optedInAt: speechOptIn.rows[0]?.opted_in_at.toISOString() ?? null,
+      },
       auditLog: audit.rows,
     };
   }

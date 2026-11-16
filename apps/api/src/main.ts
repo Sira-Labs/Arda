@@ -36,6 +36,7 @@ import { PgArdaLogRepository } from './ardaLog/repository.js';
 import { PgRuleRepository } from './rules/repository.js';
 import { TranslationService } from './translation/service.js';
 import { HttpSpeechChecker } from './speech/checker.js';
+import { PgEvaluationRepository } from './speech/evaluation.js';
 import { PgSpeechRepository } from './speech/repository.js';
 import { SpeechCheckService } from './speech/service.js';
 
@@ -185,6 +186,13 @@ async function main(): Promise<void> {
     ardaLog: { repo: new PgArdaLogRepository(pool), halaqat, auth, log },
     rules: { repo: new PgRuleRepository(pool), halaqat, auth, log },
     progress: { repo: new PgProgressRepository(pool), auth, log },
+    speechEvaluation: {
+      repo: new PgEvaluationRepository(pool),
+      halaqat,
+      auth,
+      log,
+      available: Boolean(speech),
+    },
     allowedOrigin: config.trustedOrigins,
     appOrigins: config.appOrigins,
     authzLog: log,
