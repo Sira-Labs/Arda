@@ -1040,6 +1040,35 @@ export const en: Messages = {
     more: (count) => `and ${count} more`,
     open: 'Open study plan',
   },
+  speech: {
+    optIn: {
+      title: 'Measuring the automatic check',
+      what: 'An automatic check listens to your recordings and gives your sheikh hints. Before it ever shows students anything, we measure how often it agrees with him. You can allow your recordings to be counted in that.',
+      points: [
+        'Only whether the check and your sheikh say the same of a word is counted. Nobody hears your recordings who could not before.',
+        'Your recordings are not used for training and do not leave our servers.',
+        'You can take this back at any time; your recordings then stop counting at once.',
+      ],
+      on: (day) => (day ? `Allowed since ${day}.` : 'Allowed.'),
+      off: 'Not allowed.',
+      give: 'Allow',
+      revoke: 'Take back',
+    },
+    agreement: {
+      title: 'The automatic check and you',
+      intro: (recordings, students) =>
+        `How often the hints of the automatic check and your marks say the same of a word. From ${recordings} answered recordings of ${students} students who allowed it.`,
+      rule: 'Rule',
+      compared: 'Words',
+      agree: 'agree',
+      falseAlarms: 'hint only',
+      misses: 'you only',
+      percent: (value) => `${value}%`,
+      gate: 'threshold reached',
+      gateNote: (occurrences, percent) =>
+        `A rule is shown to students at the earliest when at least ${occurrences} words are compared and you agree on ${percent}%. “Hint only”: the check hinted, you did not mark the word; “you only”: you marked it for this rule, the check found it good. The numbers here are a measure only – that is not decided automatically.`,
+    },
+  },
   struggles: {
     title: 'Rule by rule',
     intro:

@@ -1118,6 +1118,35 @@ export const de = {
     more: (count: number) => (count === 1 ? 'und 1 weitere' : `und ${count} weitere`),
     open: 'Lernplan öffnen',
   },
+  speech: {
+    optIn: {
+      title: 'Automatische Prüfung messen',
+      what: 'Eine automatische Prüfung hört deine Aufnahmen mit und gibt deinem Sheikh Hinweise. Bevor sie je Schülern etwas zeigt, wird gemessen, wie oft sie mit ihm übereinstimmt. Du kannst erlauben, dass deine Aufnahmen dabei mitgezählt werden.',
+      points: [
+        'Gezählt wird nur, ob die Prüfung und dein Sheikh bei einem Wort dasselbe sagen. Dadurch hört niemand zusätzlich deine Aufnahmen.',
+        'Deine Aufnahmen werden nicht zum Trainieren verwendet und verlassen unsere Server nicht.',
+        'Du kannst das jederzeit zurücknehmen; dann zählen deine Aufnahmen sofort nicht mehr mit.',
+      ],
+      on: (day: string | null) => (day ? `Erlaubt seit ${day}.` : 'Erlaubt.'),
+      off: 'Nicht erlaubt.',
+      give: 'Erlauben',
+      revoke: 'Zurücknehmen',
+    },
+    agreement: {
+      title: 'Automatische Prüfung und du',
+      intro: (recordings: number, students: number) =>
+        `Wie oft die Hinweise der automatischen Prüfung und deine Markierungen bei einem Wort dasselbe sagen. Aus ${recordings} beantworteten Aufnahmen von ${students} Schüler·innen, die das erlaubt haben.`,
+      rule: 'Regel',
+      compared: 'Wörter',
+      agree: 'einig',
+      falseAlarms: 'nur Hinweis',
+      misses: 'nur von dir',
+      percent: (value: number) => `${value} %`,
+      gate: 'Schwelle erreicht',
+      gateNote: (occurrences: number, percent: number) =>
+        `Eine Regel wird Schülern frühestens gezeigt, wenn mindestens ${occurrences} Wörter verglichen sind und ihr euch bei ${percent} % einig seid. „Nur Hinweis“: die Prüfung wies hin, du hast das Wort nicht markiert; „nur von dir“: du hast es für diese Regel markiert, die Prüfung fand es gut. Die Zahlen hier sind nur ein Maß – entschieden wird das nicht automatisch.`,
+    },
+  },
   struggles: {
     title: 'Regel für Regel',
     intro:
