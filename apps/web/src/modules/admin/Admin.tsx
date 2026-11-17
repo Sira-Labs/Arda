@@ -6,6 +6,7 @@ import { Soon } from '@/modules/Soon';
 import type { ApiResult } from '@/services/api/request';
 import type { AdminUser, Role } from '@/services/auth';
 import { useSession } from '@/state/session';
+import { AuditLog } from './AuditLog';
 import { SecondFactor } from './SecondFactor';
 
 type Failure = Extract<ApiResult<unknown>, { ok: false }>;
@@ -17,7 +18,8 @@ type Change = { role?: Role; disabled?: boolean };
 /**
  * `/verwaltung` (ADR-0005): an admin finds people and changes their role (a sheikh becomes a
  * teacher) or blocks them. The api checks the role and the confirmed second factor and logs
- * every change; here a missing confirmation shows the code form first.
+ * every change; here a missing confirmation shows the code form first. Below the people, the
+ * audit log shows what was changed (spec A4).
  */
 export function Admin() {
   const { me, loading, client } = useSession();
@@ -32,6 +34,9 @@ export function Admin() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  // Counts the changes made here: the audit log below reloads to show the new entry.
+  const [changes, setChanges] = useState(0);
+  const askForCode = useCallback(() => setNeedsCode(true), []);
   // Only the latest list request may set the list: an older search or page is dropped.
   const latest = useRef(0);
   // A change the api refused for want of the second factor, made once it is confirmed.
@@ -88,6 +93,7 @@ export function Admin() {
       setFailure(null);
       setUsers((list) => list?.map((u) => (u.id === user.id ? result.value : u)) ?? null);
       setNotice(t.saved(result.value.name ?? result.value.email ?? ''));
+      setChanges((n) => n + 1);
     } finally {
       setBusy(null);
     }
@@ -203,6 +209,7 @@ export function Admin() {
           )}
         </section>
       )}
+      {!needsCode && users && <AuditLog version={changes} onNeedsCode={askForCode} />}
       {failure && <p role="alert">{errorMessage(m, failure)}</p>}
     </div>
   );

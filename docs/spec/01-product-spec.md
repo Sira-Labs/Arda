@@ -111,7 +111,11 @@ Suffa's sign-in, ported (ADR-0004).
   `second_factor_required`; a used code works once; every change is in the audit log. _(Web
   built (owner, 2026-10-06): the second factor set up and confirmed on the account page with a
   QR code; `/verwaltung` lists and searches people, changes a role (a sheikh becomes a teacher)
-  and blocks or unblocks; one's own role is never offered. Next: the audit log on the page.)_
+  and blocks or unblocks; one's own role is never offered. The audit log on the page
+  (2026-11-17): below the people, newest first, read-only: what was done, when, by whom, about
+  whom or which ḥalaqa, from which address; a role change with both roles; a deleted account
+  or ḥalaqa is said to be deleted; an action the page has no words for is shown as recorded.
+  It reloads after a change made on the page.)_
 - **A5 Privacy.** Export everything as JSON; delete the account by typing the own address.
   **Acceptance:** export contains no tokens or keys; deletion cascades and is audited without
   the person.

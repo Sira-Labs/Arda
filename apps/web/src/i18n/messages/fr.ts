@@ -1019,6 +1019,36 @@ export const fr: Messages = {
     saved: (name) => `Enregistré\u202f: ${name}`,
     more: 'Charger plus',
     unverified: 'e-mail non confirmé',
+    audit: {
+      title: 'Journal',
+      intro:
+        'Qui a changé quoi – les entrées les plus récentes d’abord. Le journal ne peut pas être modifié.',
+      none: 'Aucune entrée pour l’instant.',
+      when: 'Quand',
+      by: 'Par',
+      about: 'Concerne',
+      halaqa: 'Ḥalaqa',
+      ip: 'Adresse IP',
+      gone: 'compte supprimé',
+      goneHalaqa: 'ḥalaqa supprimée',
+      retry: 'Réessayer',
+      roleChange: (from, to) => `${from} → ${to}`,
+      actions: {
+        'user.role_changed': 'Rôle modifié',
+        'user.disabled': 'Compte bloqué',
+        'user.enabled': 'Compte débloqué',
+        'account.deleted': 'Compte supprimé',
+        'account.2fa_enabled': 'Second facteur configuré',
+        'halaqa.invite_created': 'Invitation créée',
+        'halaqa.invites_revoked': 'Invitations révoquées',
+        'halaqa.member_approved': 'Membre confirmé',
+        'halaqa.member_removed': 'Membre retiré',
+        'speech.evaluation_opted_in':
+          'Évaluation des indications de prononciation autorisée',
+        'speech.evaluation_opted_out':
+          'Évaluation des indications de prononciation retirée',
+      },
+    },
   },
   passkey: {
     'already-added': 'Cet appareil a déjà une clé d’accès pour ʿArḍa.',
