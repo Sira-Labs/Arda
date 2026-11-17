@@ -4,7 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { Account } from '@/modules/account/Account';
 import { Admin } from '@/modules/admin/Admin';
-import type { AdminUser, Me } from '@/services/auth';
+import type { AdminUser, AuditEntry, Me } from '@/services/auth';
 import { fakeApi, Providers } from './render';
 
 const ADMIN: Me = {
@@ -204,6 +204,181 @@ describe('the admin area (ADR-0005)', () => {
   it('is not there for anyone but an admin', async () => {
     renderAt('/verwaltung', {}, { ...ADMIN, role: 'teacher' });
     expect(await screen.findByText('Nicht gefunden')).toBeInTheDocument();
+  });
+});
+
+describe('the audit log on the admin page (spec A4)', () => {
+  const entry = (id: string, change: Partial<AuditEntry>): AuditEntry => ({
+    id,
+    actorId: ADMIN.id,
+    actorEmail: ADMIN.email,
+    subjectEmail: null,
+    halaqaName: null,
+    action: 'account.2fa_enabled',
+    targetType: 'user',
+    targetId: ADMIN.id,
+    details: {},
+    ipAddress: null,
+    createdAt: '2026-11-16T09:30:00Z',
+    ...change,
+  });
+  const ROLE_CHANGE = entry('7', {
+    action: 'user.role_changed',
+    targetId: SHEIKH.id,
+    subjectEmail: SHEIKH.email,
+    details: { from: 'student', to: 'teacher' },
+    ipAddress: '203.0.113.7',
+  });
+  const log = () => screen.findByRole('region', { name: 'Protokoll' });
+
+  it('says who changed what, on whom, when and from where', async () => {
+    renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SELF, SHEIKH], next: null }),
+        'GET /api/v1/admin/audit': Response.json({
+          entries: [
+            ROLE_CHANGE,
+            entry('6', {
+              action: 'halaqa.member_removed',
+              actorId: SHEIKH.id,
+              actorEmail: SHEIKH.email,
+              targetType: 'halaqa',
+              targetId: 'h1',
+              halaqaName: 'Montagsrunde',
+              details: { userId: 'gone' },
+            }),
+            entry('5', { action: 'account.deleted', actorId: null, actorEmail: null }),
+            entry('4', {}),
+            entry('3', { action: 'future.action' }),
+          ],
+          next: null,
+        }),
+      },
+      ADMIN
+    );
+    const rows = within(await log()).getAllByRole('listitem');
+    expect(rows).toHaveLength(5);
+
+    const change = within(rows[0]!);
+    expect(change.getByText('Rolle geändert')).toBeInTheDocument();
+    expect(change.getByText(/Schüler·in → Sheikh \/ Lehrer·in/)).toBeInTheDocument();
+    expect(change.getByText('markus@example.org')).toBeInTheDocument();
+    expect(change.getByText('sheikh@example.org')).toBeInTheDocument();
+    expect(change.getByText('203.0.113.7')).toBeInTheDocument();
+    expect(change.getByText(/2026/).closest('time')).toHaveAttribute(
+      'datetime',
+      '2026-11-16T09:30:00Z'
+    );
+
+    // A member who has since deleted the account, in a ḥalaqa that still exists.
+    const removed = within(rows[1]!);
+    expect(removed.getByText('Mitglied entfernt')).toBeInTheDocument();
+    expect(removed.getByText('Montagsrunde')).toBeInTheDocument();
+    expect(removed.getByText('gelöschtes Konto')).toBeInTheDocument();
+
+    // A deleted account deleted itself: said once, not as actor and subject.
+    expect(within(rows[2]!).getByText('Konto gelöscht')).toBeInTheDocument();
+    expect(within(rows[2]!).getAllByText('gelöschtes Konto')).toHaveLength(1);
+    // About oneself: nobody else is named.
+    expect(within(rows[3]!).queryByText('Betrifft')).toBeNull();
+    // An action newer than this page is shown as written, not hidden.
+    expect(within(rows[4]!).getByText('future.action')).toBeInTheDocument();
+    expect(within(await log()).queryByRole('button')).toBeNull();
+  });
+
+  it('loads older entries, and shows a change made on the page at once', async () => {
+    let changed = false;
+    const { calls } = renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SELF, SHEIKH], next: null }),
+        'GET /api/v1/admin/audit': () =>
+          Response.json({
+            entries: changed ? [ROLE_CHANGE, entry('4', {})] : [entry('4', {})],
+            next: '4',
+          }),
+        'GET /api/v1/admin/audit?before=4': Response.json({
+          entries: [entry('2', { action: 'user.disabled', targetId: SHEIKH.id })],
+          next: null,
+        }),
+        [`PATCH /api/v1/admin/users/${SHEIKH.id}`]: () => {
+          changed = true;
+          return Response.json({ ...SHEIKH, role: 'teacher' });
+        },
+      },
+      ADMIN
+    );
+    const user = userEvent.setup();
+    const region = within(await log());
+    expect(await region.findByText('Zweiten Faktor eingerichtet')).toBeInTheDocument();
+    expect(region.queryByText('Noch keine Einträge.')).toBeNull();
+
+    await user.click(region.getByRole('button', { name: 'Weitere laden' }));
+    expect(await region.findByText('Konto gesperrt')).toBeInTheDocument();
+    expect(region.getAllByRole('listitem')).toHaveLength(2);
+    expect(region.queryByRole('button', { name: 'Weitere laden' })).toBeNull();
+
+    const row = (await screen.findByText('Sheikh Ahmad')).closest('li')!;
+    await user.selectOptions(
+      within(row).getByRole('combobox', { name: 'Rolle' }),
+      'teacher'
+    );
+    expect(await region.findByText('Rolle geändert')).toBeInTheDocument();
+    expect(calls.filter((c) => c.path.startsWith('/api/v1/admin/audit'))).toHaveLength(3);
+  });
+
+  it('says so when it is empty, and offers another try when it cannot be loaded', async () => {
+    let fails = true;
+    renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SELF], next: null }),
+        'GET /api/v1/admin/audit': () =>
+          fails
+            ? Response.json({ error: 'internal' }, { status: 500 })
+            : Response.json({ entries: [], next: null }),
+      },
+      ADMIN
+    );
+    const user = userEvent.setup();
+    const region = within(await log());
+    expect(await region.findByRole('alert')).toBeInTheDocument();
+    fails = false;
+    await user.click(region.getByRole('button', { name: 'Noch einmal versuchen' }));
+    expect(await region.findByText('Noch keine Einträge.')).toBeInTheDocument();
+    expect(region.queryByRole('alert')).toBeNull();
+  });
+
+  it('asks for the code again when the confirmation has lapsed, and is not there before', async () => {
+    let confirmed = true;
+    renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SELF], next: null }),
+        'GET /api/v1/admin/audit': () =>
+          confirmed
+            ? Response.json({ entries: [entry('4', {})], next: null })
+            : Response.json({ error: 'second_factor_required' }, { status: 403 }),
+        'GET /api/v1/account/2fa': Response.json({ enabled: true, confirmed: false }),
+        'POST /api/v1/account/2fa/confirm': () => {
+          confirmed = true;
+          return new Response(null, { status: 204 });
+        },
+      },
+      ADMIN
+    );
+    confirmed = false;
+    const user = userEvent.setup();
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Sechsstelliger Code' }),
+      '123456'
+    );
+    expect(screen.queryByRole('region', { name: 'Protokoll' })).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
+    expect(
+      await within(await log()).findByText('Zweiten Faktor eingerichtet')
+    ).toBeInTheDocument();
   });
 });
 

@@ -41,6 +41,22 @@ export interface AdminUser {
   createdAt: string;
 }
 
+/** One audit-log entry as the admin page lists it (api `AuditRecord`). */
+export interface AuditEntry {
+  id: string;
+  actorId: string | null;
+  actorEmail: string | null;
+  /** The person the entry is about, when that is someone and the account still exists. */
+  subjectEmail: string | null;
+  halaqaName: string | null;
+  action: string;
+  targetType: string;
+  targetId: string;
+  details: Record<string, unknown>;
+  ipAddress: string | null;
+  createdAt: string;
+}
+
 /** A device (session) as the account page lists it. */
 export interface Device {
   id: string;
@@ -848,5 +864,13 @@ export class AuthClient {
       method: 'PATCH',
       body: JSON.stringify(change),
     });
+  }
+
+  /** The audit log, newest first; `before` is the previous page's `next` (admins). */
+  adminAudit(
+    before?: string
+  ): Promise<ApiResult<{ entries: AuditEntry[]; next: string | null }>> {
+    const suffix = before ? `?before=${encodeURIComponent(before)}` : '';
+    return apiRequest(this.fetchImpl, `/api/v1/admin/audit${suffix}`);
   }
 }

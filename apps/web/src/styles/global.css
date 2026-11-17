@@ -657,6 +657,38 @@ a {
 .member-row:first-child {
   border-top: none;
 }
+/* Audit log (spec A4): what happened, then the facts as label and value */
+.audit-row {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.audit-row:first-child {
+  border-top: none;
+}
+.audit-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 16px;
+  margin: 0;
+  font-size: 0.9rem;
+}
+.audit-facts > div {
+  display: flex;
+  gap: 6px;
+  min-inline-size: 0;
+}
+.audit-facts dt {
+  white-space: nowrap;
+}
+.audit-facts dt::after {
+  content: ':';
+}
+.audit-facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
 .qr {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
