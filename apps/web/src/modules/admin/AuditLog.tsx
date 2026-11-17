@@ -18,6 +18,10 @@ function formatTime(iso: string, language: Language): string {
   });
 }
 
+/** Actions a person takes on their own account (the api writes actor and target alike). */
+const isOwnAccount = (action: string): boolean =>
+  action.startsWith('account.') || action.startsWith('speech.evaluation_');
+
 /** The account an entry is about: the target user, or the member in a ḥalaqa entry. */
 function subjectOf(entry: AuditEntry): string | null {
   if (entry.targetType === 'user') return entry.targetId;
@@ -96,15 +100,12 @@ export function AuditLog({
       <ol className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {entries?.map((entry) => {
           const subject = subjectOf(entry);
-          // Named when it is someone else. Only an entry about an account that deleted
-          // itself has neither actor nor subject left to tell apart, and says it once; a
-          // member of a ḥalaqa stays named as deleted even when the teacher is gone too.
+          // Named when it is someone else. What people do to their own account keeps no
+          // actor once the account is deleted, so those entries are known by their action,
+          // not by what is missing: a role change stays about someone even when admin and
+          // person are both gone.
           const someoneElse =
-            subject !== null &&
-            subject !== entry.actorId &&
-            (entry.targetType !== 'user' ||
-              entry.actorId !== null ||
-              entry.subjectEmail !== null);
+            subject !== null && subject !== entry.actorId && !isOwnAccount(entry.action);
           return (
             <li key={entry.id} className="audit-row">
               <strong>

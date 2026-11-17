@@ -259,6 +259,13 @@ describe('the audit log on the admin page (spec A4)', () => {
               targetId: 'h1',
               details: { userId: 'gone' },
             }),
+            entry('1', {
+              action: 'user.role_changed',
+              actorId: null,
+              actorEmail: null,
+              targetId: 'gone',
+              details: { from: 'student', to: 'teacher' },
+            }),
           ],
           next: null,
         }),
@@ -266,7 +273,10 @@ describe('the audit log on the admin page (spec A4)', () => {
       ADMIN
     );
     const rows = within(await log()).getAllByRole('listitem');
-    expect(rows).toHaveLength(6);
+    expect(rows).toHaveLength(7);
+    // Admin and person both gone: the role change is still about someone.
+    expect(within(rows[6]!).getByText('Betrifft')).toBeInTheDocument();
+    expect(within(rows[6]!).getAllByText('gelöschtes Konto')).toHaveLength(2);
     // Teacher and member both gone: the member is still named, as deleted.
     expect(within(rows[5]!).getByText('Betrifft')).toBeInTheDocument();
     expect(within(rows[5]!).getAllByText('gelöschtes Konto')).toHaveLength(2);
