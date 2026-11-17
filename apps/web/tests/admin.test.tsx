@@ -251,6 +251,14 @@ describe('the audit log on the admin page (spec A4)', () => {
             entry('5', { action: 'account.deleted', actorId: null, actorEmail: null }),
             entry('4', {}),
             entry('3', { action: 'future.action' }),
+            entry('2', {
+              action: 'halaqa.member_approved',
+              actorId: null,
+              actorEmail: null,
+              targetType: 'halaqa',
+              targetId: 'h1',
+              details: { userId: 'gone' },
+            }),
           ],
           next: null,
         }),
@@ -258,7 +266,11 @@ describe('the audit log on the admin page (spec A4)', () => {
       ADMIN
     );
     const rows = within(await log()).getAllByRole('listitem');
-    expect(rows).toHaveLength(5);
+    expect(rows).toHaveLength(6);
+    // Teacher and member both gone: the member is still named, as deleted.
+    expect(within(rows[5]!).getByText('Betrifft')).toBeInTheDocument();
+    expect(within(rows[5]!).getAllByText('gelöschtes Konto')).toHaveLength(2);
+    expect(within(rows[5]!).getByText('gelöschte Ḥalaqa')).toBeInTheDocument();
 
     const change = within(rows[0]!);
     expect(change.getByText('Rolle geändert')).toBeInTheDocument();
@@ -379,6 +391,49 @@ describe('the audit log on the admin page (spec A4)', () => {
     expect(
       await within(await log()).findByText('Zweiten Faktor eingerichtet')
     ).toBeInTheDocument();
+  });
+
+  it('drops an answer still on its way when the code form replaces the log', async () => {
+    let confirmed = false;
+    let audits = 0;
+    let answerFirst: (response: Response) => void = () => {};
+    const first = new Promise<Response>((resolve) => (answerFirst = resolve));
+    renderAt(
+      '/verwaltung',
+      {
+        'GET /api/v1/admin/users': Response.json({ users: [SELF, SHEIKH], next: null }),
+        'GET /api/v1/admin/audit': () =>
+          ++audits === 1 ? first : Response.json({ entries: [ROLE_CHANGE], next: null }),
+        [`PATCH /api/v1/admin/users/${SHEIKH.id}`]: () =>
+          confirmed
+            ? Response.json({ ...SHEIKH, role: 'teacher' })
+            : Response.json({ error: 'second_factor_required' }, { status: 403 }),
+        'GET /api/v1/account/2fa': Response.json({ enabled: true, confirmed: false }),
+        'POST /api/v1/account/2fa/confirm': () => {
+          confirmed = true;
+          return new Response(null, { status: 204 });
+        },
+      },
+      ADMIN
+    );
+    const user = userEvent.setup();
+    const row = (await screen.findByText('Sheikh Ahmad')).closest('li')!;
+    await user.selectOptions(
+      within(row).getByRole('combobox', { name: 'Rolle' }),
+      'teacher'
+    );
+    await user.type(
+      await screen.findByRole('textbox', { name: 'Sechsstelliger Code' }),
+      '123456'
+    );
+    await user.click(screen.getByRole('button', { name: 'Bestätigen' }));
+    expect(await within(await log()).findByText('Rolle geändert')).toBeInTheDocument();
+
+    // The first request, made before the code was confirmed, is refused only now.
+    answerFirst(Response.json({ error: 'second_factor_required' }, { status: 403 }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByRole('textbox', { name: 'Sechsstelliger Code' })).toBeNull();
+    expect(within(await log()).getByText('Rolle geändert')).toBeInTheDocument();
   });
 });
 

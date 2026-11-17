@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { errorMessage, useI18n } from '@/i18n/I18nProvider';
 import type { Language } from '@/i18n/languages';
 import type { ApiResult } from '@/services/api/request';
@@ -47,14 +47,15 @@ export function AuditLog({
   const [failure, setFailure] = useState<Failure | null>(null);
   const [loading, setLoading] = useState(false);
   // Only the latest request may set the list: a page asked for before a refresh is dropped.
-  const latest = useRef(0);
+  // One counter for the component's life (not a ref: the effect's cleanup advances it too).
+  const [requests] = useState(() => ({ latest: 0 }));
 
   const load = useCallback(
     async (before?: string) => {
-      const request = ++latest.current;
+      const request = ++requests.latest;
       setLoading(true);
       const result = await client.adminAudit(before);
-      if (request !== latest.current) return;
+      if (request !== requests.latest) return;
       setLoading(false);
       if (!result.ok) {
         if (result.code === 'second_factor_required') onNeedsCode();
@@ -67,12 +68,17 @@ export function AuditLog({
         before ? [...(list ?? []), ...result.value.entries] : result.value.entries
       );
     },
-    [client, onNeedsCode]
+    [client, onNeedsCode, requests]
   );
 
   useEffect(() => {
     void load();
-  }, [load, version]);
+    // Leaving (the code form replaces the log) drops the answer still on its way: it must
+    // not ask for the code again after the page has confirmed it.
+    return () => {
+      requests.latest++;
+    };
+  }, [load, version, requests]);
 
   const labels: Record<string, string> = t.actions;
   const roleName = (value: unknown): string =>
@@ -90,12 +96,15 @@ export function AuditLog({
       <ol className="stack" style={{ margin: 0, padding: 0, listStyle: 'none' }}>
         {entries?.map((entry) => {
           const subject = subjectOf(entry);
-          // Named only when it is someone else; of a deleted account that deleted itself
-          // nothing is left to tell actor and subject apart.
+          // Named when it is someone else. Only an entry about an account that deleted
+          // itself has neither actor nor subject left to tell apart, and says it once; a
+          // member of a ḥalaqa stays named as deleted even when the teacher is gone too.
           const someoneElse =
             subject !== null &&
             subject !== entry.actorId &&
-            (entry.actorId !== null || entry.subjectEmail !== null);
+            (entry.targetType !== 'user' ||
+              entry.actorId !== null ||
+              entry.subjectEmail !== null);
           return (
             <li key={entry.id} className="audit-row">
               <strong>

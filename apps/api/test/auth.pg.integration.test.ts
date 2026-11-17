@@ -1060,16 +1060,25 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         targetType: 'user',
         targetId: 'not-a-uuid',
       });
+      // An id written in capitals, as a route accepts it, still finds its account.
+      await writeAudit(pool, {
+        actorId: TEACHER,
+        action: 'test.capitals',
+        targetType: 'halaqa',
+        targetId: id.toUpperCase(),
+        details: { userId: AMINA.toUpperCase() },
+      });
       const { entries } = await listAudit(pool, { beforeId: null, limit: 10 });
       expect(
         entries.map((e) => [e.action, e.actorEmail, e.subjectEmail, e.halaqaName])
       ).toEqual([
+        ['test.capitals', 'sheikh@example.org', 'amina@example.org', 'H'],
         ['test.odd_target', null, null, null],
         ['halaqa.member_removed', 'sheikh@example.org', 'amina@example.org', 'H'],
         ['halaqa.member_approved', 'sheikh@example.org', 'amina@example.org', 'H'],
         ['halaqa.invite_created', 'sheikh@example.org', null, 'H'],
       ]);
-      const older = await listAudit(pool, { beforeId: entries[1]!.id, limit: 1 });
+      const older = await listAudit(pool, { beforeId: entries[2]!.id, limit: 1 });
       expect(older.entries.map((e) => e.action)).toEqual(['halaqa.member_approved']);
       expect(older.next).toBe(older.entries[0]!.id);
     });

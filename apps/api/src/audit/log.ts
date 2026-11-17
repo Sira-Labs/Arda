@@ -68,7 +68,7 @@ export async function listAudit(
     created_at: Date;
   }>(
     // The page is cut first; the ids in text columns become uuids only when they look like
-    // one, so both joins go through the primary keys.
+    // one (in either case: routes accept both), so both joins go through the primary keys.
     `with page as (
        select a.*,
               case when a.target_type = 'user' then a.target_id
@@ -84,10 +84,10 @@ export async function listAudit(
        from page p
        left join users u on u.id = p.actor_id
        left join users s
-         on s.id = case when p.subject_ref ~ '${UUID}' then p.subject_ref::uuid end
+         on s.id = case when p.subject_ref ~* '${UUID}' then p.subject_ref::uuid end
        left join halaqat h
          on p.target_type = 'halaqa'
-        and h.id = case when p.target_id ~ '${UUID}' then p.target_id::uuid end
+        and h.id = case when p.target_id ~* '${UUID}' then p.target_id::uuid end
       order by p.id desc`,
     [beforeId, limit + 1]
   );
