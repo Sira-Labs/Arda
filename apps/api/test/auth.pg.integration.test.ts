@@ -26,7 +26,7 @@ import {
   PgSecondFactorRepository,
   SecondFactorService,
 } from '../src/account/secondFactor.js';
-import { writeAudit } from '../src/audit/log.js';
+import { listAudit, writeAudit } from '../src/audit/log.js';
 import { SecretBox } from '../src/security/secretBox.js';
 import { base32Decode, stepAt, totpAt } from '../src/security/totp.js';
 import { SoftAuthenticator } from './softAuthenticator.js';
@@ -609,7 +609,12 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       headers: { cookie: admin },
     });
     const { entries } = (await audit.json()) as {
-      entries: { action: string; actorEmail: string; details: Record<string, unknown> }[];
+      entries: {
+        action: string;
+        actorEmail: string;
+        subjectEmail: string | null;
+        details: Record<string, unknown>;
+      }[];
     };
     expect(entries.map((e) => e.action)).toEqual([
       'user.enabled',
@@ -622,6 +627,13 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       details: { endedSessions: 1 },
     });
     expect(entries[2]!.details).toEqual({ from: 'student', to: 'teacher' });
+    // The page names the person an entry is about; an entry about oneself names nobody else.
+    expect(entries.map((e) => e.subjectEmail)).toEqual([
+      'schueler@example.org',
+      'schueler@example.org',
+      'schueler@example.org',
+      'leitung@example.org',
+    ]);
   });
 
   it('deletes the account only with the own address typed in (story A5)', async () => {
@@ -1040,6 +1052,26 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         'halaqa.member_approved',
         'halaqa.member_removed',
       ]);
+
+      // The admin's page reads who and which ḥalaqa; an id that is no uuid matches nobody.
+      await writeAudit(pool, {
+        actorId: null,
+        action: 'test.odd_target',
+        targetType: 'user',
+        targetId: 'not-a-uuid',
+      });
+      const { entries } = await listAudit(pool, { beforeId: null, limit: 10 });
+      expect(
+        entries.map((e) => [e.action, e.actorEmail, e.subjectEmail, e.halaqaName])
+      ).toEqual([
+        ['test.odd_target', null, null, null],
+        ['halaqa.member_removed', 'sheikh@example.org', 'amina@example.org', 'H'],
+        ['halaqa.member_approved', 'sheikh@example.org', 'amina@example.org', 'H'],
+        ['halaqa.invite_created', 'sheikh@example.org', null, 'H'],
+      ]);
+      const older = await listAudit(pool, { beforeId: entries[1]!.id, limit: 1 });
+      expect(older.entries.map((e) => e.action)).toEqual(['halaqa.member_approved']);
+      expect(older.next).toBe(older.entries[0]!.id);
     });
 
     it('lets only one of two students take a one-to-one place, even at the same time', async () => {
