@@ -1221,6 +1221,9 @@ export const de = {
     voiceNote: 'Sprachnotiz (optional, bis 2 Minuten)',
     voiceRecord: 'Sprachnotiz aufnehmen',
     voiceRemove: 'Sprachnotiz entfernen',
+    showOriginal: 'Original anzeigen',
+    hideOriginal: 'Original ausblenden',
+    noTranslation: 'Übersetzung nicht verfügbar – das sind die Worte deines Sheikhs.',
     voiceFrom: (name: string | null) =>
       name ? `Sprachnotiz von ${name}` : 'Sprachnotiz deines Sheikhs',
     markedWords: 'Markierte Wörter',

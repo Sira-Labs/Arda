@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { act, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
@@ -876,6 +876,228 @@ describe('the student’s recitations on Today', () => {
     await user.click(within(waiting).getByRole('button', { name: 'Löschen' }));
     await waitFor(() => expect(screen.queryByText('Sūra 113 · Āya 1')).toBeNull());
     expect(calls.some((c) => c.method === 'DELETE')).toBe(true);
+  });
+
+  describe('his written remark in the student’s language (spec T6)', () => {
+    const NOTE = 'Your ghunna on “min sharri” was too short.';
+    const TRANSLATE = `POST /api/v1/recordings/${REC}/note-translation`;
+    const written = (noteLanguage: 'de' | 'en' | null | undefined, note = NOTE) =>
+      Response.json({
+        recordings: [
+          own({
+            review: {
+              verdict: 'again',
+              remark: null,
+              note,
+              noteLanguage,
+              marks: [],
+              voiceNote: null,
+              reviewerName: 'Sheikh Ahmad',
+              reviewedAt: '2026-10-06T12:00:00Z',
+            },
+          }),
+        ],
+        more: false,
+      });
+
+    it('reads it in a labelled machine translation, the original one tap away', async () => {
+      const { calls } = renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': written('en'),
+          [TRANSLATE]: Response.json({
+            status: 'translated',
+            text: 'Deine Ghunna bei „min sharri“ war zu kurz.',
+            language: 'de',
+          }),
+        },
+        STUDENT
+      );
+      const user = userEvent.setup();
+      const translated = await screen.findByText(
+        'Deine Ghunna bei „min sharri“ war zu kurz.'
+      );
+      expect(translated).toHaveAttribute('lang', 'de');
+      expect(screen.getByText('maschinell übersetzt')).toBeInTheDocument();
+      expect(screen.queryByText(NOTE)).toBeNull();
+      // Only the language goes with the request: the text is the api's own.
+      expect(calls.find((c) => c.method === 'POST')?.body).toEqual({ to: 'de' });
+
+      const toggle = screen.getByRole('button', { name: 'Original anzeigen' });
+      expect(toggle).toHaveAttribute('aria-expanded', 'false');
+      await user.click(toggle);
+      expect(screen.getByText(NOTE)).toHaveAttribute('lang', 'en');
+      expect(
+        screen.getByText('Deine Ghunna bei „min sharri“ war zu kurz.')
+      ).toBeVisible();
+      await user.click(screen.getByRole('button', { name: 'Original ausblenden' }));
+      expect(screen.queryByText(NOTE)).toBeNull();
+    });
+
+    it('shows his own words and says so when no translation can be had', async () => {
+      for (const answer of [
+        Response.json({ status: 'unavailable', reason: 'not_configured' }),
+        Response.json({ error: 'internal' }, { status: 500 }),
+      ]) {
+        renderWith(
+          <MyRecitations />,
+          { 'GET /api/v1/recordings': written('en'), [TRANSLATE]: answer },
+          STUDENT
+        );
+        expect(
+          await screen.findByText(
+            'Übersetzung nicht verfügbar – das sind die Worte deines Sheikhs.'
+          )
+        ).toBeInTheDocument();
+        expect(screen.getByText(NOTE)).toBeInTheDocument();
+        expect(screen.queryByText('maschinell übersetzt')).toBeNull();
+        cleanup();
+      }
+    });
+
+    it('asks for no translation of what is written in the reader’s language or of unknown language', async () => {
+      for (const language of ['de', null, undefined] as const) {
+        const view = renderWith(
+          <MyRecitations />,
+          { 'GET /api/v1/recordings': written(language, 'Noch einmal Āya 2.') },
+          STUDENT
+        );
+        expect(await screen.findByText('Noch einmal Āya 2.')).toBeInTheDocument();
+        expect(view.calls.filter((c) => c.method === 'POST')).toEqual([]);
+        expect(screen.queryByText(/Übersetzung nicht verfügbar/)).toBeNull();
+        cleanup();
+      }
+    });
+
+    it('announces the outcome without moving focus', async () => {
+      renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': written('en'),
+          [TRANSLATE]: Response.json({
+            status: 'translated',
+            text: 'Kurz.',
+            language: 'de',
+          }),
+        },
+        STUDENT
+      );
+      // The region is there with his words, before the answer; then it says what was done.
+      const status = await waitFor(() => {
+        const region = screen
+          .getAllByRole('status')
+          .find((node) => node.closest('.recitation-answer'));
+        expect(region).toBeDefined();
+        return region!;
+      });
+      await waitFor(() => expect(status).toHaveTextContent('maschinell übersetzt'));
+      expect(screen.getByText('Kurz.')).toBeInTheDocument();
+    });
+
+    it('reloads the list when the sheikh has answered again since it was loaded', async () => {
+      let lists = 0;
+      const { calls } = renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': () =>
+            ++lists === 1
+              ? written('en')
+              : Response.json({
+                  recordings: [
+                    own({
+                      review: {
+                        verdict: 'again',
+                        remark: null,
+                        note: 'Read āya 2 again.',
+                        noteLanguage: 'en',
+                        marks: [],
+                        voiceNote: null,
+                        reviewerName: 'Sheikh Ahmad',
+                        reviewedAt: '2026-10-07T09:00:00Z',
+                      },
+                    }),
+                  ],
+                  more: false,
+                }),
+          // The api knows only his newest answer.
+          [TRANSLATE]: Response.json({
+            status: 'translated',
+            text: 'Lies Āya 2 noch einmal.',
+            language: 'de',
+            reviewedAt: '2026-10-07T09:00:00Z',
+          }),
+        },
+        STUDENT
+      );
+      const user = userEvent.setup();
+      expect(await screen.findByText('Lies Āya 2 noch einmal.')).toBeInTheDocument();
+      // Never his new words in translation over his old ones as the original.
+      await user.click(screen.getByRole('button', { name: 'Original anzeigen' }));
+      expect(screen.getByText('Read āya 2 again.')).toBeInTheDocument();
+      expect(screen.queryByText(NOTE)).toBeNull();
+      expect(calls.filter((c) => c.path === '/api/v1/recordings')).toHaveLength(2);
+      expect(calls.filter((c) => c.method === 'POST')).toHaveLength(2);
+    });
+
+    it('lets only the latest list set what is shown', async () => {
+      let lists = 0;
+      let answerFirst: (response: Response) => void = () => {};
+      const first = new Promise<Response>((resolve) => (answerFirst = resolve));
+      const outbox = memoryOutbox();
+      const { client } = renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': () =>
+            ++lists === 1 ? first : written('de', 'Die neue Antwort.'),
+          // Offline for takes: one stays waiting, which asks for the list again.
+          [`POST /api/v1/halaqat/${HALAQA}/recordings`]: Response.json(
+            { error: 'unavailable' },
+            { status: 503 }
+          ),
+        },
+        STUDENT,
+        fakeRecorder(),
+        outbox
+      );
+      await waitFor(() => expect(lists).toBe(1));
+      await act(async () => {
+        await enqueue(client, outbox, {
+          clientId: '00000009-0000-4000-8000-000000000000',
+          ownerId: STUDENT.id,
+          halaqaId: HALAQA,
+          assignmentId: null,
+          range: { sura: 112, from: 1, to: 1 },
+          mime: 'audio/webm',
+          durationMs: 1000,
+          blob: new Blob(['x']),
+          createdAt: '2026-10-06T10:00:09Z',
+        });
+      });
+      expect(await screen.findByText('Die neue Antwort.')).toBeInTheDocument();
+      expect(lists).toBe(2);
+      // The first answer arrives last and is dropped.
+      await act(async () => {
+        answerFirst(written('de', 'Die alte Antwort.'));
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+      expect(screen.getByText('Die neue Antwort.')).toBeInTheDocument();
+      expect(screen.queryByText('Die alte Antwort.')).toBeNull();
+    });
+
+    it('keeps his words when the api says they need no translation', async () => {
+      renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': written('en'),
+          [TRANSLATE]: Response.json({ status: 'original' }),
+        },
+        STUDENT
+      );
+      expect(await screen.findByText(NOTE)).toBeInTheDocument();
+      await waitFor(() => expect(screen.getByText(NOTE)).toHaveAttribute('lang', 'en'));
+      expect(screen.queryByText('maschinell übersetzt')).toBeNull();
+      expect(screen.queryByText(/Übersetzung nicht verfügbar/)).toBeNull();
+    });
   });
 
   it('plays the sheikh’s voice note under his answer', async () => {

@@ -9,6 +9,8 @@ export interface TranslationRequest {
   /** The teacher's language when known; the model detects it otherwise. */
   from: Language | null;
   to: Language;
+  /** Aborted when the caller stops waiting (the service's deadline). */
+  signal?: AbortSignal;
 }
 
 export type TranslationResult =

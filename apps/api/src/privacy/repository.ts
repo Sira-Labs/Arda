@@ -120,6 +120,7 @@ export class PgPrivacyRepository implements PrivacyRepository {
       this.pool.query(
         `select id, halaqa_id, assignment_id, sura, aya_from, aya_to, mime, bytes,
                 duration_ms, created_at, student_id = $1 as sent_by_you, verdict, remark, note,
+                note_language,
                 reviewed_by = $1 as answered_by_you, reviewed_at,
                 coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word,
                                                             'topic', m.topic)

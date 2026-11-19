@@ -292,8 +292,12 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   written remarks are machine-translated with tajwīd terms and āyāt unchanged, labelled
   "maschinell übersetzt", the original one tap away; voice notes stay his voice, with a
   transcript and its translation underneath. _(Built: quick remarks, the preview of written
-  remarks for teachers, the translation service, quick remarks delivered with T3. Next: written
-  remarks translated on delivery.)_
+  remarks for teachers, the translation service, quick remarks delivered with T3.)_
+  _(Built (2026-11-19, ADR-0020 update): written remarks translated on delivery. Under a
+  recitation the student reads the sheikh's remark in the language the app is shown in,
+  labelled "maschinell übersetzt", his own words one tap away; without a translation his
+  words stand with "Übersetzung nicht verfügbar". The remark keeps the language it was written
+  in. Next: the note in "Dein ʿArḍ" and the voice note's transcript.)_
   **Acceptance:** the sheikh can assign and review entirely on a phone; a student never sees
   another student's recordings; a student reading German, French or Arabic understands a
   remark written in English, and can always see the original.

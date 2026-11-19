@@ -14,13 +14,25 @@ export type TranslateOutcome =
   | { status: 'translated'; text: string; model: string; cached: boolean }
   | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' };
 
+/**
+ * How long the translator may take before the service stops waiting and gives the place in
+ * the limit back. Shorter than a reservation lives, so a place is never counted as free while
+ * its translator is still being waited for.
+ */
+export const TRANSLATE_DEADLINE_MS = 90_000;
+
 export interface TranslationServiceOptions {
   translator: Translator | null;
   repo: TranslationRepository;
   dailyLimit: number;
+  /** Defaults to `TRANSLATE_DEADLINE_MS`; tests shorten it. */
+  deadlineMs?: number;
 }
 
 export class TranslationService {
+  /** Translations being made in this process, by remark and target language. */
+  private readonly inFlight = new Map<string, Promise<TranslateOutcome>>();
+
   constructor(private readonly options: TranslationServiceOptions) {}
 
   get enabled(): boolean {
@@ -48,17 +60,68 @@ export class TranslationService {
         cached: true,
       };
     }
-    if ((await this.options.repo.countLastDay(input.userId)) >= this.options.dailyLimit) {
-      return { status: 'unavailable', reason: 'limit' };
+    // The same remark into the same language is asked for once: requests that arrive while
+    // it is being translated (a page showing the remark several times) wait for that answer.
+    const key = `${hash}:${input.to}`;
+    const underWay = this.inFlight.get(key);
+    if (underWay) {
+      const outcome = await underWay;
+      return outcome.status === 'translated' ? { ...outcome, cached: true } : outcome;
     }
-    const result = await translator.translate({ text, from: input.from, to: input.to });
+    const asking = this.ask(translator, { ...input, text }, hash).finally(() =>
+      this.inFlight.delete(key)
+    );
+    this.inFlight.set(key, asking);
+    return asking;
+  }
+
+  /** Asks the translator for a remark that is neither cached nor already being translated. */
+  private async ask(
+    translator: Translator,
+    input: { userId: string; text: string; from: Language | null; to: Language },
+    hash: string
+  ): Promise<TranslateOutcome> {
+    const { text } = input;
+    // The place in the daily limit is held before the translator is asked and given back
+    // when nothing comes of it: requests in flight together cannot each pass the limit.
+    const reservation = await this.options.repo.reserve(
+      input.userId,
+      this.options.dailyLimit
+    );
+    if (reservation === null) return { status: 'unavailable', reason: 'limit' };
+    let result: Awaited<ReturnType<Translator['translate']>>;
+    const deadline = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      result = await Promise.race([
+        translator.translate({
+          text,
+          from: input.from,
+          to: input.to,
+          signal: deadline.signal,
+        }),
+        new Promise<{ ok: false; reason: 'failed' }>((resolve) => {
+          timer = setTimeout(() => {
+            deadline.abort();
+            resolve({ ok: false, reason: 'failed' });
+          }, this.options.deadlineMs ?? TRANSLATE_DEADLINE_MS);
+        }),
+      ]);
+    } catch (error) {
+      await this.options.repo.release(reservation);
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
     if (!result.ok) {
+      await this.options.repo.release(reservation);
       return {
         status: 'unavailable',
         reason: result.reason === 'refused' ? 'refused' : 'failed',
       };
     }
     await this.options.repo.save({
+      reservation,
       createdBy: input.userId,
       sourceHash: hash,
       from: input.from,

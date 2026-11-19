@@ -6,6 +6,7 @@ import type { OwnRecitation } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { useOutboxWaiting } from './outbox';
 import { RecitedWords } from './RecitedWords';
+import { TeacherNote } from './TeacherNote';
 
 type Failure = Extract<ApiResult<unknown>, { ok: false }>;
 
@@ -25,15 +26,21 @@ export function MyRecitations() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Only the latest request may set the list: one asked for earlier (the first load, while
+  // a stale remark already asks for a fresh list) must not put older answers back.
+  const [requests] = useState(() => ({ latest: 0 }));
+
   const load = useCallback(async () => {
+    const request = ++requests.latest;
     const result = await client.myRecitations();
+    if (request !== requests.latest) return;
     if (result.ok) {
       setList(result.value.recordings);
       setFailure(null);
     } else {
       setFailure(result);
     }
-  }, [client]);
+  }, [client, requests]);
 
   useEffect(() => {
     if (me) void load();
@@ -90,8 +97,16 @@ export function MyRecitations() {
                   <div className="stack recitation-answer" style={{ gap: 4 }}>
                     <span className="muted">{m.recite.from(r.review.reviewerName)}</span>
                     {r.review.remark && <span>{m.remarks[r.review.remark]}</span>}
-                    {/* The sheikh's own words, in whatever language he wrote them. */}
-                    {r.review.note && <span dir="auto">{r.review.note}</span>}
+                    {/* The sheikh's own words, translated when he wrote another language. */}
+                    {r.review.note && (
+                      <TeacherNote
+                        recordingId={r.id}
+                        note={r.review.note}
+                        noteLanguage={r.review.noteLanguage ?? null}
+                        reviewedAt={r.review.reviewedAt}
+                        onStale={load}
+                      />
+                    )}
                     {r.review.marks.length > 0 && (
                       <>
                         <span>{m.recite.marksCount(r.review.marks.length)}</span>

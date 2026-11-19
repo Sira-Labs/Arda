@@ -11,6 +11,7 @@
  *   GET    /recordings                            my recordings and answers   recitation:own
  *   GET    /recordings/:rid/audio                 hear my own                 recitation:own
  *   GET    /recordings/:rid/voice-note            hear the teacher's answer   recitation:own
+ *   POST   /recordings/:rid/note-translation      his written remark in my language  recitation:own
  *   DELETE /recordings/:rid                       delete my own               recitation:own
  *
  * The take is the request body itself (its Content-Type the format), what it recites in the
@@ -26,7 +27,9 @@ import type { AuthResolver } from '../auth/resolver.js';
 import { authorize, type ActorEnv, type AuthorizeLog } from '../authz/middleware.js';
 import type { Actor, HalaqaScope } from '../authz/policies.js';
 import type { HalaqaRepository } from '../halaqat/repository.js';
+import { LANGUAGES } from '../i18n/languages.js';
 import { TOPICS } from '../rules/repository.js';
+import type { TranslationService } from '../translation/service.js';
 import {
   MAX_MARKS,
   RECORDING_MIMES,
@@ -44,6 +47,11 @@ export interface RecordingRouteDeps {
   halaqat: Pick<HalaqaRepository, 'membership'>;
   auth: AuthResolver;
   log: AuthorizeLog & { info(obj: object, msg: string): void };
+  /**
+   * Translates a written remark for the student who reads it (spec T6, ADR-0020); without
+   * it the route answers that no translation is set up.
+   */
+  translations?: Pick<TranslationService, 'translate'>;
 }
 
 /** Ten minutes of speech at the bitrates browsers record with stays well below this. */
@@ -111,6 +119,8 @@ const ReviewBody = z
       .transform((marks) => [...marks].sort(byPlace)),
   })
   .strict();
+
+const NoteTranslationBody = z.object({ to: z.enum(LANGUAGES).optional() }).strict();
 
 /** The format named by a Content-Type such as `audio/webm;codecs=opus`. */
 export function mimeOf(contentType: string | undefined): RecordingMime | null {
@@ -415,6 +425,73 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
     if (!recordingId.success) return notFound(c);
     const audio = await deps.repo.ownVoiceNote(c.get('actor').id, recordingId.data);
     return audio ? audioResponse(c, audio) : notFound(c);
+  });
+
+  // The remark in the language its reader reads: the one the app is shown in (`to`), else
+  // the stored one. The text and its language come from the database, never from the
+  // request: this is no translator for arbitrary text. A new translation counts against the
+  // teacher who wrote the remark (the reader's own count when that account is gone); one
+  // already made is served from the cache.
+  app.post('/recordings/:rid/note-translation', own, async (c) => {
+    const recordingId = Id.safeParse(c.req.param('rid'));
+    if (!recordingId.success) return notFound(c);
+    // No body means the stored language; a body that is not this object is refused before
+    // anything is translated or counted.
+    const raw = await c.req.text();
+    let sent: unknown = {};
+    if (raw.trim() !== '') {
+      try {
+        sent = JSON.parse(raw);
+      } catch {
+        return c.json({ error: 'invalid_json' }, 400);
+      }
+    }
+    const body = NoteTranslationBody.safeParse(sent);
+    if (!body.success) return invalid(c, ['to']);
+    const actor = c.get('actor');
+    const remark = await deps.repo.ownNote(actor.id, recordingId.data);
+    if (!remark) return notFound(c);
+    const to = body.data.to ?? remark.readerLanguage;
+    c.header('Cache-Control', 'no-store');
+    // Which answer this is about: the reader's page may still show an earlier one.
+    const { reviewedAt } = remark;
+    // A remark whose language was never recorded is shown as written, not guessed at.
+    if (!remark.noteLanguage || remark.noteLanguage === to) {
+      return c.json({ status: 'original', reviewedAt });
+    }
+    if (!deps.translations) {
+      return c.json({ status: 'unavailable', reason: 'not_configured', reviewedAt });
+    }
+    const outcome = await deps.translations.translate({
+      userId: remark.reviewerId ?? actor.id,
+      text: remark.note,
+      from: remark.noteLanguage,
+      to: to,
+    });
+    switch (outcome.status) {
+      case 'original':
+        return c.json({ status: 'original', reviewedAt });
+      case 'unavailable':
+        return c.json({ status: 'unavailable', reason: outcome.reason, reviewedAt });
+      case 'translated':
+        if (!outcome.cached) {
+          deps.log.info(
+            {
+              userId: actor.id,
+              recordingId: recordingId.data,
+              from: remark.noteLanguage,
+              to: to,
+            },
+            'recording.note_translated'
+          );
+        }
+        return c.json({
+          status: 'translated',
+          text: outcome.text,
+          language: to,
+          reviewedAt,
+        });
+    }
   });
 
   app.delete('/recordings/:rid', own, async (c) => {

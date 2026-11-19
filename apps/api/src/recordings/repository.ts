@@ -1,5 +1,5 @@
 /**
- * Recitations in Postgres (spec F7, T3; ADR-0012; migrations 0006, 0011, 0012, 0017). Who may call what is decided
+ * Recitations in Postgres (spec F7, T3; ADR-0012; migrations 0006, 0011, 0012, 0017, 0019). Who may call what is decided
  * by the routes' policies; the queries here additionally keep a student to their own
  * recordings and a teacher to the ḥalaqa in the path. The sound is kept in `recording_audio`
  * until the RustFS bucket exists (ADR-0012 update 2026-10-06), and so is the teacher's voice note.
@@ -8,6 +8,7 @@
 import type pg from 'pg';
 import { wordCount } from '@arda/quran';
 import { dayIn, writeAnswerEntry } from '../ardaLog/repository.js';
+import type { Language } from '../i18n/languages.js';
 import type { Topic } from '../rules/repository.js';
 
 export const RECORDING_MIMES = [
@@ -89,6 +90,8 @@ export interface Review {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
+  /** The language the written remark was written in; null when unknown or without one. */
+  noteLanguage: Language | null;
   /** In reading order. */
   marks: Mark[];
   voiceNote: VoiceNote | null;
@@ -114,6 +117,18 @@ export function marksFit(
 export const byPlace = (a: Mark, b: Mark): number => a.aya - b.aya || a.word - b.word;
 
 export type ReviewOutcome = 'reviewed' | 'not_found' | 'marks';
+
+/** A written remark on one of the reader's own recordings, with what translating it needs. */
+export interface OwnNote {
+  note: string;
+  noteLanguage: Language | null;
+  /** The reader's language (German until chosen). */
+  readerLanguage: Language;
+  /** Who wrote it; null once that account is gone. */
+  reviewerId: string | null;
+  /** When it was written: the answer the reader's list shows carries the same moment. */
+  reviewedAt: string;
+}
 
 /**
  * `not_reviewed`: a voice note belongs to an answer, so the teacher answers the recording
@@ -215,6 +230,8 @@ export interface RecordingRepository {
   ownVoiceNote(studentId: string, recordingId: string): Promise<Audio | null>;
   /** The voice note on a recording sent to this ḥalaqa. */
   halaqaVoiceNote(halaqaId: string, recordingId: string): Promise<Audio | null>;
+  /** The written remark on one of the student's own recordings; null without one. */
+  ownNote(studentId: string, recordingId: string): Promise<OwnNote | null>;
   /** Deletes one of the student's own recordings with its sound. */
   remove(studentId: string, recordingId: string): Promise<boolean>;
 }
@@ -235,6 +252,7 @@ interface Row {
   verdict: Verdict | null;
   remark: RemarkId | null;
   note: string | null;
+  note_language: Language | null;
   reviewer_name: string | null;
   reviewed_at: Date | null;
   marks: Mark[];
@@ -242,7 +260,7 @@ interface Row {
 }
 
 const COLUMNS = `r.id, r.halaqa_id, r.assignment_id, r.sura, r.aya_from, r.aya_to, r.mime,
-  r.bytes, r.duration_ms, r.created_at, r.verdict, r.remark, r.note,
+  r.bytes, r.duration_ms, r.created_at, r.verdict, r.remark, r.note, r.note_language,
   nullif(btrim(t.name), '') as reviewer_name, r.reviewed_at,
   coalesce((select json_agg(json_build_object('aya', m.aya, 'word', m.word, 'topic', m.topic)
                             order by m.aya, m.word)
@@ -265,6 +283,7 @@ const base = (row: Row): RecordingBase => ({
           verdict: row.verdict,
           remark: row.remark,
           note: row.note,
+          noteLanguage: row.note_language,
           marks: row.marks,
           voiceNote: row.voice_note,
           reviewerName: row.reviewer_name,
@@ -479,7 +498,10 @@ export class PgRecordingRepository implements RecordingRepository {
         time_zone: string | null;
       }>(
         `update recordings
-            set verdict = $3, remark = $4, note = $5, reviewed_by = $6, reviewed_at = now()
+            set verdict = $3, remark = $4, note = $5, reviewed_by = $6, reviewed_at = now(),
+                -- The language he writes in now (German until chosen), kept with his words.
+                note_language = case when $5::text is null then null
+                  else (select coalesce(language, 'de') from users where id = $6) end
           where id = $2 and halaqa_id = $1
           returning sura, aya_from, aya_to, student_id, created_at,
                     (select time_zone from users where id = recordings.student_id)
@@ -605,6 +627,34 @@ export class PgRecordingRepository implements RecordingRepository {
       [halaqaId, recordingId]
     );
     return rows[0] ?? null;
+  }
+
+  async ownNote(studentId: string, recordingId: string): Promise<OwnNote | null> {
+    const { rows } = await this.pool.query<{
+      note: string;
+      note_language: Language | null;
+      reader_language: Language;
+      reviewed_by: string | null;
+      reviewed_at: Date;
+    }>(
+      `select r.note, r.note_language, coalesce(s.language, 'de') as reader_language,
+              r.reviewed_by, r.reviewed_at
+         from recordings r
+         join users s on s.id = r.student_id
+        where r.id = $2 and r.student_id = $1 and r.note is not null
+          and r.reviewed_at is not null`,
+      [studentId, recordingId]
+    );
+    const row = rows[0];
+    return row
+      ? {
+          note: row.note,
+          noteLanguage: row.note_language,
+          readerLanguage: row.reader_language,
+          reviewerId: row.reviewed_by,
+          reviewedAt: iso(row.reviewed_at),
+        }
+      : null;
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

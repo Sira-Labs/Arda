@@ -1,5 +1,5 @@
 /**
- * The translation cache and the daily count per teacher (ADR-0020, migration 0002).
+ * The translation cache and the daily limit per teacher (ADR-0020, migrations 0002, 0020).
  */
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
@@ -12,8 +12,22 @@ export interface CachedTranslation {
 
 export interface TranslationRepository {
   find(sourceHash: string, to: Language): Promise<CachedTranslation | null>;
-  /** Stores a translation; a concurrent identical one keeps the first. */
+  /**
+   * Holds one place in this person's daily limit before the translator is asked: the id of
+   * the reservation, or `null` when translations of the last 24 hours and places still held
+   * already reach the limit. Checked and taken in one step per person, so requests in flight
+   * together cannot each pass (cache hits never come here).
+   */
+  reserve(userId: string, dailyLimit: number): Promise<string | null>;
+  /** Gives a place back: the translator failed or refused, so nothing is counted. */
+  release(reservation: string): Promise<void>;
+  /**
+   * Stores a translation in place of its reservation; a concurrent identical one keeps the
+   * first, and the place is given back. A translation whose place has lapsed is stored and
+   * counted all the same: the translator was asked for it.
+   */
   save(entry: {
+    reservation: string;
     createdBy: string;
     sourceHash: string;
     from: Language | null;
@@ -22,14 +36,22 @@ export interface TranslationRepository {
     text: string;
     model: string;
   }): Promise<void>;
-  /** Translations this person caused in the last 24 hours (cache hits do not count). */
-  countLastDay(userId: string): Promise<number>;
 }
+
+/**
+ * How long a place stays held for a translator call that never reported back (its process
+ * died). Several times the service's deadline for the whole call, so a place does not lapse
+ * under work that is still going on; a lost place costs one translation for ten minutes.
+ */
+export const RESERVATION_TTL_SECONDS = 600;
 
 /** The cache key: the remark with whitespace normalised, so a stray space does not miss. */
 export function sourceHash(text: string): string {
   return createHash('sha256').update(text.trim().replace(/\s+/g, ' ')).digest('hex');
 }
+
+/** The advisory lock under which one person's places are counted, taken and turned in. */
+const lockKey = (userId: string): string => `translate:${userId}`;
 
 export class PgTranslationRepository implements TranslationRepository {
   constructor(private readonly pool: pg.Pool) {}
@@ -43,30 +65,88 @@ export class PgTranslationRepository implements TranslationRepository {
     return rows[0] ?? null;
   }
 
-  async save(entry: Parameters<TranslationRepository['save']>[0]): Promise<void> {
-    await this.pool.query(
-      `insert into translations
-         (created_by, source_hash, source_language, target_language, source_text, text, model)
-       values ($1, $2, $3, $4, $5, $6, $7)
-       on conflict (source_hash, target_language) do nothing`,
-      [
-        entry.createdBy,
-        entry.sourceHash,
-        entry.from,
-        entry.to,
-        entry.sourceText,
-        entry.text,
-        entry.model,
-      ]
-    );
+  async reserve(userId: string, dailyLimit: number): Promise<string | null> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      // One reservation at a time per person; released with the transaction. Waiting for
+      // it can take a while, and `now()` is when the transaction began: the place lives
+      // from the moment it is taken, so every time below is the clock's.
+      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        lockKey(userId),
+      ]);
+      // Places left behind by a process that died are swept here, where they stop counting.
+      await client.query(
+        `delete from translation_reservations
+          where user_id = $1 and created_at <= clock_timestamp() - make_interval(secs => $2)`,
+        [userId, RESERVATION_TTL_SECONDS]
+      );
+      const { rows } = await client.query<{ id: string }>(
+        `insert into translation_reservations (user_id, created_at)
+         select $1, clock_timestamp()
+          where (select count(*) from translations
+                  where created_by = $1 and created_at > clock_timestamp() - interval '1 day')
+              + (select count(*) from translation_reservations
+                  where user_id = $1
+                    and created_at > clock_timestamp() - make_interval(secs => $3))
+              < $2
+         returning id`,
+        [userId, dailyLimit, RESERVATION_TTL_SECONDS]
+      );
+      await client.query('commit');
+      return rows[0] ? String(rows[0].id) : null;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
-  async countLastDay(userId: string): Promise<number> {
-    const { rows } = await this.pool.query<{ count: string }>(
-      `select count(*) from translations
-        where created_by = $1 and created_at > now() - interval '1 day'`,
-      [userId]
-    );
-    return Number(rows[0]?.count ?? 0);
+  async release(reservation: string): Promise<void> {
+    await this.pool.query('delete from translation_reservations where id = $1', [
+      reservation,
+    ]);
+  }
+
+  async save(entry: Parameters<TranslationRepository['save']>[0]): Promise<void> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      // Under the same per-person lock as `reserve`: a request counting places for this
+      // person waits until this translation is committed and so counts it.
+      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        lockKey(entry.createdBy),
+      ]);
+      // The place becomes the translation, or is given back when the same remark was
+      // translated meanwhile. The translator was asked and answered, so the translation is
+      // stored and counted even when its place has lapsed by now: every call that was paid
+      // for is accounted for, and the limit refuses the next one.
+      await client.query('delete from translation_reservations where id = $1', [
+        entry.reservation,
+      ]);
+      await client.query(
+        `insert into translations
+           (created_by, source_hash, source_language, target_language, source_text, text,
+            model)
+         values ($1, $2, $3, $4, $5, $6, $7)
+         on conflict (source_hash, target_language) do nothing`,
+        [
+          entry.createdBy,
+          entry.sourceHash,
+          entry.from,
+          entry.to,
+          entry.sourceText,
+          entry.text,
+          entry.model,
+        ]
+      );
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }

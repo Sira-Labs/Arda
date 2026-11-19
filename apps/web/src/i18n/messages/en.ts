@@ -1141,6 +1141,9 @@ export const en: Messages = {
     voiceNote: 'Voice note (optional, up to 2 minutes)',
     voiceRecord: 'Record a voice note',
     voiceRemove: 'Remove voice note',
+    showOriginal: 'Show the original',
+    hideOriginal: 'Hide the original',
+    noTranslation: 'No translation available – these are your sheikh’s own words.',
     voiceFrom: (name) =>
       name ? `Voice note from ${name}` : 'Voice note from your sheikh',
     markedWords: 'Marked words',

@@ -81,3 +81,48 @@ languages: the teacher teaches in one, each student reads the app in another. Ta
   typecheck enforces it); German stays the source text for review by the sheikh.
 - The sign-in mail exists in four languages.
 - A machine translation is never presented as the teacher's own words.
+
+## Update 2026-11-19: written remarks translated on delivery (spec T6)
+
+Tier 2 is now delivered to the student, not only previewed by the teacher.
+
+- **The language of a remark is kept with it.** `recordings.note_language` (migration 0019)
+  is the teacher's language when he answered (German until chosen). A later change of his
+  language does not relabel what he wrote. Remarks from before the migration have none and
+  are shown as written: a translation is never made on a guess.
+- **Translated when it is read, on the reader's request.** Under a recitation the web app
+  shows his words at once and asks `POST /api/v1/recordings/:rid/note-translation` when the
+  remark's language differs from the language the app is shown in. The api translates the
+  stored remark, from the stored language, into the requested one of the four languages (the
+  reader's stored language without one). The request carries no text, so the route is no
+  general translator. Translating when the teacher answers was the alternative: it would make
+  his answer wait for the model, and a student who reads the app in another language later
+  would still need this route.
+- **Whose limit.** A new translation counts against the teacher who wrote the remark, as his
+  preview does (the reader's own count once his account is gone). A reader can cause at most
+  three translations per remark (the other languages); the cache serves every later reader.
+- **The limit is held, then counted** (migration 0020). The daily limit was checked before
+  the translator was asked and counted after, so requests in flight together could each pass
+  it; students' pages now ask for several remarks at once. A place is reserved under a
+  per-person lock before the call (dated when it is taken, not when the wait for the lock
+  began), becomes the translation or is given back when the translator fails or refuses. The
+  service stops waiting for the translator after 90 seconds (one attempt 30 seconds, one
+  retry). A place whose process died stops counting after ten minutes, several times that
+  deadline, so it does not lapse under work still going on. Every call the translator
+  answered is stored and counted, also one saved after its place lapsed: the limit can then
+  be passed by that one call already under way, never by a further one. Ruling even that out
+  would need leases renewed by a heartbeat; for a daily cap on short texts it is not worth
+  the moving parts. The same remark wanted several times at once in one process is asked
+  for once; two instances asking for the same remark at the same moment make two calls of
+  which the cache keeps, and the limit counts, one.
+- **Which answer.** The route says when the remark it translated was written. A page that
+  still shows an earlier answer reloads its list instead of putting the translation of his new
+  words over his old ones.
+- **What the student sees.** The translation, labelled "maschinell übersetzt", with "Original
+  anzeigen" one tap away; without a translation (no key, limit, refusal, failure) his own
+  words with "Übersetzung nicht verfügbar". His words are on the page before the translation
+  arrives, so a slow or failing model never hides them.
+- Found while building this: §4 says the processor is named on the "Quellen und Datenschutz"
+  page, but the app has no such page yet. The text is the owner's (legal); until it exists the
+  key should not be set for real students (sprint plan, "Waiting on the owner").
+- Not yet: the note in the ʿarḍ log ("Dein ʿArḍ") and the voice note's transcript (tier 3).

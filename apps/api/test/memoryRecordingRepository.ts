@@ -13,6 +13,7 @@ import type {
   Audio,
   NewRecording,
   NewVoiceNote,
+  OwnNote,
   OwnRecording,
   Page,
   PageRequest,
@@ -25,6 +26,7 @@ import type {
   Verdict,
   VoiceNoteOutcome,
 } from '../src/recordings/repository.js';
+import type { Language } from '../src/i18n/languages.js';
 import { marksFit, type CheckHint, type Mark } from '../src/recordings/repository.js';
 
 interface Row extends Omit<NewRecording, 'audio'> {
@@ -36,6 +38,7 @@ interface Row extends Omit<NewRecording, 'audio'> {
     verdict: Verdict;
     remark: RemarkId | null;
     note: string | null;
+    noteLanguage: Language | null;
     marks: Mark[];
     reviewerId: string;
     reviewedAt: string;
@@ -47,7 +50,12 @@ export class MemoryRecordingRepository implements RecordingRepository {
   rows: Row[] = [];
   /** The speech check's `check` hints per recording, as migration 0017 keeps them. */
   hints = new Map<string, CheckHint[]>();
+  /** `users.language` of the people in the tests; German until chosen, as in Postgres. */
+  languages: Record<string, Language> = {};
+  /** Accounts deleted since they answered. */
+  gone = new Set<string>();
   private seq = 0;
+  private answers = 0;
 
   constructor(
     private readonly halaqat: MemoryHalaqaRepository,
@@ -79,6 +87,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
             verdict: row.review.verdict,
             remark: row.review.remark,
             note: row.review.note,
+            noteLanguage: row.review.noteLanguage,
             marks: row.review.marks,
             voiceNote: row.voiceNote
               ? {
@@ -191,9 +200,11 @@ export class MemoryRecordingRepository implements RecordingRepository {
     if (row.voiceNote && row.voiceNote.recordedBy !== reviewerId) row.voiceNote = null;
     row.review = {
       ...input,
+      noteLanguage: input.note ? (this.languages[reviewerId] ?? 'de') : null,
       marks: [...input.marks],
       reviewerId,
-      reviewedAt: '2026-10-06T12:00:00.000Z',
+      // A later answer is a later moment, as `now()` makes it in Postgres.
+      reviewedAt: new Date(Date.UTC(2026, 9, 6, 12, 0, this.answers++)).toISOString(),
     };
     this.log?.recordAnswer({
       recordingId,
@@ -242,6 +253,21 @@ export class MemoryRecordingRepository implements RecordingRepository {
       (r) => r.id === recordingId && r.halaqaId === halaqaId
     )?.voiceNote;
     return note ? { mime: note.mime, data: note.audio } : null;
+  }
+
+  async ownNote(studentId: string, recordingId: string): Promise<OwnNote | null> {
+    const row = this.live().find(
+      (r) => r.id === recordingId && r.studentId === studentId
+    );
+    if (!row?.review?.note) return null;
+    return {
+      note: row.review.note,
+      noteLanguage: row.review.noteLanguage,
+      readerLanguage: this.languages[studentId] ?? 'de',
+      // A deleted reviewer leaves the answer without an author, as `on delete set null` does.
+      reviewerId: this.gone.has(row.review.reviewerId) ? null : row.review.reviewerId,
+      reviewedAt: row.review.reviewedAt,
+    };
   }
 
   async remove(studentId: string, recordingId: string): Promise<boolean> {

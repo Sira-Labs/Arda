@@ -749,6 +749,167 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       const data = (await exported.json()) as { translations: { text: string }[] };
       expect(data.translations.map((t) => t.text)).toContain('Deine Ghunna war zu kurz.');
     });
+
+    it('holds places in the daily limit one person at a time (migration 0020)', async () => {
+      await signInDevice('lehrer@example.org', '203.0.113.122');
+      const { rows } = await pool.query<{ id: string }>(
+        "select id from users where email = 'lehrer@example.org'"
+      );
+      const teacherId = rows[0]!.id;
+      const repo = new PgTranslationRepository(pool);
+      const held = async () =>
+        Number(
+          (await pool.query('select count(*) from translation_reservations')).rows[0]
+            .count
+        );
+
+      // Five requests at once against a limit of two: two places, never more.
+      const places = await Promise.all(
+        Array.from({ length: 5 }, () => repo.reserve(teacherId, 2))
+      );
+      const taken = places.filter((place): place is string => place !== null);
+      expect(taken).toHaveLength(2);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+
+      // A place given back is free again; one turned into a translation stays counted.
+      await repo.release(taken[0]!);
+      const again = await repo.reserve(teacherId, 2);
+      expect(again).not.toBeNull();
+      await repo.save({
+        reservation: again!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('one'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'one',
+        text: 'eins',
+        model: 'fake',
+      });
+      expect(await held()).toBe(1);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+
+      // The same remark translated meanwhile: the first text stays, the place is given back.
+      await repo.release(taken[1]!);
+      const twice = await repo.reserve(teacherId, 2);
+      await repo.save({
+        reservation: twice!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('one'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'one',
+        text: 'zwei',
+        model: 'fake',
+      });
+      expect(await held()).toBe(0);
+      expect((await repo.find(sourceHash('one'), 'de'))?.text).toBe('eins');
+
+      // A place left behind by a process that died stops counting after ten minutes.
+      const lost = await repo.reserve(teacherId, 2);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+      await pool.query(
+        "update translation_reservations set created_at = now() - interval '11 minutes' where id = $1",
+        [lost]
+      );
+      const next = await repo.reserve(teacherId, 2);
+      expect(next).not.toBeNull();
+      // And it is swept away, not kept for ever.
+      expect(await held()).toBe(1);
+
+      // Yet its call was only held up and answers after all: what the translator was asked
+      // for is stored and counted, late or not, and the limit then refuses the next.
+      await repo.save({
+        reservation: lost!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('late'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'late',
+        text: 'spät',
+        model: 'fake',
+      });
+      await repo.save({
+        reservation: next!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('in time'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'in time',
+        text: 'rechtzeitig',
+        model: 'fake',
+      });
+      expect((await repo.find(sourceHash('late'), 'de'))?.text).toBe('spät');
+      expect((await repo.find(sourceHash('in time'), 'de'))?.text).toBe('rechtzeitig');
+      const stored = await pool.query(
+        'select count(*) from translations where created_by = $1',
+        [teacherId]
+      );
+      // Three calls were made and three are counted.
+      expect(Number(stored.rows[0].count)).toBe(3);
+      expect(await held()).toBe(0);
+      expect(await repo.reserve(teacherId, 3)).toBeNull();
+
+      // A place lives from the moment it is taken, not from when its request began to
+      // wait for the person's lock.
+      const blocker = await pool.connect();
+      let released: Date;
+      let waited: string | null;
+      try {
+        await blocker.query('begin');
+        await blocker.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `translate:${teacherId}`,
+        ]);
+        const waiting = repo.reserve(teacherId, 5);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        released = (await blocker.query<{ at: Date }>('select clock_timestamp() as at'))
+          .rows[0]!.at;
+        await blocker.query('commit');
+        waited = await waiting;
+      } finally {
+        blocker.release();
+      }
+      const taken2 = await pool.query<{ created_at: Date }>(
+        'select created_at from translation_reservations where id = $1',
+        [waited]
+      );
+      expect(taken2.rows[0]!.created_at.getTime()).toBeGreaterThanOrEqual(
+        released.getTime()
+      );
+
+      // A translation is stored under the same lock: while this person's places are being
+      // counted elsewhere, the save waits, and the count that follows it sees the row.
+      const counting = await pool.connect();
+      let landed = false;
+      try {
+        await counting.query('begin');
+        await counting.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `translate:${teacherId}`,
+        ]);
+        const saving = repo
+          .save({
+            reservation: waited!,
+            createdBy: teacherId,
+            sourceHash: sourceHash('under the lock'),
+            from: 'en',
+            to: 'de',
+            sourceText: 'under the lock',
+            text: 'unter der Sperre',
+            model: 'fake',
+          })
+          .then(() => (landed = true));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        expect(landed).toBe(false);
+        await counting.query('commit');
+        await saving;
+      } finally {
+        counting.release();
+      }
+      expect((await repo.find(sourceHash('under the lock'), 'de'))?.text).toBe(
+        'unter der Sperre'
+      );
+      // Four stored now: a limit of four has no place left.
+      expect(await repo.reserve(teacherId, 4)).toBeNull();
+    });
   });
 
   describe('passkeys (ADR-0004)', () => {
@@ -1570,6 +1731,56 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // The assignment taken back keeps the recording.
       await assignments.remove(halaqaId, forAll);
       expect((await repo.own(AMINA, page)).recordings[0]!.assignmentId).toBeNull();
+    });
+
+    it('keeps the language of a written remark and hands it to its reader (T6)', async () => {
+      const id = ((await repo.save(take(AMINA), 10)) as { id: string }).id;
+      const answer = (note: string | null) =>
+        repo.review(
+          halaqaId,
+          id,
+          { verdict: 'again', remark: null, note, marks: [] },
+          TEACHER
+        );
+      const review = async () => (await repo.own(AMINA, page)).recordings[0]!.review!;
+
+      // No language chosen yet: German, as everywhere.
+      await answer('Das sīn stimmlos.');
+      expect(await review()).toMatchObject({ noteLanguage: 'de' });
+      expect(await repo.ownNote(AMINA, id)).toEqual({
+        note: 'Das sīn stimmlos.',
+        noteLanguage: 'de',
+        readerLanguage: 'de',
+        reviewerId: TEACHER,
+        // The moment the list shows for this answer.
+        reviewedAt: (await review()).reviewedAt,
+      });
+
+      await pool.query("update users set language = 'en' where id = $1", [TEACHER]);
+      await pool.query("update users set language = 'ar' where id = $1", [AMINA]);
+      // What he wrote before stays German; what he writes now is English.
+      expect((await review()).noteLanguage).toBe('de');
+      await answer('The sīn without voice.');
+      expect(await repo.ownNote(AMINA, id)).toEqual({
+        note: 'The sīn without voice.',
+        noteLanguage: 'en',
+        readerLanguage: 'ar',
+        reviewerId: TEACHER,
+        reviewedAt: (await review()).reviewedAt,
+      });
+      // Only its student reads it.
+      expect(await repo.ownNote(YUSUF, id)).toBeNull();
+      expect(await repo.ownNote(TEACHER, id)).toBeNull();
+
+      // Without his own words there is neither a remark nor a language.
+      await answer(null);
+      expect(await review()).toMatchObject({ note: null, noteLanguage: null });
+      expect(await repo.ownNote(AMINA, id)).toBeNull();
+
+      // A remark from before the column existed has no language.
+      await answer('Alt.');
+      await pool.query('update recordings set note_language = null where id = $1', [id]);
+      expect((await repo.ownNote(AMINA, id))?.noteLanguage).toBeNull();
     });
 
     it('queues what waits first, takes the answer, and pages both lists', async () => {
