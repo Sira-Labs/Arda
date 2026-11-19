@@ -847,6 +847,33 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // Two against a limit of two, whatever was in flight.
       expect(Number(stored.rows[0].count)).toBe(2);
       expect(await held()).toBe(0);
+
+      // A place lives from the moment it is taken, not from when its request began to
+      // wait for the person's lock.
+      const blocker = await pool.connect();
+      let released: Date;
+      let waited: string | null;
+      try {
+        await blocker.query('begin');
+        await blocker.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `translate:${teacherId}`,
+        ]);
+        const waiting = repo.reserve(teacherId, 5);
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        released = (await blocker.query<{ at: Date }>('select clock_timestamp() as at'))
+          .rows[0]!.at;
+        await blocker.query('commit');
+        waited = await waiting;
+      } finally {
+        blocker.release();
+      }
+      const taken2 = await pool.query<{ created_at: Date }>(
+        'select created_at from translation_reservations where id = $1',
+        [waited]
+      );
+      expect(taken2.rows[0]!.created_at.getTime()).toBeGreaterThanOrEqual(
+        released.getTime()
+      );
     });
   });
 

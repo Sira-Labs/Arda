@@ -62,24 +62,26 @@ export class PgTranslationRepository implements TranslationRepository {
     const client = await this.pool.connect();
     try {
       await client.query('begin');
-      // One reservation at a time per person; released with the transaction.
+      // One reservation at a time per person; released with the transaction. Waiting for
+      // it can take a while, and `now()` is when the transaction began: the place lives
+      // from the moment it is taken, so every time below is the clock's.
       await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
         `translate:${userId}`,
       ]);
       // Places left behind by a process that died are swept here, where they stop counting.
       await client.query(
         `delete from translation_reservations
-          where user_id = $1 and created_at <= now() - make_interval(secs => $2)`,
+          where user_id = $1 and created_at <= clock_timestamp() - make_interval(secs => $2)`,
         [userId, RESERVATION_TTL_SECONDS]
       );
       const { rows } = await client.query<{ id: string }>(
-        `insert into translation_reservations (user_id)
-         select $1
+        `insert into translation_reservations (user_id, created_at)
+         select $1, clock_timestamp()
           where (select count(*) from translations
-                  where created_by = $1 and created_at > now() - interval '1 day')
+                  where created_by = $1 and created_at > clock_timestamp() - interval '1 day')
               + (select count(*) from translation_reservations
                   where user_id = $1
-                    and created_at > now() - make_interval(secs => $3))
+                    and created_at > clock_timestamp() - make_interval(secs => $3))
               < $2
          returning id`,
         [userId, dailyLimit, RESERVATION_TTL_SECONDS]
