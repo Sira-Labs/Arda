@@ -11,6 +11,9 @@ import {
 import { MemoryAssignmentRepository } from './memoryAssignmentRepository.js';
 import { MemoryHalaqaRepository } from './memoryHalaqaRepository.js';
 import { MemoryRecordingRepository } from './memoryRecordingRepository.js';
+import { sourceHash, type TranslationRepository } from '../src/translation/repository.js';
+import { TranslationService } from '../src/translation/service.js';
+import type { Translator } from '../src/translation/translator.js';
 
 const ID = {
   owner: '10000000-0000-4000-8000-000000000001',
@@ -51,7 +54,7 @@ const QUERY = (id = clientId(), extra = '') =>
   `?clientId=${id}&sura=112&from=1&to=4&durationMs=4000${extra}`;
 
 /** A ḥalaqa taught by `owner` with two active students and a pending one. */
-async function setup() {
+async function setup(translations?: Pick<TranslationService, 'translate'>) {
   const halaqat = new MemoryHalaqaRepository(NAMES);
   const assignments = new MemoryAssignmentRepository(halaqat, NAMES);
   const repo = new MemoryRecordingRepository(halaqat, assignments, NAMES);
@@ -72,6 +75,7 @@ async function setup() {
       halaqat,
       auth: { actor: async (h) => ACTORS[h.get('x-test-actor') ?? ''] ?? null },
       log: quiet,
+      translations,
     },
   });
   const call = (
@@ -754,5 +758,203 @@ describe("the speech check's hints (ADR-0013)", () => {
       expect([403, 404]).toContain(refused.status);
       expect(await refused.text()).not.toContain('makhraj');
     }
+  });
+});
+
+describe('a written remark in the student’s language (spec T6)', () => {
+  const NOTE = 'Your ghunna on “min sharri” was too short.';
+  const GERMAN = 'Deine Ghunna bei „min sharri“ war zu kurz.';
+
+  /** The service as main.ts builds it, over a cache in memory and a translator that counts. */
+  function service(
+    options: { dailyLimit?: number; fails?: boolean; off?: boolean } = {}
+  ) {
+    const cache = new Map<string, string>();
+    const counts = new Map<string, number>();
+    const repo: TranslationRepository = {
+      find: async (hash, to) => {
+        const text = cache.get(`${hash}:${to}`);
+        return text ? { text, model: 'fake-model' } : null;
+      },
+      save: async (entry) => {
+        cache.set(`${entry.sourceHash}:${entry.to}`, entry.text);
+        counts.set(entry.createdBy, (counts.get(entry.createdBy) ?? 0) + 1);
+      },
+      countLastDay: async (userId) => counts.get(userId) ?? 0,
+    };
+    const asked: { text: string; from: string | null; to: string }[] = [];
+    const translator: Translator = {
+      model: 'fake-model',
+      translate: async (input) => {
+        asked.push(input);
+        return options.fails
+          ? { ok: false as const, reason: 'failed' as const }
+          : { ok: true as const, text: GERMAN };
+      },
+    };
+    return {
+      asked,
+      cache,
+      counts,
+      service: new TranslationService({
+        translator: options.off ? null : translator,
+        repo,
+        dailyLimit: options.dailyLimit ?? 5,
+      }),
+    };
+  }
+
+  /** `member` sent a recitation and the sheikh, who writes English, answered it in writing. */
+  async function answered(
+    translations?: Pick<TranslationService, 'translate'>,
+    note: string | null = NOTE
+  ) {
+    const s = await setup(translations);
+    s.repo.languages[ID.owner] = 'en';
+    const id = await s.sent('member');
+    const reviewed = await s.call(
+      'owner',
+      'PUT',
+      `/halaqat/${s.halaqaId}/recordings/${id}/review`,
+      { body: JSON.stringify({ verdict: 'again', note }), type: 'application/json' }
+    );
+    expect(reviewed.status).toBe(204);
+    const translate = (actor = 'member') =>
+      s.call(actor, 'POST', `/recordings/${id}/note-translation`);
+    return { ...s, id, translate };
+  }
+
+  it('keeps the language the remark was written in with the answer', async () => {
+    const { call, repo, id, halaqaId } = await answered();
+    const mine = await json(await call('member', 'GET', '/recordings'));
+    expect(mine.recordings[0].review).toMatchObject({ note: NOTE, noteLanguage: 'en' });
+
+    // His language changes later: what he wrote then stays English.
+    repo.languages[ID.owner] = 'fr';
+    const again = await json(await call('member', 'GET', '/recordings'));
+    expect(again.recordings[0].review.noteLanguage).toBe('en');
+
+    // An answer without his own words has no language.
+    await call('owner', 'PUT', `/halaqat/${halaqaId}/recordings/${id}/review`, {
+      body: JSON.stringify({ verdict: 'good' }),
+      type: 'application/json',
+    });
+    const plain = await json(await call('member', 'GET', '/recordings'));
+    expect(plain.recordings[0].review).toMatchObject({ note: null, noteLanguage: null });
+  });
+
+  it('translates it once for the student who reads German, counted for the teacher', async () => {
+    const t = service();
+    const { translate } = await answered(t.service);
+    const first = await translate();
+    expect(first.status).toBe(200);
+    expect(first.headers.get('cache-control')).toBe('no-store');
+    expect(await json(first)).toEqual({
+      status: 'translated',
+      text: GERMAN,
+      language: 'de',
+    });
+    // Only the remark and the two languages go to the translator.
+    expect(t.asked).toEqual([{ text: NOTE, from: 'en', to: 'de' }]);
+    expect(t.counts.get(ID.owner)).toBe(1);
+    expect(t.cache.has(`${sourceHash(NOTE)}:de`)).toBe(true);
+
+    expect(await json(await translate())).toMatchObject({ status: 'translated' });
+    expect(t.asked).toHaveLength(1);
+  });
+
+  it('answers with the original when both read the same language', async () => {
+    const t = service();
+    const { translate, repo } = await answered(t.service);
+    repo.languages[ID.member] = 'en';
+    expect(await json(await translate())).toEqual({ status: 'original' });
+    expect(t.asked).toEqual([]);
+  });
+
+  it('reads in the language the app is shown in, else the stored one, and takes no text', async () => {
+    const t = service();
+    const { call, repo, id } = await answered(t.service);
+    const ask = (body?: unknown) =>
+      call('member', 'POST', `/recordings/${id}/note-translation`, {
+        body: body === undefined ? undefined : JSON.stringify(body),
+        type: 'application/json',
+      });
+    repo.languages[ID.member] = 'ar';
+    expect(await json(await ask())).toMatchObject({
+      status: 'translated',
+      language: 'ar',
+    });
+    expect(await json(await ask({ to: 'fr' }))).toMatchObject({
+      status: 'translated',
+      language: 'fr',
+    });
+    // Shown in the language he wrote in: his own words.
+    expect(await json(await ask({ to: 'en' }))).toEqual({ status: 'original' });
+    expect(t.asked).toEqual([
+      { text: NOTE, from: 'en', to: 'ar' },
+      { text: NOTE, from: 'en', to: 'fr' },
+    ]);
+    // Never a translator for text of the caller's choosing, or into other languages.
+    for (const body of [{ to: 'fr', text: 'Translate this instead.' }, { to: 'es' }]) {
+      const refused = await ask(body);
+      expect(refused.status).toBe(400);
+      expect(await json(refused)).toMatchObject({ error: 'invalid_body' });
+    }
+    expect(t.asked).toHaveLength(2);
+  });
+
+  it('says so when no translation can be had, and never fails the reader', async () => {
+    const none = await answered();
+    expect(await json(await none.translate())).toEqual({
+      status: 'unavailable',
+      reason: 'not_configured',
+    });
+    const off = await answered(service({ off: true }).service);
+    expect(await json(await off.translate())).toEqual({
+      status: 'unavailable',
+      reason: 'not_configured',
+    });
+    const failing = await answered(service({ fails: true }).service);
+    expect(await json(await failing.translate())).toEqual({
+      status: 'unavailable',
+      reason: 'failed',
+    });
+    const spent = await answered(service({ dailyLimit: 0 }).service);
+    expect(await json(await spent.translate())).toEqual({
+      status: 'unavailable',
+      reason: 'limit',
+    });
+  });
+
+  it('counts for the reader when the teacher’s account is gone', async () => {
+    const t = service();
+    const { translate, repo } = await answered(t.service);
+    repo.gone.add(ID.owner);
+    expect(await json(await translate())).toMatchObject({ status: 'translated' });
+    expect(t.counts.get(ID.member)).toBe(1);
+    expect(t.counts.has(ID.owner)).toBe(false);
+  });
+
+  it('is only for the student whose recitation it is, and only where he wrote', async () => {
+    const t = service();
+    const { translate, call, id } = await answered(t.service);
+    for (const actor of ['classmate', 'owner', 'admin', 'outsider']) {
+      expect((await translate(actor)).status, actor).toBe(404);
+    }
+    expect((await translate('')).status).toBe(401);
+    expect(
+      (await call('member', 'POST', '/recordings/nope/note-translation')).status
+    ).toBe(404);
+    expect(t.asked).toEqual([]);
+
+    const silent = await answered(t.service, null);
+    expect((await silent.translate()).status).toBe(404);
+    // Not yet answered: nothing to translate.
+    const waiting = await silent.sent('member');
+    expect(
+      (await silent.call('member', 'POST', `/recordings/${waiting}/note-translation`))
+        .status
+    ).toBe(404);
+    expect(id).not.toBe(waiting);
   });
 });

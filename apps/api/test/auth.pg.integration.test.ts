@@ -1572,6 +1572,53 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect((await repo.own(AMINA, page)).recordings[0]!.assignmentId).toBeNull();
     });
 
+    it('keeps the language of a written remark and hands it to its reader (T6)', async () => {
+      const id = ((await repo.save(take(AMINA), 10)) as { id: string }).id;
+      const answer = (note: string | null) =>
+        repo.review(
+          halaqaId,
+          id,
+          { verdict: 'again', remark: null, note, marks: [] },
+          TEACHER
+        );
+      const review = async () => (await repo.own(AMINA, page)).recordings[0]!.review!;
+
+      // No language chosen yet: German, as everywhere.
+      await answer('Das sīn stimmlos.');
+      expect(await review()).toMatchObject({ noteLanguage: 'de' });
+      expect(await repo.ownNote(AMINA, id)).toEqual({
+        note: 'Das sīn stimmlos.',
+        noteLanguage: 'de',
+        readerLanguage: 'de',
+        reviewerId: TEACHER,
+      });
+
+      await pool.query("update users set language = 'en' where id = $1", [TEACHER]);
+      await pool.query("update users set language = 'ar' where id = $1", [AMINA]);
+      // What he wrote before stays German; what he writes now is English.
+      expect((await review()).noteLanguage).toBe('de');
+      await answer('The sīn without voice.');
+      expect(await repo.ownNote(AMINA, id)).toEqual({
+        note: 'The sīn without voice.',
+        noteLanguage: 'en',
+        readerLanguage: 'ar',
+        reviewerId: TEACHER,
+      });
+      // Only its student reads it.
+      expect(await repo.ownNote(YUSUF, id)).toBeNull();
+      expect(await repo.ownNote(TEACHER, id)).toBeNull();
+
+      // Without his own words there is neither a remark nor a language.
+      await answer(null);
+      expect(await review()).toMatchObject({ note: null, noteLanguage: null });
+      expect(await repo.ownNote(AMINA, id)).toBeNull();
+
+      // A remark from before the column existed has no language.
+      await answer('Alt.');
+      await pool.query('update recordings set note_language = null where id = $1', [id]);
+      expect((await repo.ownNote(AMINA, id))?.noteLanguage).toBeNull();
+    });
+
     it('queues what waits first, takes the answer, and pages both lists', async () => {
       const ids: string[] = [];
       for (const studentId of [AMINA, YUSUF, AMINA]) {
