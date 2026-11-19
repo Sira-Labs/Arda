@@ -2,7 +2,7 @@
 -- update 2026-11-19). The limit used to be checked before the call and counted after it, so
 -- requests in flight together could each pass the check. A reservation is taken under a
 -- per-person lock and counts like a translation until it is either turned into one or given
--- back; one left behind by a crashed process stops counting after two minutes.
+-- back; one left behind by a crashed process stops counting after ten minutes.
 
 create table if not exists translation_reservations (
   id         bigserial primary key,

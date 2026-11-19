@@ -23,8 +23,8 @@ export interface TranslationRepository {
   release(reservation: string): Promise<void>;
   /**
    * Stores a translation in place of its reservation; a concurrent identical one keeps the
-   * first, and the place is given back. With a reservation that has lapsed nothing is
-   * stored: its place may be someone else's by now.
+   * first, and the place is given back. A translation whose place has lapsed is stored and
+   * counted all the same: the translator was asked for it.
    */
   save(entry: {
     reservation: string;
@@ -38,8 +38,12 @@ export interface TranslationRepository {
   }): Promise<void>;
 }
 
-/** How long a place stays held for a translator call that never reported back. */
-export const RESERVATION_TTL_SECONDS = 120;
+/**
+ * How long a place stays held for a translator call that never reported back (its process
+ * died). Several times the service's deadline for the whole call, so a place does not lapse
+ * under work that is still going on; a lost place costs one translation for ten minutes.
+ */
+export const RESERVATION_TTL_SECONDS = 600;
 
 /** The cache key: the remark with whitespace normalised, so a stray space does not miss. */
 export function sourceHash(text: string): string {
@@ -104,18 +108,17 @@ export class PgTranslationRepository implements TranslationRepository {
 
   async save(entry: Parameters<TranslationRepository['save']>[0]): Promise<void> {
     // One statement: the place becomes the translation, or is given back when the same
-    // remark was translated meanwhile. A place that has lapsed (the save came later than a
-    // reservation lives) may already have been taken by another request, so it becomes
-    // nothing: the limit counts what is stored, and what is stored never passes it.
+    // remark was translated meanwhile. The translator was asked and answered, so the
+    // translation is stored and counted even when its place has lapsed by now (a save held
+    // up for longer than a place lives): every call that was paid for is accounted for,
+    // and the limit refuses the next one.
     await this.pool.query(
       `with held as (
-         delete from translation_reservations where id = $8 returning created_at
+         delete from translation_reservations where id = $8
        )
        insert into translations
          (created_by, source_hash, source_language, target_language, source_text, text, model)
-       select $1, $2, $3, $4, $5, $6, $7
-        where exists (select 1 from held
-                       where created_at > now() - make_interval(secs => $9))
+       values ($1, $2, $3, $4, $5, $6, $7)
        on conflict (source_hash, target_language) do nothing`,
       [
         entry.createdBy,
@@ -126,7 +129,6 @@ export class PgTranslationRepository implements TranslationRepository {
         entry.text,
         entry.model,
         entry.reservation,
-        RESERVATION_TTL_SECONDS,
       ]
     );
   }

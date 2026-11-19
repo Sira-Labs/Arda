@@ -804,11 +804,11 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(await held()).toBe(0);
       expect((await repo.find(sourceHash('one'), 'de'))?.text).toBe('eins');
 
-      // A place left behind by a process that died stops counting after two minutes.
+      // A place left behind by a process that died stops counting after ten minutes.
       const lost = await repo.reserve(teacherId, 2);
       expect(await repo.reserve(teacherId, 2)).toBeNull();
       await pool.query(
-        "update translation_reservations set created_at = now() - interval '3 minutes' where id = $1",
+        "update translation_reservations set created_at = now() - interval '11 minutes' where id = $1",
         [lost]
       );
       const next = await repo.reserve(teacherId, 2);
@@ -816,8 +816,8 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       // And it is swept away, not kept for ever.
       expect(await held()).toBe(1);
 
-      // A save that comes after its place has lapsed stores nothing: the place went to the
-      // other request, whose translation is the one that counts.
+      // Yet its call was only held up and answers after all: what the translator was asked
+      // for is stored and counted, late or not, and the limit then refuses the next.
       await repo.save({
         reservation: lost!,
         createdBy: teacherId,
@@ -838,15 +838,16 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         text: 'rechtzeitig',
         model: 'fake',
       });
-      expect(await repo.find(sourceHash('late'), 'de')).toBeNull();
+      expect((await repo.find(sourceHash('late'), 'de'))?.text).toBe('spät');
       expect((await repo.find(sourceHash('in time'), 'de'))?.text).toBe('rechtzeitig');
       const stored = await pool.query(
         'select count(*) from translations where created_by = $1',
         [teacherId]
       );
-      // Two against a limit of two, whatever was in flight.
-      expect(Number(stored.rows[0].count)).toBe(2);
+      // Three calls were made and three are counted.
+      expect(Number(stored.rows[0].count)).toBe(3);
       expect(await held()).toBe(0);
+      expect(await repo.reserve(teacherId, 3)).toBeNull();
 
       // A place lives from the moment it is taken, not from when its request began to
       // wait for the person's lock.

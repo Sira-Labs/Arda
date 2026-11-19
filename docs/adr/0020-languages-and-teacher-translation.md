@@ -104,11 +104,15 @@ Tier 2 is now delivered to the student, not only previewed by the teacher.
 - **The limit is held, then counted** (migration 0020). The daily limit was checked before
   the translator was asked and counted after, so requests in flight together could each pass
   it; students' pages now ask for several remarks at once. A place is reserved under a
-  per-person lock before the call, becomes the translation or is given back when the
-  translator fails or refuses, and stops counting after two minutes if its process died. The
+  per-person lock before the call (dated when it is taken, not when the wait for the lock
+  began), becomes the translation or is given back when the translator fails or refuses. The
   service stops waiting for the translator after 90 seconds (one attempt 30 seconds, one
-  retry), so a place never lapses while its call is still awaited; a save that still comes after its
-  place has lapsed stores nothing, so what is stored never passes the limit.
+  retry). A place whose process died stops counting after ten minutes, several times that
+  deadline, so it does not lapse under work still going on. Every call the translator
+  answered is stored and counted, also one saved after its place lapsed: the limit can then
+  be passed by that one call already under way, never by a further one. Ruling even that out
+  would need leases renewed by a heartbeat; for a daily cap on short texts it is not worth
+  the moving parts.
 - **Which answer.** The route says when the remark it translated was written. A page that
   still shows an earlier answer reloads its list instead of putting the translation of his new
   words over his old ones.

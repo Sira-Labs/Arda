@@ -205,6 +205,66 @@ describe('TranslationService', () => {
     expect(repo.held.size).toBe(0);
   });
 
+  it('accounts for every call the translator answered, also one saved after its place lapsed', async () => {
+    // A repository whose places can lapse, as in Postgres: `lapse()` is the clock passing.
+    const counts = new Map<string, number>();
+    const held = new Set<string>();
+    let reservations = 0;
+    const saves: (() => void)[] = [];
+    const repo: TranslationRepository = {
+      find: async () => null,
+      reserve: async (userId, dailyLimit) => {
+        if ((counts.get(userId) ?? 0) + held.size >= dailyLimit) return null;
+        const id = String(++reservations);
+        held.add(id);
+        return id;
+      },
+      release: async (id) => {
+        held.delete(id);
+      },
+      // The first save is held up until the test lets it through.
+      save: (entry) =>
+        new Promise<void>((resolve) => {
+          const store = () => {
+            held.delete(entry.reservation);
+            counts.set(entry.createdBy, (counts.get(entry.createdBy) ?? 0) + 1);
+            resolve();
+          };
+          if (saves.length === 0) saves.push(store);
+          else store();
+        }),
+    };
+    let asked = 0;
+    const service = new TranslationService({
+      translator: {
+        model: 'm',
+        translate: async ({ text }) => {
+          asked += 1;
+          return { ok: true, text: `übersetzt: ${text}` };
+        },
+      },
+      repo,
+      dailyLimit: 1,
+    });
+    const ask = (text: string) =>
+      service.translate({ userId: TEACHER, text, from: 'en', to: 'de' });
+
+    const first = ask('one');
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    // Its save hangs; its place lapses; a second request takes the place and is served.
+    held.clear();
+    expect(await ask('two')).toMatchObject({ status: 'translated' });
+    saves[0]!();
+    expect(await first).toMatchObject({ status: 'translated' });
+
+    // Two calls were made, both readers got their text, and both calls are counted: the
+    // limit of one is passed by the one call that was already under way, and no further.
+    expect(asked).toBe(2);
+    expect(counts.get(TEACHER)).toBe(2);
+    expect(await ask('three')).toEqual({ status: 'unavailable', reason: 'limit' });
+    expect(asked).toBe(2);
+  });
+
   it('is unavailable without a translator and never throws on a refusal', async () => {
     const off = new TranslationService({
       translator: null,

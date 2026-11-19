@@ -88,7 +88,7 @@ Built (migration `0002_languages_and_translations`, ADR-0020):
 | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `users.language`           | `de`, `en`, `fr`, `ar` or null: interface, sign-in mail, translation target                                                                                            |
 | `translations`             | cached machine translations of written remarks per text and target language; author for the daily limit and the export                                                 |
-| `translation_reservations` | a place held in a person's daily translation limit while the translator is asked (migration `0020`); becomes the translation or is given back; stale after two minutes |
+| `translation_reservations` | a place held in a person's daily translation limit while the translator is asked (migration `0020`); becomes the translation or is given back; stale after ten minutes |
 
 Built (migration `0003_halaqat`, spec T1, ADR-0005):
 
