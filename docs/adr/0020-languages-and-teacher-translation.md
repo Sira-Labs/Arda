@@ -107,7 +107,8 @@ Tier 2 is now delivered to the student, not only previewed by the teacher.
   per-person lock before the call, becomes the translation or is given back when the
   translator fails or refuses, and stops counting after two minutes if its process died. The
   service stops waiting for the translator after 90 seconds (one attempt 30 seconds, one
-  retry), so a place never lapses while its call is still awaited.
+  retry), so a place never lapses while its call is still awaited; a save that still comes after its
+  place has lapsed stores nothing, so what is stored never passes the limit.
 - **Which answer.** The route says when the remark it translated was written. A page that
   still shows an earlier answer reloads its list instead of putting the translation of his new
   words over his old ones.

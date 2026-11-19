@@ -811,7 +811,42 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         "update translation_reservations set created_at = now() - interval '3 minutes' where id = $1",
         [lost]
       );
-      expect(await repo.reserve(teacherId, 2)).not.toBeNull();
+      const next = await repo.reserve(teacherId, 2);
+      expect(next).not.toBeNull();
+      // And it is swept away, not kept for ever.
+      expect(await held()).toBe(1);
+
+      // A save that comes after its place has lapsed stores nothing: the place went to the
+      // other request, whose translation is the one that counts.
+      await repo.save({
+        reservation: lost!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('late'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'late',
+        text: 'spät',
+        model: 'fake',
+      });
+      await repo.save({
+        reservation: next!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('in time'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'in time',
+        text: 'rechtzeitig',
+        model: 'fake',
+      });
+      expect(await repo.find(sourceHash('late'), 'de')).toBeNull();
+      expect((await repo.find(sourceHash('in time'), 'de'))?.text).toBe('rechtzeitig');
+      const stored = await pool.query(
+        'select count(*) from translations where created_by = $1',
+        [teacherId]
+      );
+      // Two against a limit of two, whatever was in flight.
+      expect(Number(stored.rows[0].count)).toBe(2);
+      expect(await held()).toBe(0);
     });
   });
 

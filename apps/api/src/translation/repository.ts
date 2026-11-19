@@ -23,7 +23,8 @@ export interface TranslationRepository {
   release(reservation: string): Promise<void>;
   /**
    * Stores a translation in place of its reservation; a concurrent identical one keeps the
-   * first, and the place is given back.
+   * first, and the place is given back. With a reservation that has lapsed nothing is
+   * stored: its place may be someone else's by now.
    */
   save(entry: {
     reservation: string;
@@ -65,6 +66,12 @@ export class PgTranslationRepository implements TranslationRepository {
       await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
         `translate:${userId}`,
       ]);
+      // Places left behind by a process that died are swept here, where they stop counting.
+      await client.query(
+        `delete from translation_reservations
+          where user_id = $1 and created_at <= now() - make_interval(secs => $2)`,
+        [userId, RESERVATION_TTL_SECONDS]
+      );
       const { rows } = await client.query<{ id: string }>(
         `insert into translation_reservations (user_id)
          select $1
@@ -95,14 +102,18 @@ export class PgTranslationRepository implements TranslationRepository {
 
   async save(entry: Parameters<TranslationRepository['save']>[0]): Promise<void> {
     // One statement: the place becomes the translation, or is given back when the same
-    // remark was translated meanwhile.
+    // remark was translated meanwhile. A place that has lapsed (the save came later than a
+    // reservation lives) may already have been taken by another request, so it becomes
+    // nothing: the limit counts what is stored, and what is stored never passes it.
     await this.pool.query(
       `with held as (
-         delete from translation_reservations where id = $8
+         delete from translation_reservations where id = $8 returning created_at
        )
        insert into translations
          (created_by, source_hash, source_language, target_language, source_text, text, model)
-       values ($1, $2, $3, $4, $5, $6, $7)
+       select $1, $2, $3, $4, $5, $6, $7
+        where exists (select 1 from held
+                       where created_at > now() - make_interval(secs => $9))
        on conflict (source_hash, target_language) do nothing`,
       [
         entry.createdBy,
@@ -113,6 +124,7 @@ export class PgTranslationRepository implements TranslationRepository {
         entry.text,
         entry.model,
         entry.reservation,
+        RESERVATION_TTL_SECONDS,
       ]
     );
   }
