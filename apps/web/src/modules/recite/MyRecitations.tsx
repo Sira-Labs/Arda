@@ -26,15 +26,21 @@ export function MyRecitations() {
   const [failure, setFailure] = useState<Failure | null>(null);
   const [busy, setBusy] = useState(false);
 
+  // Only the latest request may set the list: one asked for earlier (the first load, while
+  // a stale remark already asks for a fresh list) must not put older answers back.
+  const [requests] = useState(() => ({ latest: 0 }));
+
   const load = useCallback(async () => {
+    const request = ++requests.latest;
     const result = await client.myRecitations();
+    if (request !== requests.latest) return;
     if (result.ok) {
       setList(result.value.recordings);
       setFailure(null);
     } else {
       setFailure(result);
     }
-  }, [client]);
+  }, [client, requests]);
 
   useEffect(() => {
     if (me) void load();

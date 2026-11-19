@@ -14,10 +14,19 @@ export type TranslateOutcome =
   | { status: 'translated'; text: string; model: string; cached: boolean }
   | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' };
 
+/**
+ * How long the translator may take before the service stops waiting and gives the place in
+ * the limit back. Shorter than a reservation lives, so a place is never counted as free while
+ * its translator is still being waited for.
+ */
+export const TRANSLATE_DEADLINE_MS = 90_000;
+
 export interface TranslationServiceOptions {
   translator: Translator | null;
   repo: TranslationRepository;
   dailyLimit: number;
+  /** Defaults to `TRANSLATE_DEADLINE_MS`; tests shorten it. */
+  deadlineMs?: number;
 }
 
 export class TranslationService {
@@ -56,11 +65,28 @@ export class TranslationService {
     );
     if (reservation === null) return { status: 'unavailable', reason: 'limit' };
     let result: Awaited<ReturnType<Translator['translate']>>;
+    const deadline = new AbortController();
+    let timer: ReturnType<typeof setTimeout> | undefined;
     try {
-      result = await translator.translate({ text, from: input.from, to: input.to });
+      result = await Promise.race([
+        translator.translate({
+          text,
+          from: input.from,
+          to: input.to,
+          signal: deadline.signal,
+        }),
+        new Promise<{ ok: false; reason: 'failed' }>((resolve) => {
+          timer = setTimeout(() => {
+            deadline.abort();
+            resolve({ ok: false, reason: 'failed' });
+          }, this.options.deadlineMs ?? TRANSLATE_DEADLINE_MS);
+        }),
+      ]);
     } catch (error) {
       await this.options.repo.release(reservation);
       throw error;
+    } finally {
+      clearTimeout(timer);
     }
     if (!result.ok) {
       await this.options.repo.release(reservation);

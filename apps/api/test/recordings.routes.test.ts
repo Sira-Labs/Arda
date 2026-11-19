@@ -790,7 +790,8 @@ describe('a written remark in the student’s language (spec T6)', () => {
     const translator: Translator = {
       model: 'fake-model',
       translate: async (input) => {
-        asked.push(input);
+        // What goes to the provider; the deadline's signal is the service's own.
+        asked.push({ text: input.text, from: input.from, to: input.to });
         return options.fails
           ? { ok: false as const, reason: 'failed' as const }
           : { ok: true as const, text: GERMAN };

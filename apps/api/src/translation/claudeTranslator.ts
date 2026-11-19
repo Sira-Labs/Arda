@@ -20,6 +20,8 @@ import {
 export const DEFAULT_TRANSLATION_MODEL = 'claude-opus-5-5';
 /** A remark is at most 1000 characters; its translation fits easily. */
 const MAX_OUTPUT_TOKENS = 2000;
+/** How long one attempt may take; with one retry still under the service's deadline. */
+export const REQUEST_TIMEOUT_MS = 30_000;
 
 export interface TranslatorLog {
   warn(obj: object, msg: string): void;
@@ -38,15 +40,20 @@ export class ClaudeTranslator implements Translator {
   async translate(request: TranslationRequest): Promise<TranslationResult> {
     let response: Anthropic.Beta.BetaMessage;
     try {
-      response = await this.client.beta.messages.create({
-        model: this.model,
-        max_tokens: MAX_OUTPUT_TOKENS,
-        betas: ['server-side-fallback-2026-07-01'],
-        fallbacks: 'default',
-        output_config: { effort: 'low' },
-        system: TRANSLATION_INSTRUCTIONS,
-        messages: [{ role: 'user', content: translationPrompt(request) }],
-      });
+      response = await this.client.beta.messages.create(
+        {
+          model: this.model,
+          max_tokens: MAX_OUTPUT_TOKENS,
+          betas: ['server-side-fallback-2026-07-01'],
+          fallbacks: 'default',
+          output_config: { effort: 'low' },
+          system: TRANSLATION_INSTRUCTIONS,
+          messages: [{ role: 'user', content: translationPrompt(request) }],
+        },
+        // A short remark: an answer that takes longer is not coming. One retry at most, so
+        // the whole call ends well inside the service's deadline.
+        { timeout: REQUEST_TIMEOUT_MS, maxRetries: 1, signal: request.signal }
+      );
     } catch (error) {
       // Never log the remark: status and type are enough to act on.
       if (error instanceof Anthropic.APIError) {

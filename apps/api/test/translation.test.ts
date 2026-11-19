@@ -4,10 +4,15 @@ import { createApp } from '../src/app.js';
 import type { Actor } from '../src/authz/policies.js';
 import {
   ClaudeTranslator,
+  REQUEST_TIMEOUT_MS,
   type BetaMessagesClient,
 } from '../src/translation/claudeTranslator.js';
-import { sourceHash, type TranslationRepository } from '../src/translation/repository.js';
-import { TranslationService } from '../src/translation/service.js';
+import {
+  RESERVATION_TTL_SECONDS,
+  sourceHash,
+  type TranslationRepository,
+} from '../src/translation/repository.js';
+import { TRANSLATE_DEADLINE_MS, TranslationService } from '../src/translation/service.js';
 import {
   TRANSLATION_INSTRUCTIONS,
   translationPrompt,
@@ -166,6 +171,40 @@ describe('TranslationService', () => {
     expect(repo.held.size).toBe(0);
   });
 
+  it('stops waiting for the translator before its place in the limit could lapse', async () => {
+    expect(TRANSLATE_DEADLINE_MS).toBeLessThan(RESERVATION_TTL_SECONDS * 1000);
+    // One attempt and its retry fit inside the deadline.
+    expect(2 * REQUEST_TIMEOUT_MS).toBeLessThan(TRANSLATE_DEADLINE_MS);
+
+    const repo = memoryRepo();
+    let aborted = false;
+    let heldWhileAsked = 0;
+    const service = new TranslationService({
+      translator: {
+        model: 'm',
+        // Never answers; it only learns that nobody waits any more.
+        translate: ({ signal }) =>
+          new Promise(() => {
+            heldWhileAsked = repo.held.size;
+            signal?.addEventListener('abort', () => (aborted = true));
+          }),
+      },
+      repo,
+      dailyLimit: 1,
+      deadlineMs: 20,
+    });
+    const ask = () =>
+      service.translate({ userId: TEACHER, text: 'x', from: 'en', to: 'de' });
+    const first = ask();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    // While the translator is waited for, the place is held: a second request finds none.
+    expect(heldWhileAsked).toBe(1);
+    expect(await ask()).toEqual({ status: 'unavailable', reason: 'limit' });
+    expect(await first).toEqual({ status: 'unavailable', reason: 'failed' });
+    expect(aborted).toBe(true);
+    expect(repo.held.size).toBe(0);
+  });
+
   it('is unavailable without a translator and never throws on a refusal', async () => {
     const off = new TranslationService({
       translator: null,
@@ -230,7 +269,9 @@ describe('ClaudeTranslator', () => {
         fallbacks: 'default',
         output_config: { effort: 'low' },
         system: TRANSLATION_INSTRUCTIONS,
-      })
+      }),
+      // One attempt is short and retried once at most: the call ends inside the deadline.
+      { timeout: REQUEST_TIMEOUT_MS, maxRetries: 1, signal: undefined }
     );
   });
 

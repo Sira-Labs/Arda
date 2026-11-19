@@ -1039,6 +1039,51 @@ describe('the student’s recitations on Today', () => {
       expect(calls.filter((c) => c.method === 'POST')).toHaveLength(2);
     });
 
+    it('lets only the latest list set what is shown', async () => {
+      let lists = 0;
+      let answerFirst: (response: Response) => void = () => {};
+      const first = new Promise<Response>((resolve) => (answerFirst = resolve));
+      const outbox = memoryOutbox();
+      const { client } = renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': () =>
+            ++lists === 1 ? first : written('de', 'Die neue Antwort.'),
+          // Offline for takes: one stays waiting, which asks for the list again.
+          [`POST /api/v1/halaqat/${HALAQA}/recordings`]: Response.json(
+            { error: 'unavailable' },
+            { status: 503 }
+          ),
+        },
+        STUDENT,
+        fakeRecorder(),
+        outbox
+      );
+      await waitFor(() => expect(lists).toBe(1));
+      await act(async () => {
+        await enqueue(client, outbox, {
+          clientId: '00000009-0000-4000-8000-000000000000',
+          ownerId: STUDENT.id,
+          halaqaId: HALAQA,
+          assignmentId: null,
+          range: { sura: 112, from: 1, to: 1 },
+          mime: 'audio/webm',
+          durationMs: 1000,
+          blob: new Blob(['x']),
+          createdAt: '2026-10-06T10:00:09Z',
+        });
+      });
+      expect(await screen.findByText('Die neue Antwort.')).toBeInTheDocument();
+      expect(lists).toBe(2);
+      // The first answer arrives last and is dropped.
+      await act(async () => {
+        answerFirst(written('de', 'Die alte Antwort.'));
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      });
+      expect(screen.getByText('Die neue Antwort.')).toBeInTheDocument();
+      expect(screen.queryByText('Die alte Antwort.')).toBeNull();
+    });
+
     it('keeps his words when the api says they need no translation', async () => {
       renderWith(
         <MyRecitations />,
