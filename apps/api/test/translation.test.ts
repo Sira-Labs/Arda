@@ -193,13 +193,16 @@ describe('TranslationService', () => {
       dailyLimit: 1,
       deadlineMs: 20,
     });
-    const ask = () =>
-      service.translate({ userId: TEACHER, text: 'x', from: 'en', to: 'de' });
+    const ask = (text = 'x') =>
+      service.translate({ userId: TEACHER, text, from: 'en', to: 'de' });
     const first = ask();
     await new Promise((resolve) => setTimeout(resolve, 5));
     // While the translator is waited for, the place is held: a second request finds none.
     expect(heldWhileAsked).toBe(1);
-    expect(await ask()).toEqual({ status: 'unavailable', reason: 'limit' });
+    expect(await ask('another remark')).toEqual({
+      status: 'unavailable',
+      reason: 'limit',
+    });
     expect(await first).toEqual({ status: 'unavailable', reason: 'failed' });
     expect(aborted).toBe(true);
     expect(repo.held.size).toBe(0);
@@ -263,6 +266,45 @@ describe('TranslationService', () => {
     expect(counts.get(TEACHER)).toBe(2);
     expect(await ask('three')).toEqual({ status: 'unavailable', reason: 'limit' });
     expect(asked).toBe(2);
+  });
+
+  it('asks once for the same remark wanted several times at once', async () => {
+    const repo = memoryRepo();
+    let asked = 0;
+    let answer: () => void = () => {};
+    const waiting = new Promise<void>((resolve) => (answer = resolve));
+    const service = new TranslationService({
+      translator: {
+        model: 'm',
+        translate: async () => {
+          asked += 1;
+          await waiting;
+          return { ok: true, text: 'Gut.' };
+        },
+      },
+      repo,
+      dailyLimit: 1,
+    });
+    const ask = (to: 'de' | 'fr' = 'de') =>
+      service.translate({ userId: TEACHER, text: 'Good.', from: 'en', to });
+    const all = Promise.all([ask(), ask(), ask()]);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    // Another language is another translation, and the limit of one is taken.
+    expect(await ask('fr')).toEqual({ status: 'unavailable', reason: 'limit' });
+    answer();
+    const outcomes = await all;
+    // One call, one place in the limit, three readers served.
+    expect(asked).toBe(1);
+    expect(outcomes.map((o) => o.status)).toEqual([
+      'translated',
+      'translated',
+      'translated',
+    ]);
+    expect(outcomes.map((o) => 'cached' in o && o.cached)).toEqual([false, true, true]);
+    expect(repo.held.size).toBe(0);
+    // Later it comes from the cache as before.
+    expect(await ask()).toMatchObject({ status: 'translated', cached: true });
+    expect(asked).toBe(1);
   });
 
   it('is unavailable without a translator and never throws on a refusal', async () => {

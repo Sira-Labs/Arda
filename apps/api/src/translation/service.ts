@@ -30,6 +30,9 @@ export interface TranslationServiceOptions {
 }
 
 export class TranslationService {
+  /** Translations being made in this process, by remark and target language. */
+  private readonly inFlight = new Map<string, Promise<TranslateOutcome>>();
+
   constructor(private readonly options: TranslationServiceOptions) {}
 
   get enabled(): boolean {
@@ -57,6 +60,28 @@ export class TranslationService {
         cached: true,
       };
     }
+    // The same remark into the same language is asked for once: requests that arrive while
+    // it is being translated (a page showing the remark several times) wait for that answer.
+    const key = `${hash}:${input.to}`;
+    const underWay = this.inFlight.get(key);
+    if (underWay) {
+      const outcome = await underWay;
+      return outcome.status === 'translated' ? { ...outcome, cached: true } : outcome;
+    }
+    const asking = this.ask(translator, { ...input, text }, hash).finally(() =>
+      this.inFlight.delete(key)
+    );
+    this.inFlight.set(key, asking);
+    return asking;
+  }
+
+  /** Asks the translator for a remark that is neither cached nor already being translated. */
+  private async ask(
+    translator: Translator,
+    input: { userId: string; text: string; from: Language | null; to: Language },
+    hash: string
+  ): Promise<TranslateOutcome> {
+    const { text } = input;
     // The place in the daily limit is held before the translator is asked and given back
     // when nothing comes of it: requests in flight together cannot each pass the limit.
     const reservation = await this.options.repo.reserve(

@@ -112,7 +112,9 @@ Tier 2 is now delivered to the student, not only previewed by the teacher.
   answered is stored and counted, also one saved after its place lapsed: the limit can then
   be passed by that one call already under way, never by a further one. Ruling even that out
   would need leases renewed by a heartbeat; for a daily cap on short texts it is not worth
-  the moving parts.
+  the moving parts. The same remark wanted several times at once in one process is asked
+  for once; two instances asking for the same remark at the same moment make two calls of
+  which the cache keeps, and the limit counts, one.
 - **Which answer.** The route says when the remark it translated was written. A page that
   still shows an earlier answer reloads its list instead of putting the translation of his new
   words over his old ones.
