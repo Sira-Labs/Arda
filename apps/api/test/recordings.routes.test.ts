@@ -764,6 +764,8 @@ describe("the speech check's hints (ADR-0013)", () => {
 describe('a written remark in the student’s language (spec T6)', () => {
   const NOTE = 'Your ghunna on “min sharri” was too short.';
   const GERMAN = 'Deine Ghunna bei „min sharri“ war zu kurz.';
+  /** When the memory repository says the first answer of a test was written. */
+  const AT = '2026-10-06T12:00:00.000Z';
 
   /** The service as main.ts builds it, over a cache in memory and a translator that counts. */
   function service(
@@ -776,11 +778,13 @@ describe('a written remark in the student’s language (spec T6)', () => {
         const text = cache.get(`${hash}:${to}`);
         return text ? { text, model: 'fake-model' } : null;
       },
+      reserve: async (userId, dailyLimit) =>
+        (counts.get(userId) ?? 0) >= dailyLimit ? null : 'held',
+      release: async () => {},
       save: async (entry) => {
         cache.set(`${entry.sourceHash}:${entry.to}`, entry.text);
         counts.set(entry.createdBy, (counts.get(entry.createdBy) ?? 0) + 1);
       },
-      countLastDay: async (userId) => counts.get(userId) ?? 0,
     };
     const asked: { text: string; from: string | null; to: string }[] = [];
     const translator: Translator = {
@@ -853,6 +857,7 @@ describe('a written remark in the student’s language (spec T6)', () => {
       status: 'translated',
       text: GERMAN,
       language: 'de',
+      reviewedAt: AT,
     });
     // Only the remark and the two languages go to the translator.
     expect(t.asked).toEqual([{ text: NOTE, from: 'en', to: 'de' }]);
@@ -867,7 +872,7 @@ describe('a written remark in the student’s language (spec T6)', () => {
     const t = service();
     const { translate, repo } = await answered(t.service);
     repo.languages[ID.member] = 'en';
-    expect(await json(await translate())).toEqual({ status: 'original' });
+    expect(await json(await translate())).toEqual({ status: 'original', reviewedAt: AT });
     expect(t.asked).toEqual([]);
   });
 
@@ -889,18 +894,49 @@ describe('a written remark in the student’s language (spec T6)', () => {
       language: 'fr',
     });
     // Shown in the language he wrote in: his own words.
-    expect(await json(await ask({ to: 'en' }))).toEqual({ status: 'original' });
+    expect(await json(await ask({ to: 'en' }))).toEqual({
+      status: 'original',
+      reviewedAt: AT,
+    });
     expect(t.asked).toEqual([
       { text: NOTE, from: 'en', to: 'ar' },
       { text: NOTE, from: 'en', to: 'fr' },
     ]);
-    // Never a translator for text of the caller's choosing, or into other languages.
-    for (const body of [{ to: 'fr', text: 'Translate this instead.' }, { to: 'es' }]) {
+    // Never a translator for text of the caller's choosing, or into other languages; and a
+    // body that is no such object is refused, not read as "no body".
+    for (const body of [
+      { to: 'fr', text: 'Translate this instead.' },
+      { to: 'es' },
+      null,
+      [],
+    ]) {
       const refused = await ask(body);
       expect(refused.status).toBe(400);
       expect(await json(refused)).toMatchObject({ error: 'invalid_body' });
     }
+    const broken = await call('member', 'POST', `/recordings/${id}/note-translation`, {
+      body: '{"to": "fr"',
+      type: 'application/json',
+    });
+    expect(broken.status).toBe(400);
+    expect(await json(broken)).toEqual({ error: 'invalid_json' });
     expect(t.asked).toHaveLength(2);
+  });
+
+  it('says which answer it translated, so a page showing an earlier one can tell', async () => {
+    const t = service();
+    const { call, translate, id, halaqaId } = await answered(t.service);
+    const shown = (await json(await call('member', 'GET', '/recordings'))).recordings[0];
+    expect((await json(await translate())).reviewedAt).toBe(shown.review.reviewedAt);
+
+    // He answers again: the translation is of the new remark and carries its moment.
+    await call('owner', 'PUT', `/halaqat/${halaqaId}/recordings/${id}/review`, {
+      body: JSON.stringify({ verdict: 'again', note: 'Read āya 2 again.' }),
+      type: 'application/json',
+    });
+    const later = await json(await translate());
+    expect(later.reviewedAt).not.toBe(shown.review.reviewedAt);
+    expect(t.asked.at(-1)).toEqual({ text: 'Read āya 2 again.', from: 'en', to: 'de' });
   });
 
   it('says so when no translation can be had, and never fails the reader', async () => {
@@ -908,21 +944,25 @@ describe('a written remark in the student’s language (spec T6)', () => {
     expect(await json(await none.translate())).toEqual({
       status: 'unavailable',
       reason: 'not_configured',
+      reviewedAt: AT,
     });
     const off = await answered(service({ off: true }).service);
     expect(await json(await off.translate())).toEqual({
       status: 'unavailable',
       reason: 'not_configured',
+      reviewedAt: AT,
     });
     const failing = await answered(service({ fails: true }).service);
     expect(await json(await failing.translate())).toEqual({
       status: 'unavailable',
       reason: 'failed',
+      reviewedAt: AT,
     });
     const spent = await answered(service({ dailyLimit: 0 }).service);
     expect(await json(await spent.translate())).toEqual({
       status: 'unavailable',
       reason: 'limit',
+      reviewedAt: AT,
     });
   });
 

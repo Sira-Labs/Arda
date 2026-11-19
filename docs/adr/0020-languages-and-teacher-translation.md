@@ -101,6 +101,14 @@ Tier 2 is now delivered to the student, not only previewed by the teacher.
 - **Whose limit.** A new translation counts against the teacher who wrote the remark, as his
   preview does (the reader's own count once his account is gone). A reader can cause at most
   three translations per remark (the other languages); the cache serves every later reader.
+- **The limit is held, then counted** (migration 0020). The daily limit was checked before
+  the translator was asked and counted after, so requests in flight together could each pass
+  it; students' pages now ask for several remarks at once. A place is reserved under a
+  per-person lock before the call, becomes the translation or is given back when the
+  translator fails or refuses, and stops counting after two minutes if its process died.
+- **Which answer.** The route says when the remark it translated was written. A page that
+  still shows an earlier answer reloads its list instead of putting the translation of his new
+  words over his old ones.
 - **What the student sees.** The translation, labelled "maschinell übersetzt", with "Original
   anzeigen" one tap away; without a translation (no key, limit, refusal, failure) his own
   words with "Übersetzung nicht verfügbar". His words are on the page before the translation

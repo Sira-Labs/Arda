@@ -749,6 +749,70 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       const data = (await exported.json()) as { translations: { text: string }[] };
       expect(data.translations.map((t) => t.text)).toContain('Deine Ghunna war zu kurz.');
     });
+
+    it('holds places in the daily limit one person at a time (migration 0020)', async () => {
+      await signInDevice('lehrer@example.org', '203.0.113.122');
+      const { rows } = await pool.query<{ id: string }>(
+        "select id from users where email = 'lehrer@example.org'"
+      );
+      const teacherId = rows[0]!.id;
+      const repo = new PgTranslationRepository(pool);
+      const held = async () =>
+        Number(
+          (await pool.query('select count(*) from translation_reservations')).rows[0]
+            .count
+        );
+
+      // Five requests at once against a limit of two: two places, never more.
+      const places = await Promise.all(
+        Array.from({ length: 5 }, () => repo.reserve(teacherId, 2))
+      );
+      const taken = places.filter((place): place is string => place !== null);
+      expect(taken).toHaveLength(2);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+
+      // A place given back is free again; one turned into a translation stays counted.
+      await repo.release(taken[0]!);
+      const again = await repo.reserve(teacherId, 2);
+      expect(again).not.toBeNull();
+      await repo.save({
+        reservation: again!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('one'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'one',
+        text: 'eins',
+        model: 'fake',
+      });
+      expect(await held()).toBe(1);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+
+      // The same remark translated meanwhile: the first text stays, the place is given back.
+      await repo.release(taken[1]!);
+      const twice = await repo.reserve(teacherId, 2);
+      await repo.save({
+        reservation: twice!,
+        createdBy: teacherId,
+        sourceHash: sourceHash('one'),
+        from: 'en',
+        to: 'de',
+        sourceText: 'one',
+        text: 'zwei',
+        model: 'fake',
+      });
+      expect(await held()).toBe(0);
+      expect((await repo.find(sourceHash('one'), 'de'))?.text).toBe('eins');
+
+      // A place left behind by a process that died stops counting after two minutes.
+      const lost = await repo.reserve(teacherId, 2);
+      expect(await repo.reserve(teacherId, 2)).toBeNull();
+      await pool.query(
+        "update translation_reservations set created_at = now() - interval '3 minutes' where id = $1",
+        [lost]
+      );
+      expect(await repo.reserve(teacherId, 2)).not.toBeNull();
+    });
   });
 
   describe('passkeys (ADR-0004)', () => {
@@ -1591,6 +1655,8 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         noteLanguage: 'de',
         readerLanguage: 'de',
         reviewerId: TEACHER,
+        // The moment the list shows for this answer.
+        reviewedAt: (await review()).reviewedAt,
       });
 
       await pool.query("update users set language = 'en' where id = $1", [TEACHER]);
@@ -1603,6 +1669,7 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
         noteLanguage: 'en',
         readerLanguage: 'ar',
         reviewerId: TEACHER,
+        reviewedAt: (await review()).reviewedAt,
       });
       // Only its student reads it.
       expect(await repo.ownNote(YUSUF, id)).toBeNull();

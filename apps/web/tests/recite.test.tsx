@@ -969,6 +969,76 @@ describe('the student’s recitations on Today', () => {
       }
     });
 
+    it('announces the outcome without moving focus', async () => {
+      renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': written('en'),
+          [TRANSLATE]: Response.json({
+            status: 'translated',
+            text: 'Kurz.',
+            language: 'de',
+          }),
+        },
+        STUDENT
+      );
+      // The region is there with his words, before the answer; then it says what was done.
+      const status = await waitFor(() => {
+        const region = screen
+          .getAllByRole('status')
+          .find((node) => node.closest('.recitation-answer'));
+        expect(region).toBeDefined();
+        return region!;
+      });
+      await waitFor(() => expect(status).toHaveTextContent('maschinell übersetzt'));
+      expect(screen.getByText('Kurz.')).toBeInTheDocument();
+    });
+
+    it('reloads the list when the sheikh has answered again since it was loaded', async () => {
+      let lists = 0;
+      const { calls } = renderWith(
+        <MyRecitations />,
+        {
+          'GET /api/v1/recordings': () =>
+            ++lists === 1
+              ? written('en')
+              : Response.json({
+                  recordings: [
+                    own({
+                      review: {
+                        verdict: 'again',
+                        remark: null,
+                        note: 'Read āya 2 again.',
+                        noteLanguage: 'en',
+                        marks: [],
+                        voiceNote: null,
+                        reviewerName: 'Sheikh Ahmad',
+                        reviewedAt: '2026-10-07T09:00:00Z',
+                      },
+                    }),
+                  ],
+                  more: false,
+                }),
+          // The api knows only his newest answer.
+          [TRANSLATE]: Response.json({
+            status: 'translated',
+            text: 'Lies Āya 2 noch einmal.',
+            language: 'de',
+            reviewedAt: '2026-10-07T09:00:00Z',
+          }),
+        },
+        STUDENT
+      );
+      const user = userEvent.setup();
+      expect(await screen.findByText('Lies Āya 2 noch einmal.')).toBeInTheDocument();
+      // Never his new words in translation over his old ones as the original.
+      await user.click(screen.getByRole('button', { name: 'Original anzeigen' }));
+      expect(screen.getByText('Read āya 2 again.')).toBeInTheDocument();
+      expect(screen.queryByText(NOTE)).toBeNull();
+      expect(calls.filter((c) => c.path === '/api/v1/recordings')).toHaveLength(2);
+      expect(calls.filter((c) => c.method === 'POST')).toHaveLength(2);
+    });
+
     it('keeps his words when the api says they need no translation', async () => {
       renderWith(
         <MyRecitations />,

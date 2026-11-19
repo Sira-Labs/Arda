@@ -48,17 +48,29 @@ export class TranslationService {
         cached: true,
       };
     }
-    if ((await this.options.repo.countLastDay(input.userId)) >= this.options.dailyLimit) {
-      return { status: 'unavailable', reason: 'limit' };
+    // The place in the daily limit is held before the translator is asked and given back
+    // when nothing comes of it: requests in flight together cannot each pass the limit.
+    const reservation = await this.options.repo.reserve(
+      input.userId,
+      this.options.dailyLimit
+    );
+    if (reservation === null) return { status: 'unavailable', reason: 'limit' };
+    let result: Awaited<ReturnType<Translator['translate']>>;
+    try {
+      result = await translator.translate({ text, from: input.from, to: input.to });
+    } catch (error) {
+      await this.options.repo.release(reservation);
+      throw error;
     }
-    const result = await translator.translate({ text, from: input.from, to: input.to });
     if (!result.ok) {
+      await this.options.repo.release(reservation);
       return {
         status: 'unavailable',
         reason: result.reason === 'refused' ? 'refused' : 'failed',
       };
     }
     await this.options.repo.save({
+      reservation,
       createdBy: input.userId,
       sourceHash: hash,
       from: input.from,

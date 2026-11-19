@@ -126,6 +126,8 @@ export interface OwnNote {
   readerLanguage: Language;
   /** Who wrote it; null once that account is gone. */
   reviewerId: string | null;
+  /** When it was written: the answer the reader's list shows carries the same moment. */
+  reviewedAt: string;
 }
 
 /**
@@ -633,9 +635,10 @@ export class PgRecordingRepository implements RecordingRepository {
       note_language: Language | null;
       reader_language: Language;
       reviewed_by: string | null;
+      reviewed_at: Date;
     }>(
       `select r.note, r.note_language, coalesce(s.language, 'de') as reader_language,
-              r.reviewed_by
+              r.reviewed_by, r.reviewed_at
          from recordings r
          join users s on s.id = r.student_id
         where r.id = $2 and r.student_id = $1 and r.note is not null
@@ -649,6 +652,7 @@ export class PgRecordingRepository implements RecordingRepository {
           noteLanguage: row.note_language,
           readerLanguage: row.reader_language,
           reviewerId: row.reviewed_by,
+          reviewedAt: iso(row.reviewed_at),
         }
       : null;
   }

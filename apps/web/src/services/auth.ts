@@ -217,10 +217,14 @@ export interface VoiceNoteUpload {
 }
 
 /** A written remark for its reader (apps/api/src/recordings/routes.ts). */
-export type NoteTranslation =
+export type NoteTranslation = (
   | { status: 'original' }
   | { status: 'translated'; text: string; language: Language }
-  | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' };
+  | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' }
+) & {
+  /** The moment of the answer it is about (`RecitationReview.reviewedAt`). */
+  reviewedAt?: string;
+};
 
 /** The teacher's answer to a recitation (apps/api/src/recordings/repository.ts). */
 export interface RecitationReview {

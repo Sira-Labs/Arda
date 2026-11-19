@@ -16,20 +16,35 @@ import {
 
 const TEACHER = '11111111-1111-4111-8111-111111111111';
 
-function memoryRepo(): TranslationRepository & { rows: Map<string, string> } {
+function memoryRepo(): TranslationRepository & {
+  rows: Map<string, string>;
+  held: Set<string>;
+} {
   const rows = new Map<string, string>();
   const counts = new Map<string, number>();
+  const held = new Set<string>();
+  let reservations = 0;
   return {
     rows,
+    held,
     find: async (hash, to) => {
       const text = rows.get(`${hash}:${to}`);
       return text ? { text, model: 'fake' } : null;
     },
+    reserve: async (userId, dailyLimit) => {
+      if ((counts.get(userId) ?? 0) + held.size >= dailyLimit) return null;
+      const id = String(++reservations);
+      held.add(id);
+      return id;
+    },
+    release: async (id) => {
+      held.delete(id);
+    },
     save: async (entry) => {
+      held.delete(entry.reservation);
       rows.set(`${entry.sourceHash}:${entry.to}`, entry.text);
       counts.set(entry.createdBy, (counts.get(entry.createdBy) ?? 0) + 1);
     },
-    countLastDay: async (userId) => counts.get(userId) ?? 0,
   };
 }
 
@@ -92,6 +107,63 @@ describe('TranslationService', () => {
     expect(await ask('one')).toMatchObject({ status: 'translated' });
     expect(await ask('two')).toEqual({ status: 'unavailable', reason: 'limit' });
     expect(await ask('one')).toMatchObject({ status: 'translated', cached: true });
+  });
+
+  it('holds a place in the limit while the translator is asked, so requests together cannot pass it', async () => {
+    const repo = memoryRepo();
+    let asked = 0;
+    let answer: () => void = () => {};
+    const waiting = new Promise<void>((resolve) => (answer = resolve));
+    const service = new TranslationService({
+      translator: {
+        model: 'm',
+        translate: async ({ text }) => {
+          asked += 1;
+          await waiting;
+          return { ok: true, text: `übersetzt: ${text}` };
+        },
+      },
+      repo,
+      dailyLimit: 2,
+    });
+    const ask = (text: string) =>
+      service.translate({ userId: TEACHER, text, from: 'en', to: 'de' });
+    const all = Promise.all(['one', 'two', 'three', 'four'].map(ask));
+    // Give every request the chance to reach the translator before any answer comes back.
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    answer();
+    const outcomes = await all;
+    expect(asked).toBe(2);
+    expect(outcomes.map((o) => o.status)).toEqual([
+      'translated',
+      'translated',
+      'unavailable',
+      'unavailable',
+    ]);
+    expect(repo.held.size).toBe(0);
+  });
+
+  it('gives the place back when the translator fails, refuses or throws', async () => {
+    const repo = memoryRepo();
+    const answers: (() => Promise<{ ok: false; reason: 'refused' | 'failed' }>)[] = [
+      async () => ({ ok: false, reason: 'failed' }),
+      async () => ({ ok: false, reason: 'refused' }),
+      async () => {
+        throw new Error('network');
+      },
+    ];
+    const service = new TranslationService({
+      translator: { model: 'm', translate: () => answers.shift()!() },
+      repo,
+      dailyLimit: 1,
+    });
+    const ask = () =>
+      service.translate({ userId: TEACHER, text: 'x', from: 'en', to: 'de' });
+    expect(await ask()).toEqual({ status: 'unavailable', reason: 'failed' });
+    expect(await ask()).toEqual({ status: 'unavailable', reason: 'refused' });
+    await expect(ask()).rejects.toThrow('network');
+    // Three attempts with a limit of one: none of them was counted.
+    expect(repo.held.size).toBe(0);
   });
 
   it('is unavailable without a translator and never throws on a refusal', async () => {

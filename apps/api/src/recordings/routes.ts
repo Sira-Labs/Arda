@@ -435,19 +435,32 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
   app.post('/recordings/:rid/note-translation', own, async (c) => {
     const recordingId = Id.safeParse(c.req.param('rid'));
     if (!recordingId.success) return notFound(c);
-    const body = NoteTranslationBody.safeParse((await readJson(c)) ?? {});
+    // No body means the stored language; a body that is not this object is refused before
+    // anything is translated or counted.
+    const raw = await c.req.text();
+    let sent: unknown = {};
+    if (raw.trim() !== '') {
+      try {
+        sent = JSON.parse(raw);
+      } catch {
+        return c.json({ error: 'invalid_json' }, 400);
+      }
+    }
+    const body = NoteTranslationBody.safeParse(sent);
     if (!body.success) return invalid(c, ['to']);
     const actor = c.get('actor');
     const remark = await deps.repo.ownNote(actor.id, recordingId.data);
     if (!remark) return notFound(c);
     const to = body.data.to ?? remark.readerLanguage;
     c.header('Cache-Control', 'no-store');
+    // Which answer this is about: the reader's page may still show an earlier one.
+    const { reviewedAt } = remark;
     // A remark whose language was never recorded is shown as written, not guessed at.
     if (!remark.noteLanguage || remark.noteLanguage === to) {
-      return c.json({ status: 'original' });
+      return c.json({ status: 'original', reviewedAt });
     }
     if (!deps.translations) {
-      return c.json({ status: 'unavailable', reason: 'not_configured' });
+      return c.json({ status: 'unavailable', reason: 'not_configured', reviewedAt });
     }
     const outcome = await deps.translations.translate({
       userId: remark.reviewerId ?? actor.id,
@@ -457,9 +470,9 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
     });
     switch (outcome.status) {
       case 'original':
-        return c.json({ status: 'original' });
+        return c.json({ status: 'original', reviewedAt });
       case 'unavailable':
-        return c.json({ status: 'unavailable', reason: outcome.reason });
+        return c.json({ status: 'unavailable', reason: outcome.reason, reviewedAt });
       case 'translated':
         if (!outcome.cached) {
           deps.log.info(
@@ -476,6 +489,7 @@ export function createRecordingRoutes(deps: RecordingRouteDeps): Hono<ActorEnv> 
           status: 'translated',
           text: outcome.text,
           language: to,
+          reviewedAt,
         });
     }
   });

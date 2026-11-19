@@ -97,6 +97,8 @@ export function MyRecitations() {
                         recordingId={r.id}
                         note={r.review.note}
                         noteLanguage={r.review.noteLanguage ?? null}
+                        reviewedAt={r.review.reviewedAt}
+                        onStale={load}
                       />
                     )}
                     {r.review.marks.length > 0 && (

@@ -55,6 +55,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
   /** Accounts deleted since they answered. */
   gone = new Set<string>();
   private seq = 0;
+  private answers = 0;
 
   constructor(
     private readonly halaqat: MemoryHalaqaRepository,
@@ -202,7 +203,8 @@ export class MemoryRecordingRepository implements RecordingRepository {
       noteLanguage: input.note ? (this.languages[reviewerId] ?? 'de') : null,
       marks: [...input.marks],
       reviewerId,
-      reviewedAt: '2026-10-06T12:00:00.000Z',
+      // A later answer is a later moment, as `now()` makes it in Postgres.
+      reviewedAt: new Date(Date.UTC(2026, 9, 6, 12, 0, this.answers++)).toISOString(),
     };
     this.log?.recordAnswer({
       recordingId,
@@ -264,6 +266,7 @@ export class MemoryRecordingRepository implements RecordingRepository {
       readerLanguage: this.languages[studentId] ?? 'de',
       // A deleted reviewer leaves the answer without an author, as `on delete set null` does.
       reviewerId: this.gone.has(row.review.reviewerId) ? null : row.review.reviewerId,
+      reviewedAt: row.review.reviewedAt,
     };
   }
 
