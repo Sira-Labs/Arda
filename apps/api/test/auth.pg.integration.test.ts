@@ -875,6 +875,40 @@ describe.skipIf(!url)('Magic-link sign-in (Postgres)', () => {
       expect(taken2.rows[0]!.created_at.getTime()).toBeGreaterThanOrEqual(
         released.getTime()
       );
+
+      // A translation is stored under the same lock: while this person's places are being
+      // counted elsewhere, the save waits, and the count that follows it sees the row.
+      const counting = await pool.connect();
+      let landed = false;
+      try {
+        await counting.query('begin');
+        await counting.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+          `translate:${teacherId}`,
+        ]);
+        const saving = repo
+          .save({
+            reservation: waited!,
+            createdBy: teacherId,
+            sourceHash: sourceHash('under the lock'),
+            from: 'en',
+            to: 'de',
+            sourceText: 'under the lock',
+            text: 'unter der Sperre',
+            model: 'fake',
+          })
+          .then(() => (landed = true));
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        expect(landed).toBe(false);
+        await counting.query('commit');
+        await saving;
+      } finally {
+        counting.release();
+      }
+      expect((await repo.find(sourceHash('under the lock'), 'de'))?.text).toBe(
+        'unter der Sperre'
+      );
+      // Four stored now: a limit of four has no place left.
+      expect(await repo.reserve(teacherId, 4)).toBeNull();
     });
   });
 

@@ -50,6 +50,9 @@ export function sourceHash(text: string): string {
   return createHash('sha256').update(text.trim().replace(/\s+/g, ' ')).digest('hex');
 }
 
+/** The advisory lock under which one person's places are counted, taken and turned in. */
+const lockKey = (userId: string): string => `translate:${userId}`;
+
 export class PgTranslationRepository implements TranslationRepository {
   constructor(private readonly pool: pg.Pool) {}
 
@@ -70,7 +73,7 @@ export class PgTranslationRepository implements TranslationRepository {
       // it can take a while, and `now()` is when the transaction began: the place lives
       // from the moment it is taken, so every time below is the clock's.
       await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
-        `translate:${userId}`,
+        lockKey(userId),
       ]);
       // Places left behind by a process that died are swept here, where they stop counting.
       await client.query(
@@ -107,29 +110,43 @@ export class PgTranslationRepository implements TranslationRepository {
   }
 
   async save(entry: Parameters<TranslationRepository['save']>[0]): Promise<void> {
-    // One statement: the place becomes the translation, or is given back when the same
-    // remark was translated meanwhile. The translator was asked and answered, so the
-    // translation is stored and counted even when its place has lapsed by now (a save held
-    // up for longer than a place lives): every call that was paid for is accounted for,
-    // and the limit refuses the next one.
-    await this.pool.query(
-      `with held as (
-         delete from translation_reservations where id = $8
-       )
-       insert into translations
-         (created_by, source_hash, source_language, target_language, source_text, text, model)
-       values ($1, $2, $3, $4, $5, $6, $7)
-       on conflict (source_hash, target_language) do nothing`,
-      [
-        entry.createdBy,
-        entry.sourceHash,
-        entry.from,
-        entry.to,
-        entry.sourceText,
-        entry.text,
-        entry.model,
+    const client = await this.pool.connect();
+    try {
+      await client.query('begin');
+      // Under the same per-person lock as `reserve`: a request counting places for this
+      // person waits until this translation is committed and so counts it.
+      await client.query('select pg_advisory_xact_lock(hashtextextended($1, 0))', [
+        lockKey(entry.createdBy),
+      ]);
+      // The place becomes the translation, or is given back when the same remark was
+      // translated meanwhile. The translator was asked and answered, so the translation is
+      // stored and counted even when its place has lapsed by now: every call that was paid
+      // for is accounted for, and the limit refuses the next one.
+      await client.query('delete from translation_reservations where id = $1', [
         entry.reservation,
-      ]
-    );
+      ]);
+      await client.query(
+        `insert into translations
+           (created_by, source_hash, source_language, target_language, source_text, text,
+            model)
+         values ($1, $2, $3, $4, $5, $6, $7)
+         on conflict (source_hash, target_language) do nothing`,
+        [
+          entry.createdBy,
+          entry.sourceHash,
+          entry.from,
+          entry.to,
+          entry.sourceText,
+          entry.text,
+          entry.model,
+        ]
+      );
+      await client.query('commit');
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
