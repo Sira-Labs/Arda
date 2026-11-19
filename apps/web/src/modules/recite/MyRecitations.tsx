@@ -6,6 +6,7 @@ import type { OwnRecitation } from '@/services/auth';
 import { useSession } from '@/state/session';
 import { useOutboxWaiting } from './outbox';
 import { RecitedWords } from './RecitedWords';
+import { TeacherNote } from './TeacherNote';
 
 type Failure = Extract<ApiResult<unknown>, { ok: false }>;
 
@@ -90,8 +91,14 @@ export function MyRecitations() {
                   <div className="stack recitation-answer" style={{ gap: 4 }}>
                     <span className="muted">{m.recite.from(r.review.reviewerName)}</span>
                     {r.review.remark && <span>{m.remarks[r.review.remark]}</span>}
-                    {/* The sheikh's own words, in whatever language he wrote them. */}
-                    {r.review.note && <span dir="auto">{r.review.note}</span>}
+                    {/* The sheikh's own words, translated when he wrote another language. */}
+                    {r.review.note && (
+                      <TeacherNote
+                        recordingId={r.id}
+                        note={r.review.note}
+                        noteLanguage={r.review.noteLanguage ?? null}
+                      />
+                    )}
                     {r.review.marks.length > 0 && (
                       <>
                         <span>{m.recite.marksCount(r.review.marks.length)}</span>

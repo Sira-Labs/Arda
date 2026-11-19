@@ -216,11 +216,22 @@ export interface VoiceNoteUpload {
   durationMs: number;
 }
 
+/** A written remark for its reader (apps/api/src/recordings/routes.ts). */
+export type NoteTranslation =
+  | { status: 'original' }
+  | { status: 'translated'; text: string; language: Language }
+  | { status: 'unavailable'; reason: 'not_configured' | 'limit' | 'refused' | 'failed' };
+
 /** The teacher's answer to a recitation (apps/api/src/recordings/repository.ts). */
 export interface RecitationReview {
   verdict: Verdict;
   remark: RemarkId | null;
   note: string | null;
+  /**
+   * The language the written remark was written in; null or absent when unknown or without
+   * one (an answer the teacher's own page has just built does not carry it).
+   */
+  noteLanguage?: Language | null;
   /** Words that need work, in reading order. */
   marks: WordMark[];
   voiceNote: VoiceNoteInfo | null;
@@ -640,6 +651,19 @@ export class AuthClient {
   myRecitations(before?: string): Promise<ApiResult<RecitationPage<OwnRecitation>>> {
     const query = before ? `?before=${encodeURIComponent(before)}` : '';
     return apiRequest(this.fetchImpl, `/api/v1/recordings${query}`);
+  }
+
+  /**
+   * The sheikh's written remark on one of the student's recitations in the language the app
+   * is shown in: a machine translation, his own words when none is needed, or why none can
+   * be had (spec T6).
+   */
+  translateNote(id: string, to: Language): Promise<ApiResult<NoteTranslation>> {
+    return apiRequest(
+      this.fetchImpl,
+      `/api/v1/recordings/${encodeURIComponent(id)}/note-translation`,
+      { method: 'POST', body: JSON.stringify({ to }) }
+    );
   }
 
   deleteRecitation(id: string): Promise<ApiResult<unknown>> {
