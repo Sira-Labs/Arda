@@ -94,3 +94,11 @@ activity log in `packages/engagement`; the log, the sync and the API do not chan
 Alternatives: quests that rotate by weekday (more variety, but a goal such as "review" cannot be
 met on a day without due cards); badges without XP for quests (a quest with no effect on Today
 reads as decoration).
+
+## Update 2026-11-20: "Halte die Ghunna" is a round like the others
+
+The game of spec F6 logs `hold-ghunna` with its right holds out of six. It is a round kind:
+the same XP as every round, inside the same daily cap, counted by the quests and badges that
+count rounds. No weight changed, so the rules version stays 2. A device that does not know
+the kind yet skips the event when it syncs and counts it once it is updated (tested since
+ADR-0023).

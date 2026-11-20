@@ -247,6 +247,14 @@ each marked draft until the sheikh has checked it.)_
 "Which rule?" (ten real words, then hear each), "Sort the 28" (drag every letter to its rule
 against the clock), "Hold the ghunna" (hum with the beat: two counts, not one, not three).
 **Acceptance:** each game drills one rule and feeds mistakes into spaced repetition.
+_(Built (2026-11-20): "Halte die Ghunna" in unit 3, the last of the three. A checked word of
+the ghunna card with its nūn or mīm mushaddad marked, a practice beat in bars of four, and a
+button held while the learner hums: two counts is `gut`, nearer one or three is `prüfen` with
+what was held said in words and shown on a line. Six tries, the first three at a calm beat,
+the last three brisker: the two counts are counts of the beat, not seconds. Nothing is
+recorded and the microphone is not used. The beat can be muted; tapping twice replaces
+holding; space or enter work as the button. A missed word goes to the review as a "which
+rule?" card. The texts are drafts for the sheikh like the unit's cards.)_
 
 ### F7 — Recite and be heard twice _(Must)_
 
@@ -297,7 +305,9 @@ recording and upload work offline-first; only teachers of the ḥalaqa can play 
   recitation the student reads the sheikh's remark in the language the app is shown in,
   labelled "maschinell übersetzt", his own words one tap away; without a translation his
   words stand with "Übersetzung nicht verfügbar". The remark keeps the language it was written
-  in. Next: the note in "Dein ʿArḍ" and the voice note's transcript.)_
+  in. Next: the voice note's transcript. The notes of the ʿarḍ log are not shown to students
+  today ("Dein ʿArḍ" is the summary per sūra), so there is nothing of them to translate
+  until the owner decides whether students read them (sprint plan, "Waiting on the owner").)_
   **Acceptance:** the sheikh can assign and review entirely on a phone; a student never sees
   another student's recordings; a student reading German, French or Arabic understands a
   remark written in English, and can always see the original.

@@ -684,6 +684,31 @@ export const de = {
       recommended: (unit: number) => `Empfohlen nach dem Test von Einheit ${unit}.`,
     },
     back: 'Zur Einheit',
+    hold: {
+      title: 'Halte die Ghunna',
+      intro: 'Summe die Ghunna mit dem Takt: zwei Zählzeiten, nicht eine, nicht drei.',
+      how: 'Du siehst ein Wort mit Nūn oder Mīm mit Shadda und hörst einen Takt. Summe die Ghunna und halte dabei den Knopf gedrückt: genau zwei Schläge lang. Dann lass los.',
+      noMicrophone:
+        'Es wird nichts aufgenommen: Du summst für dich, der Knopf misst nur die Dauer.',
+      start: 'Los',
+      question: 'Halte die Ghunna auf dem markierten Buchstaben: 2 Zählzeiten.',
+      tempo: {
+        calm: 'Ruhiges Tempo',
+        brisk: 'Etwas zügiger – zwei Zählzeiten bleiben zwei Zählzeiten.',
+      },
+      hold: 'Gedrückt halten und summen',
+      holding: 'Halten …',
+      tapStart: 'Antippen und summen',
+      tapEnd: 'Antippen zum Beenden',
+      sound: 'Takt hören',
+      taps: 'Antippen statt halten',
+      verdict: {
+        good: 'Zwei Zählzeiten.',
+        short: 'Zu kurz: Halte bis zum zweiten Schlag.',
+        long: 'Zu lang: Lass nach dem zweiten Schlag los.',
+      },
+      held: (counts: string) => `Gehalten: etwa ${counts} Zählzeiten.`,
+    },
     unit3: {
       title: 'Welche Regel? · Einheit 3',
       intro: 'Mīm sākina oder Shadda: zehn Wörter, vier Regeln.',

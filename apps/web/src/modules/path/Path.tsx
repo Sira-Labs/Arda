@@ -22,6 +22,7 @@ const GAMES: Record<
       | 'whichRule'
       | 'sort'
       | 'unit3'
+      | 'hold'
       | 'qalqala'
       | 'maddLength'
       | 'weight'
@@ -35,7 +36,10 @@ const GAMES: Record<
     { path: '/pfad/2/spiel/welche-regel', game: 'whichRule' },
     { path: '/pfad/2/spiel/sortieren', game: 'sort' },
   ],
-  3: [{ path: '/pfad/3/spiel/welche-regel', game: 'unit3' }],
+  3: [
+    { path: '/pfad/3/spiel/welche-regel', game: 'unit3' },
+    { path: '/pfad/3/spiel/ghunna-halten', game: 'hold' },
+  ],
   4: [{ path: '/pfad/4/spiel/buchstaben', game: 'qalqala' }],
   5: [{ path: '/pfad/5/spiel/wie-lang', game: 'maddLength' }],
   6: [{ path: '/pfad/6/spiel/schwer-oder-leicht', game: 'weight' }],

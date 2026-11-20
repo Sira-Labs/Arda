@@ -125,4 +125,6 @@ Tier 2 is now delivered to the student, not only previewed by the teacher.
 - Found while building this: §4 says the processor is named on the "Quellen und Datenschutz"
   page, but the app has no such page yet. The text is the owner's (legal); until it exists the
   key should not be set for real students (sprint plan, "Waiting on the owner").
-- Not yet: the note in the ʿarḍ log ("Dein ʿArḍ") and the voice note's transcript (tier 3).
+- Not yet: the voice note's transcript (tier 3). Corrected 2026-11-20: the ʿarḍ log's notes
+  are not shown to students at all ("Dein ʿArḍ" is a summary), so they are not a translation
+  gap; whether students read them is the owner's to decide.

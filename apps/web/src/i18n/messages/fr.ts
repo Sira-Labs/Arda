@@ -631,6 +631,31 @@ export const fr: Messages = {
       recommended: (unit) => `Conseillé après le test de l'unité ${unit}.`,
     },
     back: 'Vers l’unité',
+    hold: {
+      title: 'Tiens la ghunna',
+      intro: 'Fredonne la ghunna sur le rythme\u202f: deux temps, ni un, ni trois.',
+      how: 'Tu vois un mot avec un nūn ou un mīm portant une shadda et tu entends un rythme. Fredonne la ghunna en gardant le bouton appuyé\u202f: exactement deux battements. Puis relâche.',
+      noMicrophone:
+        'Rien n’est enregistré\u202f: tu fredonnes pour toi, le bouton ne mesure que la durée.',
+      start: 'C’est parti',
+      question: 'Tiens la ghunna sur la lettre marquée\u202f: 2 temps.',
+      tempo: {
+        calm: 'Tempo calme',
+        brisk: 'Un peu plus vite – deux temps restent deux temps.',
+      },
+      hold: 'Maintiens appuyé et fredonne',
+      holding: 'Tiens …',
+      tapStart: 'Touche et fredonne',
+      tapEnd: 'Touche pour terminer',
+      sound: 'Entendre le rythme',
+      taps: 'Toucher au lieu de maintenir',
+      verdict: {
+        good: 'Deux temps.',
+        short: 'Trop court\u202f: tiens jusqu’au deuxième battement.',
+        long: 'Trop long\u202f: relâche après le deuxième battement.',
+      },
+      held: (counts) => `Tenu\u202f: environ ${counts} temps.`,
+    },
     unit3: {
       title: 'Quelle règle ? · Unité 3',
       intro: 'Mīm sākina ou shadda : dix mots, quatre règles.',
