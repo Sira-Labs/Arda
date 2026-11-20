@@ -57,6 +57,8 @@ export function HoldGhunna({
   const [audible, setAudible] = useState(true);
   // For those who cannot keep a button down: one tap starts the hold, the next ends it.
   const [taps, setTaps] = useState(false);
+  // The words missed this round: a word missed twice is still one card in the review.
+  const missed = useRef(new Set<string>());
   const downAt = useRef<number | null>(null);
   const click = useRef<BeatSound | null>(null);
 
@@ -112,7 +114,10 @@ export function HoldGhunna({
     const verdict = verdictOf(counts);
     if (verdict === 'good') setRight((n) => n + 1);
     // The word comes back in the review, asked for its rule.
-    else review.record(word, false);
+    else {
+      review.record(word, false);
+      missed.current.add(word.id);
+    }
     setOutcome({ verdict, counts });
   }, [word, clock, beatMs, review]);
 
@@ -125,10 +130,11 @@ export function HoldGhunna({
       right,
       total: words.length,
     });
-    setResult({ right, total: words.length, missed: words.length - right, xp });
+    setResult({ right, total: words.length, missed: missed.current.size, xp });
   };
 
   const again = () => {
+    missed.current = new Set();
     setWords(holdRound(random));
     setIndex(0);
     setRight(0);

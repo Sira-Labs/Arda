@@ -634,7 +634,7 @@ export const fr: Messages = {
     hold: {
       title: 'Tiens la ghunna',
       intro: 'Fredonne la ghunna sur le rythme\u202f: deux temps, ni un, ni trois.',
-      how: 'Tu vois un mot avec un nūn ou un mīm portant une shadda et tu entends un rythme. Fredonne la ghunna en gardant le bouton appuyé\u202f: exactement deux battements. Puis relâche.',
+      how: 'Tu vois un mot avec un nūn ou un mīm portant une shadda et tu entends un rythme. Fredonne la ghunna en gardant le bouton appuyé\u202f: deux battements entiers, d’un battement jusqu’au deuxième qui suit. Puis relâche.',
       noMicrophone:
         'Rien n’est enregistré\u202f: tu fredonnes pour toi, le bouton ne mesure que la durée.',
       start: 'C’est parti',
@@ -651,8 +651,8 @@ export const fr: Messages = {
       taps: 'Toucher au lieu de maintenir',
       verdict: {
         good: 'Deux temps.',
-        short: 'Trop court\u202f: tiens jusqu’au deuxième battement.',
-        long: 'Trop long\u202f: relâche après le deuxième battement.',
+        short: 'Trop court\u202f: tiens deux battements entiers.',
+        long: 'Trop long\u202f: relâche après deux battements entiers.',
       },
       held: (counts) => `Tenu\u202f: environ ${counts} temps.`,
     },

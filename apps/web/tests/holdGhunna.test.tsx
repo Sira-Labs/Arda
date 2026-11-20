@@ -167,7 +167,7 @@ describe('Halte die Ghunna', () => {
     hold(TEMPI.calm * 1.1);
     expect(screen.getByText('prüfen')).toBeInTheDocument();
     expect(
-      screen.getByText(/Zu kurz: Halte bis zum zweiten Schlag\./)
+      screen.getByText(/Zu kurz: Halte zwei ganze Schläge lang\./)
     ).toBeInTheDocument();
     expect(screen.getByText(/etwa 1,1 Zählzeiten/)).toBeInTheDocument();
     expect(screen.getByText('Kommt in deine Wiederholung.')).toBeInTheDocument();
@@ -175,7 +175,7 @@ describe('Halte die Ghunna', () => {
 
     hold(TEMPI.calm * 3);
     expect(
-      screen.getByText(/Zu lang: Lass nach dem zweiten Schlag los\./)
+      screen.getByText(/Zu lang: Lass nach zwei ganzen Schlägen los\./)
     ).toBeInTheDocument();
   });
 
@@ -213,6 +213,32 @@ describe('Halte die Ghunna', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
     expect(screen.getByText('1 / 6')).toBeInTheDocument();
     expect(screen.getByText('Ruhiges Tempo')).toBeInTheDocument();
+  });
+
+  it('counts a word missed twice as one card for the review', () => {
+    const store = mount();
+    fireEvent.click(screen.getByRole('button', { name: 'Los' }));
+    // Every try too short: six misses on a pool of four words.
+    for (let i = 0; i < HOLD_ROUND_SIZE; i++) {
+      hold(100);
+      onward();
+    }
+    expect(screen.getByRole('heading', { name: '0 von 6 richtig' })).toBeInTheDocument();
+    const cards = Object.values(store.load().cards);
+    expect(cards).toHaveLength(HOLD_POOL.length);
+    expect(
+      screen.getByText(`${HOLD_POOL.length} Karten kommen in deine Wiederholung.`)
+    ).toBeInTheDocument();
+
+    // A new round counts anew.
+    fireEvent.click(screen.getByRole('button', { name: 'Nochmal' }));
+    hold(100);
+    onward();
+    for (let i = 1; i < HOLD_ROUND_SIZE; i++) {
+      hold((i < 3 ? TEMPI.calm : TEMPI.brisk) * 2);
+      onward();
+    }
+    expect(screen.getByText('1 Karte kommt in deine Wiederholung.')).toBeInTheDocument();
   });
 
   it('can be played with the keyboard, and by tapping instead of holding', async () => {

@@ -687,7 +687,7 @@ export const de = {
     hold: {
       title: 'Halte die Ghunna',
       intro: 'Summe die Ghunna mit dem Takt: zwei Zählzeiten, nicht eine, nicht drei.',
-      how: 'Du siehst ein Wort mit Nūn oder Mīm mit Shadda und hörst einen Takt. Summe die Ghunna und halte dabei den Knopf gedrückt: genau zwei Schläge lang. Dann lass los.',
+      how: 'Du siehst ein Wort mit Nūn oder Mīm mit Shadda und hörst einen Takt. Summe die Ghunna und halte dabei den Knopf gedrückt: zwei ganze Schläge lang, also von einem Schlag bis zum übernächsten. Dann lass los.',
       noMicrophone:
         'Es wird nichts aufgenommen: Du summst für dich, der Knopf misst nur die Dauer.',
       start: 'Los',
@@ -704,8 +704,8 @@ export const de = {
       taps: 'Antippen statt halten',
       verdict: {
         good: 'Zwei Zählzeiten.',
-        short: 'Zu kurz: Halte bis zum zweiten Schlag.',
-        long: 'Zu lang: Lass nach dem zweiten Schlag los.',
+        short: 'Zu kurz: Halte zwei ganze Schläge lang.',
+        long: 'Zu lang: Lass nach zwei ganzen Schlägen los.',
       },
       held: (counts: string) => `Gehalten: etwa ${counts} Zählzeiten.`,
     },

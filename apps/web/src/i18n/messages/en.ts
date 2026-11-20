@@ -620,7 +620,7 @@ export const en: Messages = {
     hold: {
       title: 'Hold the ghunna',
       intro: 'Hum the ghunna with the beat: two counts, not one, not three.',
-      how: 'You see a word with nūn or mīm with shadda and hear a beat. Hum the ghunna and keep the button down while you do: exactly two beats. Then let go.',
+      how: 'You see a word with nūn or mīm with shadda and hear a beat. Hum the ghunna and keep the button down while you do: two whole beats, from one beat to the one after the next. Then let go.',
       noMicrophone:
         'Nothing is recorded: you hum for yourself, the button only measures how long.',
       start: 'Start',
@@ -637,8 +637,8 @@ export const en: Messages = {
       taps: 'Tap instead of holding',
       verdict: {
         good: 'Two counts.',
-        short: 'Too short: hold until the second beat.',
-        long: 'Too long: let go after the second beat.',
+        short: 'Too short: hold for two whole beats.',
+        long: 'Too long: let go after two whole beats.',
       },
       held: (counts) => `Held: about ${counts} counts.`,
     },
