@@ -202,7 +202,7 @@ describe('syncing the log (ADR-0023)', () => {
 
   it('skips an event of a kind this version does not know, and moves on', async () => {
     const server = fakeServer(1);
-    server.log.push({ ...event(), kind: 'hold-ghunna', seq: 1 }, { ...event(), seq: 2 });
+    server.log.push({ ...event(), kind: 'a-later-game', seq: 1 }, { ...event(), seq: 2 });
     const { store } = mount(server);
     await waitFor(() => expect(store.load().cursor).toBe(2));
     expect(server.requests.map((r) => r.since)).toEqual([0, 1]);

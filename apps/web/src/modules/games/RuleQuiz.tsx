@@ -469,7 +469,8 @@ function optionClass(card: AnswerId, chosen: AnswerId | null, answer: AnswerId):
 }
 
 /** The end of a round: score, new review cards, and where to go next. */
-function Results({
+/** The end of a round: the score, the XP, what goes to the review, and what to do next. */
+export function Results({
   result,
   again,
   offerReview,

@@ -489,6 +489,7 @@ describe('the path', () => {
       '/pfad/3/idgham-shafawi',
       '/pfad/3/izhar-shafawi',
       '/pfad/3/spiel/welche-regel',
+      '/pfad/3/spiel/ghunna-halten',
       '/pfad/3/test',
       '/pfad/4/qalqala',
       '/pfad/4/spiel/buchstaben',

@@ -617,6 +617,31 @@ export const en: Messages = {
       recommended: (unit) => `Recommended after the test of unit ${unit}.`,
     },
     back: 'To the unit',
+    hold: {
+      title: 'Hold the ghunna',
+      intro: 'Hum the ghunna with the beat: two counts, not one, not three.',
+      how: 'You see a word with nūn or mīm with shadda and hear a beat. Hum the ghunna and keep the button down while you do: two whole beats, from one beat to the one after the next. Then let go.',
+      noMicrophone:
+        'Nothing is recorded: you hum for yourself, the button only measures how long.',
+      start: 'Start',
+      question: 'Hold the ghunna on the marked letter: 2 counts.',
+      tempo: {
+        calm: 'Calm tempo',
+        brisk: 'A little brisker – two counts stay two counts.',
+      },
+      hold: 'Press, hold and hum',
+      holding: 'Holding …',
+      tapStart: 'Tap and hum',
+      tapEnd: 'Tap to end',
+      sound: 'Hear the beat',
+      taps: 'Tap instead of holding',
+      verdict: {
+        good: 'Two counts.',
+        short: 'Too short: hold for two whole beats.',
+        long: 'Too long: let go after two whole beats.',
+      },
+      held: (counts) => `Held: about ${counts} counts.`,
+    },
     unit3: {
       title: 'Which rule? · Unit 3',
       intro: 'Mīm sākina or shadda: ten words, four rules.',
