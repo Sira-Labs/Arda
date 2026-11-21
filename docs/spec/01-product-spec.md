@@ -222,7 +222,8 @@ Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the 
 the letter recorded and sent to him (F7).)_
 _(Built (2026-11-21): tongue and lips move. Opening a letter, the mouth goes once from rest to
 the letter's point, and again on "Bewegung zeigen": the tip to the place the point names, or the
-part of the tongue the point names up towards the palate, the lips together (bāʾ, mīm), rounded
+part of the tongue the point names up to the palate (jīm, shīn, yāʾ, kāf and qāf meet it,
+as their texts say; ḍād's edge only rises, the molars being out of a side view), the lips together (bāʾ, mīm), rounded
 forward and open (wāw), or the lower lip to the upper incisors (fāʾ). Each pose shows what the
 point's label and the letter's makhraj text already say and nothing further: no heaviness, no
 nasal passage, no air; the throat's six letters move nothing, since a side view shows nothing

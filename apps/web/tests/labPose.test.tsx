@@ -78,11 +78,42 @@ describe('the poses of tongue and lips (F5)', () => {
     expect(dotShift('teeth', POSES.teeth)).toEqual({ x: 0, y: 0 });
   });
 
+  /** The nearest the tongue's edge comes to the palate's line, and where. */
+  function nearest(pose: Pose) {
+    const palate = palatePoints(200);
+    return edge(pose)
+      .filter((p) => p.x > 200 && p.y < 440)
+      .map((p) => ({
+        at: p,
+        gap: Math.min(...palate.map((q) => Math.hypot(p.x - q.x, p.y - q.y))),
+      }))
+      .reduce((best, here) => (here.gap < best.gap ? here : best));
+  }
+
   it('never push the tongue through the roof of the mouth', () => {
     for (const point of POINTS) {
-      for (const p of edge(POSES[point]).filter((q) => q.x > 200 && q.x < 400)) {
+      for (const p of edge(POSES[point]).filter((q) => q.x > 200 && q.x < 415)) {
         expect(p.y, `${point} at x=${Math.round(p.x)}`).toBeGreaterThan(palateAt(p.x));
       }
+    }
+  });
+
+  it('lay the tongue against the palate where the letter’s text says it meets it', () => {
+    // The palate's line is 4 wide: an edge within 1.5 to 3.5 of its centre touches it.
+    const jim = nearest(POSES.tongueMid);
+    const kaf = nearest(POSES.tongueBack);
+    const qaf = nearest(POSES.tongueFar);
+    for (const { gap } of [jim, kaf, qaf]) {
+      expect(gap).toBeGreaterThan(1.5);
+      expect(gap).toBeLessThan(3.5);
+    }
+    // Jīm at the hard palate, qāf at the soft palate (from x = 382), kāf in front of qāf.
+    expect(jim.at.x).toBeLessThan(kaf.at.x);
+    expect(kaf.at.x).toBeLessThan(382);
+    expect(qaf.at.x).toBeGreaterThan(382);
+    // At rest, and with only the tip or the edge raised, nothing touches.
+    for (const point of ['whistle', 'tongueSide', 'halqMid', 'lips'] as const) {
+      expect(nearest(POSES[point]).gap, point).toBeGreaterThan(8);
     }
   });
 

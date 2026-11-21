@@ -68,7 +68,8 @@ const lips = (change: Partial<LipPose>): Pose => ({
 
 /**
  * The pose of each point. Tip points: the tip at the place the point marks. Points on the
- * tongue (its edge, middle and back): that part raised towards the palate above it.
+ * tongue: its middle and back up to the palate above them, as their texts say they meet it;
+ * its edge raised towards the molars, which a side view cannot show it reaching.
  */
 export const POSES: Record<Point, Pose> = {
   // A narrow gap at the incisors: the tip comes close, it does not press.
@@ -83,23 +84,25 @@ export const POSES: Record<Point, Pose> = {
   lam: tongue({ tip: { x: 199, y: 374 }, front1: { x: 220, y: 388 } }),
   // The edge of the tongue up at the molars.
   tongueSide: tongue({ front1: { x: 222, y: 388 }, front2: { x: 276, y: 380 } }),
-  // The middle of the tongue up under the hard palate.
+  // The middle of the tongue laid against the hard palate above it.
   tongueMid: tongue({
     front1: { x: 218, y: 398 },
-    front2: { x: 286, y: 364 },
+    front2: { x: 286, y: 298 },
     mid: { x: 340, y: 398 },
   }),
-  // The back of the tongue up: kāf a little in front of qāf, which meets the soft palate.
-  // The handles on both sides of the meeting point stay in one line, so the back stays round.
+  // The back of the tongue at the palate: kāf where the hard palate ends, qāf behind it at
+  // the soft palate, both closing against it. The handles on both sides of the meeting point
+  // stay in one line, so the back stays round. The edge stops half a line's width short of
+  // the palate's centre line: drawn, the two touch and do not cross.
   tongueBack: tongue({
-    front2: { x: 300, y: 390 },
-    mid: { x: 352, y: 378 },
-    back1: { x: 378, y: 372 },
+    front2: { x: 300, y: 377 },
+    mid: { x: 356, y: 355 },
+    back1: { x: 382, y: 349 },
   }),
   tongueFar: tongue({
-    front2: { x: 310, y: 392 },
-    mid: { x: 368, y: 382 },
-    back1: { x: 397, y: 377 },
+    front2: { x: 330, y: 376 },
+    mid: { x: 390, y: 362 },
+    back1: { x: 406, y: 358 },
   }),
   // The throat: nothing a side view shows moves.
   halqNear: REST,
