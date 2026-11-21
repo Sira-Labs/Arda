@@ -1,6 +1,17 @@
-import { useId } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useI18n } from '@/i18n/I18nProvider';
 import { AREAS, type Area, type Point } from './letters';
+import {
+  REST,
+  between,
+  dotShift,
+  ease,
+  moves,
+  poseOf,
+  tonguePath,
+  type Pose,
+} from './pose';
+import type { LabLetterId } from './types';
 import './lab.css';
 
 /**
@@ -46,6 +57,55 @@ const AREA_MARKS: Record<Area, { x: number; y: number }> = {
 /** The tag naming the point, below the chin where the drawing is empty. */
 const TAG = { x: 14, y: 584, width: 256, height: 84 };
 
+/** How long tongue and lips take from rest to the point, and the wait before they start. */
+export const MOVE_MS = 700;
+const START_AFTER_MS = 350;
+
+/** Whether the reader asked their device for less motion. */
+function prefersStill(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true
+  );
+}
+
+/**
+ * The mouth's pose for a point over time: from rest to the point's pose once when the page
+ * opens, and again whenever `play` is called. With reduced motion it stands at the point
+ * from the start and only moves when the reader asks for it.
+ */
+function usePose(target: Pose): { pose: Pose; play: () => void } {
+  const [progress, setProgress] = useState(() => (prefersStill() ? 1 : 0));
+  // Each run of the movement; the first one is the page's own, unless motion is unwanted.
+  const [run, setRun] = useState(() => (prefersStill() ? 0 : 1));
+  useEffect(() => {
+    if (run === 0 || target === REST) return;
+    let frame = 0;
+    let started: number | undefined;
+    const step = (now: number) => {
+      started ??= now;
+      const t = (now - started) / MOVE_MS;
+      setProgress(ease(t));
+      if (t < 1) frame = requestAnimationFrame(step);
+    };
+    const wait = window.setTimeout(
+      () => {
+        setProgress(0);
+        frame = requestAnimationFrame(step);
+      },
+      run === 1 ? START_AFTER_MS : 0
+    );
+    return () => {
+      window.clearTimeout(wait);
+      cancelAnimationFrame(frame);
+    };
+  }, [run, target]);
+  return {
+    pose: between(REST, target, progress),
+    play: () => setRun((n) => Math.max(n, 1) + 1),
+  };
+}
+
 /** The number of an area in the reader's digits (Arabic-Indic in Arabic). */
 export function areaNumber(area: Area, language: string): string {
   return (AREAS.indexOf(area) + 1).toLocaleString(language === 'ar' ? 'ar-EG' : 'de-DE');
@@ -57,13 +117,31 @@ export function areaNumber(area: Area, language: string): string {
  * letter, its point pulsing with a label. Our own drawing, CC BY 4.0, a draft until the
  * sheikh has checked it (ADR-0018).
  */
-export function HeadDiagram({ point }: { point?: Point }) {
+export function HeadDiagram(props: HeadProps) {
+  // A new letter starts from rest again.
+  return <Head key={`${props.point ?? 'areas'}-${props.letter ?? ''}`} {...props} />;
+}
+
+interface HeadProps {
+  /** The point to mark; without one the head shows its areas only. */
+  point?: Point;
+  /** The letter shown, where its mouth differs from the point's other letters. */
+  letter?: LabLetterId;
+}
+
+function Head({ point, letter }: HeadProps) {
   const { m, language } = useI18n();
+  const target = point ? poseOf(point, letter) : REST;
+  const { pose, play } = usePose(target);
   // The face never mirrors, but an Arabic label reads right to left.
   const arabic = language === 'ar' ? ({ lang: 'ar', dir: 'rtl' } as const) : {};
   const id = useId();
   const t = m.lab.diagram;
-  const at = point ? POINTS[point] : undefined;
+  // A point on the tongue rides with it; every other point is the place the mouth comes to.
+  const shift = point ? dotShift(point, pose) : { x: 0, y: 0 };
+  const at = point
+    ? { x: POINTS[point].x + shift.x, y: POINTS[point].y + shift.y }
+    : undefined;
   const label = point ? m.lab.points[point] : undefined;
   return (
     <figure className="lab-head stack" style={{ gap: 12 }}>
@@ -100,7 +178,8 @@ export function HeadDiagram({ point }: { point?: Point }) {
         <path
           className="lab-area"
           data-area="lisan"
-          d="M172 414 C215 402 290 395 340 405 C395 418 412 460 410 520 L405 560 C360 540 300 500 240 470 C205 455 180 440 172 430 Z"
+          data-part="tongue"
+          d={tonguePath(pose.tongue)}
         />
         {/* Throat: ḥalq */}
         <path
@@ -117,16 +196,18 @@ export function HeadDiagram({ point }: { point?: Point }) {
         <ellipse
           className="lab-area"
           data-area="shafatan"
-          cx="141"
-          cy="393"
+          data-part="upper-lip"
+          cx={pose.lips.upperX}
+          cy={pose.lips.upperY}
           rx="14"
           ry="9"
         />
         <ellipse
           className="lab-area"
           data-area="shafatan"
-          cx="148"
-          cy="425"
+          data-part="lower-lip"
+          cx={pose.lips.lowerX}
+          cy={pose.lips.lowerY}
           rx="14"
           ry="10"
         />
@@ -178,6 +259,11 @@ export function HeadDiagram({ point }: { point?: Point }) {
         )}
       </svg>
       <figcaption className="stack" style={{ gap: 8 }}>
+        {moves(target) && (
+          <button type="button" className="btn lab-play" onClick={play}>
+            {t.play}
+          </button>
+        )}
         <ul className="lab-legend" aria-label={t.legend}>
           {AREAS.map((area) => (
             <li key={area}>

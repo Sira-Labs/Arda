@@ -1374,8 +1374,9 @@ export const fr: Messages = {
       description:
         'Vue de profil de la tête avec cinq zones\u202f: Jawf (cavité buccale), Ḥalq (gorge), Lisān (langue), Shafatān (lèvres) et Khayshūm (cavité nasale).',
       legend: 'Les cinq zones',
+      play: 'Montrer le mouvement',
       licence:
-        'Dessin\u202f: ʿArḍa, CC BY 4.0 – un brouillon, ton cheikh le vérifie encore.',
+        'Dessin et mouvement\u202f: ʿArḍa, CC BY 4.0 – un brouillon, ton cheikh vérifie encore les deux.',
     },
     areas: {
       jawf: {

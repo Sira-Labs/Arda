@@ -1337,7 +1337,9 @@ export const en: Messages = {
       description:
         'Side view of the head with five areas: Jawf (mouth space), Ḥalq (throat), Lisān (tongue), Shafatān (lips) and Khayshūm (nasal cavity).',
       legend: 'The five areas',
-      licence: 'Drawing: ʿArḍa, CC BY 4.0 – a draft, your sheikh is still checking it.',
+      play: 'Show the movement',
+      licence:
+        'Drawing and movement: ʿArḍa, CC BY 4.0 – a draft, your sheikh is still checking both.',
     },
     areas: {
       jawf: { name: 'Jawf', gloss: 'mouth and throat space: the long vowels' },

@@ -63,7 +63,7 @@ export function Letter({ id }: { id: LabLetterId }) {
         {letter.review.status === 'draft' && <DraftBadge />}
       </header>
 
-      <HeadDiagram point={letter.point} />
+      <HeadDiagram point={letter.point} letter={letter.id} />
 
       <section className="stack" style={{ gap: 8 }} aria-labelledby="lab-makhraj">
         <h2 id="lab-makhraj" className="h-small">

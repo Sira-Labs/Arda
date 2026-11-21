@@ -1421,7 +1421,9 @@ export const de = {
       description:
         'Seitenansicht des Kopfes mit fünf Bereichen: Jawf (Mundraum), Ḥalq (Kehle), Lisān (Zunge), Shafatān (Lippen) und Khayshūm (Nasenraum).',
       legend: 'Die fünf Bereiche',
-      licence: 'Zeichnung: ʿArḍa, CC BY 4.0 – ein Entwurf, dein Sheikh prüft sie noch.',
+      play: 'Bewegung zeigen',
+      licence:
+        'Zeichnung und Bewegung: ʿArḍa, CC BY 4.0 – ein Entwurf, dein Sheikh prüft beides noch.',
     },
     areas: {
       jawf: { name: 'Jawf', gloss: 'Mund- und Rachenraum: die Dehnungslaute' },
