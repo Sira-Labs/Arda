@@ -96,7 +96,7 @@ Rules for using it:
 | 0   | Today            | `/`                        | "Von meinem Sheikh" (ink card) first, "Weiterlesen" (the page last read), "Mein Lernplan" (open plans), "Dein Fortschritt" (level, streak, badges → `/abzeichen`), "Für heute" (three quests), next unit (paper card, +XP chip), colour legend | built (assignments live; next unit placeholder)                                                         |
 | 1   | Rule card        | `/pfad/:unit/:rule`        | Arabic rule name, rule on one line, coloured example on paper, Play / Slow 0.5×, numbered steps, "where sources differ" note, Ask al-Muʿallim                                                                                                  | built for units 2–4 (no audio, no Ask yet)                                                              |
 | 2   | Muṣḥaf           | `/mushaf`, `/mushaf/:sura` | IndoPak page, script chips (IndoPak · Madīna · Warsh), tap a letter → ink sheet with rule, "Hear it · Practise 5 more", legend                                                                                                                 | built: IndoPak and Madīna printed pages (S3.4, S3.5), tap a word for its rules, offline                 |
-| 3   | Letter lab       | `/labor/:letter`           | side view of the head, five coloured areas, numbered points, letter list per area                                                                                                                                                              | built: first set س ز ص ر (S3.6), draft; animation and the other letters later                           |
+| 3   | Letter lab       | `/labor/:letter`           | side view of the head, five coloured areas, numbered points, letter list per area                                                                                                                                                              | built: all 28 letters, draft; tongue and lips move (2026-11-21)                                         |
 | 4   | Games            | `/pfad/:unit/spiel/:game`  | Which rule? · Sort the 28 · Hold the ghunna; XP, quests, streak shields; review at `/pfad/wiederholen`                                                                                                                                         | built: Which rule? (units 2, 3), Sort the 28, qalqala letters, review, unit tests at `/pfad/:unit/test` |
 | 5   | Recite           | `/rezitieren/:range`       | text with `gut` / `prüfen` per word (label next to colour), finding card, Yours ↔ Reciter, **Send to my sheikh** (primary)                                                                                                                     | week 4                                                                                                  |
 | 6   | Sheikh (student) | `/sheikh`                  | "Von meinem Sheikh" list: type chip, range, focus, due date; voice notes                                                                                                                                                                       | built on Today and the ḥalaqa page (T2); voice notes later                                              |
@@ -156,6 +156,11 @@ Makhārij drawings are our own SVGs (no usable open drawings exist): a side view
 ink lines on paper, the five areas in the token colours (jawf teal, ḥalq blue, lisān saffron,
 shafatān red, khayshūm green), numbered points, animated tongue and lips. Licensed CC BY 4.0
 and reviewed by the sheikh before release (ADR-0018).
+
+The movement is drawn, not filmed: each point has one pose of the tongue's upper edge and the
+lips (`apps/web/src/modules/lab/pose.ts`), and the drawing goes from rest to it in 0.7 s, once
+on opening and again on request. A point on the tongue rides with it; a point the mouth comes
+to stays put. A pose may show only what the point's label and the letter's makhraj text say.
 
 ## 11. Logo
 

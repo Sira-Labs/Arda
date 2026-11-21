@@ -219,7 +219,15 @@ numbered and named, the letter's point pulsing with a label, makhraj in plain wo
 a one-line meaning each, typical mistakes of German speakers, real words from the packs played
 word by word from al-Ḥuṣarī's teaching recitation (0.5×–1×), the listening quiz "Welcher
 Buchstabe?" (rāʾ: heavy or light), pairs to compare, all marked draft for the sheikh; an āya with
-the letter recorded and sent to him (F7). Not yet animated.)_
+the letter recorded and sent to him (F7).)_
+_(Built (2026-11-21): tongue and lips move. Opening a letter, the mouth goes once from rest to
+the letter's point, and again on "Bewegung zeigen": the tip to the place the point names, or the
+part of the tongue the point names up towards the palate, the lips together (bāʾ, mīm), rounded
+forward and open (wāw), or the lower lip to the upper incisors (fāʾ). Each pose shows what the
+point's label and the letter's makhraj text already say and nothing further: no heaviness, no
+nasal passage, no air; the throat's six letters move nothing, since a side view shows nothing
+of them. With reduced motion the mouth stands at the point and moves only when asked. Like the
+drawing, the movement is a draft until the sheikh has checked it, and says so beneath it.)_
 _(Built (owner, 2026-10-07): the throat, ء ه ع ح غ خ, with its three points (deepest, middle,
 nearest the mouth), ten words each and the pairs that differ in that letter only (ʿalīm / alīm,
 ʿammā / ammā, ʿayna / ayna, uḥilla / uhilla, khayra / ghayra, yakhshā / yaghshā). Each letter is

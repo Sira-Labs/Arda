@@ -279,3 +279,8 @@
   font-size: 2rem;
   line-height: 1;
 }
+
+/* Replaying the movement of tongue and lips */
+.lab-play {
+  align-self: center;
+}
