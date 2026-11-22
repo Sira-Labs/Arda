@@ -236,6 +236,7 @@ export function MushafPage() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p role="alert">{m.mushaf.failure.missingPage}</p>
       </div>
     );
@@ -244,6 +245,7 @@ export function MushafPage() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p className="muted" role="status">
           {m.mushaf.loading}
         </p>
@@ -254,6 +256,7 @@ export function MushafPage() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p role="alert">{m.mushaf.failure[result.ok ? 'missing' : result.failure]}</p>
       </div>
     );

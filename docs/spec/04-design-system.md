@@ -155,15 +155,17 @@ Checked on every commit (2026-11-22), as far as a machine can:
 
 - `apps/web/tests/a11y.test.tsx` opens every route of the app, in German and Arabic and, where
   a screen differs, signed in as student, teacher and admin, and runs axe-core's WCAG 2.0–2.2
-  A/AA and best-practice rules on it. Each screen has exactly one `h1`, in every state.
+  A/AA and best-practice rules on it. It checks the state a screen opens in (for the muṣḥaf
+  page and a ḥalaqa also the loaded one), and that this state has exactly one `h1`. The test
+  fails for a route of the table that none of its paths opens.
 - `apps/web/tests/contrast.test.ts` reads the tokens of both themes: text colours 4.5:1 on all
   three surfaces, field edges (`--border-strong`), focus ring and drawings 3:1, tajwīd colours
   3:1 on the page. `--border` is decoration and carries no meaning alone.
 
-jsdom lays nothing out, so target size, reflow, focus order and the screens behind a first tap
-are still checked by hand and by screenshot in review. A new screen is added to the route
-table and is then checked without further work; a new text colour is added to the list in the
-contrast test.
+jsdom lays nothing out, so target size, reflow, focus order and the states behind a tap (a
+game in play, an open dialog) are still checked by hand and by screenshot in review. A new
+screen needs a path in the test's lists, which the test itself demands; a new text colour is
+added to the list in the contrast test.
 
 ## 10. Illustrations
 

@@ -25,6 +25,7 @@ export function SuraView() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p role="alert">
           {m.mushaf.failure[!meta || !result || result.ok ? 'missing' : result.failure]}
         </p>
@@ -35,6 +36,7 @@ export function SuraView() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p className="muted" role="status">
           {m.mushaf.loading}
         </p>
@@ -49,6 +51,7 @@ export function SuraView() {
     return (
       <div className="stack">
         {back}
+        <h1 className="h-small">{m.mushaf.eyebrow}</h1>
         <p role="alert">{m.mushaf.failure.missing}</p>
       </div>
     );
