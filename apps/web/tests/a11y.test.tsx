@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import type { PackIndex } from '@arda/quran';
 import axe from 'axe-core';
 import {
@@ -26,7 +26,6 @@ const PATHS = [
   '/abzeichen',
   '/mushaf',
   '/mushaf/seite/582',
-  '/mushaf/78',
   '/labor',
   '/labor/ra',
   '/labor/ra/quiz',
@@ -99,6 +98,12 @@ const SIGNED_IN = [
   '/verwaltung',
 ];
 
+/**
+ * A sūra's address only sends on to its page: between the two nothing is on screen, so it is
+ * checked once the page is there (below).
+ */
+const SURA = '/mushaf/78';
+
 /** Every path pattern of the route table, layouts left out. */
 function patterns(table: RouteObject[]): string[] {
   return table.flatMap((route) => [
@@ -136,8 +141,9 @@ async function check(
   );
   // Every screen opens with one main heading (WCAG 2.4.6), also when it has nothing to show.
   await given.ready?.();
-  await screen.findByRole('heading', { level: 1 });
-  expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  await waitFor(() =>
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+  );
   // What jsdom cannot lay out (contrast, target size) is checked on the tokens below and by hand.
   const results = await axe.run(container, {
     runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
@@ -156,7 +162,7 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
 
   it('opens every route of the app at least once', () => {
     // A new screen fails here until a path for it is in one of the lists above.
-    const tested = [...PATHS, ...SIGNED_IN];
+    const tested = [...PATHS, ...SIGNED_IN, SURA];
     const specific = patterns(routes).filter((pattern) => pattern !== '*');
     for (const pattern of specific) {
       expect(
@@ -177,10 +183,10 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
     }
   }
 
-  it('the muṣḥaf page with its words, once the pack is there', async () => {
+  it('a sūra’s address: its page with its words, once the pack is there', async () => {
     localStorage.setItem('arda.language', 'de');
     expect(
-      await check('/mushaf/78', null, { ready: () => screen.findByText(/^Seite \d+ · /) })
+      await check(SURA, null, { ready: () => screen.findByText(/^Seite \d+ · /) })
     ).toEqual([]);
     expect(document.querySelectorAll('.mushaf-word').length).toBeGreaterThan(20);
   });
