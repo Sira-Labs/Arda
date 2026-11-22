@@ -7,7 +7,7 @@ import axe from 'axe-core';
 import {
   RouterProvider,
   createMemoryRouter,
-  matchPath,
+  matchRoutes,
   type RouteObject,
 } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -107,11 +107,11 @@ const SIGNED_IN = [
  */
 const SURA = '/mushaf/78';
 
-/** Every path pattern of the route table, layouts left out. */
-function patterns(table: RouteObject[]): string[] {
+/** Every screen of the route table: the routes with a path, layouts left out. */
+function screens(table: RouteObject[]): RouteObject[] {
   return table.flatMap((route) => [
-    ...(route.path ? [route.path] : []),
-    ...patterns(route.children ?? []),
+    ...(route.path ? [route] : []),
+    ...screens(route.children ?? []),
   ]);
 }
 
@@ -164,17 +164,15 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
   afterEach(cleanup);
 
   it('opens every route of the app at least once', () => {
-    // A new screen fails here until a path for it is in one of the lists above.
-    const tested = [...PATHS, ...SIGNED_IN, SURA];
-    const specific = patterns(routes).filter((pattern) => pattern !== '*');
-    for (const pattern of specific) {
-      expect(
-        tested.some((path) => matchPath(pattern, path)),
-        pattern
-      ).toBe(true);
-    }
-    // And the catch-all with a path nothing else takes.
-    expect(tested.some((path) => !specific.some((p) => matchPath(p, path)))).toBe(true);
+    // A new screen fails here until a path that the router sends to it is in one of the
+    // lists above: what counts is the route chosen, not a pattern that would also fit.
+    const chosen = new Set(
+      [...PATHS, ...SIGNED_IN, SURA].map(
+        (path) => matchRoutes(routes, path)?.at(-1)?.route
+      )
+    );
+    const unopened = screens(routes).filter((route) => !chosen.has(route));
+    expect(unopened.map((route) => route.path)).toEqual([]);
   });
 
   for (const language of LANGUAGES) {
