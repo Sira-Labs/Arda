@@ -195,6 +195,32 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
     ).toEqual([]);
   });
 
+  it('the account page with the opt-in to measure the check, offered and unreadable', async () => {
+    localStorage.setItem('arda.language', 'de');
+    const title = () =>
+      screen.findByRole('heading', { level: 2, name: 'Automatische Prüfung messen' });
+    expect(
+      await check('/konto', person('student'), {
+        answers: {
+          'GET /api/v1/speech/evaluation': () =>
+            Response.json({ available: true, optedIn: false, since: null }),
+        },
+        ready: title,
+      })
+    ).toEqual([]);
+    cleanup();
+    expect(
+      await check('/konto', person('student'), {
+        answers: {
+          'GET /api/v1/speech/evaluation': () =>
+            Response.json({ error: 'internal' }, { status: 500 }),
+        },
+        ready: title,
+      })
+    ).toEqual([]);
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+  });
+
   for (const role of ['student', 'teacher', 'admin'] as const) {
     for (const path of SIGNED_IN) {
       it(`${path} as ${role}`, async () => {
