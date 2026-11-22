@@ -16,13 +16,14 @@
   --on-ink: #f4eee2;
   --text: #1b2420;
   --text-muted: #56615b;
-  --border: #dcd2bf;
+  --border: #dcd2bf; /* decoration: cards, rules */
+  --border-strong: #857e6d; /* the edge of a field: 3:1 on every surface (WCAG 1.4.11) */
 
   /* Accents: saffron for the one primary action, teal for progress and the teacher */
   --accent: #8a5a12; /* text-safe saffron on paper */
   --accent-fill: #e8a93b;
   --on-accent: #1a1206;
-  --accent-2: #1f7a6d;
+  --accent-2: #1c7265; /* 4.5:1 as text on every surface and under --on-accent-2 */
   --on-accent-2: #f4eee2;
   --focus: #8a5a12;
   --on-ink-muted: #b9c7bf; /* secondary text on ink */
@@ -32,9 +33,9 @@
   --brand-teal: #3fb5a3; /* its centre and rings */
 
   /* Feedback */
-  --good: #1f7a6d;
+  --good: #1c7265;
   --check: #8a5a12; /* "check this word": never red, it is not a failure */
-  --bad: #b4432b;
+  --bad: #b0412a;
   --info: #25609b;
 
   /* Tajwīd colours (common tajwīd-muṣḥaf convention), tuned for paper */
@@ -94,6 +95,7 @@
   --text: #f4eee2;
   --text-muted: #a9b5ae;
   --border: #2e3d37;
+  --border-strong: #6b7f75;
   --accent: #e8a93b;
   --accent-2: #3fb5a3;
   --on-accent-2: #06201c;

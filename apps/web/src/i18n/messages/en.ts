@@ -143,6 +143,7 @@ export const en: Messages = {
     next: 'These are all eight units. Review them until they hold.',
   },
   ruleCard: {
+    shellProgress: 'Progress',
     play: (sura, aya) => `Listen: sūra ${sura}, āya ${aya}`,
     inQuran: 'In the Qurʾān:',
     eyebrow: (unit) => `Unit ${unit} · Understand`,
@@ -787,6 +788,7 @@ export const en: Messages = {
     retry: 'Try again',
     back: 'To my ḥalaqāt',
     join: {
+      heading: 'Join a ḥalaqa',
       eyebrow: 'Invitation',
       title: (name) => `Ḥalaqa “${name}”`,
       signIn: 'Sign in to join. You will come back here afterwards.',

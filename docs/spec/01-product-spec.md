@@ -351,7 +351,9 @@ As described in their ADRs; only confirmed flags reach the student.
   English, French and Arabic (RTL) (ADR-0020); Qurʾān text always right to left with full
   tashkīl; repository content in English.
 - **Accessibility:** WCAG 2.2 AA; touch targets ≥ 44 px; colour never the only signal; reduced
-  motion respected; adjustable Qurʾān text size.
+  motion respected; adjustable Qurʾān text size. _(Checked by test on every commit since
+  2026-11-22: structure, names and roles of every screen, and the contrast of the colour
+  tokens; what needs a layout stays a manual check, design system §9.)_
 - **Privacy:** recordings never leave our servers; no tracking; GDPR export and deletion.
 - **Security:** threat model in `docs/security/threat-model.md`; auth hardening from Suffa's
   review; secrets only in environment variables.

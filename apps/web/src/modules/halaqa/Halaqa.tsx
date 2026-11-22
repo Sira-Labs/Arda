@@ -54,6 +54,7 @@ export function Halaqa() {
   if (error) {
     return (
       <div className="stack">
+        <h1>{m.halaqa.mine}</h1>
         <p role="alert">{error}</p>
         <Link to="/sheikh">{m.halaqa.back}</Link>
       </div>

@@ -98,6 +98,8 @@ export function Join() {
   return (
     <div className="stack" style={{ gap: 20, maxWidth: 560 }}>
       <p className="eyebrow">{m.halaqa.join.eyebrow}</p>
+      {/* Every state of the page has its heading; the preview's is the ḥalaqa's name. */}
+      {phase.kind !== 'preview' && <h1>{m.halaqa.join.heading}</h1>}
       {!loading && !me ? (
         token ? (
           <>

@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, type RouteObject } from 'react-router-dom';
 import { AppShell } from '@/components/AppShell';
 import { I18nProvider } from '@/i18n/I18nProvider';
 import { Account } from '@/modules/account/Account';
@@ -37,7 +37,8 @@ import { ProgressSync } from '@/review/ProgressSync';
 import { ReviewProvider } from '@/review/ReviewProvider';
 import { SessionProvider } from '@/state/session';
 
-const router = createBrowserRouter([
+/** Every screen of the app; the accessibility check walks them all. */
+export const routes: RouteObject[] = [
   // Learning screens bring their own shell: no navigation bar, a close button and progress.
   { path: '/pfad/:unit/:rule', element: <RuleCardPage /> },
   { path: '/pfad/2/spiel/welche-regel', element: <WhichRule /> },
@@ -75,7 +76,9 @@ const router = createBrowserRouter([
       { path: '*', element: <Soon page="notFound" /> },
     ],
   },
-]);
+];
+
+const router = createBrowserRouter(routes);
 
 export function App() {
   return (

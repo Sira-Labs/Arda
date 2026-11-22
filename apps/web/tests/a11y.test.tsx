@@ -1,0 +1,245 @@
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
+import type { PackIndex } from '@arda/quran';
+import axe from 'axe-core';
+import {
+  RouterProvider,
+  createMemoryRouter,
+  matchRoutes,
+  type RouteObject,
+} from 'react-router-dom';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { routes } from '@/App';
+import type { PackLoaderDeps } from '@/content/packs';
+import { PackLoaderContext } from '@/modules/mushaf/usePack';
+import type { Me } from '@/services/auth';
+import { fakeApi, Providers } from './render';
+
+const PATHS = [
+  '/',
+  '/anmelden',
+  '/konto',
+  '/pfad',
+  '/lernplan',
+  '/abzeichen',
+  '/mushaf',
+  '/mushaf/seite/582',
+  '/labor',
+  '/labor/ra',
+  '/labor/ra/quiz',
+  '/pfad/2/izhar',
+  '/pfad/2/spiel/welche-regel',
+  '/pfad/2/spiel/sortieren',
+  '/pfad/3/spiel/welche-regel',
+  '/pfad/3/spiel/ghunna-halten',
+  '/pfad/4/spiel/buchstaben',
+  '/pfad/5/spiel/wie-lang',
+  '/pfad/6/spiel/schwer-oder-leicht',
+  '/pfad/7/spiel/anhalten',
+  '/pfad/7/spiel/zeichen',
+  '/pfad/8/spiel/was-aendert-warsh',
+  '/pfad/8/spiel/hafs-oder-warsh',
+  '/pfad/2/test',
+  '/pfad/wiederholen',
+  '/sheikh',
+  '/beitreten',
+  '/gibt-es-nicht',
+];
+
+const HALAQA = '22222222-2222-4222-8222-222222222222';
+const PACKS = resolve(__dirname, '../public/packs');
+
+/** The packs the app ships, served from the repository; nothing is kept between screens. */
+const shippedPacks: PackLoaderDeps = {
+  index: JSON.parse(readFileSync(resolve(PACKS, 'index.json'), 'utf8')) as PackIndex,
+  fetch: async (url) =>
+    new Response(
+      new Uint8Array(readFileSync(resolve(PACKS, url.replace('/packs/', ''))))
+    ),
+  cache: async () => null,
+  sha256: async (data) => createHash('sha256').update(new Uint8Array(data)).digest('hex'),
+};
+
+/** A ḥalaqa as its teacher sees it: one student active, one waiting. */
+const halaqaView = {
+  [`GET /api/v1/halaqat/${HALAQA}`]: () =>
+    Response.json({
+      role: 'teacher',
+      halaqa: {
+        id: HALAQA,
+        name: 'Juzʾ ʿAmma',
+        oneToOne: false,
+        teacherName: 'Person',
+        createdAt: '2026-10-03T12:00:00Z',
+      },
+      members: ['active', 'pending'].map((status, i) => ({
+        userId: `s${i}`,
+        name: `Student ${i}`,
+        email: `s${i}@example.org`,
+        role: 'student',
+        status,
+        joinedAt: '2026-10-03T12:00:00Z',
+      })),
+    }),
+  [`GET /api/v1/halaqat/${HALAQA}/assignments`]: () =>
+    Response.json({ role: 'teacher', assignments: [], more: false }),
+};
+
+/** German is the source text; Arabic is the one that reads right to left. */
+const LANGUAGES = ['de', 'ar'] as const;
+
+/** The screens a signed-in person sees differently. */
+const SIGNED_IN = [
+  '/',
+  '/konto',
+  '/lernplan',
+  '/abzeichen',
+  '/sheikh',
+  `/halaqa/${HALAQA}`,
+  '/verwaltung',
+];
+
+/**
+ * A sūra's address only sends on to its page: between the two nothing is on screen, so it is
+ * checked once the page is there (below).
+ */
+const SURA = '/mushaf/78';
+
+/** Every screen of the route table: the routes with a path, layouts left out. */
+function screens(table: RouteObject[]): RouteObject[] {
+  return table.flatMap((route) => [
+    ...(route.path ? [route] : []),
+    ...screens(route.children ?? []),
+  ]);
+}
+
+const person = (role: Me['role']): Me => ({
+  id: '11111111-1111-4111-8111-111111111111',
+  email: 'person@example.org',
+  name: 'Person',
+  role,
+  timeZone: null,
+  language: null,
+});
+
+/** Renders the app at a path and returns what axe finds there, one line per rule. */
+async function check(
+  path: string,
+  me: Me | null = null,
+  given: {
+    answers?: Parameters<typeof fakeApi>[0];
+    /** What shows that the screen has its content, awaited before it is checked. */
+    ready?: () => Promise<unknown>;
+  } = {}
+): Promise<string[]> {
+  const router = createMemoryRouter(routes, { initialEntries: [path] });
+  const { container } = render(
+    <Providers client={fakeApi(given.answers ?? {}, me).client}>
+      <PackLoaderContext.Provider value={shippedPacks}>
+        <RouterProvider router={router} />
+      </PackLoaderContext.Provider>
+    </Providers>
+  );
+  // Every screen opens with one main heading (WCAG 2.4.6), also when it has nothing to show.
+  await given.ready?.();
+  await waitFor(() =>
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+  );
+  // What jsdom cannot lay out (contrast, target size) is checked on the tokens below and by hand.
+  const results = await axe.run(container, {
+    runOnly: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa', 'best-practice'],
+    rules: { 'color-contrast': { enabled: false } },
+  });
+  return results.violations.map(
+    (v) => `${v.id}: ${v.nodes.map((n) => n.html).join(' | ')}`
+  );
+}
+
+describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+  afterEach(cleanup);
+
+  it('opens every route of the app at least once', () => {
+    // A new screen fails here until a path that the router sends to it is in one of the
+    // lists above: what counts is the route chosen, not a pattern that would also fit.
+    const chosen = new Set(
+      [...PATHS, ...SIGNED_IN, SURA].map(
+        (path) => matchRoutes(routes, path)?.at(-1)?.route
+      )
+    );
+    const unopened = screens(routes).filter((route) => !chosen.has(route));
+    expect(unopened.map((route) => route.path)).toEqual([]);
+  });
+
+  for (const language of LANGUAGES) {
+    for (const path of PATHS) {
+      it(`${path} (${language})`, async () => {
+        localStorage.setItem('arda.language', language);
+        expect(await check(path)).toEqual([]);
+      });
+    }
+  }
+
+  for (const language of LANGUAGES) {
+    it(`a sūra’s address: its page with its words, once the pack is there (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      const words = () => document.querySelectorAll('.mushaf-word');
+      expect(
+        await check(SURA, null, {
+          ready: () => waitFor(() => expect(words().length).toBeGreaterThan(20)),
+        })
+      ).toEqual([]);
+    });
+
+    it(`a ḥalaqa as its teacher sees it (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      expect(
+        await check(`/halaqa/${HALAQA}`, person('teacher'), {
+          answers: halaqaView,
+          ready: () => screen.findByRole('heading', { name: 'Juzʾ ʿAmma' }),
+        })
+      ).toEqual([]);
+    });
+
+    it(`the account page with the opt-in to measure the check, offered and unreadable (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      const card = () =>
+        waitFor(() =>
+          expect(document.getElementById('speech-evaluation')).not.toBeNull()
+        );
+      expect(
+        await check('/konto', person('student'), {
+          answers: {
+            'GET /api/v1/speech/evaluation': () =>
+              Response.json({ available: true, optedIn: false, since: null }),
+          },
+          ready: card,
+        })
+      ).toEqual([]);
+      cleanup();
+      expect(
+        await check('/konto', person('student'), {
+          answers: {
+            'GET /api/v1/speech/evaluation': () =>
+              Response.json({ error: 'internal' }, { status: 500 }),
+          },
+          ready: card,
+        })
+      ).toEqual([]);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    for (const role of ['student', 'teacher', 'admin'] as const) {
+      for (const path of SIGNED_IN) {
+        it(`${path} as ${role} (${language})`, async () => {
+          localStorage.setItem('arda.language', language);
+          expect(await check(path, person(role))).toEqual([]);
+        });
+      }
+    }
+  }
+});

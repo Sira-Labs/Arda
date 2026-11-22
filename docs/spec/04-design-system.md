@@ -31,10 +31,11 @@ muṣḥaf page is the centre of the app.
 | `--ink` / `--on-ink`                                  | `#10201b` / `#f4eee2`                        | `#0b1310` / same                      | statement surfaces: the sheikh's card, the nav                       |
 | `--text` / `--text-muted`                             | `#1b2420` / `#56615b`                        | `#f4eee2` / `#a9b5ae`                 | text (15.7:1 / 6.3:1 on paper)                                       |
 | `--border`                                            | `#dcd2bf`                                    | `#2e3d37`                             | hairlines                                                            |
+| `--border-strong`                                     | `#857e6d`                                    | `#6b7f75`                             | the edge of a field: 3:1 on every surface                            |
 | `--accent`                                            | `#8a5a12`                                    | `#e8a93b`                             | eyebrows, links (text-safe saffron)                                  |
 | `--accent-fill` / `--on-accent`                       | `#e8a93b` / `#1a1206`                        | same                                  | the one primary action (9.0:1)                                       |
-| `--accent-2` / `--on-accent-2`                        | `#1f7a6d` / `#f4eee2`                        | `#3fb5a3` / `#06201c`                 | progress, done, teacher actions                                      |
-| `--good` / `--check` / `--bad` / `--info`             | teal / saffron-brown / `#b4432b` / `#25609b` | lighter variants                      | feedback; `check` is not a failure                                   |
+| `--accent-2` / `--on-accent-2`                        | `#1c7265` / `#f4eee2`                        | `#3fb5a3` / `#06201c`                 | progress, done, teacher actions                                      |
+| `--good` / `--check` / `--bad` / `--info`             | teal / saffron-brown / `#b0412a` / `#25609b` | lighter variants                      | feedback; `check` is not a failure                                   |
 
 Shape: radii 12 / 16 / 24 px; tap target 44 px; spacing unit 16 px; floating nav 72 px.
 
@@ -149,6 +150,22 @@ app itself never draws a frame.
 WCAG 2.2 AA: text ≥ 4.5:1, large text and Qurʾān glyphs ≥ 3:1; touch targets ≥ 44 px; visible
 focus (`--focus`); `prefers-reduced-motion` respected; `lang="ar" dir="rtl"` on every Arabic
 run; screen readers get rule names from titles; adjustable Qurʾān size.
+
+Checked on every commit (2026-11-22), as far as a machine can:
+
+- `apps/web/tests/a11y.test.tsx` opens every route of the app, in German and Arabic and, where
+  a screen differs, signed in as student, teacher and admin, and runs axe-core's WCAG 2.0–2.2
+  A/AA and best-practice rules on it. It checks the state a screen opens in (for the muṣḥaf
+  page and a ḥalaqa also the loaded one), and that this state has exactly one `h1`. The test
+  fails for a route of the table that none of its paths opens.
+- `apps/web/tests/contrast.test.ts` reads the tokens of both themes: text colours 4.5:1 on all
+  three surfaces, field edges (`--border-strong`), focus ring and drawings 3:1, tajwīd colours
+  3:1 on the page. `--border` is decoration and carries no meaning alone.
+
+jsdom lays nothing out, so target size, reflow, focus order and the states behind a tap (a
+game in play, an open dialog) are still checked by hand and by screenshot in review. A new
+screen needs a path in the test's lists, which the test itself demands; a new text colour is
+added to the list in the contrast test.
 
 ## 10. Illustrations
 
