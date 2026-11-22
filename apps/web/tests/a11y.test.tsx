@@ -87,6 +87,9 @@ const halaqaView = {
     Response.json({ role: 'teacher', assignments: [], more: false }),
 };
 
+/** German is the source text; Arabic is the one that reads right to left. */
+const LANGUAGES = ['de', 'ar'] as const;
+
 /** The screens a signed-in person sees differently. */
 const SIGNED_IN = [
   '/',
@@ -174,7 +177,7 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
     expect(tested.some((path) => !specific.some((p) => matchPath(p, path)))).toBe(true);
   });
 
-  for (const language of ['de', 'ar']) {
+  for (const language of LANGUAGES) {
     for (const path of PATHS) {
       it(`${path} (${language})`, async () => {
         localStorage.setItem('arda.language', language);
@@ -183,56 +186,62 @@ describe('accessibility (WCAG 2.2 AA, spec 01 §6)', () => {
     }
   }
 
-  it('a sūra’s address: its page with its words, once the pack is there', async () => {
-    localStorage.setItem('arda.language', 'de');
-    expect(
-      await check(SURA, null, { ready: () => screen.findByText(/^Seite \d+ · /) })
-    ).toEqual([]);
-    expect(document.querySelectorAll('.mushaf-word').length).toBeGreaterThan(20);
-  });
+  for (const language of LANGUAGES) {
+    it(`a sūra’s address: its page with its words, once the pack is there (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      const words = () => document.querySelectorAll('.mushaf-word');
+      expect(
+        await check(SURA, null, {
+          ready: () => waitFor(() => expect(words().length).toBeGreaterThan(20)),
+        })
+      ).toEqual([]);
+    });
 
-  it('a ḥalaqa as its teacher sees it', async () => {
-    localStorage.setItem('arda.language', 'de');
-    expect(
-      await check(`/halaqa/${HALAQA}`, person('teacher'), {
-        answers: halaqaView,
-        ready: () => screen.findByRole('heading', { name: 'Juzʾ ʿAmma' }),
-      })
-    ).toEqual([]);
-  });
+    it(`a ḥalaqa as its teacher sees it (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      expect(
+        await check(`/halaqa/${HALAQA}`, person('teacher'), {
+          answers: halaqaView,
+          ready: () => screen.findByRole('heading', { name: 'Juzʾ ʿAmma' }),
+        })
+      ).toEqual([]);
+    });
 
-  it('the account page with the opt-in to measure the check, offered and unreadable', async () => {
-    localStorage.setItem('arda.language', 'de');
-    const title = () =>
-      screen.findByRole('heading', { level: 2, name: 'Automatische Prüfung messen' });
-    expect(
-      await check('/konto', person('student'), {
-        answers: {
-          'GET /api/v1/speech/evaluation': () =>
-            Response.json({ available: true, optedIn: false, since: null }),
-        },
-        ready: title,
-      })
-    ).toEqual([]);
-    cleanup();
-    expect(
-      await check('/konto', person('student'), {
-        answers: {
-          'GET /api/v1/speech/evaluation': () =>
-            Response.json({ error: 'internal' }, { status: 500 }),
-        },
-        ready: title,
-      })
-    ).toEqual([]);
-    expect(screen.getByRole('alert')).toBeInTheDocument();
-  });
+    it(`the account page with the opt-in to measure the check, offered and unreadable (${language})`, async () => {
+      localStorage.setItem('arda.language', language);
+      const card = () =>
+        waitFor(() =>
+          expect(document.getElementById('speech-evaluation')).not.toBeNull()
+        );
+      expect(
+        await check('/konto', person('student'), {
+          answers: {
+            'GET /api/v1/speech/evaluation': () =>
+              Response.json({ available: true, optedIn: false, since: null }),
+          },
+          ready: card,
+        })
+      ).toEqual([]);
+      cleanup();
+      expect(
+        await check('/konto', person('student'), {
+          answers: {
+            'GET /api/v1/speech/evaluation': () =>
+              Response.json({ error: 'internal' }, { status: 500 }),
+          },
+          ready: card,
+        })
+      ).toEqual([]);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
 
-  for (const role of ['student', 'teacher', 'admin'] as const) {
-    for (const path of SIGNED_IN) {
-      it(`${path} as ${role}`, async () => {
-        localStorage.setItem('arda.language', 'de');
-        expect(await check(path, person(role))).toEqual([]);
-      });
+    for (const role of ['student', 'teacher', 'admin'] as const) {
+      for (const path of SIGNED_IN) {
+        it(`${path} as ${role} (${language})`, async () => {
+          localStorage.setItem('arda.language', language);
+          expect(await check(path, person(role))).toEqual([]);
+        });
+      }
     }
   }
 });
