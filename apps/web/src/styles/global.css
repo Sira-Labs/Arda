@@ -330,7 +330,7 @@ a {
   min-height: var(--tap);
   padding: 0 14px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   background: var(--bg-elev);
   color: var(--text);
   font: inherit;

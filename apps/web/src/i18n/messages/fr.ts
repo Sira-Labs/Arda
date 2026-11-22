@@ -152,6 +152,7 @@ export const fr: Messages = {
     next: 'Voilà les huit unités. Révise-les jusqu’à ce qu’elles tiennent.',
   },
   ruleCard: {
+    shellProgress: 'Progression',
     play: (sura, aya) => `Écouter\u202f: sourate ${sura}, āya ${aya}`,
     inQuran: 'Dans le Coran\u202f:',
     eyebrow: (unit) => `Unité ${unit} · Comprendre`,
@@ -802,6 +803,7 @@ export const fr: Messages = {
     retry: 'Réessayer',
     back: 'Vers mes ḥalaqāt',
     join: {
+      heading: 'Rejoindre une ḥalaqa',
       eyebrow: 'Invitation',
       title: (name) => `Ḥalaqa «\u202f${name}\u202f»`,
       signIn: 'Connecte-toi pour rejoindre. Tu reviendras ici ensuite.',

@@ -201,6 +201,8 @@ export const de = {
     next: 'Das sind alle acht Einheiten. Wiederhole sie, bis sie sitzen.',
   },
   ruleCard: {
+    /** The learning screens' bar: how far through the station or round. */
+    shellProgress: 'Fortschritt',
     play: (sura: number, aya: number) => `Anhören: Sūra ${sura}, Āya ${aya}`,
     inQuran: 'Im Qurʾān:',
     eyebrow: (unit: number) => `Einheit ${unit} · Verstehen`,
@@ -856,6 +858,7 @@ export const de = {
     retry: 'Nochmal versuchen',
     back: 'Zu meinen Ḥalaqāt',
     join: {
+      heading: 'Einer Ḥalaqa beitreten',
       eyebrow: 'Einladung',
       title: (name: string) => `Ḥalaqa „${name}“`,
       signIn: 'Melde dich an, um beizutreten. Danach geht es hier weiter.',

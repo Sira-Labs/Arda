@@ -198,6 +198,7 @@ export const ar: Messages = {
     next: 'هذه الوحدات الثماني كلها. راجعها حتى تثبت.',
   },
   ruleCard: {
+    shellProgress: 'التقدّم',
     play: (sura, aya) => `استمع: سورة ${sura}، آية ${aya}`,
     inQuran: 'في القرآن:',
     eyebrow: (unit) => `الوحدة ${num(unit)} · الفهم`,
@@ -807,6 +808,7 @@ export const ar: Messages = {
     retry: 'حاول مرة أخرى',
     back: 'إلى حلقاتي',
     join: {
+      heading: 'الانضمام إلى حلقة',
       eyebrow: 'دعوة',
       title: (name) => `حلقة «${name}»`,
       signIn: 'سجّل الدخول للانضمام، ثم تعود إلى هنا.',

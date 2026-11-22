@@ -72,7 +72,9 @@ export function Account({
         </>
       )}
       <section className="card stack" aria-labelledby="devices">
-        <h3 id="devices">{m.account.devices}</h3>
+        <h2 className="h-small" id="devices">
+          {m.account.devices}
+        </h2>
         <ul className="stack" style={{ margin: 0, paddingInlineStart: 20 }}>
           {devices.map((device) => (
             <li key={device.id}>

@@ -46,6 +46,11 @@
   fill: var(--lab-lisan);
   opacity: 0.85;
 }
+/* The tongue moves: an ink edge keeps it apart from the paper, whatever its colour. */
+.lab-area[data-part='tongue'] {
+  stroke: var(--text);
+  stroke-width: 2;
+}
 .lab-area[data-area='halq'] {
   fill: var(--lab-halq);
   opacity: 0.45;

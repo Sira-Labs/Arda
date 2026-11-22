@@ -39,7 +39,9 @@ export function EvaluationOptIn() {
   if (!state && loadFailed) {
     return (
       <section className="card stack" aria-labelledby="speech-evaluation">
-        <h3 id="speech-evaluation">{m.speech.optIn.title}</h3>
+        <h2 className="h-small" id="speech-evaluation">
+          {m.speech.optIn.title}
+        </h2>
         <p role="alert">{m.speech.optIn.loadFailed}</p>
         <button
           className="btn"
@@ -78,7 +80,9 @@ export function EvaluationOptIn() {
 
   return (
     <section className="card stack" aria-labelledby="speech-evaluation">
-      <h3 id="speech-evaluation">{m.speech.optIn.title}</h3>
+      <h2 className="h-small" id="speech-evaluation">
+        {m.speech.optIn.title}
+      </h2>
       <p className="muted">{m.speech.optIn.what}</p>
       <ul className="muted" style={{ margin: 0, paddingInlineStart: 20 }}>
         {m.speech.optIn.points.map((point) => (

@@ -38,6 +38,7 @@ export function LearningShell({
         <div
           className="progress"
           role="progressbar"
+          aria-label={m.ruleCard.shellProgress}
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={percent}
