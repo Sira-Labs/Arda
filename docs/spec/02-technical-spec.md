@@ -300,3 +300,36 @@ Backup: `ARDA_BACKUP_*` (runbook).
 3. Port Suffa's sync (outbox, last write wins) for progress (story L3) and its engagement
    package; decide when both move to shared packages (ADR-0002).
 4. LiveKit on CapRover: TURN and UDP ports (ADR-0015).
+
+## 8. First load
+
+Spec 01 §6 asks for a first load within 2.5 s on a mid-range phone on 4G. A first visit has no
+service worker yet, so it downloads what the page names; that is what is kept small.
+
+- **The entry** holds the shell, Today, the path, a rule card, sign-in and the German catalog.
+  Every other screen is a route with `lazy` in `apps/web/src/App.tsx` and arrives with its
+  first visit.
+- **Catalogs** (ADR-0020): German ships with the entry; English, French and Arabic are
+  fetched when someone reads in them (`apps/web/src/i18n/catalogs.ts`). `main.tsx` fetches the
+  reader's language before the first paint, so nothing is drawn in German and redrawn.
+- **Offline** is unchanged: the service worker precaches every chunk after the first visit,
+  so screens and languages not yet opened also work without a network. A chunk that cannot
+  be fetched (offline before that, or replaced by a deploy) shows a page that says so and
+  offers to load the app again.
+- **Budget:** `apps/web/scripts/budget.mjs` runs at the end of every build, in CI and in the
+  release, and fails it when the entry script passes 185 kB gzip, the entry style 10 kB, a
+  catalog 30 kB, or a catalog is back in the entry.
+
+Measured on 2026-11-23 with Chromium on Lighthouse's mobile profile (1.6 Mbit/s down, 150 ms
+round trip, CPU four times slower), gzip as staging serves it, no service worker, median of
+five, largest contentful paint of `/`:
+
+| Build                          | Entry script (gzip) | German | Arabic |
+| ------------------------------ | ------------------- | ------ | ------ |
+| before (one bundle)            | 283 kB              | 2.3 s  | 2.3 s  |
+| catalogs and screens on demand | 167 kB              | 1.7 s  | 2.0 s  |
+
+Arabic pays a second request for its catalog after the entry has run. The numbers are from a
+desktop machine made slow, not from a phone in a ḥalaqa; they order the builds and are not a
+promise. What is left in the entry is mostly the router and React (about half), the German
+catalog and the review deck's words.

@@ -29,6 +29,8 @@ languages: the teacher teaches in one, each student reads the app in another. Ta
 - `apps/web/src/i18n/`: one catalog per language, typed against the German one, so a missing
   or misspelled message fails the typecheck; parameters are functions
   (`greeting(name)`), never string templates assembled at runtime. No i18n library.
+  Update 2026-11-23: German ships with the app; the other three are fetched when someone
+  reads in them and precached for offline use (technical spec §8). The typing is unchanged.
 - **Arabic** switches the whole document to `dir="rtl"`; layout uses logical CSS properties
   (`padding-inline-start`, not `padding-left`) so it mirrors; Latin UI text uses Manrope,
   Arabic UI text IBM Plex Sans Arabic (OFL, bundled). Qurʾān text is unaffected (always the

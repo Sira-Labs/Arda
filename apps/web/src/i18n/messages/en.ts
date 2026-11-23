@@ -1276,6 +1276,8 @@ export const en: Messages = {
     raRolled: 'Rāʾ with the tip of the tongue, one light tap – do not roll it.',
   },
   feedback: {
+    catalogFailed: 'This language will not load right now.',
+    retry: 'Try again',
     eyebrow: 'For the sheikh',
     title: 'Feedback in your students’ language',
     intro:
@@ -1910,6 +1912,11 @@ export const en: Messages = {
       pick: 'Āya',
       record: 'Record this āya',
     },
+  },
+  screenError: {
+    title: 'This page will not load right now',
+    text: 'You may be offline, or there is a new version. Load the app again.',
+    reload: 'Reload',
   },
   soon: {
     eyebrow: 'In progress',

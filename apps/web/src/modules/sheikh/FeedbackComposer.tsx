@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { errorMessage, useI18n } from '@/i18n/I18nProvider';
+import { errorMessage, useCatalog, useI18n } from '@/i18n/I18nProvider';
 import {
   directionOf,
   LANGUAGES,
@@ -7,7 +7,7 @@ import {
   isLanguage,
   type Language,
 } from '@/i18n/languages';
-import { CATALOGS, type RemarkId } from '@/i18n/messages';
+import type { RemarkId } from '@/i18n/messages';
 import type { TranslateOutcome } from '@/services/auth';
 import { REMARKS } from '@/modules/recite/remarks';
 import { useSession } from '@/state/session';
@@ -64,6 +64,14 @@ export function FeedbackComposer() {
   const { client } = useSession();
   const [from, setFrom] = useState<Language>(language);
   const [to, setTo] = useState<Language>(language === 'de' ? 'ar' : 'de');
+  // The two languages' own words. Until the sheikh's has been fetched the buttons read in
+  // the language shown, and say so to a screen reader.
+  const source = useCatalog(from);
+  const target = useCatalog(to);
+  const remarksFrom = (source.messages ?? m).remarks;
+  const remarksLanguage = source.messages ? from : language;
+  const remarksTo = target.messages?.remarks;
+  const failed = [source, target].filter((catalog) => catalog.failed);
   const [remark, setRemark] = useState<RemarkId | null>(null);
   const [text, setText] = useState('');
   const [outcome, setOutcome] = useState<TranslateOutcome | null>(null);
@@ -98,17 +106,31 @@ export function FeedbackComposer() {
             type="button"
             className={remark === id ? 'btn btn-teal' : 'btn'}
             aria-pressed={remark === id}
-            lang={from}
+            lang={remarksLanguage}
             onClick={() => setRemark(id)}
           >
-            {CATALOGS[from].remarks[id]}
+            {remarksFrom[id]}
           </button>
         ))}
       </div>
-      {remark && (
+      {failed.length > 0 && (
+        <div className="row" style={{ gap: 12 }}>
+          <p role="alert" style={{ margin: 0 }}>
+            {m.feedback.catalogFailed}
+          </p>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => failed.forEach((catalog) => catalog.retry())}
+          >
+            {m.feedback.retry}
+          </button>
+        </div>
+      )}
+      {remark && remarksTo && (
         <div className="paper stack" style={{ gap: 6 }}>
           <span className="eyebrow">{m.feedback.preview}</span>
-          <InLanguage language={to}>{CATALOGS[to].remarks[remark]}</InLanguage>
+          <InLanguage language={to}>{remarksTo[remark]}</InLanguage>
         </div>
       )}
 
