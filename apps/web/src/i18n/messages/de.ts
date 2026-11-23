@@ -1993,6 +1993,12 @@ export const de = {
       record: 'Diese Āya aufnehmen',
     },
   },
+  /** A screen that could not be fetched or failed while drawing. */
+  screenError: {
+    title: 'Diese Seite lädt gerade nicht',
+    text: 'Vielleicht bist du offline, oder es gibt eine neue Version. Lade die App neu.',
+    reload: 'Neu laden',
+  },
   soon: {
     eyebrow: 'In Arbeit',
     notFound: { title: 'Nicht gefunden', text: 'Diese Seite gibt es nicht.' },

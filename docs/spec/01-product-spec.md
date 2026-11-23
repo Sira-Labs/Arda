@@ -358,7 +358,9 @@ As described in their ADRs; only confirmed flags reach the student.
 - **Security:** threat model in `docs/security/threat-model.md`; auth hardening from Suffa's
   review; secrets only in environment variables.
 - **Performance:** first load ≤ 2.5 s on a mid-range phone on 4G; muṣḥaf page turn ≤ 100 ms
-  from a downloaded pack.
+  from a downloaded pack. _(First load measured and held by a budget since 2026-11-23,
+  technical spec §8: 1.7 s in German, 2.0 s in Arabic on a throttled phone profile; it was
+  2.3 s.)_
 - **Self-hostable:** CapRover, Postgres, RustFS; no third-party cloud for user data.
 
 ## 7. Plan (summary; details in `docs/plan/`)

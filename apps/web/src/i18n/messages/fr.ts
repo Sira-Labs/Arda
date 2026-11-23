@@ -1953,6 +1953,11 @@ export const fr: Messages = {
       record: 'Enregistrer cette āya',
     },
   },
+  screenError: {
+    title: 'Cette page ne se charge pas pour l’instant',
+    text: 'Tu es peut-être hors ligne, ou il y a une nouvelle version. Recharge l’application.',
+    reload: 'Recharger',
+  },
   soon: {
     eyebrow: 'En préparation',
     notFound: { title: 'Introuvable', text: 'Cette page n’existe pas.' },

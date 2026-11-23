@@ -1911,6 +1911,11 @@ export const en: Messages = {
       record: 'Record this āya',
     },
   },
+  screenError: {
+    title: 'This page will not load right now',
+    text: 'You may be offline, or there is a new version. Load the app again.',
+    reload: 'Reload',
+  },
   soon: {
     eyebrow: 'In progress',
     notFound: { title: 'Not found', text: 'This page does not exist.' },
