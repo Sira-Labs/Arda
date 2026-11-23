@@ -95,11 +95,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   // The account's language wins once known; a first sign-in adopts this device's choice.
   useEffect(() => {
     if (!me) return;
-    if (me.language && me.language !== language) {
+    if (me.language) {
+      // Also when it is the language shown already: a choice still on its way must not
+      // arrive after the account has spoken.
       show(me.language);
       store(me.language);
-    } else if (!me.language) {
-      void client.saveLanguage(language);
+    } else {
+      // What this device chose, which may still be loading, not what is shown meanwhile.
+      void client.saveLanguage(initialLanguage());
     }
     // Only when the profile changes; a local choice is saved by setLanguage below.
     // eslint-disable-next-line react-hooks/exhaustive-deps

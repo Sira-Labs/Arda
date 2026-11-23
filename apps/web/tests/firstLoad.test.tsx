@@ -18,6 +18,7 @@ import { useI18n } from '@/i18n/I18nProvider';
 import { CATALOGS } from '@/i18n/messages';
 import { REMARKS } from '@/modules/recite/remarks';
 import { ScreenError } from '@/modules/ScreenError';
+import type { Me } from '@/services/auth';
 import { FeedbackComposer } from '@/modules/sheikh/FeedbackComposer';
 // The budget is a build script; its two functions are plain JavaScript.
 import { LIMITS, measure, over } from '../scripts/budget.mjs';
@@ -151,6 +152,53 @@ describe('catalogs that arrive late, out of order or not at all', () => {
     waiting.get('fr')!.fail();
     await settle();
     expect(shown()).toBe('de ltr');
+  });
+
+  const person = (language: Me['language']): Me => ({
+    id: 'p',
+    email: 'person@example.org',
+    name: null,
+    role: 'student',
+    timeZone: null,
+    language,
+  });
+
+  it('lets the account’s language win over a choice still on its way', async () => {
+    const waiting = byHand();
+    localStorage.setItem('arda.language', 'fr');
+    render(
+      <Providers client={fakeApi({}, person('de')).client}>
+        <Probe />
+      </Providers>
+    );
+    expect(shown()).toBe('de ltr');
+    // The profile arrives and says German, which is shown already; then French arrives.
+    await waitFor(() => expect(localStorage.getItem('arda.language')).toBe('de'));
+    await act(async () => waiting.get('fr')!.arrive());
+    await settle();
+    expect(shown()).toBe('de ltr');
+  });
+
+  it('saves this device’s language to a new account, not the German shown meanwhile', async () => {
+    const waiting = byHand();
+    localStorage.setItem('arda.language', 'ar');
+    const { client, calls } = fakeApi({}, person(null));
+    render(
+      <Providers client={client}>
+        <Probe />
+      </Providers>
+    );
+    expect(shown()).toBe('de ltr');
+    await waitFor(() =>
+      expect(
+        calls.find((call) => call.method !== 'GET' && call.path !== '/api/v1/me')
+      ).toBeTruthy()
+    );
+    const saved = calls.filter((call) => call.method !== 'GET');
+    expect(saved).toHaveLength(1);
+    expect(saved[0]!.body).toEqual({ language: 'ar' });
+    await act(async () => waiting.get('ar')!.arrive());
+    await waitFor(() => expect(shown()).toBe('ar rtl'));
   });
 
   it('tells the sheikh when the other language’s words cannot be fetched, and tries again', async () => {
