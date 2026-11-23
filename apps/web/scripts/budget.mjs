@@ -28,7 +28,14 @@ export function measure(dist) {
     /^(en|fr|ar)-[\w-]+\.js$/.test(name)
   );
   return {
-    entryScript: sum(named(/<script[^>]+src="([^"]+\.js)"/g)),
+    // The page's own script and what it asks the browser to fetch with it; each file once.
+    entryScript: sum([
+      ...new Set([
+        ...named(/<script[^>]+src="([^"]+\.js)"/g),
+        ...named(/<link[^>]+rel="modulepreload"[^>]+href="([^"]+\.js)"/g),
+        ...named(/<link[^>]+href="([^"]+\.js)"[^>]+rel="modulepreload"/g),
+      ]),
+    ]),
     entryStyle: sum(named(/<link[^>]+href="([^"]+\.css)"/g)),
     catalogs: Object.fromEntries(
       catalogs.map((name) => [name.slice(0, 2), zipped(new URL(`assets/${name}`, dist))])

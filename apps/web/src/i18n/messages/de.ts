@@ -1360,6 +1360,9 @@ export const de = {
     raRolled: 'Rāʾ mit der Zungenspitze, ein leichter Schlag – nicht rollen.',
   } as Record<RemarkId, string>,
   feedback: {
+    /** The other language's words could not be fetched. */
+    catalogFailed: 'Diese Sprache lädt gerade nicht.',
+    retry: 'Noch einmal versuchen',
     eyebrow: 'Für den Sheikh',
     title: 'Rückmeldung in der Sprache deiner Schüler',
     intro:

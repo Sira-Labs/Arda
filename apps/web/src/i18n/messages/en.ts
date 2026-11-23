@@ -1276,6 +1276,8 @@ export const en: Messages = {
     raRolled: 'Rāʾ with the tip of the tongue, one light tap – do not roll it.',
   },
   feedback: {
+    catalogFailed: 'This language will not load right now.',
+    retry: 'Try again',
     eyebrow: 'For the sheikh',
     title: 'Feedback in your students’ language',
     intro:

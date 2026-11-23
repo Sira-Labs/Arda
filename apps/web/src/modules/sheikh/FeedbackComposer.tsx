@@ -64,9 +64,14 @@ export function FeedbackComposer() {
   const { client } = useSession();
   const [from, setFrom] = useState<Language>(language);
   const [to, setTo] = useState<Language>(language === 'de' ? 'ar' : 'de');
-  // The two languages' own words; a catalog not yet fetched shows the reader's meanwhile.
-  const remarksFrom = (useCatalog(from) ?? m).remarks;
-  const remarksTo = useCatalog(to)?.remarks;
+  // The two languages' own words. Until the sheikh's has been fetched the buttons read in
+  // the language shown, and say so to a screen reader.
+  const source = useCatalog(from);
+  const target = useCatalog(to);
+  const remarksFrom = (source.messages ?? m).remarks;
+  const remarksLanguage = source.messages ? from : language;
+  const remarksTo = target.messages?.remarks;
+  const failed = [source, target].filter((catalog) => catalog.failed);
   const [remark, setRemark] = useState<RemarkId | null>(null);
   const [text, setText] = useState('');
   const [outcome, setOutcome] = useState<TranslateOutcome | null>(null);
@@ -101,13 +106,27 @@ export function FeedbackComposer() {
             type="button"
             className={remark === id ? 'btn btn-teal' : 'btn'}
             aria-pressed={remark === id}
-            lang={from}
+            lang={remarksLanguage}
             onClick={() => setRemark(id)}
           >
             {remarksFrom[id]}
           </button>
         ))}
       </div>
+      {failed.length > 0 && (
+        <div className="row" style={{ gap: 12 }}>
+          <p role="alert" style={{ margin: 0 }}>
+            {m.feedback.catalogFailed}
+          </p>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => failed.forEach((catalog) => catalog.retry())}
+          >
+            {m.feedback.retry}
+          </button>
+        </div>
+      )}
       {remark && remarksTo && (
         <div className="paper stack" style={{ gap: 6 }}>
           <span className="eyebrow">{m.feedback.preview}</span>

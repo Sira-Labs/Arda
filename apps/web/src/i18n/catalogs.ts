@@ -15,6 +15,10 @@ const loaders: Record<Exclude<Language, 'de'>, () => Promise<Messages>> = {
   ar: () => import('./messages/ar').then((module) => module.ar),
 };
 
+type Fetch = (language: Exclude<Language, 'de'>) => Promise<Messages>;
+const fromChunks: Fetch = (language) => loaders[language]();
+let fetchCatalog = fromChunks;
+
 const loaded = new Map<Language, Messages>([['de', de]]);
 const loading = new Map<Language, Promise<Messages>>();
 
@@ -32,7 +36,7 @@ export function loadCatalog(language: Language): Promise<Messages> {
   if (here) return Promise.resolve(here);
   const pending = loading.get(language);
   if (pending) return pending;
-  const load = loaders[language as Exclude<Language, 'de'>]()
+  const load = fetchCatalog(language as Exclude<Language, 'de'>)
     .then((catalog) => {
       loaded.set(language, catalog);
       return catalog;
@@ -53,9 +57,13 @@ export function provideCatalogs(catalogs: Partial<Record<Language, Messages>>): 
   }
 }
 
-/** Back to what a first visit has: German only. For tests of the fetching itself. */
-export function forgetCatalogsForTests(): void {
+/**
+ * Back to what a first visit has: German only. For tests of the fetching itself, which may
+ * put their own fetch in place of the chunks (slow, failing, out of order).
+ */
+export function forgetCatalogsForTests(fetch: Fetch = fromChunks): void {
   loaded.clear();
   loaded.set('de', de);
   loading.clear();
+  fetchCatalog = fetch;
 }

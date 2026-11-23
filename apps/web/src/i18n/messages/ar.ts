@@ -1307,6 +1307,8 @@ export const ar: Messages = {
     raRolled: 'الراء بطرف اللسان، نقرة واحدة خفيفة – لا تكرّرها.',
   },
   feedback: {
+    catalogFailed: 'تعذّر تحميل هذه اللغة الآن.',
+    retry: 'حاول مرة أخرى',
     eyebrow: 'للشيخ',
     title: 'ملاحظاتك بلغة طلابك',
     intro:

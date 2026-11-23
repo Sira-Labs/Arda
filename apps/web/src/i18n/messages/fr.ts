@@ -1313,6 +1313,8 @@ export const fr: Messages = {
       'Le rāʾ avec la pointe de la langue, une seule frappe légère – ne le roule pas.',
   },
   feedback: {
+    catalogFailed: 'Cette langue ne se charge pas pour l’instant.',
+    retry: 'Réessayer',
     eyebrow: 'Pour le cheikh',
     title: 'Des retours dans la langue de tes élèves',
     intro:
