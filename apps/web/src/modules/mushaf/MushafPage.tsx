@@ -18,7 +18,7 @@ import { RecordPanel } from '@/modules/recite/RecordPanel';
 import { useReview } from '@/review/ReviewProvider';
 import type { AssignmentRange, RecitedRange } from '@/services/auth';
 import { chooseColours, useMushafColours } from './colours';
-import { useLineFit } from './fit';
+import { hasFit, useLineFit, whenIdle } from './fit';
 import { PageAssign, useTeaching } from './PageAssign';
 import {
   pageBlocks,
@@ -185,7 +185,36 @@ export function MushafPage() {
   // A turned page starts silent: the recitation was of the page before.
   useEffect(() => stop, [page, stop]);
   const lines = useRef<HTMLDivElement>(null);
-  useLineFit(lines, blocks);
+  const fitId = useCallback(
+    (of: number) => (entry ? `${entry.id}@${entry.version}:${of}` : undefined),
+    [entry]
+  );
+  useLineFit(lines, blocks, fitId(page));
+  // The neighbouring pages are measured while nothing else happens, so that turning to them
+  // lays the page out once, not twice (technical spec §9). One at a time, the next first.
+  const [ahead, setAhead] = useState<number | null>(null);
+  const aheadTried = useRef(new Set<number>());
+  const measureAhead = useCallback(() => {
+    const neighbour = [page + 1, page - 1].find((of) => {
+      const id = fitId(of);
+      return (
+        of >= 1 &&
+        id !== undefined &&
+        !aheadTried.current.has(of) &&
+        !hasFit(id) &&
+        entryForPage(of, script)?.id === entry?.id
+      );
+    });
+    if (neighbour !== undefined) aheadTried.current.add(neighbour);
+    setAhead(neighbour ?? null);
+  }, [page, script, entry, fitId]);
+  useEffect(() => {
+    aheadTried.current = new Set();
+    // Printed lines only, and only where there is a layout to measure (not in jsdom).
+    if (pack?.script !== 'indopak' || !lines.current?.clientWidth) return;
+    return whenIdle(measureAhead);
+  }, [pack, measureAhead]);
+
   const recitation = useMemo(() => pageRecitation(blocks), [blocks]);
   useFollowRecitation(lines, player.recited);
 
@@ -317,7 +346,7 @@ export function MushafPage() {
     >
       {back}
       <header className="stack" style={{ gap: 6 }}>
-        <p className="eyebrow">
+        <p className="eyebrow mushaf-page-number">
           {m.mushaf.page(page)} · {m.mushaf.scripts[script].name}
         </p>
         <h1 className="h-small">
@@ -450,6 +479,16 @@ export function MushafPage() {
         >
           {blocks.map((block) => blockView(block, word, indopak, m))}
         </div>
+        {ahead !== null && ahead !== page && (
+          <PageAhead
+            key={ahead}
+            id={fitId(ahead)}
+            opening={ahead - pack.layout!.pageOffset <= 2}
+            onMeasured={measureAhead}
+          >
+            {pageBlocks(pack, ahead).map((block) => blockView(block, word, indopak, m))}
+          </PageAhead>
+        )}
       </div>
       <nav className="page-turn" aria-label={m.mushaf.page(page)}>
         {/* A right-to-left book: the next page lies to the left. */}
@@ -547,6 +586,41 @@ export function MushafPage() {
 }
 
 type Messages = ReturnType<typeof useI18n>['m'];
+
+/**
+ * A neighbouring page drawn where nobody sees or reaches it, to learn its fit before it is
+ * turned to. Gone again as soon as it is measured.
+ */
+function PageAhead({
+  id,
+  opening,
+  onMeasured,
+  children,
+}: {
+  id: string | undefined;
+  opening: boolean;
+  onMeasured(): void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  useLineFit(ref, id, id);
+  // The fit is taken in a layout effect, so it is known by now; then the next, when idle.
+  useEffect(() => whenIdle(onMeasured), [onMeasured]);
+  return (
+    <div
+      ref={ref}
+      className="quran mushaf-text mushaf-page mushaf-ahead"
+      data-script="indopak"
+      data-layout="lines"
+      data-opening={opening ? 'true' : undefined}
+      lang="ar"
+      dir="rtl"
+      aria-hidden="true"
+    >
+      {children}
+    </div>
+  );
+}
 
 function blockView(
   block: Block,

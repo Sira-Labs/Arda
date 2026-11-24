@@ -10,7 +10,13 @@ import { resetColoursForTests } from '@/modules/mushaf/colours';
 import { chooseScript, resetScriptForTests } from '@/modules/mushaf/script';
 import type { PackIndex, PackIndexEntry } from '@arda/quran';
 import type { Me } from '@/services/auth';
-import { entryFor, loadPack, type PackCache, type PackLoaderDeps } from '@/content/packs';
+import {
+  entryFor,
+  entryForPage,
+  loadPack,
+  type PackCache,
+  type PackLoaderDeps,
+} from '@/content/packs';
 import { de } from '@/i18n/messages/de';
 import { Mushaf } from '@/modules/mushaf/Mushaf';
 import { MushafPage } from '@/modules/mushaf/MushafPage';
@@ -25,6 +31,7 @@ import type { Timings } from '@/modules/mushaf/timings';
 import { PlayerContext, type PlayerDeps } from '@/modules/mushaf/usePlayer';
 import { packRuleName, wordSegments } from '@/modules/mushaf/words';
 import { StudentAssignmentItem } from '@/modules/assignments/StudentAssignmentItem';
+import { forgetFitsForTests, hasFit } from '@/modules/mushaf/fit';
 import { fakeApi, Providers } from './render';
 
 const PACKS = resolve(__dirname, '../public/packs');
@@ -420,6 +427,62 @@ describe('the muṣḥaf screen (S2.4)', () => {
       fireEvent.touchEnd(page, { touches: [], changedTouches: to });
     };
     afterEach(() => vi.unstubAllGlobals());
+
+    it('turns within a pack at once: no second download, check or wait (spec 01 §6)', async () => {
+      const { deps, calls } = loader();
+      let checks = 0;
+      renderAt('/mushaf/seite/7', {
+        ...deps,
+        sha256: (data) => {
+          checks += 1;
+          return deps.sha256(data);
+        },
+      });
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      // The next page of a right-to-left book lies to the left.
+      for (const [key, page] of [
+        ['ArrowLeft', 8],
+        ['ArrowLeft', 9],
+        ['ArrowLeft', 10],
+        ['ArrowRight', 9],
+      ] as const) {
+        fireEvent.keyDown(window, { key });
+        // No `findBy`: the page is there in the same turn of the event loop, with its words,
+        // and "loading" is never shown. That is what keeps a turn far below 100 ms.
+        expect(screen.getByText(`Seite ${page} · IndoPak`)).toBeInTheDocument();
+        expect(screen.queryByText('Der Muṣḥaf wird geladen …')).toBeNull();
+        expect(document.querySelectorAll('.mushaf-word').length).toBeGreaterThan(20);
+      }
+      expect(calls).toHaveLength(1);
+      expect(checks).toBe(1);
+    });
+
+    it('measures the neighbouring pages ahead, out of sight and reach, and clears up', async () => {
+      // jsdom lays nothing out; say there is a column, so there is something to measure.
+      vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000);
+      Range.prototype.getBoundingClientRect = () => ({ width: 800 }) as DOMRect;
+      forgetFitsForTests();
+      renderAt('/mushaf/seite/7', loader().deps);
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      const idOf = (page: number) =>
+        `${entryForPage(7, 'indopak')!.id}@${entryForPage(7, 'indopak')!.version}:${page}`;
+      expect(hasFit(idOf(7))).toBe(true);
+      expect(hasFit(idOf(8))).toBe(false);
+      // While it is measured the copy is hidden from everyone.
+      const ahead = await waitFor(() => {
+        const copy = document.querySelector('.mushaf-ahead');
+        expect(copy).not.toBeNull();
+        return copy!;
+      });
+      expect(ahead).toHaveAttribute('aria-hidden', 'true');
+      expect(ahead.querySelectorAll('.mushaf-word').length).toBeGreaterThan(20);
+      await waitFor(() => expect(hasFit(idOf(8)) && hasFit(idOf(6))).toBe(true));
+      await waitFor(() => expect(document.querySelector('.mushaf-ahead')).toBeNull());
+      // Only this page's words are left.
+      expect(document.querySelectorAll('.mushaf-page')).toHaveLength(1);
+      vi.restoreAllMocks();
+      Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect');
+    });
 
     it('turns with one finger sideways, never while scrolling or pinching', async () => {
       renderAt('/mushaf/seite/7', loader().deps);

@@ -322,7 +322,7 @@ service worker yet, so it downloads what the page names; that is what is kept sm
 
 Measured on 2026-11-23 with Chromium on Lighthouse's mobile profile (1.6 Mbit/s down, 150 ms
 round trip, CPU four times slower), gzip as staging serves it, no service worker, median of
-five, largest contentful paint of `/`:
+five, largest contentful paint of `/` (`apps/web/scripts/measure.mjs` repeats it):
 
 | Build                          | Entry script (gzip) | German | Arabic |
 | ------------------------------ | ------------------- | ------ | ------ |
@@ -333,3 +333,49 @@ Arabic pays a second request for its catalog after the entry has run. The number
 desktop machine made slow, not from a phone in a ḥalaqa; they order the builds and are not a
 promise. What is left in the entry is mostly the router and React (about half), the German
 catalog and the review deck's words.
+
+## 9. Page turn
+
+Spec 01 §6 asks for a muṣḥaf page turn within 100 ms from a downloaded pack. Measured with
+`apps/web/scripts/measure.mjs` (Chromium, CPU four times slower): from the arrow key until the
+next page's number is on screen and two frames have passed, twelve pages on and back again,
+median in milliseconds.
+
+| Build (2026-11-24)                | Script  | A page not seen before | A page seen before |
+| --------------------------------- | ------- | ---------------------- | ------------------ |
+| before                            | IndoPak | 201–205                | 163–189            |
+| before                            | Madīna  | 97–98                  | 93–96              |
+| now, a turn every 0.4 s (leafing) | IndoPak | 111–158                | 82–97              |
+| now, a turn every 2 s (reading)   | IndoPak | 104–112                | 92–94              |
+| now, either pace                  | Madīna  | 95–113                 | 82–101             |
+
+So the IndoPak page, the sheikh's and the default, took twice the target and is now about
+where the Madīna page is: around 100 ms on this profile, a quarter of that on the machine
+unslowed. That is at the target, not safely under it, and single turns still take 150 to 200
+ms. The numbers are from a desktop machine made slow, not from a phone in a ḥalaqa.
+
+Where the time went: a pack is fetched, checked and parsed once per visit (`usePack`), so a
+turn only draws. But an IndoPak page is fitted to its column (`fit.ts`): laid out unjustified,
+measured, laid out again at the fitted size, and all of that a second time for a font that
+had long been loaded. Four layouts a turn. Now:
+
+- A page is measured once. Its fit is a ratio of the font's own widths, so it holds for any
+  column width and is kept by pack and page; a page seen before is laid out once.
+- It is measured a second time only if a font was still loading when it was first measured,
+  and such a fit is not kept.
+- While nothing else happens the two neighbouring pages are drawn out of sight, in a copy
+  exactly as wide as the page, and measured, the next first; turning to them is then one
+  layout too. Leafing fast leaves little time for that, hence the first row's range.
+
+Checked in the browser: pages reached by turning have the same fit, to the third decimal, and
+the same pixels as pages opened directly.
+
+What is left of a turn is one render of the page's words and one layout. Making that smaller
+means drawing fewer elements per word, which touches how tajwīd colours and taps are built;
+not done here.
+
+Tests hold the reasons, not the seconds, which flap in CI: a turn within a pack shows the
+next page in the same turn of the event loop, never "loading", and downloads and checks
+nothing again (`apps/web/tests/mushaf.test.tsx`); a page is measured once, reused from
+memory, and measured again after a font load (`apps/web/tests/fit.test.tsx`); the copy
+measured ahead is hidden, marked `aria-hidden`, and gone once measured.
