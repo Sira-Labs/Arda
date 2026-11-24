@@ -1,6 +1,9 @@
 // Measures what spec 01 §6 asks of the web app, by hand, against a build that is being served:
 //
-//   npm run build -w @arda/web && npm run preview -w @arda/web -- --port 4173 &
+//   npm run build -w @arda/web && npm run preview -w @arda/web -- --port 4173
+//
+// and, in a second terminal once the preview says it is listening:
+//
 //   NODE_PATH=$(npm root -g) node apps/web/scripts/measure.mjs http://localhost:4173
 //
 // It needs Playwright with Chromium, which the repository does not depend on; it is not run
@@ -100,6 +103,8 @@ async function pageTurns(browser, script, sura, pause) {
   const turns = [];
   // Twelve pages on, then back over them: the way back shows pages drawn before.
   for (let turn = 0; turn < 24; turn++) {
+    // A turn every `pause` ms, counted from the turn's start: a slow turn shortens the rest.
+    const started = Date.now();
     turns.push(
       Math.round(
         await page.evaluate(
@@ -123,7 +128,7 @@ async function pageTurns(browser, script, sura, pause) {
         )
       )
     );
-    await page.waitForTimeout(pause);
+    await page.waitForTimeout(Math.max(0, pause - (Date.now() - started)));
   }
   const first = turns.slice(0, 12);
   const again = turns.slice(12);

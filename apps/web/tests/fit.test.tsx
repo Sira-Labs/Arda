@@ -100,6 +100,50 @@ describe('fitting a page of printed lines (technical spec §9)', () => {
     expect(hasFit('pack@1:8')).toBe(true);
   });
 
+  it('says when the fit is final: at once with the font here, else only once it has come', async () => {
+    function Told({ id, onSettled }: { id: string; onSettled(): void }) {
+      const ref = useRef<HTMLDivElement>(null);
+      useLineFit(ref, id, id, onSettled);
+      return (
+        <div ref={ref} data-layout="lines">
+          <div className="mushaf-line">line</div>
+        </div>
+      );
+    }
+    const here = vi.fn();
+    render(<Told id="here" onSettled={here} />);
+    expect(here).toHaveBeenCalledOnce();
+    // From memory: final at once, too.
+    render(<Told id="here" onSettled={here} />);
+    expect(here).toHaveBeenCalledTimes(2);
+
+    fontStatus = 'loading';
+    const late = vi.fn();
+    render(<Told id="late" onSettled={late} />);
+    expect(late).not.toHaveBeenCalled();
+    fontStatus = 'loaded';
+    await act(async () => fontsReady());
+    expect(late).toHaveBeenCalledOnce();
+    expect(hasFit('late')).toBe(true);
+  });
+
+  it('says so too where nothing can be measured', () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(0);
+    function Told({ onSettled }: { onSettled(): void }) {
+      const ref = useRef<HTMLDivElement>(null);
+      useLineFit(ref, 1, 'nowhere', onSettled);
+      return (
+        <div ref={ref} data-layout="lines">
+          <div className="mushaf-line">line</div>
+        </div>
+      );
+    }
+    const told = vi.fn();
+    render(<Told onSettled={told} />);
+    expect(told).toHaveBeenCalledOnce();
+    expect(hasFit('nowhere')).toBe(false);
+  });
+
   it('leaves running text alone', () => {
     function Flow() {
       const ref = useRef<HTMLDivElement>(null);

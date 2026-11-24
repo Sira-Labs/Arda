@@ -361,7 +361,7 @@ As described in their ADRs; only confirmed flags reach the student.
   from a downloaded pack. _(First load measured and held by a budget since 2026-11-23,
   technical spec §8: 1.7 s in German, 2.0 s in Arabic on a throttled phone profile; it was
   2.3 s. Page turn measured on 2026-11-24, technical spec §9: the IndoPak page took about 200 ms on
-  the same profile and now takes about 105 to 160 ms new and 80 to 100 ms seen before, like the
+  the same profile and now takes about 100 to 125 ms new and 85 to 105 ms seen before, like the
   Madīna page; at the target, not safely under it.)_
 - **Self-hostable:** CapRover, Postgres, RustFS; no third-party cloud for user data.
 

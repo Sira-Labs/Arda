@@ -192,7 +192,8 @@ export function MushafPage() {
   useLineFit(lines, blocks, fitId(page));
   // The neighbouring pages are measured while nothing else happens, so that turning to them
   // lays the page out once, not twice (technical spec §9). One at a time, the next first.
-  const [ahead, setAhead] = useState<number | null>(null);
+  // With the pack it belongs to: a copy asked for under another pack or script is not drawn.
+  const [ahead, setAhead] = useState<{ of: number; pack: string } | null>(null);
   const aheadTried = useRef(new Set<number>());
   const measureAhead = useCallback(() => {
     const neighbour = [page + 1, page - 1].find((of) => {
@@ -206,7 +207,7 @@ export function MushafPage() {
       );
     });
     if (neighbour !== undefined) aheadTried.current.add(neighbour);
-    setAhead(neighbour ?? null);
+    setAhead(neighbour !== undefined && entry ? { of: neighbour, pack: entry.id } : null);
   }, [page, script, entry, fitId]);
   useEffect(() => {
     aheadTried.current = new Set();
@@ -479,16 +480,22 @@ export function MushafPage() {
         >
           {blocks.map((block) => blockView(block, word, indopak, m))}
         </div>
-        {ahead !== null && ahead !== page && (
-          <PageAhead
-            key={ahead}
-            id={fitId(ahead)}
-            opening={ahead - pack.layout!.pageOffset <= 2}
-            onMeasured={measureAhead}
-          >
-            {pageBlocks(pack, ahead).map((block) => blockView(block, word, indopak, m))}
-          </PageAhead>
-        )}
+        {indopak &&
+          pack.layout &&
+          ahead &&
+          ahead.pack === entry?.id &&
+          ahead.of !== page && (
+            <PageAhead
+              key={ahead.of}
+              id={fitId(ahead.of)}
+              opening={ahead.of - pack.layout.pageOffset <= 2}
+              onMeasured={measureAhead}
+            >
+              {pageBlocks(pack, ahead.of).map((block) =>
+                blockView(block, word, indopak, m)
+              )}
+            </PageAhead>
+          )}
       </div>
       <nav className="page-turn" aria-label={m.mushaf.page(page)}>
         {/* A right-to-left book: the next page lies to the left. */}
@@ -603,9 +610,13 @@ function PageAhead({
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  useLineFit(ref, id, id);
-  // The fit is taken in a layout effect, so it is known by now; then the next, when idle.
-  useEffect(() => whenIdle(onMeasured), [onMeasured]);
+  // The copy stays until its fit is final: if a font is still loading, until the page has
+  // been measured with it. Then the next neighbour, when the browser is idle again.
+  const next = useRef<() => void>();
+  useLineFit(ref, id, id, () => {
+    next.current = whenIdle(onMeasured);
+  });
+  useEffect(() => () => next.current?.(), []);
   return (
     <div
       ref={ref}

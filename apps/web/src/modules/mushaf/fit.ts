@@ -1,4 +1,4 @@
-import { useLayoutEffect, type RefObject } from 'react';
+import { useLayoutEffect, useRef, type RefObject } from 'react';
 
 /** How much of a line the longest printed line may fill (the rest is the justified slack). */
 const FILL = 0.97;
@@ -48,14 +48,21 @@ export function forgetFitsForTests(): void {
 export function useLineFit(
   ref: RefObject<HTMLElement | null>,
   key: unknown,
-  id?: string
+  id?: string,
+  /** Told once the fit is final: taken with the font loaded, or not to be had here. */
+  onSettled?: () => void
 ): void {
+  const settled = useRef(onSettled);
+  useLayoutEffect(() => {
+    settled.current = onSettled;
+  });
   useLayoutEffect(() => {
     const page = ref.current;
     if (!page || page.dataset.layout !== 'lines') return;
     const known = id ? fits.get(id) : undefined;
     if (known) {
       page.style.setProperty('--fit', known);
+      settled.current?.();
       return;
     }
     let live = true;
@@ -74,13 +81,18 @@ export function useLineFit(
         widest = Math.max(widest, range.getBoundingClientRect().width / line.clientWidth);
       }
       delete page.dataset.measuring;
-      if (widest === 0) return;
+      // Nothing to measure (no layout, no lines): this is all there will be.
+      if (widest === 0) return settled.current?.();
       const fit = Math.min(MAX, Math.max(MIN, FILL / widest)).toFixed(3);
       page.style.setProperty('--fit', fit);
       // Laying the page out may have asked for a font: then this was measured in a
       // stand-in, and the page is measured once more when the font is here.
-      if (document.fonts?.status === 'loading') void document.fonts.ready.then(measure);
-      else if (id) fits.set(id, fit);
+      if (document.fonts?.status === 'loading') {
+        void document.fonts.ready.then(measure);
+        return;
+      }
+      if (id) fits.set(id, fit);
+      settled.current?.();
     };
     measure();
     return () => {

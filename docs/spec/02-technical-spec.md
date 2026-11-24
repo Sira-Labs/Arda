@@ -341,18 +341,21 @@ Spec 01 §6 asks for a muṣḥaf page turn within 100 ms from a downloaded pack
 next page's number is on screen and two frames have passed, twelve pages on and back again,
 median in milliseconds.
 
-| Build (2026-11-24)                | Script  | A page not seen before | A page seen before |
-| --------------------------------- | ------- | ---------------------- | ------------------ |
-| before                            | IndoPak | 201–205                | 163–189            |
-| before                            | Madīna  | 97–98                  | 93–96              |
-| now, a turn every 0.4 s (leafing) | IndoPak | 111–158                | 82–97              |
-| now, a turn every 2 s (reading)   | IndoPak | 104–112                | 92–94              |
-| now, either pace                  | Madīna  | 95–113                 | 82–101             |
+| Build (2026-11-24) | Script  | A page not seen before | A page seen before |
+| ------------------ | ------- | ---------------------- | ------------------ |
+| before             | IndoPak | 201–205                | 163–189            |
+| before             | Madīna  | 97–98                  | 93–96              |
+| now                | IndoPak | 102–125                | 87–104             |
+| now                | Madīna  | 90–101                 | 88–105             |
 
-So the IndoPak page, the sheikh's and the default, took twice the target and is now about
-where the Madīna page is: around 100 ms on this profile, a quarter of that on the machine
-unslowed. That is at the target, not safely under it, and single turns still take 150 to 200
-ms. The numbers are from a desktop machine made slow, not from a phone in a ḥalaqa.
+"Now" is four runs each, two with a turn every 0.4 s (leafing) and two with one every 2 s
+(reading); the two paces did not differ by more than the runs did among themselves, about
+20 ms.
+
+So the IndoPak page, the sheikh's and the default, took twice the target and is now close to
+the Madīna page: around 100 ms on this profile, a quarter of that on the machine unslowed.
+That is at the target, not safely under it, and single turns still take 150 to 190 ms. The
+numbers are from a desktop machine made slow, not from a phone in a ḥalaqa.
 
 Where the time went: a pack is fetched, checked and parsed once per visit (`usePack`), so a
 turn only draws. But an IndoPak page is fitted to its column (`fit.ts`): laid out unjustified,
@@ -365,7 +368,7 @@ had long been loaded. Four layouts a turn. Now:
   and such a fit is not kept.
 - While nothing else happens the two neighbouring pages are drawn out of sight, in a copy
   exactly as wide as the page, and measured, the next first; turning to them is then one
-  layout too. Leafing fast leaves little time for that, hence the first row's range.
+  layout too. The copy stays until its fit is final, and is not drawn under another pack.
 
 Checked in the browser: pages reached by turning have the same fit, to the third decimal, and
 the same pixels as pages opened directly.

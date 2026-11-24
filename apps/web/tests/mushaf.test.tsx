@@ -484,6 +484,27 @@ describe('the muṣḥaf screen (S2.4)', () => {
       Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect');
     });
 
+    it('drops a page being measured ahead when the script changes under it', async () => {
+      vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(1000);
+      Range.prototype.getBoundingClientRect = () => ({ width: 800 }) as DOMRect;
+      // A font that never finishes loading keeps the copy on the page.
+      Object.defineProperty(document, 'fonts', {
+        configurable: true,
+        value: { status: 'loading', ready: new Promise<void>(() => undefined) },
+      });
+      forgetFitsForTests();
+      renderAt('/mushaf/seite/7', loader().deps);
+      expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
+      await waitFor(() => expect(document.querySelector('.mushaf-ahead')).not.toBeNull());
+      // The Madīna pack has no printed lines and no layout to place a copy in.
+      act(() => chooseScript('uthmani'));
+      expect(await screen.findByText(/^Seite \d+ · Madīna$/)).toBeInTheDocument();
+      expect(document.querySelector('.mushaf-ahead')).toBeNull();
+      vi.restoreAllMocks();
+      Reflect.deleteProperty(Range.prototype, 'getBoundingClientRect');
+      Reflect.deleteProperty(document, 'fonts');
+    });
+
     it('turns with one finger sideways, never while scrolling or pinching', async () => {
       renderAt('/mushaf/seite/7', loader().deps);
       expect(await screen.findByText('Seite 7 · IndoPak')).toBeInTheDocument();
