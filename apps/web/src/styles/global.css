@@ -886,6 +886,15 @@ a {
 .mushaf-page[data-layout='lines'] .mushaf-line:last-child {
   border-block-end: none;
 }
+/* A neighbouring page measured ahead of a turn (fit.ts): in the flow below the page, so it
+   is exactly as wide, but without height; never seen, never reached by pointer, keyboard or
+   screen reader. */
+.mushaf-ahead {
+  block-size: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
 .mushaf-page[data-measuring='true'] .mushaf-line {
   text-align: start;
   text-align-last: start;
