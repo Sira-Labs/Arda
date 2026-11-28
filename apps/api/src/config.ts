@@ -38,7 +38,7 @@ const RawEnvSchema = z.object({
   ARDA_ENV: z.enum(['dev', 'test', 'prod']).default('dev'),
   ARDA_PORT: z.coerce.number().int().min(1).max(65535).default(8000),
   ARDA_DATABASE_URL: z
-    .string({ required_error: 'ARDA_DATABASE_URL is required' })
+    .string({ error: 'ARDA_DATABASE_URL is required' })
     .regex(/^postgres(ql)?:\/\/.+/, 'ARDA_DATABASE_URL must be a postgres:// URL'),
   ARDA_DB_POOL_MAX: z.coerce.number().int().min(1).max(100).default(10),
   ARDA_AUTH_SECRET: z.string().optional(),
