@@ -60,7 +60,7 @@ tools/          content import: Tanzil text and cpfair rules into checksummed pa
 | API        | Hono 4 on `@hono/node-server`                     | dependency-injected routes, testable without a DB       |
 | Auth       | Better Auth 1.7.7 + `@better-auth/passkey`        | ADR-0004; `@better-auth/core` pinned                    |
 | DB         | Postgres 17, raw `pg`, plain SQL migrations       | advisory-locked runner, `schema_migrations`             |
-| Validation | zod 3                                             | env config and request bodies                           |
+| Validation | zod 4                                             | env config and request bodies                           |
 | Build      | tsc (types), esbuild (api), Vite (web)            | the api bundle inlines `@arda/*`; npm packages external |
 | Logging    | pino (api), small structured logger (web)         | JSON lines; never links, codes or addresses on failures |
 | Web        | React 18, react-router 7, Vite 5, vite-plugin-pwa | offline shell; IndexedDB for packs (next)               |
